@@ -1,0 +1,7 @@
+
+# .gitignore in the root directory of your project
+
+# Ignore node_modules directories
+FlowofEnglish_Frontend/node_modules/
+FlowofEnglish_Frontend/FoE/node_modules/
+FlowofEnglish_Frontend/FoE/packages/*/node_modules/
