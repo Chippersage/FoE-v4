@@ -38,6 +38,7 @@ export const updateOrg = async (organizationId, data) => {
     const response = await axios.put(`${apiUrl}/api/v1/organizations/${organizationId}`, data, {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
     });
     return response.data;
@@ -757,7 +758,7 @@ export async function deleteUserCohortMapping(leaderboardScore) {
   } catch (error) {
     console.error("Error deleting UserCohortMapping:", error);
   }
-  
+  return null;
 }
 
 //UserAttempts API Calls
@@ -792,6 +793,7 @@ export async function createUserAttempt(data) {
   } catch (error) {
     console.error("Error creating UserAttempt:", error);
   }
+  return null;
 }
 
 // Update an existing UserAttempt by userAttemptId
@@ -802,6 +804,7 @@ export async function updateUserAttempt(userAttemptId, data) {
   } catch (error) {
     console.error("Error updating UserAttempt:", error);
   }
+  return null;
 }
 
 // Delete a UserAttempt by userAttemptId
@@ -812,6 +815,7 @@ export async function deleteUserAttempt(userAttemptId) {
   } catch (error) {
     console.error("Error deleting UserAttempt:", error);
   }
+  return null;
 }
 
 //UserSessionMappings API Calls
@@ -846,6 +850,7 @@ export async function createUserSessionMapping(data) {
   } catch (error) {
     console.error("Error creating UserSessionMapping:", error);
   }
+  return null;
 }
 
 // Update an existing UserSessionMapping by sessionId
@@ -856,6 +861,7 @@ export async function updateUserSessionMapping(sessionId, data) {
   } catch (error) {
     console.error("Error updating UserSessionMapping:", error);
   }
+  return null;
 }
 
 // Delete a UserSessionMapping by sessionId
@@ -866,6 +872,7 @@ export async function deleteUserSessionMapping(sessionId) {
   } catch (error) {
     console.error("Error deleting UserSessionMapping:", error);
   }
+  return null;
 }
 
 

@@ -34,17 +34,20 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/v1/superadmin/**").permitAll() // Allow public access to superadmin endpoints
-                .requestMatchers("/api/v1/organizations/login").permitAll() // Allow public access to login endpoint
-                .requestMatchers("/api/v1/organizations/forgotorgpassword").permitAll() // Allow public access to forgot password endpoint
-                .requestMatchers("/api/v1/organizations/resetorgpassword").permitAll() // Allow public access to reset password endpoint
-                .requestMatchers("/api/v1/organizations/**").authenticated() // Require authentication for all other organization operations
-                .anyRequest().authenticated() // Require authentication for all other requests
-            )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF protection
+            		.requestMatchers("/api/v1/superadmin/**").permitAll() // Allow public access to superadmin endpoints
+                    .requestMatchers("/api/v1/organizations/login").permitAll() // Allow public access to login endpoint
+                    .requestMatchers("/api/v1/organizations/forgotorgpassword").permitAll() // Allow public access to forgot password endpoint
+                    .requestMatchers("/api/v1/organizations/resetorgpassword").permitAll() // Allow public access to reset password endpoint
+                    .requestMatchers("/api/v1/organizations/create").permitAll() // Allow public access to create endpoint
+                    .requestMatchers("/api/v1/users/create").permitAll()
+                    .requestMatchers("/api/v1/users/login").permitAll()
+                    .requestMatchers("/api/v1/organizations/**").authenticated() // Require authentication for all other organization operations
+                    .anyRequest().authenticated() // Require authentication for all other requests
+                )
+                .csrf(csrf -> csrf.disable()); // Disable CSRF protection
 
-        return http.build();
-    }
+            return http.build();
+        }
 }
 
 
