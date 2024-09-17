@@ -2,6 +2,7 @@ import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { GeneralUserProvider } from './GeneralUserContext';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Import UserProvider from your UserContext
@@ -18,6 +19,7 @@ export default function App() {
     <HelmetProvider>
       {/* Wrap your entire application with UserProvider */}
       <UserProvider>
+        <GeneralUserProvider>
         <BrowserRouter basename="/admin">
           <ThemeProvider>
             <ScrollToTop />
@@ -37,6 +39,7 @@ export default function App() {
             />
           </ThemeProvider>
         </BrowserRouter>
+        </GeneralUserProvider>
       </UserProvider>
     </HelmetProvider>
   );

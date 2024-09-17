@@ -13,7 +13,7 @@ public class MailConfig {
     @Bean
     public JavaMailSender getjavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.example.com"); // Replace with your SMTP server
+        mailSender.setHost("smtp.gmail.com"); // Replace with your SMTP server
         mailSender.setPort(587); // Replace with your SMTP port
         mailSender.setUsername("support@mindfultalk.in"); // Replace with your email
         mailSender.setPassword("gaxj astl rqpc izii"); // Replace with your email password

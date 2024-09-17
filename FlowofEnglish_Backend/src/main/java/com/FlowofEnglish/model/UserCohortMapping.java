@@ -12,7 +12,7 @@ public class UserCohortMapping {
     @Column(name = "leaderboard_score")
     private int leaderboardScore;
 
-    @Column(name = "uuid", length = 8, nullable = false, unique = true)
+    @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
     @ManyToOne
@@ -73,16 +73,15 @@ public class UserCohortMapping {
         this.user = user;
     }
 
-    @Override
-    public String toString() {
-        return "UserCohortMapping{" +
-                "leaderboardScore=" + leaderboardScore +
-                ", uuid='" + uuid + '\'' +
-                ", cohort=" + cohort +
-                ", user=" + user +
-                '}';
-    }
- // Method to ensure UUID and generate leaderboardScore before persisting
+    
+ @Override
+	public String toString() {
+		return "UserCohortMapping [leaderboardScore=" + leaderboardScore + ", uuid=" + uuid + ", cohort=" + cohort
+				+ ", user=" + user + "]";
+	}
+
+
+	// Method to ensure UUID and generate leaderboardScore before persisting
     @PrePersist
     private void ensureUuid() {
         if (this.uuid == null) {

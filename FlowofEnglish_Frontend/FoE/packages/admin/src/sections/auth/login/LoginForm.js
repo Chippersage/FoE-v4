@@ -21,39 +21,69 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
+  //   try {
+  //   const response = await axios.post(`${apiUrl}/api/v1/superadmin/login`, {
+  //     userId,
+  //     password,
+  //   });
+    
+
+  //     const data = response.data; // Access data from the response
+  //      console.log(data.token);
+  //      console.log(data.userType);
+
+  //     if (data.token && data.userType === 'superAdmin') {
+  //       localStorage.setItem('token', data.token);
+  //       setUserType(data.userType); // Setting userType using setUserType from context
+  //       navigate('/dashboard', { replace: true });
+  //     } else {
+  //       setError(data.error || 'Login failed');
+  //     }
+  //   }
+  //   catch (error) {
+  //     if (error.response && error.response.status === 401) {
+  //       setError('Invalid credentials');
+  //     } else if (error.response && error.response.status === 500) {
+  //       setError('Server error. Please try again later.');
+  //     } else {
+  //       setError('Error during login');
+  //     }
+  //   }
+    
+  // };
+  try {
     const response = await axios.post(`${apiUrl}/api/v1/superadmin/login`, {
       userId,
       password,
     });
-    
-
-      const data = response.data; // Access data from the response
-       console.log(data.token);
-       console.log(data.userType);
-
-      if (data.token && data.userType === 'superAdmin') {
-        localStorage.setItem('token', data.token);
-        setUserType(data.userType); // Setting userType using setUserType from context
-        navigate('/dashboard', { replace: true });
-      } else {
-        setError(data.error || 'Login failed');
-      }
+  
+    const data = response.data; // Access data from the response
+    console.log('Response data:', data); // Log the entire response
+  
+    // Fix condition to match response fields correctly
+    if (data.token === 'dummyToken' && data.userType === 'superAdmin') {
+      localStorage.setItem('token', data.token); // Store the token in localStorage
+      setUserType(data.userType); // Set the userType from context
+      navigate('/dashboard', { replace: true }); // Redirect to the dashboard
+    } else {
+      setError(data.error || 'Login failed');
     }
-    catch (error) {
-      if (error.response && error.response.status === 401) {
-        setError('Invalid credentials');
-      } else if (error.response && error.response.status === 500) {
-        setError('Server error. Please try again later.');
-      } else {
-        setError('Error during login');
-      }
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      setError('Invalid credentials');
+    } else if (error.response && error.response.status === 500) {
+      setError('Server error. Please try again later.');
+    } else {
+      setError('Error during login');
     }
-    
-  };
-
+  }
+  };  
   const handleSuperAdmin = () => {
     navigate('/loginorg');
+  };
+
+  const handleRedirectToUserLogin = () => {
+    navigate('/loginUser');
   };
 
   return (
@@ -101,6 +131,9 @@ export default function LoginForm() {
       </LoadingButton>
       <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleSuperAdmin}>
         Go to organization admin Page
+      </LoadingButton>
+      <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleRedirectToUserLogin}>
+        Go to User Login Page
       </LoadingButton>
     </>
   );

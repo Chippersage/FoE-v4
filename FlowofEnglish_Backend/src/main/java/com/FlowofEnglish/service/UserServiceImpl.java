@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
+    	// Encrypt password before saving
         //user.setUserPassword(bCryptPasswordEncoder.encode(user.getUserPassword())); // Encrypt password before saving
         return userRepository.save(user);
     }
