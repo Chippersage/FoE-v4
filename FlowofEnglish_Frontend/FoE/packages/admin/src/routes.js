@@ -32,6 +32,7 @@ import UserPassword from './pages/UserPassword';
 import SuperUserReport from './pages/UsersReport';
 import CohortOrg from './pages/cohortsOrg';
 import SuperAdminPassword from './pages/superAdminPassword';
+import LoginUser from './pages/LoginPageUser';
 export default function Router() {
   const routes = useRoutes([
     {
@@ -97,6 +98,10 @@ export default function Router() {
     {
       path: 'loginorg',
       element: <LoginOrg />,
+    },
+    {
+      path: 'loginUser',
+      element: <LoginUser />,
     },
     {
       path: 'login',

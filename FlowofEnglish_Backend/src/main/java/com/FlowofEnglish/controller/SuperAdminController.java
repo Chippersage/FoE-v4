@@ -23,23 +23,37 @@ public class SuperAdminController {
         return "SuperAdmin created with UUID: " + createdSuperAdmin.getUuid();
     }
     
+
+      
+// superadmin login
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
         String userId = payload.get("userId");
         String password = payload.get("password");
+        
+        // Debug logs
+        System.out.println("Received userId: " + userId);
+        System.out.println("Received password: " + password);
+        
         SuperAdmin superAdmin = superAdminService.findByUserId(userId);
         Map<String, Object> response = new HashMap<>();
+
+        // Log fetched SuperAdmin data
+        if (superAdmin != null) {
+            System.out.println("SuperAdmin found: " + superAdmin.getUserId());
+            System.out.println("SuperAdmin stored password: " + superAdmin.getPassword());
+        }
 
         if (superAdmin != null && superAdminService.verifyPassword(password, superAdmin.getPassword())) {
             response.put("token", "dummyToken"); // Replace with actual token generation if applicable
             response.put("userType", "superAdmin");
             return ResponseEntity.ok(response);
         } else {
+            System.out.println("Invalid credentials");
             response.put("error", "Invalid userId or password");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
-    
     @PostMapping("/resetpassword")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");

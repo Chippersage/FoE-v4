@@ -26,7 +26,7 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000")); // Add your front-end URL
+                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080")); // Add your front-end URL
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -42,6 +42,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/users/create").permitAll()
                     .requestMatchers("/api/v1/users/login").permitAll()
                     .requestMatchers("/api/v1/organizations/**").authenticated() // Require authentication for all other organization operations
+                    .requestMatchers("/api/v1/cohorts/create").permitAll()
+                    .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()
+                    .requestMatchers("/api/v1/programs/create").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF protection
