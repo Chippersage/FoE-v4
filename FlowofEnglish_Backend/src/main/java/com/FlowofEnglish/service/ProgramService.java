@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.model.Program;
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +18,6 @@ public interface ProgramService {
     void deleteProgram(String programId);
 
     void deletePrograms(List<String> programIds);
+
+	ProgramDTO convertToDTO(Program program);
 }

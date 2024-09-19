@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+import com.FlowofEnglish.dto.UserCohortMappingDTO;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +19,14 @@ public class UserCohortMappingController {
 
     // GET all mappings
     @GetMapping
-    public List<UserCohortMapping> getAllUserCohortMappings() {
+    public List<UserCohortMappingDTO> getAllUserCohortMappings() {
         return userCohortMappingService.getAllUserCohortMappings();
     }
 
-    // GET a specific mapping by leaderboardScore
-    @GetMapping("/{leaderboardScore}")
-    public ResponseEntity<UserCohortMapping> getUserCohortMappingById(@PathVariable int leaderboardScore) {
-        Optional<UserCohortMapping> userCohortMapping = userCohortMappingService.getUserCohortMappingById(leaderboardScore);
-        return userCohortMapping.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    // GET user cohort mappings by userId
+    @GetMapping("/user/{userId}")
+    public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(@PathVariable String userId) {
+        return userCohortMappingService.getUserCohortMappingsByUserId(userId);
     }
 
     // POST (create) a new user-cohort mapping
@@ -35,16 +35,16 @@ public class UserCohortMappingController {
         return userCohortMappingService.createUserCohortMapping(userCohortMapping);
     }
 
-    // PUT (update) an existing mapping by leaderboardScore
-    @PutMapping("/{leaderboardScore}")
-    public ResponseEntity<UserCohortMapping> updateUserCohortMapping(@PathVariable int leaderboardScore, @RequestBody UserCohortMapping userCohortMapping) {
-        return ResponseEntity.ok(userCohortMappingService.updateUserCohortMapping(leaderboardScore, userCohortMapping));
+    // PUT (update) an existing mapping by userId
+    @PutMapping("/user/{userId}")
+    public ResponseEntity<UserCohortMapping> updateUserCohortMapping(@PathVariable String userId, @RequestBody UserCohortMapping userCohortMapping) {
+        return ResponseEntity.ok(userCohortMappingService.updateUserCohortMapping(userId, userCohortMapping));
     }
 
-    // DELETE a specific mapping by leaderboardScore
-    @DeleteMapping("/{leaderboardScore}")
-    public ResponseEntity<Void> deleteUserCohortMapping(@PathVariable int leaderboardScore) {
-        userCohortMappingService.deleteUserCohortMapping(leaderboardScore);
+    // DELETE a specific mapping by userId
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<Void> deleteUserCohortMappingByUserId(@PathVariable String userId) {
+        userCohortMappingService.deleteUserCohortMappingByUserId(userId);
         return ResponseEntity.noContent().build();
     }
 }

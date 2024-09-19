@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.dto.CohortDTO;
 import com.FlowofEnglish.model.Cohort;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface CohortService {
     Cohort updateCohort(String cohortId, Cohort cohort);
 
     void deleteCohort(String cohortId);
+
+	CohortDTO convertToDTO(Cohort cohort);
 }

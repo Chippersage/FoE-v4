@@ -19,4 +19,6 @@ public interface UnitService {
     void deleteUnit(String unitId);
 
     void deleteUnits(List<String> unitIds);
+
+	Unit findById(String unitId);
 }

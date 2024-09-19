@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.repository.ProgramRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class ProgramServiceImpl implements ProgramService {
             .map(program -> {
                 program.setProgramName(updatedProgram.getProgramName());
                 program.setProgramDesc(updatedProgram.getProgramDesc());
-                program.setLevels(updatedProgram.getLevels());
+                program.setStages(updatedProgram.getStages());
                 program.setUnitCount(updatedProgram.getUnitCount());
                 return programRepository.save(program);
             })
@@ -50,5 +51,17 @@ public class ProgramServiceImpl implements ProgramService {
     @Override
     public void deletePrograms(List<String> programIds) {
         programRepository.deleteAllById(programIds);
+    }
+
+    // Implementation of convertToDTO
+    @Override
+    public ProgramDTO convertToDTO(Program program) {
+        ProgramDTO dto = new ProgramDTO();
+        dto.setProgramId(program.getProgramId());
+        dto.setProgramName(program.getProgramName());
+        dto.setProgramDesc(program.getProgramDesc());
+        dto.setStages(program.getStages());
+        dto.setUnitCount(program.getUnitCount());
+        return dto;
     }
 }

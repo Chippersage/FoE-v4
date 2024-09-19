@@ -1,17 +1,28 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
+
+//import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
+//@IdClass(UserCohortMappingId.class)
 @Table(name = "UserCohortMapping")
-public class UserCohortMapping {
+public class UserCohortMapping  {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "leaderboard_score")
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_cohort_id", nullable = false, unique = true)
+    private int userCohortId;
+	
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+	
+	@Column(name = "leaderboard_score")
     private int leaderboardScore;
-
+	
+	
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
@@ -19,22 +30,19 @@ public class UserCohortMapping {
     @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
+    
     // Default constructor
     public UserCohortMapping() {
         
     }
-    
-
-    public UserCohortMapping(int leaderboardScore, String uuid, Cohort cohort, User user) {
+  
+    public UserCohortMapping(int userCohortId, User user, int leaderboardScore, String uuid, Cohort cohort) {
 		super();
+		this.userCohortId = userCohortId;
+		this.user = user;
 		this.leaderboardScore = leaderboardScore;
 		this.uuid = uuid;
 		this.cohort = cohort;
-		this.user = user;
 	}
 
 
@@ -73,13 +81,19 @@ public class UserCohortMapping {
         this.user = user;
     }
 
+    public int getUserCohortId() {
+		return userCohortId;
+	}
     
- @Override
-	public String toString() {
-		return "UserCohortMapping [leaderboardScore=" + leaderboardScore + ", uuid=" + uuid + ", cohort=" + cohort
-				+ ", user=" + user + "]";
+    public void setUserCohortId(int userCohortId) {
+		this.userCohortId = userCohortId;
 	}
 
+	@Override
+	public String toString() {
+		return "UserCohortMapping [userCohortId=" + userCohortId + ", user=" + user + ", leaderboardScore="
+				+ leaderboardScore + ", uuid=" + uuid + ", cohort=" + cohort + "]";
+	}
 
 	// Method to ensure UUID and generate leaderboardScore before persisting
     @PrePersist

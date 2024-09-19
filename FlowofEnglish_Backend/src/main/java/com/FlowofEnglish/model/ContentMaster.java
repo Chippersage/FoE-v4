@@ -8,11 +8,14 @@ import java.util.UUID;
 public class ContentMaster {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "content_id")
     private int contentId;
+    
+    @Column(name = "content_name", length = 50, nullable = false)
+    private String contentName;
 
-    @Column(name = "content_desc", length = 50, nullable = false)
+	@Column(name = "content_desc", length = 50, nullable = false)
     private String contentDesc;
 
     @Column(name = "content_origin", length = 50, nullable = false)
@@ -28,14 +31,17 @@ public class ContentMaster {
 		
 	}
 
-	public ContentMaster(int contentId, String contentDesc, String contentOrigin, String contentTopic, String uuid) {
+	public ContentMaster(int contentId, String contentName, String contentDesc, String contentOrigin, String contentTopic, String uuid) {
 		super();
 		this.contentId = contentId;
+		this.contentName = contentName;
 		this.contentDesc = contentDesc;
 		this.contentOrigin = contentOrigin;
 		this.contentTopic = contentTopic;
 		this.uuid = uuid;
 	}
+
+	
 
 	// Getters and Setters
 	public int getContentId() {
@@ -44,6 +50,14 @@ public class ContentMaster {
 
 	public void setContentId(int contentId) {
 		this.contentId = contentId;
+	}
+	
+	public String getContentName() {
+		return contentName;
+	}
+
+	public void setContentName(String contentName) {
+		this.contentName = contentName;
 	}
 
 	public String getContentDesc() {
@@ -80,8 +94,8 @@ public class ContentMaster {
 
 	@Override
 	public String toString() {
-		return "ContentMaster [contentId=" + contentId + ", contentDesc=" + contentDesc + ", contentOrigin="
-				+ contentOrigin + ", contentTopic=" + contentTopic + ", uuid=" + uuid + "]";
+		return "ContentMaster [contentId=" + contentId + ", contentName=" + contentName + ", contentDesc=" + contentDesc
+				+ ", contentOrigin=" + contentOrigin + ", contentTopic=" + contentTopic + ", uuid=" + uuid + "]";
 	}
 
 	// Method to ensure UUID and generate contentId before persisting

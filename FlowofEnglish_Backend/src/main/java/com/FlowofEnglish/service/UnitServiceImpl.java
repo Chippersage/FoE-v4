@@ -25,6 +25,13 @@ public class UnitServiceImpl implements UnitService {
     public Optional<Unit> getUnitById(String unitId) {
         return unitRepository.findById(unitId);
     }
+    //new
+    @Override
+    public Unit findById(String unitId) {
+        return unitRepository.findById(unitId)
+            .orElseThrow(() -> new IllegalArgumentException("Unit not found"));
+    }
+
 
     @Override
     public List<Unit> getUnitsByProgramId(String programId) {
@@ -40,8 +47,8 @@ public class UnitServiceImpl implements UnitService {
     public Unit updateUnit(String unitId, Unit updatedUnit) {
         return unitRepository.findById(unitId)
             .map(unit -> {
-                unit.setLessonName(updatedUnit.getLessonName());
-                unit.setLearningDesc(updatedUnit.getLearningDesc());
+                unit.setUnitName(updatedUnit.getUnitName());
+                unit.setUnitDesc(updatedUnit.getUnitDesc());
                 unit.setProgram(updatedUnit.getProgram());
                 return unitRepository.save(unit);
             })

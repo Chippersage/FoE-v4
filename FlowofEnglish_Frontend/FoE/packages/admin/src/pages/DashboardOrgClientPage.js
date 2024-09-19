@@ -99,7 +99,7 @@ export default function DashboardOrgClientPage() {
       });
 
     axios
-      .get(`${apiUrl}/organisations/organisationsx/${id}/Programs`, { headers })
+      .get(`${apiUrl}/organisations/organisationsx/${id}api/v1/programs`, { headers })
       .then((res) => {
         setPrograms(res.data);
         setSelectedProgram(res.data.length > 0 ? res.data[0].id : 0);
