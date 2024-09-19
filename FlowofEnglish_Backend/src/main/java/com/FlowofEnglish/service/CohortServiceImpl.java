@@ -1,6 +1,7 @@
 package com.FlowofEnglish.service;
 
 
+import com.FlowofEnglish.dto.CohortDTO;
 import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.repository.CohortRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class CohortServiceImpl implements CohortService {
     public Cohort updateCohort(String cohortId, Cohort updatedCohort) {
         return cohortRepository.findById(cohortId)
                 .map(cohort -> {
-                    cohort.setCohortDesc(updatedCohort.getCohortDesc());
+                    cohort.setCohortName(updatedCohort.getCohortName());
                     cohort.setCohortEndDate(updatedCohort.getCohortEndDate());
                     cohort.setCohortStartDate(updatedCohort.getCohortStartDate());
                     cohort.setOrganization(updatedCohort.getOrganization());
@@ -51,6 +52,16 @@ public class CohortServiceImpl implements CohortService {
     @Override
     public void deleteCohort(String cohortId) {
         cohortRepository.deleteById(cohortId);
+    }
+    
+ // Implementation of convertToDTO method
+    @Override
+    public CohortDTO convertToDTO(Cohort cohort) {
+        CohortDTO dto = new CohortDTO();
+        dto.setCohortId(cohort.getCohortId());
+        dto.setCohortName(cohort.getCohortName());
+        //dto.setOrganizationId(cohort.getOrganization().getOrganizationId());
+        return dto;
     }
 }
 

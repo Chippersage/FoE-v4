@@ -19,10 +19,7 @@ public class CohortProgram {
     @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
-    @ManyToOne
-    @JoinColumn(name = "unit_id", nullable = false)
-    private Unit unit;
-
+    
     @ManyToOne
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
@@ -31,12 +28,12 @@ public class CohortProgram {
 		
 	}
 
-	public CohortProgram(long cohortProgramId, String uuid, Cohort cohort, Unit unit, Program program) {
+	public CohortProgram(long cohortProgramId, String uuid, Cohort cohort, Program program) {
 		super();
 		this.cohortProgramId = cohortProgramId;
 		this.uuid = uuid;
 		this.cohort = cohort;
-		this.unit = unit;
+		
 		this.program = program;
 	}
 
@@ -64,13 +61,7 @@ public class CohortProgram {
 		this.cohort = cohort;
 	}
 
-	public Unit getUnit() {
-		return unit;
-	}
-
-	public void setUnit(Unit unit) {
-		this.unit = unit;
-	}
+	
 
 	public Program getProgram() {
 		return program;
@@ -80,10 +71,12 @@ public class CohortProgram {
 		this.program = program;
 	}
 
+	
+
 	@Override
 	public String toString() {
-		return "CohortProgram [cohortProgramId=" + cohortProgramId + ", uuid=" + uuid + ", cohort=" + cohort + ", unit="
-				+ unit + ", program=" + program + "]";
+		return "CohortProgram [cohortProgramId=" + cohortProgramId + ", uuid=" + uuid + ", cohort=" + cohort
+				+ ", program=" + program + "]";
 	}
 
 	// Method to ensure UUID and generate cohort_program_id before persisting

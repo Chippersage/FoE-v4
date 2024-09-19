@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "ProgramConceptsMapping")
+@Table(name = "Program_Subconcepts")
 public class ProgramConceptsMapping {
 
     @Id

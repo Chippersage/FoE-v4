@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.dto.UserCohortMappingDTO;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserCohortMappingServiceImpl implements UserCohortMappingService {
@@ -15,13 +17,20 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     private UserCohortMappingRepository userCohortMappingRepository;
 
     @Override
-    public List<UserCohortMapping> getAllUserCohortMappings() {
-        return userCohortMappingRepository.findAll();
+    public List<UserCohortMappingDTO> getAllUserCohortMappings() {
+        List<UserCohortMapping> mappings = userCohortMappingRepository.findAll();
+        return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
-    public Optional<UserCohortMapping> getUserCohortMappingById(int leaderboardScore) {
-        return userCohortMappingRepository.findById(leaderboardScore);
+    public Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId) {
+        return userCohortMappingRepository.findByUserUserId(userId);
+    }
+
+    @Override
+    public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId) {
+        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByUserUserId(userId);
+        return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -30,10 +39,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
-    public UserCohortMapping updateUserCohortMapping(int leaderboardScore, UserCohortMapping userCohortMapping) {
-        return userCohortMappingRepository.findById(leaderboardScore).map(existingMapping -> {
-            existingMapping.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
-            existingMapping.setUuid(userCohortMapping.getUuid());
+    public UserCohortMapping updateUserCohortMapping(String userId, UserCohortMapping userCohortMapping) {
+        return userCohortMappingRepository.findByUserUserId(userId).map(existingMapping -> {
             existingMapping.setCohort(userCohortMapping.getCohort());
             existingMapping.setUser(userCohortMapping.getUser());
             return userCohortMappingRepository.save(existingMapping);
@@ -41,7 +48,17 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
-    public void deleteUserCohortMapping(int leaderboardScore) {
-        userCohortMappingRepository.deleteById(leaderboardScore);
+    public void deleteUserCohortMappingByUserId(String userId) {
+        userCohortMappingRepository.deleteByUserUserId(userId);
+    }
+
+    private UserCohortMappingDTO convertToDTO(UserCohortMapping userCohortMapping) {
+        UserCohortMappingDTO dto = new UserCohortMappingDTO();
+        dto.setOrganizationName(userCohortMapping.getCohort().getOrganization().getOrganizationName());
+        dto.setCohortId(userCohortMapping.getCohort().getCohortId());
+        dto.setUserId(userCohortMapping.getUser().getUserId());
+        dto.setUserName(userCohortMapping.getUser().getUserName());
+        dto.setCohortName(userCohortMapping.getCohort().getCohortName());
+        return dto;
     }
 }

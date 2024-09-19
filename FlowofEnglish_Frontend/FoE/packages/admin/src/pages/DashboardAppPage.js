@@ -35,7 +35,7 @@ export default function DashboardAppPage() {
       });
   
     axios
-      .get(`${apiUrl}/users`)
+      .get(`${apiUrl}/api/v1/users`)
       .then((res) => {
         setUsers(res.data);
       })
@@ -54,7 +54,7 @@ export default function DashboardAppPage() {
       });
 
     axios
-      .get(`${apiUrl}/api/programs`)
+      .get(`${apiUrl}/api/v1/programs`)
       .then((res) => {
         setLangs(res.data);
       })
@@ -66,7 +66,7 @@ export default function DashboardAppPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard | Chipper Sage </title>
+        <title> Dashboard | Mindfultalk </title>
       </Helmet>
 
       <Container maxWidth="xl">

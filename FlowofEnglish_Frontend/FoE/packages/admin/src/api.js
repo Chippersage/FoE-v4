@@ -35,10 +35,11 @@ export const createOrg = async (data) => {
 // Update an existing organization
 export const updateOrg = async (organizationId, data) => {
   try {
+    const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
     const response = await axios.put(`${apiUrl}/api/v1/organizations/${organizationId}`, data, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
@@ -47,6 +48,7 @@ export const updateOrg = async (organizationId, data) => {
     return null;
   }
 };
+
 
 // Delete an organization by ID
 export const deleteOrg = async (organizationId) => {
@@ -761,7 +763,7 @@ export async function deleteUserCohortMapping(leaderboardScore) {
   return null;
 }
 
-//UserAttempts API Calls
+// UserAttempts API Calls
 
 // Get all UserAttempts
 export async function getUserAttempts() {
@@ -818,8 +820,7 @@ export async function deleteUserAttempt(userAttemptId) {
   return null;
 }
 
-//UserSessionMappings API Calls
-
+// UserSessionMappings API Calls
 // Get all UserSessionMappings
 export async function getUserSessionMappings() {
   try {

@@ -41,10 +41,20 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/organizations/create").permitAll() // Allow public access to create endpoint
                     .requestMatchers("/api/v1/users/create").permitAll()
                     .requestMatchers("/api/v1/users/login").permitAll()
-                    .requestMatchers("/api/v1/organizations/**").authenticated() // Require authentication for all other organization operations
+                    .requestMatchers("/api/v1/users/**").permitAll()
+                    .requestMatchers("/api/v1/cohorts/**").permitAll()
+                    .requestMatchers("/api/v1/programs/**").permitAll()
+                    .requestMatchers("/api/v1/user-cohort-mappings/**").permitAll()
+                    .requestMatchers("/api/v1/cohortprogram/**").permitAll()
+                    .requestMatchers("/api/v1/cohortprogram/create").permitAll()
+                    .requestMatchers("/api/v1/organizations/**").permitAll() // Require authentication for all other organization operations
                     .requestMatchers("/api/v1/cohorts/create").permitAll()
                     .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()
                     .requestMatchers("/api/v1/programs/create").permitAll()
+                    .requestMatchers("/api/v1/stages/**").permitAll()
+                    .requestMatchers("/api/v1/stages/create").permitAll()
+                    .requestMatchers("/api/v1/units/**").permitAll()
+                    //.requestMatchers("/api/v1/users/user/user1@chippersage.com/details").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF protection

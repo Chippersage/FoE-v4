@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+import com.FlowofEnglish.dto.UserDTO;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.service.TokenService;
 import com.FlowofEnglish.service.UserService;
@@ -22,22 +23,46 @@ public class UserController {
 //    @Autowired
 //    private TokenService tokenService;
 
+    
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable String id) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable String id) {
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/organization/{organizationId}")
-    public List<User> getUsersByOrganizationId(@PathVariable String organizationId) {
+    public List<UserDTO> getUsersByOrganizationId(@PathVariable String organizationId) {
         return userService.getUsersByOrganizationId(organizationId);
     }
+    
+    @GetMapping("/{userId}/details")
+    public ResponseEntity<UserDTO> getUserDetailsWithProgram(@PathVariable String userId) {
+        UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
+        return ResponseEntity.ok(userDTO);
+    }
+
+//    @GetMapping
+//    public List<User> getAllUsers() {
+//        return userService.getAllUsers();
+//    }
+//
+//    @GetMapping("/{id}")
+//    public ResponseEntity<User> getUserById(@PathVariable String id) {
+//        return userService.getUserById(id)
+//                .map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
+//
+//    @GetMapping("/organization/{organizationId}")
+//    public List<User> getUsersByOrganizationId(@PathVariable String organizationId) {
+//        return userService.getUsersByOrganizationId(organizationId);
+//    }
 
     @PostMapping("/create")
     public User createUser(@RequestBody User user) {

@@ -16,8 +16,8 @@ public class Cohort {
     @Column(name = "cohort_creation", nullable = false)
     private LocalDateTime cohortCreation;
 
-    @Column(name = "cohort_desc", length = 100, nullable = false)
-    private String cohortDesc;
+    @Column(name = "cohort_name", length = 100, nullable = false)
+    private String cohortName;
 
     @Column(name = "cohort_end_date", nullable = false)
     private LocalDate cohortEndDate;
@@ -38,17 +38,17 @@ public class Cohort {
     }
 
     // Parameterized constructor
-    public Cohort(String cohortId, LocalDateTime cohortCreation, String cohortDesc, LocalDate cohortEndDate,
-			LocalDate cohortStartDate, String uuid, Organization organization) {
-		super();
-		this.cohortId = cohortId;
-		this.cohortCreation = cohortCreation;
-		this.cohortDesc = cohortDesc;
-		this.cohortEndDate = cohortEndDate;
-		this.cohortStartDate = cohortStartDate;
-		this.uuid = uuid;
-		this.organization = organization;
-	}
+    public Cohort(String cohortId, LocalDateTime cohortCreation, String cohortName, LocalDate cohortEndDate,
+            LocalDate cohortStartDate, String uuid, Organization organization) {
+  this.cohortId = cohortId;
+  this.cohortCreation = cohortCreation;
+  this.cohortName = cohortName;
+  this.cohortEndDate = cohortEndDate;
+  this.cohortStartDate = cohortStartDate;
+  this.uuid = uuid; // This should be either provided or handled by @PrePersist
+  this.organization = organization;
+}
+
 
 	public String getCohortId() {
 		return cohortId;
@@ -66,12 +66,12 @@ public class Cohort {
 		this.cohortCreation = cohortCreation;
 	}
 
-	public String getCohortDesc() {
-		return cohortDesc;
+	public String getCohortName() {
+		return cohortName;
 	}
 
-	public void setCohortDesc(String cohortDesc) {
-		this.cohortDesc = cohortDesc;
+	public void setCohortName(String cohortName) {
+		this.cohortName = cohortName;
 	}
 
 	public LocalDate getCohortEndDate() {
@@ -108,7 +108,7 @@ public class Cohort {
 
 	@Override
 	public String toString() {
-		return "Cohort [cohortId=" + cohortId + ", cohortCreation=" + cohortCreation + ", cohortDesc=" + cohortDesc
+		return "Cohort [cohortId=" + cohortId + ", cohortCreation=" + cohortCreation + ", cohortName=" + cohortName
 				+ ", cohortEndDate=" + cohortEndDate + ", cohortStartDate=" + cohortStartDate + ", uuid=" + uuid
 				+ ", organization=" + organization + "]";
 	}

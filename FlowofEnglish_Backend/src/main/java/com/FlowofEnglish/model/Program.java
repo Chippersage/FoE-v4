@@ -11,8 +11,8 @@ public class Program {
     @Column(name = "program_id", length = 500)
     private String programId;
 
-    @Column(name = "levels")
-    private int levels;
+    @Column(name = "Stages")
+    private int Stages;
 
     @Column(name = "unit_count")
     private int unitCount;
@@ -30,10 +30,10 @@ public class Program {
 		
 	}
 
-	public Program(String programId, int levels, int unitCount, String programDesc, String programName, String uuid) {
+	public Program(String programId, int Stages, int unitCount, String programDesc, String programName, String uuid) {
 		super();
 		this.programId = programId;
-		this.levels = levels;
+		this.Stages = Stages;
 		this.unitCount = unitCount;
 		this.programDesc = programDesc;
 		this.programName = programName;
@@ -48,12 +48,12 @@ public class Program {
 		this.programId = programId;
 	}
 
-	public int getLevels() {
-		return levels;
+	public int getStages() {
+		return Stages;
 	}
 
-	public void setLevels(int levels) {
-		this.levels = levels;
+	public void setStages(int Stages) {
+		this.Stages = Stages;
 	}
 
 	public int getUnitCount() {
@@ -90,7 +90,7 @@ public class Program {
 
 	@Override
 	public String toString() {
-		return "Program [programId=" + programId + ", levels=" + levels + ", unitCount=" + unitCount + ", programDesc="
+		return "Program [programId=" + programId + ", Stages=" + Stages + ", unitCount=" + unitCount + ", programDesc="
 				+ programDesc + ", programName=" + programName + ", uuid=" + uuid + "]";
 	}
 

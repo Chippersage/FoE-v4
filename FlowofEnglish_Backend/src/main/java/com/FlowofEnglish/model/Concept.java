@@ -10,8 +10,12 @@ public class Concept {
     @Id
     @Column(name = "concept_id", length = 255)
     private String conceptId;
+    
+    @Column(name = "concept_name", length = 50, nullable = false)
+    private String conceptName;
 
-    @Column(name = "concept_desc", length = 50, nullable = false)
+
+	@Column(name = "concept_desc", length = 50, nullable = false)
     private String conceptDesc;
 
     @Column(name = "concept_skill_1", length = 50, nullable = false)
@@ -30,10 +34,11 @@ public class Concept {
 	public Concept() {
 	}
 	
-	public Concept(String conceptId, String conceptDesc, String conceptSkill1, String conceptSkill2, String uuid,
+	public Concept(String conceptId, String conceptName, String conceptDesc, String conceptSkill1, String conceptSkill2, String uuid,
 			ContentMaster content) {
 		super();
 		this.conceptId = conceptId;
+		this.conceptName = conceptName;
 		this.conceptDesc = conceptDesc;
 		this.conceptSkill1 = conceptSkill1;
 		this.conceptSkill2 = conceptSkill2;
@@ -45,12 +50,22 @@ public class Concept {
 
 
 
+	
+
 	public String getConceptId() {
 		return conceptId;
 	}
 
 	public void setConceptId(String conceptId) {
 		this.conceptId = conceptId;
+	}
+	
+	public String getConceptName() {
+		return conceptName;
+	}
+
+	public void setConceptName(String conceptName) {
+		this.conceptName = conceptName;
 	}
 
 	public String getConceptDesc() {
@@ -95,8 +110,9 @@ public class Concept {
 
 	@Override
 	public String toString() {
-		return "Concept [conceptId=" + conceptId + ", conceptDesc=" + conceptDesc + ", conceptSkill1=" + conceptSkill1
-				+ ", conceptSkill2=" + conceptSkill2 + ", uuid=" + uuid + ", content=" + content + "]";
+		return "Concept [conceptId=" + conceptId + ", conceptName=" + conceptName + ", conceptDesc=" + conceptDesc
+				+ ", conceptSkill1=" + conceptSkill1 + ", conceptSkill2=" + conceptSkill2 + ", uuid=" + uuid
+				+ ", content=" + content + "]";
 	}
 
 	// Method to ensure UUID and generate conceptId before persisting

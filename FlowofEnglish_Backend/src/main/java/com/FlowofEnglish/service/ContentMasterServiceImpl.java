@@ -37,6 +37,7 @@ public class ContentMasterServiceImpl implements ContentMasterService {
         Optional<ContentMaster> existingContent = contentMasterRepository.findById(id);
         if (existingContent.isPresent()) {
             ContentMaster content = existingContent.get();
+            content.setContentName(updatedContent.getContentName());
             content.setContentDesc(updatedContent.getContentDesc());
             content.setContentOrigin(updatedContent.getContentOrigin());
             content.setContentTopic(updatedContent.getContentTopic());
