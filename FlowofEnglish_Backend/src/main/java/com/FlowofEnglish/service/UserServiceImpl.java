@@ -86,10 +86,12 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(userId);
     }
 
+    
     @Override
-    public User findByUserId(String userId) {
-        return userRepository.findById(userId).orElse(null);
+    public Optional<User> findByUserId(String userId) {
+        return userRepository.findById(userId);
     }
+
 
     @Override
     public boolean verifyPassword(String providedPassword, String storedPassword) {

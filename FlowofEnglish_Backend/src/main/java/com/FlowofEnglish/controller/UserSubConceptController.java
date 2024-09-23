@@ -26,6 +26,12 @@ public class UserSubConceptController {
         UserSubConcept userSubConcept = userSubConceptService.getUserSubConceptById(id);
         return ResponseEntity.ok(userSubConcept);
     }
+    
+//    @GetMapping("/byUser/{userId}")
+//    public ResponseEntity<List<UserSubConcept>> getUserSubConceptsByUserId(@PathVariable String userId) {
+//        List<UserSubConcept> userSubConcepts = userSubConceptService.getAllUserSubConceptsByUserId(userId);
+//        return ResponseEntity.ok(userSubConcepts);
+//    }
 
     @GetMapping
     public ResponseEntity<List<UserSubConcept>> getAllUserSubConcepts() {
@@ -38,10 +44,22 @@ public class UserSubConceptController {
         UserSubConcept updatedUserSubConcept = userSubConceptService.updateUserSubConcept(id, userSubConcept);
         return ResponseEntity.ok(updatedUserSubConcept);
     }
+    
+//    @PutMapping("/byUser/{userId}")
+//    public ResponseEntity<UserSubConcept> updateUserSubConceptByUserId(@PathVariable String userId, @RequestBody UserSubConcept userSubConcept) {
+//        UserSubConcept updatedUserSubConcept = userSubConceptService.updateUserSubConceptByUserId(userId, userSubConcept);
+//        return ResponseEntity.ok(updatedUserSubConcept);
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserSubConcept(@PathVariable Long id) {
         userSubConceptService.deleteUserSubConcept(id);
         return ResponseEntity.noContent().build();
     }
+    
+//    @DeleteMapping("/byUser/{userId}")
+//    public ResponseEntity<Void> deleteUserSubConceptByUserId(@PathVariable String userId) {
+//        userSubConceptService.deleteUserSubConceptByUserId(userId);
+//        return ResponseEntity.noContent().build();
+//    }
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -94,24 +95,62 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
         String userId = payload.get("userId");
         String password = payload.get("password");
+
         // Debug logging
         System.out.println("Received userId: " + userId);
         System.out.println("Received password: " + password);
-        
-        User user = userService.findByUserId(userId);
+
+        // Use Optional to handle potential absence of user
+        Optional<User> userOpt = userService.findByUserId(userId);
         Map<String, Object> response = new HashMap<>();
 
-        if (user != null && userService.verifyPassword(password, user.getUserPassword())) {
-            response.put("token", "dummyToken"); // Replace with actual token generation logic
-            response.put("userType", "user"); // Adjust user type as necessary
-            response.put("userId", user.getUserId()); // Corrected to return actual userId
-            response.put("username", user.getUserName());
-            return ResponseEntity.ok(response);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();  // Unwrap the Optional safely
+
+            if (userService.verifyPassword(password, user.getUserPassword())) {
+                response.put("token", "dummyToken"); // Replace with actual token generation logic
+                response.put("userType", "user");    // Adjust user type as necessary
+                response.put("userId", user.getUserId());  // Return the actual userId
+                response.put("username", user.getUserName());
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Invalid password");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
         } else {
-            response.put("error", "Invalid userId or password");
+            response.put("error", "Invalid userId");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
+
+    
+    
+    
+//    @PostMapping("/login")
+//    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
+//        String userId = payload.get("userId");
+//        String password = payload.get("password");
+//        // Debug logging
+//        System.out.println("Received userId: " + userId);
+//        System.out.println("Received password: " + password);
+//        
+//        User user = userService.findByUserId(userId);
+//        Map<String, Object> response = new HashMap<>();
+//
+//        if (user != null && userService.verifyPassword(password, user.getUserPassword())) {
+//            response.put("token", "dummyToken"); // Replace with actual token generation logic
+//            response.put("userType", "user"); // Adjust user type as necessary
+//            response.put("userId", user.getUserId()); // Corrected to return actual userId
+//            response.put("username", user.getUserName());
+//            return ResponseEntity.ok(response);
+//        } else {
+//            response.put("error", "Invalid userId or password");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//    }
+    
+    
+    
 //    @PostMapping("/login")
 //    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
 //        String userId = payload.get("userId");
