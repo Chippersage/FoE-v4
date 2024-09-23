@@ -7,6 +7,28 @@ public class UnitResponseDTO {
     private StageDTO stage;
     private String unitDesc;
     private String unitName;
+    private String CompletionStatus;
+public String getCompletionStatus() {
+		return CompletionStatus;
+	}
+	public void setCompletionStatus(String completionStatus) {
+		CompletionStatus = completionStatus;
+	}
+	//    private String userId;
+//    public String getUserId() {
+//		return userId;
+//	}
+//	public void setUserId(String userId) {
+//		this.userId = userId;
+//	}
+	private UserDTO user;
+    
+	public UserDTO getUser() {
+		return user;
+	}
+	public void setUser(UserDTO user) {
+		this.user = user;
+	}
 	public String getUnitId() {
 		return unitId;
 	}

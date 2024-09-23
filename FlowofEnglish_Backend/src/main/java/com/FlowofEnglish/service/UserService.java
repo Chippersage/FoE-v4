@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface UserService {
     List<UserDTO> getAllUsers();
+    Optional<User> findByUserId(String userId);
     Optional<UserDTO> getUserById(String userId);
     List<UserDTO> getUsersByOrganizationId(String organizationId);
     
@@ -20,7 +21,7 @@ public interface UserService {
     List<User> createUsers(List<User> users);
     User updateUser(String userId, User user);
     void deleteUser(String userId);
-    User findByUserId(String userId);
+    //User findByUserId(String userId);
     boolean verifyPassword(String providedPassword, String storedPassword);
 	UserDTO getUserDetailsWithProgram(String userId);
     
