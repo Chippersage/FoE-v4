@@ -26,7 +26,7 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080")); // Add your front-end URL
+                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173")); // Add your front-end URL
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -57,6 +57,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/stages/**").permitAll()
                     .requestMatchers("/api/v1/stages/create").permitAll()
                     .requestMatchers("/api/v1/units/**").permitAll()
+                    .requestMatchers("/api/v1/user-attempts/**").permitAll()
+                    .requestMatchers("/api/v1/user-session-mappings/**").permitAll()
+                    .requestMatchers("/api/v1/userSubConceptsCompletion/**").permitAll()
                     //.requestMatchers("/api/v1/users/user/user1@chippersage.com/details").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )

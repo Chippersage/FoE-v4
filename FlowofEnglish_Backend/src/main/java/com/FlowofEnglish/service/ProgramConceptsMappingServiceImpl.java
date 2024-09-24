@@ -1,7 +1,5 @@
 package com.FlowofEnglish.service;
 
-
-
 import com.FlowofEnglish.model.ProgramConceptsMapping;
 import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,9 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     public ProgramConceptsMapping updateProgramConceptsMapping(String programConceptId, ProgramConceptsMapping programConceptsMapping) {
         return programConceptsMappingRepository.findById(programConceptId).map(existingMapping -> {
             existingMapping.setProgramConceptDesc(programConceptsMapping.getProgramConceptDesc());
-            existingMapping.setConcept(programConceptsMapping.getConcept());
-            existingMapping.setContent(programConceptsMapping.getContent());
+            //existingMapping.setConcept(programConceptsMapping.getConcept());
+            //existingMapping.setContent(programConceptsMapping.getContent());
+            existingMapping.setStage(programConceptsMapping.getStage());
             existingMapping.setUnit(programConceptsMapping.getUnit());
             existingMapping.setProgram(programConceptsMapping.getProgram());
             existingMapping.setSubconcept(programConceptsMapping.getSubconcept());

@@ -26,9 +26,9 @@ public class UserAttempts {
     @Column(name = "user_attempt_start_timestamp", nullable = false)
     private LocalDateTime userAttemptStartTimestamp;
 
-    @ManyToOne
-    @JoinColumn(name = "concept_id", nullable = false)
-    private Concept concept;
+//    @ManyToOne
+//    @JoinColumn(name = "concept_id", nullable = true)
+//    private Concept concept;
 
     @ManyToOne
     @JoinColumn(name = "unit_id", nullable = false)
@@ -39,6 +39,15 @@ public class UserAttempts {
     private Program program;
 
     @ManyToOne
+    @JoinColumn(name = "stage_id", nullable = false)
+    private Stage stage;
+    
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+  
+	@ManyToOne
     @JoinColumn(name = "session_id", nullable = false)
     private UserSessionMapping session;
 
@@ -55,7 +64,7 @@ public class UserAttempts {
 	
 
     public UserAttempts(int userAttemptId, LocalDateTime userAttemptEndTimestamp, boolean userAttemptFlag,
-			int userAttemptScore, LocalDateTime userAttemptStartTimestamp, Concept concept, Unit unit, Program program,
+			int userAttemptScore, LocalDateTime userAttemptStartTimestamp, User user,  Unit unit, Program program, Stage stage,
 			UserSessionMapping session, Subconcept subconcept, String uuid) {
 		super();
 		this.userAttemptId = userAttemptId;
@@ -63,64 +72,52 @@ public class UserAttempts {
 		this.userAttemptFlag = userAttemptFlag;
 		this.userAttemptScore = userAttemptScore;
 		this.userAttemptStartTimestamp = userAttemptStartTimestamp;
-		this.concept = concept;
+//		this.concept = concept;
+		this.user = user;
 		this.unit = unit;
 		this.program = program;
 		this.session = session;
 		this.subconcept = subconcept;
+		this.stage = stage;
 		this.uuid = uuid;
 	}
 
 
- // Getters and Setters
+ 
+
+
+// Getters and Setters
 
 	public int getUserAttemptId() {
 		return userAttemptId;
 	}
 
-
-
 	public void setUserAttemptId(int userAttemptId) {
 		this.userAttemptId = userAttemptId;
 	}
-
-
-
-	public LocalDateTime getUserAttemptEndTimestamp() {
+    public LocalDateTime getUserAttemptEndTimestamp() {
 		return userAttemptEndTimestamp;
 	}
-
-
 
 	public void setUserAttemptEndTimestamp(LocalDateTime userAttemptEndTimestamp) {
 		this.userAttemptEndTimestamp = userAttemptEndTimestamp;
 	}
 
-
-
 	public boolean isUserAttemptFlag() {
 		return userAttemptFlag;
 	}
-
-
 
 	public void setUserAttemptFlag(boolean userAttemptFlag) {
 		this.userAttemptFlag = userAttemptFlag;
 	}
 
-
-
 	public int getUserAttemptScore() {
 		return userAttemptScore;
 	}
 
-
-
 	public void setUserAttemptScore(int userAttemptScore) {
 		this.userAttemptScore = userAttemptScore;
 	}
-
-
 
 	public LocalDateTime getUserAttemptStartTimestamp() {
 		return userAttemptStartTimestamp;
@@ -132,31 +129,28 @@ public class UserAttempts {
 		this.userAttemptStartTimestamp = userAttemptStartTimestamp;
 	}
 
-
-
-	public Concept getConcept() {
-		return concept;
+//	public Concept getConcept() {
+//		return concept;
+//	}
+//
+//	public void setConcept(Concept concept) {
+//		this.concept = concept;
+//	}
+	public User getUser() {
+		return user;
 	}
 
-
-
-	public void setConcept(Concept concept) {
-		this.concept = concept;
+	public void setUser(User user) {
+		this.user = user;
 	}
-
-
-
+	
 	public Unit getUnit() {
 		return unit;
 	}
 
-
-
 	public void setUnit(Unit unit) {
 		this.unit = unit;
 	}
-
-
 
 	public Program getProgram() {
 		return program;
@@ -168,6 +162,15 @@ public class UserAttempts {
 		this.program = program;
 	}
 
+	public Stage getStage() {
+		return stage;
+	}
+
+
+
+	public void setStage(Stage stage) {
+		this.stage = stage;
+	}
 
 
 	public UserSessionMapping getSession() {
@@ -210,9 +213,9 @@ public class UserAttempts {
 	public String toString() {
 		return "UserAttempts [userAttemptId=" + userAttemptId + ", userAttemptEndTimestamp=" + userAttemptEndTimestamp
 				+ ", userAttemptFlag=" + userAttemptFlag + ", userAttemptScore=" + userAttemptScore
-				+ ", userAttemptStartTimestamp=" + userAttemptStartTimestamp + ", concept=" + concept + ", unit=" + unit
-				+ ", program=" + program + ", session=" + session + ", subconcept=" + subconcept + ", uuid=" + uuid
-				+ "]";
+				+ ", userAttemptStartTimestamp=" + userAttemptStartTimestamp + ", unit=" + unit + ", program=" + program
+				+ ", stage=" + stage + ", user=" + user + ", session=" + session + ", subconcept=" + subconcept
+				+ ", uuid=" + uuid + "]";
 	}
 
 

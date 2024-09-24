@@ -29,13 +29,14 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         return userSessionMappingRepository.save(userSessionMapping);
     }
 
+    
     @Override
     public UserSessionMapping updateUserSessionMapping(int sessionId, UserSessionMapping userSessionMapping) {
         return userSessionMappingRepository.findById(sessionId).map(existingMapping -> {
             existingMapping.setSessionEndTimestamp(userSessionMapping.getSessionEndTimestamp());
-            existingMapping.setSessionScore(userSessionMapping.getSessionScore());
             existingMapping.setSessionStartTimestamp(userSessionMapping.getSessionStartTimestamp());
             existingMapping.setUuid(userSessionMapping.getUuid());
+            existingMapping.setSessionId(userSessionMapping.getSessionId());  // Ensure sessionId is updated
             existingMapping.setCohort(userSessionMapping.getCohort());
             existingMapping.setUser(userSessionMapping.getUser());
             return userSessionMappingRepository.save(existingMapping);

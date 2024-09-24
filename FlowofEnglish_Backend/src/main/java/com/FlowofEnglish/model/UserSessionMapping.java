@@ -9,20 +9,16 @@ import java.util.UUID;
 public class UserSessionMapping {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "session_id")
-    private int sessionId;
+    @Column(name = "session_id", length = 128)
+    private String sessionId;  // 128-bit string for session ID
 
     @Column(name = "session_end_timestamp")
     private LocalDateTime sessionEndTimestamp;
 
-    @Column(name = "session_score")
-    private int sessionScore;
-
     @Column(name = "session_start_timestamp")
     private LocalDateTime sessionStartTimestamp;
 
-    @Column(name = "uuid", length = 16, nullable = false, unique = true)
+    @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
     @ManyToOne
@@ -33,127 +29,76 @@ public class UserSessionMapping {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
- // Default constructor
-	public UserSessionMapping() {
-		
-	}
+    // Default constructor
+    public UserSessionMapping() {}
 
+    public UserSessionMapping(String sessionId, LocalDateTime sessionEndTimestamp, 
+            LocalDateTime sessionStartTimestamp, String uuid, Cohort cohort, User user) {
+        this.sessionId = sessionId;
+        this.sessionEndTimestamp = sessionEndTimestamp;
+        this.sessionStartTimestamp = sessionStartTimestamp;
+        this.uuid = uuid;
+        this.cohort = cohort;
+        this.user = user;
+    }
 
+    // Getters and Setters
+    public String getSessionId() {
+        return sessionId;
+    }
 
-	public UserSessionMapping(int sessionId, LocalDateTime sessionEndTimestamp, int sessionScore,
-			LocalDateTime sessionStartTimestamp, String uuid, Cohort cohort, User user) {
-		super();
-		this.sessionId = sessionId;
-		this.sessionEndTimestamp = sessionEndTimestamp;
-		this.sessionScore = sessionScore;
-		this.sessionStartTimestamp = sessionStartTimestamp;
-		this.uuid = uuid;
-		this.cohort = cohort;
-		this.user = user;
-	}
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
 
+    public LocalDateTime getSessionEndTimestamp() {
+        return sessionEndTimestamp;
+    }
 
-	// Getters and Setters
-	public int getSessionId() {
-		return sessionId;
-	}
+    public void setSessionEndTimestamp(LocalDateTime sessionEndTimestamp) {
+        this.sessionEndTimestamp = sessionEndTimestamp;
+    }
 
+    public LocalDateTime getSessionStartTimestamp() {
+        return sessionStartTimestamp;
+    }
 
+    public void setSessionStartTimestamp(LocalDateTime sessionStartTimestamp) {
+        this.sessionStartTimestamp = sessionStartTimestamp;
+    }
 
-	public void setSessionId(int sessionId) {
-		this.sessionId = sessionId;
-	}
+    public String getUuid() {
+        return uuid;
+    }
 
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
+    public Cohort getCohort() {
+        return cohort;
+    }
 
-	public LocalDateTime getSessionEndTimestamp() {
-		return sessionEndTimestamp;
-	}
+    public void setCohort(Cohort cohort) {
+        this.cohort = cohort;
+    }
 
+    public User getUser() {
+        return user;
+    }
 
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-	public void setSessionEndTimestamp(LocalDateTime sessionEndTimestamp) {
-		this.sessionEndTimestamp = sessionEndTimestamp;
-	}
-
-
-
-	public int getSessionScore() {
-		return sessionScore;
-	}
-
-
-
-	public void setSessionScore(int sessionScore) {
-		this.sessionScore = sessionScore;
-	}
-
-
-
-	public LocalDateTime getSessionStartTimestamp() {
-		return sessionStartTimestamp;
-	}
-
-
-
-	public void setSessionStartTimestamp(LocalDateTime sessionStartTimestamp) {
-		this.sessionStartTimestamp = sessionStartTimestamp;
-	}
-
-
-
-	public String getUuid() {
-		return uuid;
-	}
-
-
-
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
-
-
-
-	public Cohort getCohort() {
-		return cohort;
-	}
-
-
-
-	public void setCohort(Cohort cohort) {
-		this.cohort = cohort;
-	}
-
-
-
-	public User getUser() {
-		return user;
-	}
-
-
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-
-
-	
-	@Override
-	public String toString() {
-		return "UserSessionMapping [sessionId=" + sessionId + ", sessionEndTimestamp=" + sessionEndTimestamp
-				+ ", sessionScore=" + sessionScore + ", sessionStartTimestamp=" + sessionStartTimestamp + ", uuid="
-				+ uuid + ", cohort=" + cohort + ", user=" + user + "]";
-	}
-
-
-
-	// Method to ensure UUID and generate sessionId before persisting
+    // Automatically generate UUID and session ID before persisting
     @PrePersist
-    private void ensureUuid() {
+    private void ensureSessionId() {
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
         }
+        if (this.sessionId == null) {
+            this.sessionId = UUID.randomUUID().toString().replace("-", "") + System.nanoTime(); // Generate 128-bit session ID
+        }
     }
-
 }
