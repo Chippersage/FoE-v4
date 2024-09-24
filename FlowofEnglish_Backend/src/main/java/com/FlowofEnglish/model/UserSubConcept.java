@@ -111,4 +111,9 @@ public class UserSubConcept {
             this.uuid = UUID.randomUUID().toString();
         }
     }
+
+	public void setCompletionStatus(boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
 }

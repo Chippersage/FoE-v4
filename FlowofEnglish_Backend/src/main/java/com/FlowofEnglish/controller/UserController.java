@@ -42,11 +42,11 @@ public class UserController {
         return userService.getUsersByOrganizationId(organizationId);
     }
     
-    @GetMapping("/{userId}/details")
-    public ResponseEntity<UserDTO> getUserDetailsWithProgram(@PathVariable String userId) {
-        UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
-        return ResponseEntity.ok(userDTO);
-    }
+//    @GetMapping("/{userId}/details")
+//    public ResponseEntity<UserDTO> getUserDetailsWithProgram(@PathVariable String userId) {
+//        UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
+//        return ResponseEntity.ok(userDTO);
+//    }
 
 //    @GetMapping
 //    public List<User> getAllUsers() {
@@ -110,8 +110,12 @@ public class UserController {
             if (userService.verifyPassword(password, user.getUserPassword())) {
                 response.put("token", "dummyToken"); // Replace with actual token generation logic
                 response.put("userType", "user");    // Adjust user type as necessary
-                response.put("userId", user.getUserId());  // Return the actual userId
-                response.put("username", user.getUserName());
+                //response.put("userId", user.getUserId());  // Return the actual userId
+                //response.put("username", user.getUserName());
+             // Fetch additional user details with cohort and program
+                UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
+                response.put("userDetails", userDTO); // Include user details (with cohort and program)
+
                 return ResponseEntity.ok(response);
             } else {
                 response.put("error", "Invalid password");
@@ -122,6 +126,12 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
+    
+
+       
+       
+          
+
 
     
     
