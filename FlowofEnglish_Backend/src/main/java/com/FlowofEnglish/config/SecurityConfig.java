@@ -34,8 +34,8 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(authorize -> authorize
-            		.requestMatchers("/api/v1/superadmin/**").permitAll() // Allow public access to superadmin endpoints
-                    .requestMatchers("/api/v1/organizations/login").permitAll() // Allow public access to login endpoint
+            		.requestMatchers("/api/v1/superadmin/**").permitAll() // Allow public access to super admin endpoints
+                    .requestMatchers("/api/v1/organizations/login").permitAll() // Allow public access to login end  point
                     .requestMatchers("/api/v1/organizations/forgotorgpassword").permitAll() // Allow public access to forgot password endpoint
                     .requestMatchers("/api/v1/organizations/resetorgpassword").permitAll() // Allow public access to reset password endpoint
                     .requestMatchers("/api/v1/organizations/create").permitAll() // Allow public access to create endpoint
