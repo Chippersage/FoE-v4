@@ -22,7 +22,7 @@ public class UserSessionMappingController {
     }
 
     @GetMapping("/{sessionId}")
-    public ResponseEntity<UserSessionMapping> getUserSessionMappingById(@PathVariable int sessionId) {
+    public ResponseEntity<UserSessionMapping> getUserSessionMappingById(@PathVariable String sessionId) {
         Optional<UserSessionMapping> userSessionMapping = userSessionMappingService.getUserSessionMappingById(sessionId);
         return userSessionMapping.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -33,12 +33,12 @@ public class UserSessionMappingController {
     }
 
     @PutMapping("/{sessionId}")
-    public ResponseEntity<UserSessionMapping> updateUserSessionMapping(@PathVariable int sessionId, @RequestBody UserSessionMapping userSessionMapping) {
+    public ResponseEntity<UserSessionMapping> updateUserSessionMapping(@PathVariable String sessionId, @RequestBody UserSessionMapping userSessionMapping) {
         return ResponseEntity.ok(userSessionMappingService.updateUserSessionMapping(sessionId, userSessionMapping));
     }
 
     @DeleteMapping("/{sessionId}")
-    public ResponseEntity<Void> deleteUserSessionMapping(@PathVariable int sessionId) {
+    public ResponseEntity<Void> deleteUserSessionMapping(@PathVariable String sessionId) {
         userSessionMappingService.deleteUserSessionMapping(sessionId);
         return ResponseEntity.noContent().build();
     }

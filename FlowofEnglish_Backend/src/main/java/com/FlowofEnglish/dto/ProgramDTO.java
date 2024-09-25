@@ -1,13 +1,16 @@
 package com.FlowofEnglish.dto;
 
-public class ProgramDTO {
+import java.util.Map;
 
+public class ProgramDTO {
+    
     private String programId;
     private String programName;
     private String programDesc;
-    private int Stages;
+    private int stagesCount; // Renamed for clarity
     private int unitCount;
-
+    private Map<String, StageDTO> stages;
+    
     // Getters and Setters
 
     public String getProgramId() {
@@ -34,22 +37,27 @@ public class ProgramDTO {
         this.programDesc = programDesc;
     }
 
-	public int getStages() {
-		return Stages;
-	}
+    public int getStagesCount() { // Getter for stages count
+        return stagesCount;
+    }
 
-	public void setStages(int stages) {
-		Stages = stages;
-	}
+    public void setStagesCount(int stagesCount) { // Setter for stages count
+        this.stagesCount = stagesCount;
+    }
 
-	public int getUnitCount() {
-		return unitCount;
-	}
+    public int getUnitCount() {
+        return unitCount;
+    }
 
-	public void setUnitCount(int unitCount) {
-		this.unitCount = unitCount;
-	}
+    public void setUnitCount(int unitCount) {
+        this.unitCount = unitCount;
+    }
 
-	
+    public Map<String, StageDTO> getStages() {
+        return stages;
+    }
+
+    public void setStages(Map<String, StageDTO> stages) {
+        this.stages = stages;
+    }
 }
-

@@ -20,7 +20,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     }
 
     @Override
-    public Optional<UserSessionMapping> getUserSessionMappingById(int sessionId) {
+    public Optional<UserSessionMapping> getUserSessionMappingById(String sessionId) {
         return userSessionMappingRepository.findById(sessionId);
     }
 
@@ -31,7 +31,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
 
     
     @Override
-    public UserSessionMapping updateUserSessionMapping(int sessionId, UserSessionMapping userSessionMapping) {
+    public UserSessionMapping updateUserSessionMapping(String sessionId, UserSessionMapping userSessionMapping) {
         return userSessionMappingRepository.findById(sessionId).map(existingMapping -> {
             existingMapping.setSessionEndTimestamp(userSessionMapping.getSessionEndTimestamp());
             existingMapping.setSessionStartTimestamp(userSessionMapping.getSessionStartTimestamp());
@@ -44,7 +44,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     }
 
     @Override
-    public void deleteUserSessionMapping(int sessionId) {
+    public void deleteUserSessionMapping(String sessionId) {
         userSessionMappingRepository.deleteById(sessionId);
     }
 }

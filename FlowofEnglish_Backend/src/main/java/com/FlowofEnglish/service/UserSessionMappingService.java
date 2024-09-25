@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public interface UserSessionMappingService {
     List<UserSessionMapping> getAllUserSessionMappings();
-    Optional<UserSessionMapping> getUserSessionMappingById(int sessionId);
+    Optional<UserSessionMapping> getUserSessionMappingById(String sessionId);
     UserSessionMapping createUserSessionMapping(UserSessionMapping userSessionMapping);
-    UserSessionMapping updateUserSessionMapping(int sessionId, UserSessionMapping userSessionMapping);
-    void deleteUserSessionMapping(int sessionId);
+    UserSessionMapping updateUserSessionMapping(String sessionId, UserSessionMapping userSessionMapping);
+    void deleteUserSessionMapping(String sessionId);
 }

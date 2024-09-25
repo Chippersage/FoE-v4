@@ -1,24 +1,18 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.dto.ProgramDTO;
+import com.FlowofEnglish.dto.UnitResponseDTO;
+import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.model.Unit;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface UnitService {
-
-    List<Unit> getAllUnits();
-
-    Optional<Unit> getUnitById(String unitId);
-
-    List<Unit> getUnitsByProgramId(String programId);
-
-    Unit createUnit(Unit unit);
-
+   
+	ProgramDTO getProgramWithStagesAndUnits(String programId); // Example signature
+	Unit createUnit(Unit unit);
     Unit updateUnit(String unitId, Unit unit);
-
+    Unit getUnitById(String unitId);
     void deleteUnit(String unitId);
-
-    void deleteUnits(List<String> unitIds);
-
-	Unit findById(String unitId);
+    List<UnitResponseDTO> getAllUnits(); // For returning customized response
 }

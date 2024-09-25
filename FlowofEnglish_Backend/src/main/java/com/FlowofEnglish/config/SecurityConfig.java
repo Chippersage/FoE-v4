@@ -60,6 +60,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-attempts/**").permitAll()
                     .requestMatchers("/api/v1/user-session-mappings/**").permitAll()
                     .requestMatchers("/api/v1/userSubConceptsCompletion/**").permitAll()
+                    .requestMatchers("/api/v1/programconceptsmappings/**").permitAll()
                     //.requestMatchers("/api/v1/users/user/user1@chippersage.com/details").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )

@@ -92,6 +92,11 @@ public class Stage {
             this.uuid = UUID.randomUUID().toString();
         }
     }
+
+	public String getStageCompletionStatus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
 

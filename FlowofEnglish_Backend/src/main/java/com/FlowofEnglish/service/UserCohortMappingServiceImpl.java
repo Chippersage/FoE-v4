@@ -43,6 +43,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return userCohortMappingRepository.findByUserUserId(userId).map(existingMapping -> {
             existingMapping.setCohort(userCohortMapping.getCohort());
             existingMapping.setUser(userCohortMapping.getUser());
+            existingMapping.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
             return userCohortMappingRepository.save(existingMapping);
         }).orElseThrow(() -> new RuntimeException("UserCohortMapping not found"));
     }
@@ -54,11 +55,12 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     private UserCohortMappingDTO convertToDTO(UserCohortMapping userCohortMapping) {
         UserCohortMappingDTO dto = new UserCohortMappingDTO();
-        dto.setOrganizationName(userCohortMapping.getCohort().getOrganization().getOrganizationName());
+        //dto.setOrganizationName(userCohortMapping.getCohort().getOrganization().getOrganizationName());
         dto.setCohortId(userCohortMapping.getCohort().getCohortId());
         dto.setUserId(userCohortMapping.getUser().getUserId());
         dto.setUserName(userCohortMapping.getUser().getUserName());
         dto.setCohortName(userCohortMapping.getCohort().getCohortName());
+        dto.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
         return dto;
     }
 }

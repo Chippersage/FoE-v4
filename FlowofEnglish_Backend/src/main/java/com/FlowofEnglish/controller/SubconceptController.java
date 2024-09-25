@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+import com.FlowofEnglish.dto.SubconceptResponseDTO;
 import com.FlowofEnglish.model.Subconcept;
 import com.FlowofEnglish.service.SubconceptService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +18,17 @@ public class SubconceptController {
     private SubconceptService subconceptService;
 
     @GetMapping
-    public List<Subconcept> getAllSubconcepts() {
+    public List<SubconceptResponseDTO> getAllSubconcepts() {
         return subconceptService.getAllSubconcepts();
     }
 
     @GetMapping("/{subconceptId}")
-    public ResponseEntity<Subconcept> getSubconceptById(@PathVariable String subconceptId) {
-        Optional<Subconcept> subconcept = subconceptService.getSubconceptById(subconceptId);
+    public ResponseEntity<SubconceptResponseDTO> getSubconceptById(@PathVariable String subconceptId) {
+        Optional<SubconceptResponseDTO> subconcept = subconceptService.getSubconceptById(subconceptId);
         return subconcept.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
+    
+    
 
     @PostMapping("/create")
     public Subconcept createSubconcept(@RequestBody Subconcept subconcept) {
