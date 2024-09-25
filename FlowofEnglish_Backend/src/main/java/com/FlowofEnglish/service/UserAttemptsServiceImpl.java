@@ -5,6 +5,9 @@ import com.FlowofEnglish.model.UserAttempts;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.model.UserSubConcept;
 import com.FlowofEnglish.repository.UserAttemptsRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +32,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     }
 
     @Override
-    public Optional<UserAttempts> getUserAttemptById(int userAttemptId) {
+    public Optional<UserAttempts> getUserAttemptById(Long userAttemptId) {
         return userAttemptsRepository.findById(userAttemptId);
     }
 
@@ -38,6 +41,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
 //        return userAttemptsRepository.save(userAttempt);
 //    }
     @Override
+    @Transactional
     public UserAttempts createUserAttempt(UserAttempts userAttempt) {
     	// Save the user attempt first
         UserAttempts savedAttempt = userAttemptsRepository.save(userAttempt);
@@ -103,7 +107,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     
     
     @Override
-    public UserAttempts updateUserAttempt(int userAttemptId, UserAttempts userAttempt) {
+    public UserAttempts updateUserAttempt(Long userAttemptId, UserAttempts userAttempt) {
         return userAttemptsRepository.findById(userAttemptId).map(existingAttempt -> {
             existingAttempt.setUserAttemptEndTimestamp(userAttempt.getUserAttemptEndTimestamp());
             existingAttempt.setUserAttemptFlag(userAttempt.isUserAttemptFlag());
@@ -122,7 +126,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     }
 
     @Override
-    public void deleteUserAttempt(int userAttemptId) {
+    public void deleteUserAttempt(Long userAttemptId) {
         userAttemptsRepository.deleteById(userAttemptId);
     }
 }

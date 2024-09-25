@@ -1,9 +1,27 @@
 package com.FlowofEnglish.dto;
 
+import java.util.Map;
+
 public class StageDTO {
     private String stageId;
     private String stageName;
     private String stageDesc;
+    private String stageCompletionStatus;
+    private Map<String, UnitResponseDTO> units; // Use a Map for dynamic keys
+    
+    // Getters and Setters  
+    public Map<String, UnitResponseDTO> getUnits() {
+		return units;
+	}
+	public void setUnits(Map<String, UnitResponseDTO> units) {
+		this.units = units;
+	}
+	public String getStageCompletionStatus() {
+		return stageCompletionStatus;
+	}
+	public void setStageCompletionStatus(String stageCompletionStatus) {
+		this.stageCompletionStatus = stageCompletionStatus;
+	}
 	public String getStageId() {
 		return stageId;
 	}

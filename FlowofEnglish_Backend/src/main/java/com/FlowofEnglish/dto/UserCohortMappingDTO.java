@@ -1,19 +1,31 @@
 package com.FlowofEnglish.dto;
 
 public class UserCohortMappingDTO {
-    private String organizationName;
+    //private String organizationName;
     private String cohortId;
     private String userId;
     private String userName;
     private String cohortName;
-	public String getOrganizationName() {
-		return organizationName;
+    private int leaderboardScore; 
+    
+ // Getters and Setters
+    
+	public int getLeaderboardScore() {
+		return leaderboardScore;
 	}
-	
-	// Getters and Setters
-	public void setOrganizationName(String organizationName) {
-		this.organizationName = organizationName;
+
+	public void setLeaderboardScore(int leaderboardScore) {
+		this.leaderboardScore = leaderboardScore;
 	}
+
+//	public String getOrganizationName() {
+//		return organizationName;
+//	}
+//	
+//	
+//	public void setOrganizationName(String organizationName) {
+//		this.organizationName = organizationName;
+//	}
 	public String getCohortId() {
 		return cohortId;
 	}

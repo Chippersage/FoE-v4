@@ -28,14 +28,10 @@ public class Unit {
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
-    
-    
-	public Unit() {
+    public Unit() {
 		
 	}
 
-
-	
 
 	public Unit(String unitId, Program program, Stage stage, String unitDesc, String unitName, String uuid) {
 		super();
@@ -46,8 +42,6 @@ public class Unit {
 		this.unitName = unitName;
 		this.uuid = uuid;
 	}
-
-
 
 
 	// Getters and Setters

@@ -3,6 +3,7 @@ package com.FlowofEnglish.controller;
 import com.FlowofEnglish.model.UserAttempts;
 import com.FlowofEnglish.service.UserAttemptsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,23 +23,28 @@ public class UserAttemptsController {
     }
 
     @GetMapping("/{userAttemptId}")
-    public ResponseEntity<UserAttempts> getUserAttemptById(@PathVariable int userAttemptId) {
+    public ResponseEntity<UserAttempts> getUserAttemptById(@PathVariable Long userAttemptId) {
         Optional<UserAttempts> userAttempt = userAttemptsService.getUserAttemptById(userAttemptId);
         return userAttempt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+//    @PostMapping
+//    public UserAttempts createUserAttempt(@RequestBody UserAttempts userAttempt) {
+//        return userAttemptsService.createUserAttempt(userAttempt);
+//    }
+    
     @PostMapping
-    public UserAttempts createUserAttempt(@RequestBody UserAttempts userAttempt) {
-        return userAttemptsService.createUserAttempt(userAttempt);
+    public ResponseEntity<UserAttempts> createUserAttempt(@RequestBody UserAttempts userAttempt) {
+        UserAttempts createdAttempt = userAttemptsService.createUserAttempt(userAttempt);
+        return new ResponseEntity<>(createdAttempt, HttpStatus.CREATED);
     }
-
     @PutMapping("/{userAttemptId}")
-    public ResponseEntity<UserAttempts> updateUserAttempt(@PathVariable int userAttemptId, @RequestBody UserAttempts userAttempt) {
+    public ResponseEntity<UserAttempts> updateUserAttempt(@PathVariable Long userAttemptId, @RequestBody UserAttempts userAttempt) {
         return ResponseEntity.ok(userAttemptsService.updateUserAttempt(userAttemptId, userAttempt));
     }
 
     @DeleteMapping("/{userAttemptId}")
-    public ResponseEntity<Void> deleteUserAttempt(@PathVariable int userAttemptId) {
+    public ResponseEntity<Void> deleteUserAttempt(@PathVariable Long userAttemptId) {
         userAttemptsService.deleteUserAttempt(userAttemptId);
         return ResponseEntity.noContent().build();
     }

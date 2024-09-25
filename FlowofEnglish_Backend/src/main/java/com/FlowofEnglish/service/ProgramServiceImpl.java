@@ -60,7 +60,7 @@ public class ProgramServiceImpl implements ProgramService {
         dto.setProgramId(program.getProgramId());
         dto.setProgramName(program.getProgramName());
         dto.setProgramDesc(program.getProgramDesc());
-        dto.setStages(program.getStages());
+        dto.setStagesCount(program.getStages());
         dto.setUnitCount(program.getUnitCount());
         return dto;
     }

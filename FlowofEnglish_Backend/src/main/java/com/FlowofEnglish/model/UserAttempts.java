@@ -12,7 +12,7 @@ public class UserAttempts {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_attempt_id")
-    private int userAttemptId;
+    private Long userAttemptId;
 
     @Column(name = "user_attempt_end_timestamp")
     private LocalDateTime userAttemptEndTimestamp;
@@ -63,7 +63,7 @@ public class UserAttempts {
 
 	
 
-    public UserAttempts(int userAttemptId, LocalDateTime userAttemptEndTimestamp, boolean userAttemptFlag,
+    public UserAttempts(Long userAttemptId, LocalDateTime userAttemptEndTimestamp, boolean userAttemptFlag,
 			int userAttemptScore, LocalDateTime userAttemptStartTimestamp, User user,  Unit unit, Program program, Stage stage,
 			UserSessionMapping session, Subconcept subconcept, String uuid) {
 		super();
@@ -88,11 +88,11 @@ public class UserAttempts {
 
 // Getters and Setters
 
-	public int getUserAttemptId() {
+	public Long getUserAttemptId() {
 		return userAttemptId;
 	}
 
-	public void setUserAttemptId(int userAttemptId) {
+	public void setUserAttemptId(Long userAttemptId) {
 		this.userAttemptId = userAttemptId;
 	}
     public LocalDateTime getUserAttemptEndTimestamp() {
