@@ -107,7 +107,7 @@ public class UnitServiceImpl implements UnitService {
 
                 // If any unit is not completed, mark the stage as not completed
                 if (!"yes".equals(completionStatus)) {
-                    stageCompleted = false;
+                    stageCompleted = true;
                 }
 
                 // Use index as the key for unit map
