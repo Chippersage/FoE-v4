@@ -14,6 +14,8 @@ import com.FlowofEnglish.repository.UserSubConceptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.FlowofEnglish.exception.ResourceNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +73,11 @@ public class UnitServiceImpl implements UnitService {
         programResponse.setProgramId(program.getProgramId());
         programResponse.setProgramName(program.getProgramName());
         programResponse.setProgramDesc(program.getProgramDesc());
+        
+     // Get the currently authenticated user's userId
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName(); // Assuming the userId is the principal name
+
 
         // Fetch stages for the program
         List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
@@ -101,7 +108,7 @@ public class UnitServiceImpl implements UnitService {
 
                 // Check completion status from UserSubConcept
                 Optional<UserSubConcept> userSubConcept = userSubConceptRepository
-                    .findByUser_UserIdAndUnit_UnitId("user1@chippersage.com", unit.getUnitId());
+                    .findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
                 String completionStatus = userSubConcept.isPresent() ? "yes" : "no";
                 unitResponse.setCompletionStatus(completionStatus);
 
@@ -136,7 +143,10 @@ public class UnitServiceImpl implements UnitService {
     public void deleteUnit(String unitId) {
         unitRepository.deleteById(unitId);
     }
-
+    @Override
+  public void deleteUnits(List<String> unitIds) {
+      unitRepository.deleteAllById(unitIds);
+  }
     @Override
     public List<UnitResponseDTO> getAllUnits() {
         return unitRepository.findAll().stream()

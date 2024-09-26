@@ -40,6 +40,13 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
 //    public UserAttempts createUserAttempt(UserAttempts userAttempt) {
 //        return userAttemptsRepository.save(userAttempt);
 //    }
+    
+    @Override
+    public UserAttempts saveUserAttempt(UserAttempts userAttempt) {
+        return userAttemptsRepository.save(userAttempt); // Implement the save logic
+    }
+
+    
     @Override
     @Transactional
     public UserAttempts createUserAttempt(UserAttempts userAttempt) {

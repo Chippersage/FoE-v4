@@ -14,5 +14,6 @@ public interface UnitService {
     Unit updateUnit(String unitId, Unit unit);
     Unit getUnitById(String unitId);
     void deleteUnit(String unitId);
+    void deleteUnits(List<String> unitIds);
     List<UnitResponseDTO> getAllUnits(); // For returning customized response
 }

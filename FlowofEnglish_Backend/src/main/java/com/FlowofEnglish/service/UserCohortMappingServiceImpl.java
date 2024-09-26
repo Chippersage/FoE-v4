@@ -21,6 +21,12 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAll();
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
+    
+    @Override
+    public UserCohortMapping findByUserUserId(String userId) {
+        return userCohortMappingRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new RuntimeException("UserCohortMapping not found for userId: " + userId));
+    }
 
     @Override
     public Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId) {
