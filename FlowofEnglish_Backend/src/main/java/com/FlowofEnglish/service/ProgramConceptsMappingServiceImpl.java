@@ -47,6 +47,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
 
         // Initialize the sub_concepts map
         Map<String, SubconceptResponseDTO> subconcepts = new HashMap<>();
+        int subconceptCount = 0;  // Variable to keep track of total subconcept count
 
         // Populate the sub_concepts based on mappings
         for (ProgramConceptsMapping mapping : mappings) {
@@ -62,14 +63,19 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptResponseDTO.setShowTo(mapping.getSubconcept().getShowTo());
             subconceptResponseDTO.setSubconceptGroup(mapping.getSubconcept().getSubconceptGroup());
             subconceptResponseDTO.setSubconceptTitle(mapping.getSubconcept().getSubconceptTitle());
+         // Increment the subconcept count
+            subconceptCount++;
 
             // Add to the map with an appropriate key (like an index or ID)
             subconcepts.put(String.valueOf(subconcepts.size()), subconceptResponseDTO);
+         
         }
-
+        
+     
+        // Add subconcept count to the response
+        responseDTO.setSubconceptCount(subconceptCount); // Total number of subconcepts for this unit
         responseDTO.setSub_concepts(subconcepts);
-        responseDTO.setUnit_completion_status("no"); // Update according to your logic
-
+        responseDTO.setUnit_completion_status("no");  // Update according to your logic
         return Optional.of(responseDTO);
     }
 

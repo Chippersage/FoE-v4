@@ -8,6 +8,9 @@ public class ProgramConceptsMappingResponseDTO {
     private String stageId;  // Add stageId
     private Map<String, SubconceptResponseDTO> sub_concepts;
     private String unit_completion_status;
+    private int subconceptCount;
+
+   
 
     // Getters and Setters
 
@@ -50,5 +53,12 @@ public class ProgramConceptsMappingResponseDTO {
 
     public void setUnit_completion_status(String unit_completion_status) {
         this.unit_completion_status = unit_completion_status;
+    }
+    public int getSubconceptCount() {
+        return subconceptCount;
+    }
+
+    public void setSubconceptCount(int subconceptCount) {
+        this.subconceptCount = subconceptCount;
     }
 }
