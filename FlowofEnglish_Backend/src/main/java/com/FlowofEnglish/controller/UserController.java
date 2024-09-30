@@ -40,10 +40,6 @@ public class UserController {
     private UserCohortMappingService userCohortMappingService; // Add this line to inject UserCohortMappingService
 
     
-//    @Autowired
-//    private TokenService tokenService;
-
-    
     @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
