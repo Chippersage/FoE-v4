@@ -32,15 +32,9 @@ public class UserSubConcept {
     @JoinColumn(name = "subconcept_id", nullable = false)
     private Subconcept subconcept;
     
-    public String getCompletionStatus() {
-		return completionStatus;
-	}
+    
 
-	public void setCompletionStatus(String completionStatus) {
-		this.completionStatus = completionStatus;
-	}
-
-	private String completionStatus;
+	
 
     @Column(name = "uuid", nullable = false, unique = true)
     private String uuid;

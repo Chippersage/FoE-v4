@@ -10,9 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, Long> {
- 	Optional<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
+ 	List<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
 	List<UserSubConcept> findAllByUser_UserId(String userId);  // Updated method to find by userId
-	long countByUser_UserIdAndUnit_UnitIdAndCompletionStatus(String userId, String unitId, String completionStatus);
-
+	List<UserSubConcept> findByUser_UserIdAndProgram_ProgramId(String userId, String programId);
+    
 }
 
