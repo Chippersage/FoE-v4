@@ -31,6 +31,10 @@ public class UserSubConcept {
     @ManyToOne
     @JoinColumn(name = "subconcept_id", nullable = false)
     private Subconcept subconcept;
+    
+    
+
+	
 
     @Column(name = "uuid", nullable = false, unique = true)
     private String uuid;

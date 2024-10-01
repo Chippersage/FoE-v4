@@ -4,13 +4,14 @@ import java.util.Map;
 
 public class ProgramConceptsMappingResponseDTO {
     private String programId;
-    private String unit_id;
-    private String stageId;  // Add stageId
-    private Map<String, SubconceptResponseDTO> sub_concepts;
-    private String unit_completion_status;
+    private String unitId;  // Changed from unit_id to unitId
+    private String stageId; 
+    private Map<String, SubconceptResponseDTO> subConcepts; // Changed from sub_concepts to subConcepts
+    private String unitCompletionStatus; // Changed from unit_completion_status to unitCompletionStatus
+    private int subconceptCount;
 
+  
     // Getters and Setters
-
     public String getProgramId() {
         return programId;
     }
@@ -19,36 +20,43 @@ public class ProgramConceptsMappingResponseDTO {
         this.programId = programId;
     }
 
-    public String getUnit_id() {
-        return unit_id;
+    public String getUnitId() {
+        return unitId;
     }
 
-    public void setUnit_id(String unit_id) {
-        this.unit_id = unit_id;
+    public void setUnitId(String unitId) {
+        this.unitId = unitId;
     }
-    
 
     public String getStageId() {
-		return stageId;
-	}
-
-	public void setStageId(String stageId) {
-		this.stageId = stageId;
-	}
-
-	public Map<String, SubconceptResponseDTO> getSub_concepts() {
-        return sub_concepts;
+        return stageId;
     }
 
-    public void setSub_concepts(Map<String, SubconceptResponseDTO> sub_concepts) {
-        this.sub_concepts = sub_concepts;
+    public void setStageId(String stageId) {
+        this.stageId = stageId;
     }
 
-    public String getUnit_completion_status() {
-        return unit_completion_status;
+    public Map<String, SubconceptResponseDTO> getSubConcepts() {
+        return subConcepts;
     }
 
-    public void setUnit_completion_status(String unit_completion_status) {
-        this.unit_completion_status = unit_completion_status;
+    public void setSubConcepts(Map<String, SubconceptResponseDTO> subConcepts) {
+        this.subConcepts = subConcepts;
+    }
+
+    public String getUnitCompletionStatus() {
+        return unitCompletionStatus;
+    }
+
+    public void setUnitCompletionStatus(String unitCompletionStatus) {
+        this.unitCompletionStatus = unitCompletionStatus;
+    }
+
+    public int getSubconceptCount() {
+        return subconceptCount;
+    }
+
+    public void setSubconceptCount(int subconceptCount) {
+        this.subconceptCount = subconceptCount;
     }
 }

@@ -25,7 +25,11 @@ public class User {
 
     @Column(name = "user_password", length = 255, nullable = false)
     private String userPassword;  // New field for user password
+    
+    @Column(name = "user_type", length = 1000)
+    private String userType;
 
+    
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
@@ -37,19 +41,22 @@ public class User {
     }
 
     public User(String userId, String userAddress, String userEmail, String userName, String userPhoneNumber,
-                String userPassword, String uuid, Organization organization) {
-        super();
-        this.userId = userId;
-        this.userAddress = userAddress;
-        this.userEmail = userEmail;
-        this.userName = userName;
-        this.userPhoneNumber = userPhoneNumber;
-        this.userPassword = userPassword;
-        this.uuid = uuid;
-        this.organization = organization;
-    }
+			String userPassword, String userType, String uuid, Organization organization) {
+		super();
+		this.userId = userId;
+		this.userAddress = userAddress;
+		this.userEmail = userEmail;
+		this.userName = userName;
+		this.userPhoneNumber = userPhoneNumber;
+		this.userPassword = userPassword;
+		this.userType = userType;
+		this.uuid = uuid;
+		this.organization = organization;
+	}
 
-    // Getters and Setters
+
+
+	// Getters and Setters
     public String getUserId() {
         return userId;
     }
@@ -97,8 +104,18 @@ public class User {
     public void setUserPassword(String userPassword) {
         this.userPassword = userPassword;
     }
+    
+    
 
-    public String getUuid() {
+    public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	public String getUuid() {
         return uuid;
     }
 
@@ -115,11 +132,11 @@ public class User {
     }
 
     @Override
-    public String toString() {
-        return "User [userId=" + userId + ", userAddress=" + userAddress + ", userEmail=" + userEmail + ", userName="
-                + userName + ", userPhoneNumber=" + userPhoneNumber + ", userPassword=" + userPassword + ", uuid=" + uuid
-                + ", organization=" + organization + "]";
-    }
+	public String toString() {
+		return "User [userId=" + userId + ", userAddress=" + userAddress + ", userEmail=" + userEmail + ", userName="
+				+ userName + ", userPhoneNumber=" + userPhoneNumber + ", userPassword=" + userPassword + ", userType="
+				+ userType + ", uuid=" + uuid + ", organization=" + organization + "]";
+	}
 
     // Method to ensure UUID and generate userId before persisting
     @PrePersist

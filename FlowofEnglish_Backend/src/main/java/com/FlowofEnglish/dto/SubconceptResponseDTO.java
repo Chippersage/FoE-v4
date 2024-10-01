@@ -13,6 +13,7 @@ public class SubconceptResponseDTO {
      private String subconceptLink;
      private String completionStatus;
     
+
      
   // Getters and Setters
 	public String getSubconceptId() {
@@ -70,6 +71,5 @@ public class SubconceptResponseDTO {
 		this.completionStatus = completionStatus;
 	}
 	
-
     
 }
