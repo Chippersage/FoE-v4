@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProgramConceptsMappingService {
-	 Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String unitId);
+	 Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String userId, String unitId);
+	 //Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String unitId);
+	 
     List<ProgramConceptsMapping> getAllProgramConceptsMappings();
     Optional<ProgramConceptsMapping> getProgramConceptsMappingById(String programConceptId);
     ProgramConceptsMapping createProgramConceptsMapping(ProgramConceptsMapping programConceptsMapping);

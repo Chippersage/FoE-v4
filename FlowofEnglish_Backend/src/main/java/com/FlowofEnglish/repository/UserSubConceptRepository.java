@@ -10,13 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, Long> {
- // Optional<UserSubConcept> findByUserIdAndUnitId(String userId, String unitId);
-//    Optional<UserSubConcept> findByUserUuidAndUnitId(String userUuid, String unitId);
-//    Optional<UserSubConcept> findByUser_UserIdAndUnitId(String userId, String unitId);  // Traversing the relationship
-//    Optional<UserSubConcept> findByUser_UuidAndUnitId(String userUuid, String unitId);  // Similar for UUID
-	Optional<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
+ 	List<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
 	List<UserSubConcept> findAllByUser_UserId(String userId);  // Updated method to find by userId
- //  List<UserSubConcept> findAllByUserId(String userId);  // New method to find all by userId
-//    void deleteByUserId(String userId);  // New method to delete by userId
+	List<UserSubConcept> findByUser_UserIdAndProgram_ProgramId(String userId, String programId);
+    
 }
 

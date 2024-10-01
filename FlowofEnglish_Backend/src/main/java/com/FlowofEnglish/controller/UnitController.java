@@ -47,9 +47,9 @@ public class UnitController {
 //        ProgramDTO response = unitService.getProgramWithStagesAndUnits(programId, userId);
 //        return new ResponseEntity<>(response, HttpStatus.OK);
 //    }
-    @GetMapping("/program/{programId}")
-    public ResponseEntity<ProgramDTO> getProgramWithStagesAndUnits(@PathVariable String programId) {
-        ProgramDTO response = unitService.getProgramWithStagesAndUnits(programId);
+    @GetMapping("{userId}/program/{programId}")
+    public ResponseEntity<ProgramDTO> getProgramWithStagesAndUnits(@PathVariable String userId, @PathVariable String programId) {
+        ProgramDTO response = unitService.getProgramWithStagesAndUnits(userId, programId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

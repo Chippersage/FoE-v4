@@ -7,6 +7,7 @@ public class StageDTO {
     private String stageName;
     private String stageDesc;
     private String stageCompletionStatus;
+    private boolean stageEnabled;
     private Map<String, UnitResponseDTO> units; // Use a Map for dynamic keys
     
     // Getters and Setters  
@@ -39,6 +40,12 @@ public class StageDTO {
 	}
 	public void setStageDesc(String stageDesc) {
 		this.stageDesc = stageDesc;
+	}
+	public boolean isStageEnabled() {
+		return stageEnabled;
+	}
+	public void setStageEnabled(boolean stageEnabled) {
+		this.stageEnabled = stageEnabled;
 	}
     
     

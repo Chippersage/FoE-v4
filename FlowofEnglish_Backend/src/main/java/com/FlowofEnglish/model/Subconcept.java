@@ -19,7 +19,10 @@ public class Subconcept {
 
     @Column(name = "subconcept_desc", length = 255)
     private String subconceptDesc;
-
+    
+    @Column(name = "subconcept_desc 2", length = 255)
+    private String subconceptDesc2;
+    
     @Column(name = "subconcept_group", length = 1000)
     private String subconceptGroup;
 
@@ -50,7 +53,7 @@ public class Subconcept {
 		
 	}
 
-	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc,
+	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc, String subconceptDesc2, 
 			String subconceptGroup, String subconceptLink, String subconceptTitle, String subconceptType,
 			String userType, String uuid, Concept concept, ContentMaster content) {
 		super();
@@ -58,6 +61,7 @@ public class Subconcept {
 		this.dependency = dependency;
 		this.showTo = showTo;
 		this.subconceptDesc = subconceptDesc;
+		this.subconceptDesc2 = subconceptDesc2;
 		this.subconceptGroup = subconceptGroup;
 		this.subconceptLink = subconceptLink;
 		this.subconceptTitle = subconceptTitle;
@@ -99,6 +103,14 @@ public class Subconcept {
 
 	public void setSubconceptDesc(String subconceptDesc) {
 		this.subconceptDesc = subconceptDesc;
+	}
+
+	public String getSubconceptDesc2() {
+		return subconceptDesc2;
+	}
+
+	public void setSubconceptDesc2(String subconceptDesc2) {
+		this.subconceptDesc2 = subconceptDesc2;
 	}
 
 	public String getSubconceptGroup() {
@@ -168,9 +180,10 @@ public class Subconcept {
 	@Override
 	public String toString() {
 		return "Subconcept [subconceptId=" + subconceptId + ", dependency=" + dependency + ", showTo=" + showTo
-				+ ", subconceptDesc=" + subconceptDesc + ", subconceptGroup=" + subconceptGroup + ", subconceptLink="
-				+ subconceptLink + ", subconceptTitle=" + subconceptTitle + ", subconceptType=" + subconceptType
-				+ ", userType=" + userType + ", uuid=" + uuid + ", concept=" + concept + ", content=" + content + "]";
+				+ ", subconceptDesc=" + subconceptDesc + ", subconceptDesc2=" + subconceptDesc2 + ", subconceptGroup="
+				+ subconceptGroup + ", subconceptLink=" + subconceptLink + ", subconceptTitle=" + subconceptTitle
+				+ ", subconceptType=" + subconceptType + ", userType=" + userType + ", uuid=" + uuid + ", concept="
+				+ concept + ", content=" + content + "]";
 	}
 	// Method to ensure UUID and generate subconceptId before persisting
     @PrePersist

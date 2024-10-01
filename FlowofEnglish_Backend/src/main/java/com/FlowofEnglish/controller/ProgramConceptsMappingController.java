@@ -1,7 +1,6 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.ProgramConceptsMappingResponseDTO;
-import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.model.ProgramConceptsMapping;
 import com.FlowofEnglish.service.ProgramConceptsMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +28,9 @@ public class ProgramConceptsMappingController {
         return programConceptsMapping.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     
-    @GetMapping("/unit/{unitId}")
-    public ResponseEntity<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnit_UnitId(@PathVariable String unitId) {
-        Optional<ProgramConceptsMappingResponseDTO> programConceptsMappingResponseDTO = programConceptsMappingService.getProgramConceptsMappingByUnitId(unitId);
+    @GetMapping("{userId}/unit/{unitId}")
+    public ResponseEntity<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnit_UnitId(@PathVariable String userId, @PathVariable String unitId) {
+        Optional<ProgramConceptsMappingResponseDTO> programConceptsMappingResponseDTO = programConceptsMappingService.getProgramConceptsMappingByUnitId(userId, unitId);
         return programConceptsMappingResponseDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 

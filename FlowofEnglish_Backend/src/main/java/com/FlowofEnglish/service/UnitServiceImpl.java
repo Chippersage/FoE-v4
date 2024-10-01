@@ -2,11 +2,14 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.dto.StageDTO;
+import com.FlowofEnglish.dto.SubconceptResponseDTO;
 import com.FlowofEnglish.dto.UnitResponseDTO;
 import com.FlowofEnglish.model.Program;
+import com.FlowofEnglish.model.ProgramConceptsMapping;
 import com.FlowofEnglish.model.Stage;
 import com.FlowofEnglish.model.Unit;
 import com.FlowofEnglish.model.UserSubConcept;
+import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
 import com.FlowofEnglish.repository.ProgramRepository;
 import com.FlowofEnglish.repository.StageRepository;
 import com.FlowofEnglish.repository.UnitRepository;
@@ -35,6 +38,9 @@ public class UnitServiceImpl implements UnitService {
 
     @Autowired
     private UserSubConceptRepository userSubConceptRepository;
+    
+    @Autowired
+    private ProgramConceptsMappingRepository programConceptsMappingRepository;
 
     @Override
     public Unit createUnit(Unit unit) {
@@ -60,9 +66,8 @@ public class UnitServiceImpl implements UnitService {
         return unitRepository.findById(unitId)
                 .orElseThrow(() -> new RuntimeException("Unit not found with id: " + unitId));
     }
-   
     @Override 
-    public ProgramDTO getProgramWithStagesAndUnits(String programId) {
+    public ProgramDTO getProgramWithStagesAndUnits(String userId, String programId) {
         // Fetch the program details
         Program program = programRepository.findById(programId)
             .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
@@ -74,9 +79,15 @@ public class UnitServiceImpl implements UnitService {
 
         // Fetch stages for the program
         List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
-        Map<String, StageDTO> stageMap = new HashMap<>(); 
-        int totalUnitCount = 0; // Variable to keep track of total units
-        int stagesCount = 0; // Variable to count the stages
+        Map<String, StageDTO> stageMap = new HashMap<>();
+        int totalUnitCount = 0;
+        int stagesCount = 0;
+
+        // Fetch all UserSubConcepts for the user and unit to track completion
+        List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
+        
+        boolean previousStageCompleted = true;  // Flag to determine if the previous stage is completed
+        boolean programCompleted = true;  // Track if the entire program is complete
 
         // Iterate through stages and build the stage map
         for (int i = 0; i < stages.size(); i++) {
@@ -90,51 +101,101 @@ public class UnitServiceImpl implements UnitService {
             List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             boolean stageCompleted = true;
+            if (units.isEmpty()) {
+                stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
+            } else {
+//                boolean stageCompleted = true;
 
-            // Iterate through units and build the unit map
-            for (int j = 0; j < units.size(); j++) {
-                Unit unit = units.get(j);
-                UnitResponseDTO unitResponse = new UnitResponseDTO();
-                unitResponse.setUnitId(unit.getUnitId());
-                unitResponse.setUnitName(unit.getUnitName());
-                unitResponse.setUnitDesc(unit.getUnitDesc());
+                for (int j = 0; j < units.size(); j++) {
+                    Unit unit = units.get(j);
+                    UnitResponseDTO unitResponse = new UnitResponseDTO();
+                    unitResponse.setUnitId(unit.getUnitId());
+                    unitResponse.setUnitName(unit.getUnitName());
+                    unitResponse.setUnitDesc(unit.getUnitDesc());
 
-                // Check completion status from UserSubConcept
-                Optional<UserSubConcept> userSubConcept = userSubConceptRepository
-                    .findByUser_UserIdAndUnit_UnitId("user1@chippersage.com", unit.getUnitId());
-                String completionStatus = userSubConcept.isPresent() ? "yes" : "no";
-                unitResponse.setCompletionStatus(completionStatus);
+                    // Fetch user subconcepts for the current unit
+                    List<UserSubConcept> userSubConceptsForUnit = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
 
-                // If any unit is not completed, mark the stage as not completed
-                if (!"yes".equals(completionStatus)) {
-                    stageCompleted = true;
+                    // Fetch the total number of subconcepts associated with the unit
+                    int totalSubConceptCount = getTotalSubConceptCount(unit.getUnitId());
+                    int completedSubConceptCount = userSubConceptsForUnit.size();
+
+                    String unitCompletionStatus;
+                    
+                    if (totalSubConceptCount == 0) {
+                        // No subconcepts in the unit
+                        unitCompletionStatus = "No subconcepts in this unit";
+                    } else if (completedSubConceptCount == totalSubConceptCount) {
+                        // All subconcepts completed
+                        unitCompletionStatus = "yes";
+                    } else if (completedSubConceptCount > 0) {
+                        // Some subconcepts are completed, but not all
+                        unitCompletionStatus = "incomplete";
+                        stageCompleted = false;
+                        programCompleted = false;
+                    } else {
+                        // No subconcepts completed, unit is locked
+                        unitCompletionStatus = "disabled";
+                        stageCompleted = false;
+                        programCompleted = false;
+                    }
+
+                    // Set the unit status and add it to the unit map
+                    unitResponse.setCompletionStatus(unitCompletionStatus);
+                    unitMap.put(String.valueOf(j), unitResponse);
+                    totalUnitCount++;
                 }
 
-                // Use index as the key for unit map
-                unitMap.put(String.valueOf(j), unitResponse);
-                totalUnitCount++; // Increment the total unit count
+                // Check if all units are completed to mark the stage as completed
+                boolean allUnitsCompleted = unitMap.values().stream()
+                    .allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()));
+                
+                stageResponse.setUnits(unitMap);
+                stageResponse.setStageCompletionStatus(allUnitsCompleted ? "yes" : "no");
             }
+            
+            
+         // Set stage enabled status based on previous stage completion
+            if (i == 0) {
+                // Enable the first stage by default
+                stageResponse.setStageEnabled(true);
+            } else {
+                // Enable this stage only if the previous stage was completed
+                stageResponse.setStageEnabled(previousStageCompleted);
+            }
+            
+         // Update previousStageCompleted for the next iteration
+            previousStageCompleted = stageCompleted;
 
-            // Add units to the stage response
-            stageResponse.setUnits(unitMap);
-            stageResponse.setStageCompletionStatus(stageCompleted ? "yes" : "no");
-
-            // Use index as the key for stage map
+            // Add the stage to the response
             stageMap.put(String.valueOf(i), stageResponse);
-            stagesCount++; // Increment the stage count
+            stagesCount++;
         }
 
         // Set stagesCount and unitCount in the program response
         programResponse.setStages(stageMap);
         programResponse.setStagesCount(stagesCount);
         programResponse.setUnitCount(totalUnitCount);
+        programResponse.setProgramCompletionStatus(programCompleted ? "yes" : "no");
 
         return programResponse;
+    }
+    /**
+     * Helper method to get the total subconcept count for a unit.
+     */
+    private int getTotalSubConceptCount(String unitId) {
+        List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
+        return subconcepts.size();
     }
 
     @Override
     public void deleteUnit(String unitId) {
         unitRepository.deleteById(unitId);
+    }
+
+    @Override
+    public void deleteUnits(List<String> unitIds) {
+        unitRepository.deleteAllById(unitIds);
     }
 
     @Override
@@ -159,107 +220,10 @@ public class UnitServiceImpl implements UnitService {
 
 
 
+// check whether all units within a stage are completed usingThis
+//boolean allUnitsCompleted = unitMap.values().stream()
+//.allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()));
 
-
-
-
-//package com.FlowofEnglish.service;
-//
-//
-//
-//import com.FlowofEnglish.dto.UnitResponseDTO;
-//import com.FlowofEnglish.model.Unit;
-//import com.FlowofEnglish.repository.UnitRepository;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Service;
-//
-//import java.util.List;
-//import java.util.Optional;
-//import java.util.stream.Collectors;
-//
-//@Service
-//public class UnitServiceImpl implements UnitService {
-//
-//    @Autowired
-//    private UnitRepository unitRepository;
-////
-////    @Override
-////    public List<UnitResponseDTO> getAllUnits() {
-////        return unitRepository.findAll();
-////    }
-//    
-//    
-////    @Override
-////    public List<UnitResponseDTO> getAllUnits() {
-////        List<Unit> units = unitRepository.findAll(); // Fetch the list of Unit entities
-////        return units.stream()
-////                     .map(this::convertToDTO) // Convert each Unit to UnitResponseDTO
-////                     .collect(Collectors.toList()); // Collect the results into a list
-////    }
-////
-////    // Method to convert Unit to UnitResponseDTO
-////    private UnitResponseDTO convertToDTO(Unit unit) {
-////        UnitResponseDTO dto = new UnitResponseDTO();
-////        // Set properties from unit to dto
-////        dto.setUnitId(unit.getUnitId());
-////        dto.setUnitName(unit.getUnitName());
-////        // Add other properties as needed
-////        return dto;
-////    }
-//    @Override
-//    public List<UnitResponseDTO> getAllUnits() {
-//        List<Unit> units = unitRepository.findAll(); // Replace with your actual method to get units
-//        return units.stream().map(unit -> {
-//            UnitResponseDTO dto = new UnitResponseDTO();
-//            dto.setUnitId(unit.getUnitId());
-//            dto.setUnitName(unit.getUnitName());
-//            dto.setUnitDesc(unit.getUnitDesc());
-//            // Set program and stage details as needed
-//            return dto;
-//        }).collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    public Optional<Unit> getUnitById(String unitId) {
-//        return unitRepository.findById(unitId);
-//    }
-//    //new
-//    @Override
-//    public Unit findById(String unitId) {
-//        return unitRepository.findById(unitId)
-//            .orElseThrow(() -> new IllegalArgumentException("Unit not found"));
-//    }
-//
-//
-//    @Override
-//    public List<Unit> getUnitsByProgramId(String programId) {
-//        return unitRepository.findByProgramProgramId(programId);
-//    }
-//
-//    @Override
-//    public Unit createUnit(Unit unit) {
-//        return unitRepository.save(unit);
-//    }
-//
-//    @Override
-//    public Unit updateUnit(String unitId, Unit updatedUnit) {
-//        return unitRepository.findById(unitId)
-//            .map(unit -> {
-//                unit.setUnitName(updatedUnit.getUnitName());
-//                unit.setUnitDesc(updatedUnit.getUnitDesc());
-//                unit.setProgram(updatedUnit.getProgram());
-//                return unitRepository.save(unit);
-//            })
-//            .orElseThrow(() -> new IllegalArgumentException("Unit not found"));
-//    }
-//
-//    @Override
-//    public void deleteUnit(String unitId) {
-//        unitRepository.deleteById(unitId);
-//    }
-//
-//    @Override
-//    public void deleteUnits(List<String> unitIds) {
-//        unitRepository.deleteAllById(unitIds);
-//    }
-//}
+//For each unit, you calculate whether subconcepts are completed usingThis
+//int totalSubConceptCount = getTotalSubConceptCount(unit.getUnitId());
+//int completedSubConceptCount = userSubConceptsForUnit.size();
