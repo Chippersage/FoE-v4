@@ -124,10 +124,11 @@ public class UserController {
                     throw new RuntimeException("No cohort mapping found for user with ID: " + user.getUserId());
                 }
                 
-                response.put("userType", "user");    // Adjust user type as necessary
+//                response.put("userType", "user");    // Adjust user type as necessary
                 
              // Fetch additional user details with cohort and program
                 UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
+                response.put("userType", user.getUserType());
                 response.put("userDetails", userDTO); // Include user details (with cohort and program)
                 response.put("sessionId", sessionId); // Add session ID to response
 
