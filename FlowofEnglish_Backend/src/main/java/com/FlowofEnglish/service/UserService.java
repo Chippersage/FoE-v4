@@ -31,16 +31,3 @@ public interface UserService {
 
 
     
-//    UserDTO createUser(UserDTO userDTO);
-//
-//    List<UserDTO> createUsers(List<UserDTO> userDTOs);
-//
-//    UserDTO updateUser(String userId, UserDTO userDTO);
-//
-//    void deleteUser(String userId);
-//
-//    Optional<UserDTO> findByUserId(String userId); // Updated to return Optional<UserDTO>
-//
-//    boolean verifyPassword(String providedPassword, String storedPassword);
-
-
