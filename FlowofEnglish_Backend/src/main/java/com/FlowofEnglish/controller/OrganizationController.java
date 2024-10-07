@@ -84,7 +84,8 @@ public class OrganizationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
 
-        if (organization != null && organization.getOrgpassword().equals(password)) {
+        //if (organization != null && organization.getOrgpassword().equals(password)) {
+        	if (organization != null && organizationService.verifyPassword(password, organization.getOrgpassword())) {
             // Login successful
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Login successful");

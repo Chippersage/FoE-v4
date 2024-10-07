@@ -172,4 +172,9 @@ public class OrganizationService {
     public List<Organization> createOrganizations(List<Organization> organizations) {
         return organizationRepository.saveAll(organizations);
     }
+    public boolean verifyPassword(String plainPassword, String encodedPassword) {
+        return passwordEncoder.matches(plainPassword, encodedPassword);
+    }
+
+
 }
