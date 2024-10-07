@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -118,6 +119,11 @@ public class UserController {
                     userSession.setSessionStartTimestamp(LocalDateTime.now());
                     userSession.setUser(user);
                     userSession.setCohort(userCohortMapping.getCohort());  // Set cohort from UserCohortMapping
+                    
+                 // Explicitly generate UUID if needed
+                    if (userSession.getUuid() == null) {
+                        userSession.setUuid(UUID.randomUUID().toString());
+                    }
                     userSessionMappingService.createUserSessionMapping(userSession);
                 } else {
                     // Handle case where userCohortMapping is not found
@@ -192,50 +198,3 @@ public class UserController {
     
     
     
-//    @PostMapping("/login")
-//    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
-//        String userId = payload.get("userId");
-//        String password = payload.get("password");
-//        // Debug logging
-//        System.out.println("Received userId: " + userId);
-//        System.out.println("Received password: " + password);
-//        
-//        User user = userService.findByUserId(userId);
-//        Map<String, Object> response = new HashMap<>();
-//
-//        if (user != null && userService.verifyPassword(password, user.getUserPassword())) {
-//            response.put("token", "dummyToken"); // Replace with actual token generation logic
-//            response.put("userType", "user"); // Adjust user type as necessary
-//            response.put("userId", user.getUserId()); // Corrected to return actual userId
-//            response.put("username", user.getUserName());
-//            return ResponseEntity.ok(response);
-//        } else {
-//            response.put("error", "Invalid userId or password");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//    }
-    
-    
-    
-//    @PostMapping("/login")
-//    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
-//        String userId = payload.get("userId");
-//        String password = payload.get("password");
-//
-//        User user = userService.findByUserId(userId);
-//        Map<String, Object> response = new HashMap<>();
-//
-//        if (user != null && userService.verifyPassword(password, user.getUserPassword())) {
-//            // Generate JWT token
-//            String token = tokenService.generateToken(userId);
-//            response.put("token", token);
-//            response.put("userType", "user"); // Adjust as per your logic
-//            response.put("userId", user.getUserId());
-//            return ResponseEntity.ok(response);
-//        } else {
-//            response.put("error", "Invalid userId or password");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//    }
-    
-

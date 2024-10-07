@@ -30,7 +30,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     }
 
     @Override
-    public Optional<ProgramConceptsMapping> getProgramConceptsMappingById(String programConceptId) {
+    public Optional<ProgramConceptsMapping> getProgramConceptsMappingById(Long programConceptId) {
         return programConceptsMappingRepository.findById(programConceptId);
     }
     
@@ -113,7 +113,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     }
 
     @Override
-    public ProgramConceptsMapping updateProgramConceptsMapping(String programConceptId, ProgramConceptsMapping programConceptsMapping) {
+    public ProgramConceptsMapping updateProgramConceptsMapping(Long programConceptId, ProgramConceptsMapping programConceptsMapping) {
         return programConceptsMappingRepository.findById(programConceptId).map(existingMapping -> {
             existingMapping.setProgramConceptDesc(programConceptsMapping.getProgramConceptDesc());
             existingMapping.setStage(programConceptsMapping.getStage());
@@ -125,7 +125,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     }
 
     @Override
-    public void deleteProgramConceptsMapping(String programConceptId) {
+    public void deleteProgramConceptsMapping(Long programConceptId) {
         programConceptsMappingRepository.deleteById(programConceptId);
     }
 }

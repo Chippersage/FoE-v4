@@ -12,8 +12,8 @@ public interface ProgramConceptsMappingService {
 	 //Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String unitId);
 	 
     List<ProgramConceptsMapping> getAllProgramConceptsMappings();
-    Optional<ProgramConceptsMapping> getProgramConceptsMappingById(String programConceptId);
+    Optional<ProgramConceptsMapping> getProgramConceptsMappingById(Long programConceptId);
     ProgramConceptsMapping createProgramConceptsMapping(ProgramConceptsMapping programConceptsMapping);
-    ProgramConceptsMapping updateProgramConceptsMapping(String programConceptId, ProgramConceptsMapping programConceptsMapping);
-    void deleteProgramConceptsMapping(String programConceptId);
+    ProgramConceptsMapping updateProgramConceptsMapping(Long programConceptId, ProgramConceptsMapping programConceptsMapping);
+    void deleteProgramConceptsMapping(Long programConceptId);
 }

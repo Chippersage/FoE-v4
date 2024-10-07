@@ -23,7 +23,7 @@ public class ProgramConceptsMappingController {
     }
 
     @GetMapping("/{programConceptId}")
-    public ResponseEntity<ProgramConceptsMapping> getProgramConceptsMappingById(@PathVariable String programConceptId) {
+    public ResponseEntity<ProgramConceptsMapping> getProgramConceptsMappingById(@PathVariable Long programConceptId) {
         Optional<ProgramConceptsMapping> programConceptsMapping = programConceptsMappingService.getProgramConceptsMappingById(programConceptId);
         return programConceptsMapping.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -40,12 +40,12 @@ public class ProgramConceptsMappingController {
     }
 
     @PutMapping("/{programConceptId}")
-    public ResponseEntity<ProgramConceptsMapping> updateProgramConceptsMapping(@PathVariable String programConceptId, @RequestBody ProgramConceptsMapping programConceptsMapping) {
+    public ResponseEntity<ProgramConceptsMapping> updateProgramConceptsMapping(@PathVariable Long programConceptId, @RequestBody ProgramConceptsMapping programConceptsMapping) {
         return ResponseEntity.ok(programConceptsMappingService.updateProgramConceptsMapping(programConceptId, programConceptsMapping));
     }
 
     @DeleteMapping("/{programConceptId}")
-    public ResponseEntity<Void> deleteProgramConceptsMapping(@PathVariable String programConceptId) {
+    public ResponseEntity<Void> deleteProgramConceptsMapping(@PathVariable Long programConceptId) {
         programConceptsMappingService.deleteProgramConceptsMapping(programConceptId);
         return ResponseEntity.noContent().build();
     }

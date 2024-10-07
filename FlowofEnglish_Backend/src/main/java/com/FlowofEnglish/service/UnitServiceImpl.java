@@ -100,11 +100,13 @@ public class UnitServiceImpl implements UnitService {
             // Fetch units for each stage
             List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
+            
             boolean stageCompleted = true;
+            
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
             } else {
-//                boolean stageCompleted = true;
+  //              boolean stageCompleted = true;
 
                 for (int j = 0; j < units.size(); j++) {
                     Unit unit = units.get(j);
@@ -161,7 +163,7 @@ public class UnitServiceImpl implements UnitService {
                 stageResponse.setStageEnabled(true);
             } else {
                 // Enable this stage only if the previous stage was completed
-                stageResponse.setStageEnabled(previousStageCompleted);
+                stageResponse.setStageEnabled(previousStageCompleted && !units.isEmpty());
             }
             
          // Update previousStageCompleted for the next iteration

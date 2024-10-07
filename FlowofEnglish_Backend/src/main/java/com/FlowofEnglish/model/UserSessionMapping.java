@@ -90,15 +90,21 @@ public class UserSessionMapping {
     public void setUser(User user) {
         this.user = user;
     }
-
     // Automatically generate UUID and session ID before persisting
     @PrePersist
     private void ensureSessionId() {
+    	System.out.println("PrePersist triggered for UserSessionMapping");
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
+            System.out.println("UUID generated: " + this.uuid);
         }
         if (this.sessionId == null) {
-            this.sessionId = UUID.randomUUID().toString().replace("-", "") + System.nanoTime(); // Generate 128-bit session ID
+            this.sessionId = UUID.randomUUID().toString().replace("-", "") + System.nanoTime();
+            System.out.println("Session ID generated: " + this.sessionId);
         }
     }
+
+
+    
+    
 }
