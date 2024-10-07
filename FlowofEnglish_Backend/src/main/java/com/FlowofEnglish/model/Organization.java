@@ -162,16 +162,25 @@ public class Organization {
                 + ", uuid=" + uuid + "]";
     }
 
-    // Method to ensure UUID and generate organizationId before persisting
+     // Method to ensure UUID and generate organizationId before persisting
     @PrePersist
     private void ensureUuid() {
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
         }
 
-     // Generate 4-letter organizationId if not already set
+        // Generate organizationId based on organizationName
         if (this.organizationId == null || this.organizationId.isEmpty()) {
-            this.organizationId = RandomStringUtil.generateRandomAlphabetic(4);
+            if (this.organizationName != null && !this.organizationName.isEmpty()) {
+                // Take the first 4 characters of organizationName, if available
+                this.organizationId = this.organizationName.length() >= 4
+                        ? this.organizationName.substring(0, 4).toUpperCase() // Convert to uppercase for consistency
+                        : String.format("%-4s", this.organizationName).replace(' ', 'X').toUpperCase(); // Pad if less than 4 chars
+            } else {
+                // Fallback to random ID if organizationName is null or empty
+                this.organizationId = RandomStringUtil.generateRandomAlphabetic(4).toUpperCase();
+            }
         }
     }
+
 }
