@@ -1,0 +1,171 @@
+/* .card-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 22px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+    width: 45%;
+    margin-top: 67px;
+    margin-left: 78px;
+
+  }
+  
+  .stage-container {
+    margin: 10px 0;
+  }
+  
+  .stage-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+  }
+  
+  .passage-button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: none;
+    padding: 8px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 90%;
+  }
+  
+  .bar {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin: 0px 0;
+  }
+  
+  .filled-bar {
+    height: 100%;
+    background-color: #4caf50;
+    border-radius: 5px;
+  }
+   */
+
+  .card-container {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  position: relative;
+  overflow: hidden;
+  width: 52%;
+  margin-top: 150px;
+  margin-left: 78px;
+}
+
+.stage-button {
+  background-color: #007bff; /* Default blue color */
+  color: white;
+  border: none;
+  padding: 10px;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 5px;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.stage-button.green-filter {
+  background-color: #28a745; /* Green color when all activities are completed */
+}
+.stage-button.disabled-button {
+  background-color: grey;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+
+.passage-structure {
+  position: relative;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.passage-row {
+  display: flex;
+  justify-content: start;
+  position: relative;
+  width: 66%;
+}
+
+.passage-item {
+  position: relative;
+  text-align: center;
+  width: 72px;
+  height: 79px;
+  padding-top: 17px;
+  margin-right: 10px;
+}
+
+.passage-item img {
+  width: 66%;
+  height: 65%;
+  border-radius: 15%;
+}
+
+.connection-line {
+  position: absolute;
+  border-top: 2px dashed #ccc;
+  width: 100px;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+}
+
+/* .green-image {
+  border: 3px solid green;
+  
+  filter: hue-rotate(90deg);
+} */
+
+
+.passage-item.green-filter  {
+  /* filter: hue-rotate(100deg) brightness(1.2); */
+  background-color: green;
+  
+}
+
+
+
+@media (max-width: 767px) {
+
+.card-container {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  position: relative;
+  overflow: hidden;
+  width: 80%;
+  margin-top: 67px;
+  margin-left: 40px;
+}
+}
+
+
+
+.passage-item.inactive img {
+  filter: grayscale(60%); /* Converts the image to grayscale */
+  opacity: 0.5; /* Makes the image semi-transparent */
+  pointer-events: none; /* Makes the image non-clickable */
+}
+
+.passage-item.active img {
+  filter: none; /* Ensures the active image is fully colored */
+  opacity: 1; /* Fully visible */
+  pointer-events: auto; /* Clickable */
+}

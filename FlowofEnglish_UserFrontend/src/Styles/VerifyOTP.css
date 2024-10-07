@@ -1,0 +1,64 @@
+.main-verify {
+        display: flex;
+        justify-content:center;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 5px;
+}
+
+.verify-card {
+        width: 28rem;
+        border-radius: 20px;
+        box-sizing: border-box;
+}
+
+
+.verify-card-body .verify-img-div{
+        margin-bottom: 50px;
+        text-align: center;
+
+}
+
+.verify-card-body .verify-img-div img {
+        height: 100px;
+        width: 250px;
+}
+
+.verifyotp-form #verificationCode{
+display: block;
+width: 55%;
+padding: .375rem .75rem;
+font-size: 1rem;
+font-weight: 400;
+line-height: 1.5;
+color: var(--bs-body-color);
+appearance: none;
+background-color: var(--bs-body-bg);
+background-clip: padding-box;
+border: var(--bs-border-width) solid var(--bs-border-color);
+border-radius: 10px;
+transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+margin-top: 1.25rem !important;
+margin-left: 127px;
+height: 50px;
+
+}
+
+.verifyotp-form .div-verify-button{
+text-align: center;
+margin-top: 10px;
+}
+
+.verifyotp-form
+.div-verify-button .verify-button{
+        background-color:rgb(14, 158, 14);
+        color: white;
+        border: none;
+        outline: none;
+        font-weight: bold;
+        width: 51%;
+        height: 44px;
+        border-radius: 25px;
+        margin-top: 20px;
+
+}

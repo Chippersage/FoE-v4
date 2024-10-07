@@ -1,0 +1,131 @@
+.leaderboard-container {
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 370px;
+        margin: auto;
+        
+        margin-left: 66%;
+        margin-top: -335px;
+    
+      }
+      
+      .leaderboard-heading {
+        text-align: center;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      
+      .leaderboard-subheading {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #888;
+        margin-bottom: 20px;
+      }
+      
+      .cards-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .score-card {
+        display: flex;
+        align-items: center;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      
+      .score-card-rank {
+        font-size: 1.2rem;
+        font-weight: bold;
+        width: 30px;
+        text-align: center;
+      }
+      
+      .score-card-avatar {
+        margin-right: 10px;
+      }
+      
+      .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #28a745;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+      
+      .score-card-content {
+        flex-grow: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .score-card-name {
+        font-weight: bold;
+        margin-top: 15px;
+      }
+      
+      .score-card-points {
+        color: #888;
+      }
+      
+      .toggle-button-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      
+      .toggle-button {
+        padding: 10px 20px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: rgb(18, 18, 18);
+        font-weight: bold;
+        margin-left: 195px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      .toggle-button:hover {
+        background-color: #9d9fa1;
+      }
+      
+
+      @media (max-width: 767px) {
+      .leaderboard-container {
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 370px;
+        margin: auto;
+        /* margin-left: 1000px; */
+        margin-top: 50px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+
+    .leaderboard-container {
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 370px;
+      margin: auto;
+      /* margin-left: 1000px; */
+      margin-top: 50px;
+  }
+}
