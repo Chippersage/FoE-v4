@@ -8,19 +8,13 @@ import java.util.UUID;
 public class ProgramConceptsMapping {
 
     @Id
-    @Column(name = "programconcept_id", length = 500)
-    private String programConceptId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "programconcept_id", length = 500, nullable = false, unique = true)
+    private Long programConceptId;
+    
 
     @Column(name = "program_concept_desc", length = 500, nullable = false)
     private String programConceptDesc;
-
-//    @ManyToOne
-//    @JoinColumn(name = "concept_id", nullable = true)
-//    private Concept concept;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "content_id", nullable = true)
-//    private ContentMaster content;
 
     @ManyToOne
     @JoinColumn(name = "unit_id", nullable = false)
@@ -40,97 +34,90 @@ public class ProgramConceptsMapping {
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
-    
-    
-	public ProgramConceptsMapping() {
-	
-	}
-	
-	public ProgramConceptsMapping(String programConceptId, String programConceptDesc, Unit unit, Stage stage,
-			Program program, Subconcept subconcept, String uuid) {
-		super();
-		this.programConceptId = programConceptId;
-		this.programConceptDesc = programConceptDesc;
-		this.unit = unit;
-		this.stage = stage;
-		this.program = program;
-		this.subconcept = subconcept;
-		this.uuid = uuid;
-	}
- // Getters & Setters
-	
-	public String getProgramConceptId() {
-		return programConceptId;
-	}
 
-	public void setProgramConceptId(String programConceptId) {
-		this.programConceptId = programConceptId;
-	}
+    public ProgramConceptsMapping() {
+    }
 
-	public String getProgramConceptDesc() {
-		return programConceptDesc;
-	}
+    public ProgramConceptsMapping(Long programConceptId, String programConceptDesc, Unit unit, Stage stage,
+                                  Program program, Subconcept subconcept, String uuid) {
+        this.programConceptId = programConceptId;
+        this.programConceptDesc = programConceptDesc;
+        this.unit = unit;
+        this.stage = stage;
+        this.program = program;
+        this.subconcept = subconcept;
+        this.uuid = uuid;
+    }
 
-	public void setProgramConceptDesc(String programConceptDesc) {
-		this.programConceptDesc = programConceptDesc;
-	}
+    // Getters & Setters
+    public Long getProgramConceptId() {
+        return programConceptId;
+    }
 
-	public Unit getUnit() {
-		return unit;
-	}
+    public void setProgramConceptId(Long programConceptId) {
+        this.programConceptId = programConceptId;
+    }
 
-	public void setUnit(Unit unit) {
-		this.unit = unit;
-	}
+    public String getProgramConceptDesc() {
+        return programConceptDesc;
+    }
 
-	public Stage getStage() {
-		return stage;
-	}
+    public void setProgramConceptDesc(String programConceptDesc) {
+        this.programConceptDesc = programConceptDesc;
+    }
 
-	public void setStage(Stage stage) {
-		this.stage = stage;
-	}
+    public Unit getUnit() {
+        return unit;
+    }
 
-	public Program getProgram() {
-		return program;
-	}
+    public void setUnit(Unit unit) {
+        this.unit = unit;
+    }
 
-	public void setProgram(Program program) {
-		this.program = program;
-	}
+    public Stage getStage() {
+        return stage;
+    }
 
-	public Subconcept getSubconcept() {
-		return subconcept;
-	}
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
-	public void setSubconcept(Subconcept subconcept) {
-		this.subconcept = subconcept;
-	}
+    public Program getProgram() {
+        return program;
+    }
 
-	public String getUuid() {
-		return uuid;
-	}
+    public void setProgram(Program program) {
+        this.program = program;
+    }
 
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
-	
-	
-	
+    public Subconcept getSubconcept() {
+        return subconcept;
+    }
 
-	@Override
-	public String toString() {
-		return "ProgramConceptsMapping [programConceptId=" + programConceptId + ", programConceptDesc="
-				+ programConceptDesc + ", unit=" + unit + ", stage=" + stage + ", program=" + program + ", subconcept="
-				+ subconcept + ", uuid=" + uuid + "]";
-	}
+    public void setSubconcept(Subconcept subconcept) {
+        this.subconcept = subconcept;
+    }
 
-	// Method to ensure UUID and generate programConceptId before persisting
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    @Override
+    public String toString() {
+        return "ProgramConceptsMapping [programConceptId=" + programConceptId + ", programConceptDesc="
+                + programConceptDesc + ", unit=" + unit + ", stage=" + stage + ", program=" + program + ", subconcept="
+                + subconcept + ", uuid=" + uuid + "]";
+    }
+
+    // Method to ensure UUID and generate programConceptId before persisting
     @PrePersist
     private void ensureUuid() {
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
         }
     }
-    
 }

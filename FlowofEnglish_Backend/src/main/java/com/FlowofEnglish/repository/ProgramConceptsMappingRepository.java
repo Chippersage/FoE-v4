@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProgramConceptsMappingRepository extends JpaRepository<ProgramConceptsMapping, String> {
+public interface ProgramConceptsMappingRepository extends JpaRepository<ProgramConceptsMapping, Long> {
 	// Custom query method to find mappings by unitId
     List<ProgramConceptsMapping> findByUnit_UnitId(String unitId);
 	
