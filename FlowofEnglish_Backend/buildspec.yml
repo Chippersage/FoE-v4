@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      java: openjdk21  # Specify Java 21
+    commands:
+      - echo Installing Maven
+      - apt-get update
+      - apt-get install maven -y  # Install Maven
+  build:
+    commands:
+      - echo Build started on `date`
+      - mvn clean package  # Compile the Spring Boot application
+artifacts:
+  files:
+    - target/*.jar  # Include the JAR files as build artifacts

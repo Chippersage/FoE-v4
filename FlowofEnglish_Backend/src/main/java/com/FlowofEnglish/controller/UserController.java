@@ -10,6 +10,11 @@ import jakarta.servlet.http.HttpSession;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import com.FlowofEnglish.service.UserService;
 import com.FlowofEnglish.service.UserSessionMappingService;
+import com.opencsv.CSVReader;
+import org.springframework.web.multipart.MultipartFile;
+
+
+import java.io.InputStreamReader;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,11 +69,25 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    @PostMapping("/bulkcreate")
-    public List<User> createUsers(@RequestBody List<User> users) {
-        return userService.createUsers(users);
-    }
+//    @PostMapping("/bulkcreate")
+//    public List<User> createUsers(@RequestBody List<User> users) {
+//        return userService.createUsers(users);
+//    }
+    
+    @PostMapping("/bulkcreate/csv")
+    public ResponseEntity<Map<String, String>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "CSV file is missing."));
+        }
 
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+            List<User> users = userService.parseAndCreateUsersFromCsv(reader);
+            return ResponseEntity.ok(Map.of("message", "Users created successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("message", "Error processing CSV file: " + e.getMessage()));
+        }
+    }
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
         try {
