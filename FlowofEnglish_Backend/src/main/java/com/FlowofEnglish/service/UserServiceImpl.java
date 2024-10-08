@@ -9,13 +9,18 @@ import com.FlowofEnglish.dto.OrganizationDTO;
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.dto.UserDTO;
 import com.FlowofEnglish.repository.UserRepository;
+import com.opencsv.CSVReader;
 import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import com.FlowofEnglish.repository.CohortProgramRepository;
+import com.FlowofEnglish.repository.OrganizationRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +41,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private CohortProgramRepository cohortProgramRepository; // Autowire CohortProgramRepository
 
+    @Autowired
+    private OrganizationRepository organizationRepository;
+    
     @Override
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
@@ -60,12 +68,45 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
         return userRepository.save(user);
     }
-
+    
     @Override
     public List<User> createUsers(List<User> users) {
         return userRepository.saveAll(users);
     }
 
+    
+    @Override
+    public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader) {
+        List<User> users = new ArrayList<>();
+        String[] line;
+        try {
+            while ((line = csvReader.readNext()) != null) {
+                // Assuming CSV format: userId, userEmail, userName, userAddress, userPhoneNumber, userPassword, userType, organizationId
+                User user = new User();
+                user.setUserId(line[0]);
+                user.setUserEmail(line[1]);
+                user.setUserName(line[2]);
+                user.setUserAddress(line[3]);
+                user.setUserPhoneNumber(line[4]);
+                user.setUserPassword(line[5]); // Ideally, password would be hashed
+                user.setUserType(line[6]);
+                user.setUuid(UUID.randomUUID().toString());
+
+                // Fetch the organization by organizationId (line[7])
+                Organization organization = organizationRepository.findById(line[7])
+                        .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+                user.setOrganization(organization);
+
+                users.add(user);
+            }
+
+            return userRepository.saveAll(users);
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
+        }
+    }
+
+    
     @Override
     public User updateUser(String userId, User updatedUser) {
         return userRepository.findById(userId)
