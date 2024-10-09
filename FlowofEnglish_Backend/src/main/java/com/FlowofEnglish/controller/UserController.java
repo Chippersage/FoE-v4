@@ -10,6 +10,11 @@ import jakarta.servlet.http.HttpSession;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import com.FlowofEnglish.service.UserService;
 import com.FlowofEnglish.service.UserSessionMappingService;
+import com.opencsv.CSVReader;
+import org.springframework.web.multipart.MultipartFile;
+
+
+import java.io.InputStreamReader;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,11 +69,25 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    @PostMapping("/bulkcreate")
-    public List<User> createUsers(@RequestBody List<User> users) {
-        return userService.createUsers(users);
-    }
+//    @PostMapping("/bulkcreate")
+//    public List<User> createUsers(@RequestBody List<User> users) {
+//        return userService.createUsers(users);
+//    }
+    
+    @PostMapping("/bulkcreate/csv")
+    public ResponseEntity<Map<String, String>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "CSV file is missing."));
+        }
 
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+            List<User> users = userService.parseAndCreateUsersFromCsv(reader);
+            return ResponseEntity.ok(Map.of("message", "Users created successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("message", "Error processing CSV file: " + e.getMessage()));
+        }
+    }
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
         try {
@@ -86,22 +105,35 @@ public class UserController {
     
  // New Login Method
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
-        String userId = payload.get("userId");
-        String password = payload.get("password");
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
+    	String userId = loginData.get("userId");
+        String userPassword = loginData.get("userPassword");
 
         // Debug logging
         System.out.println("Received userId: " + userId);
-        System.out.println("Received password: " + password);
+        System.out.println("Received password: " + userPassword);
+        
+     // Initialize response map
+        Map<String, Object> response = new HashMap<>();
+
 
         // Use Optional to handle potential absence of user
         Optional<User> userOpt = userService.findByUserId(userId);
-        Map<String, Object> response = new HashMap<>();
+        
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();  // Unwrap the Optional safely
+            System.out.println("Stored password: " + user.getUserPassword()); // Debug: print stored password
 
-            if (userService.verifyPassword(password, user.getUserPassword())) {
+
+            if (userService.verifyPassword(userPassword, user.getUserPassword())) {
+            	
+            	// Check if user is using the default password
+                if (userService.isDefaultPassword(user)) {
+                    // Return a response directing to reset password page
+                    return new ResponseEntity<>("Redirect to reset password page", HttpStatus.FOUND);
+                }
+            	
             	// Set session attribute with userId to track user session
                 session.setAttribute("userId", userId);
                 
@@ -129,8 +161,7 @@ public class UserController {
                     // Handle case where userCohortMapping is not found
                     throw new RuntimeException("No cohort mapping found for user with ID: " + user.getUserId());
                 }
-                
-//                response.put("userType", "user");    // Adjust user type as necessary
+                               
                 
              // Fetch additional user details with cohort and program
                 UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
@@ -146,6 +177,20 @@ public class UserController {
         } else {
             response.put("error", "Invalid userId");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+    
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String userId, @RequestParam String newPassword) {
+        Optional<User> userOpt = userService.findByUserId(userId);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setUserPassword(newPassword);  // Automatically encoded
+            userService.updateUser(userId, user);
+            return ResponseEntity.ok("Password reset successfully");
+        } else {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
     }
     

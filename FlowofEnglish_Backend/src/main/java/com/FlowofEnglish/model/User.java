@@ -1,6 +1,7 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.UUID;
 
 @Entity
@@ -20,16 +21,15 @@ public class User {
     @Column(name = "user_name", length = 100)
     private String userName;
 
-    @Column(name = "user_phone_number", length = 12)
+    @Column(name = "user_phone_number", length = 15)
     private String userPhoneNumber;
 
     @Column(name = "user_password", length = 255, nullable = false)
-    private String userPassword;  // New field for user password
-    
+    private String userPassword;
+
     @Column(name = "user_type", length = 1000)
     private String userType;
 
-    
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
@@ -38,25 +38,30 @@ public class User {
     private Organization organization;
 
     public User() {
+        // Set the default password and encode it
+        this.userPassword = encodePassword("Welcome123");
     }
 
     public User(String userId, String userAddress, String userEmail, String userName, String userPhoneNumber,
-			String userPassword, String userType, String uuid, Organization organization) {
-		super();
-		this.userId = userId;
-		this.userAddress = userAddress;
-		this.userEmail = userEmail;
-		this.userName = userName;
-		this.userPhoneNumber = userPhoneNumber;
-		this.userPassword = userPassword;
-		this.userType = userType;
-		this.uuid = uuid;
-		this.organization = organization;
-	}
+                String userPassword, String userType, String uuid, Organization organization) {
+        this.userId = userId;
+        this.userAddress = userAddress;
+        this.userEmail = userEmail;
+        this.userName = userName;
+        this.userPhoneNumber = userPhoneNumber;
+        this.userPassword = encodePassword(userPassword);  // Encode the provided password
+        this.userType = userType;
+        this.uuid = uuid;
+        this.organization = organization;
+    }
 
+    // Method to encode the password
+    private String encodePassword(String password) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        return passwordEncoder.encode(password);
+    }
 
-
-	// Getters and Setters
+    // Getters and Setters
     public String getUserId() {
         return userId;
     }
@@ -102,20 +107,18 @@ public class User {
     }
 
     public void setUserPassword(String userPassword) {
-        this.userPassword = userPassword;
+        this.userPassword = encodePassword(userPassword);  // Ensure password is encoded
     }
-    
-    
 
     public String getUserType() {
-		return userType;
-	}
+        return userType;
+    }
 
-	public void setUserType(String userType) {
-		this.userType = userType;
-	}
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
 
-	public String getUuid() {
+    public String getUuid() {
         return uuid;
     }
 
@@ -132,11 +135,11 @@ public class User {
     }
 
     @Override
-	public String toString() {
-		return "User [userId=" + userId + ", userAddress=" + userAddress + ", userEmail=" + userEmail + ", userName="
-				+ userName + ", userPhoneNumber=" + userPhoneNumber + ", userPassword=" + userPassword + ", userType="
-				+ userType + ", uuid=" + uuid + ", organization=" + organization + "]";
-	}
+    public String toString() {
+        return "User [userId=" + userId + ", userAddress=" + userAddress + ", userEmail=" + userEmail + ", userName="
+                + userName + ", userPhoneNumber=" + userPhoneNumber + ", userPassword=" + userPassword + ", userType="
+                + userType + ", uuid=" + uuid + ", organization=" + organization + "]";
+    }
 
     // Method to ensure UUID and generate userId before persisting
     @PrePersist

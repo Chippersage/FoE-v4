@@ -26,7 +26,7 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173")); // Add your front-end URL
+                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173", "https://chippersageblr.s3.ap-south-1.amazonaws.com")); // Add your front-end URL
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
