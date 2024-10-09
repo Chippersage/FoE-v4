@@ -22,7 +22,9 @@ public interface UserService {
     
 	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader);
 	
-
+	Optional<User> authenticateUser(String userId, String password);
+	
+	boolean isDefaultPassword(User user);
 }
 
 //List<User> getAllUsers();
