@@ -7,7 +7,9 @@ import logo from "../../assets/Img/main-logo.png";
 import "../../Styles/Login.css";
 import axios from "axios";
 
-const LoginForm = ({ setIsAuthenticated }: { setIsAuthenticated: (status: boolean) => void }) => {
+const LoginForm = () => {
+
+  const { checkAuthUser } = useUserContext();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,12 +52,32 @@ const LoginForm = ({ setIsAuthenticated }: { setIsAuthenticated: (status: boolea
       // Store sessionId, userType, and userDetails in localStorage
       localStorage.setItem("authToken", sessionId);
       localStorage.setItem("userType", userType);
-      localStorage.setItem("userDetails", JSON.stringify(userDetails));
+      localStorage.setItem("user", JSON.stringify(userDetails));
 
-      setIsAuthenticated(true); // Update the authentication status in App.tsx
+      // setIsAuthenticated(true); // Update the authentication status in App.tsx
 
-      // Optionally, navigate directly after successful login
-      navigate("/home");
+      // // Optionally, navigate directly after successful login
+      // navigate("/home");
+
+      const isLoggedIn = await checkAuthUser();
+
+      if (isLoggedIn) {
+        // toast({
+        //   title: "Signin Successful!",
+        //   className:
+        //     "bg-success-green text-xs sm:text-lg font-semibold w-fit h-fit p-3 fixed right-10 bottom-10",
+        //   duration: 3000,
+        // });
+        console.log("Signin Successful!");
+        navigate("/");
+      }
+      // toast({
+      //   title: "Oops!, Login failed. Please try again.",
+      //   className:
+      //     "bg-danger-red font-semibold p-3 w-fit h-fit fixed right-10 bottom-10 ml-10",
+      // });
+      else setError("Oops!, Login failed. Please try again.");
+      console.log("Oops!, Login failed. Please try again.");
 
     } catch (error) {
       setError("Oops!, Login failed. Please try again.");

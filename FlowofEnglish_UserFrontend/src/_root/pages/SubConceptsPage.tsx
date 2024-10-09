@@ -7,6 +7,7 @@ import {
   Headphones,
   PenTool,
   Play,
+  Flag,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -25,7 +26,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  software: BookOpen,
+  Software: BookOpen,
   Literal: Mic,
   activity: PenTool,
   video: PlayCircle,
@@ -44,6 +45,8 @@ export default function SubConceptsPage() {
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  console.log("rendered")
   
   const fetchSubconcepts = async () => {
     try {
@@ -148,22 +151,36 @@ export default function SubConceptsPage() {
     ? iconMap[subconcept.subconceptType as keyof typeof iconMap] || PenTool
     : index === 0
     ? Play
-    : CheckCircle2;
+    : Flag;
     
   const isCompleted = subconcept && subconcept.completionStatus === "yes";
+  const isAllSubconceptsCompleted = subconcepts.every((s) => s.completionStatus === "yes");
+  // const isEnabled =
+  //   started &&
+  //   (index === 0 ||
+  //     subconcepts
+  //       .slice(0, index - 1)
+  //       .every(
+  //         (s) =>
+  //           s.completionStatus !== "disabled"
+  //       ));
   
-  const isEnabled =
+  const isEnabled = 
     started &&
-    (index === 0 || subconcepts.slice(0, index - 1).every(s => s.completionStatus === "yes"));
+    (index === 0  ||
+      (subconcept?.completionStatus !== "disabled" && index !== totalSteps - 1)
+    );
 
-  // Your rendering logic here
-
+  console.log(subconcept);
+  console.log(isEnabled);
 
           return (
             <Link
-              to={`/subconcept/${subconcept?.subconceptId}`}
+            // @ts-ignore
+              to={ (index === 0 || index === totalSteps - 1) ? null : `/subconcept/${subconcept?.subconceptId}`}
               state={{ subconcept, stageId, currentUnitId }}
               key={index}
+              className={`${!isEnabled && "cursor-not-allowed"}`}
             >
               <g
                 className={`transition-transform duration-300 ease-out ${
@@ -171,26 +188,46 @@ export default function SubConceptsPage() {
                 }`}
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
+                
                 <circle
                   cx={point.x}
                   cy={point.y}
                   r="20"
-                  fill={isEnabled ? (isCompleted ? "#4CAF50" : "#2196F3") : "#9E9E9E"}
-                  className="transition-all duration-300"
+                  fill={
+                    isEnabled
+                      ? isCompleted
+                        ? "#4CAF50"
+                        : "#2196F3"
+                      : "#9E9E9E"
+                  }
+                  className={`transition-all duration-300`}
                 />
-                <g
+                
+                {/* <g
                   className={`transition-transform duration-300 ease-out ${
-                    isEnabled ? "scale-100" : "scale-0"
+                    isEnabled ? "scale-100" : "scale-100"
                   }`}
                   style={{ transitionDelay: `${index * 100 + 200}ms` }}
                 >
-                  <Icon
-                    x={point.x - 12}
-                    y={point.y - 12}
-                    width="24"
-                    height="24"
-                    color="white"
-                  />
+                    <Icon
+                      x={point.x - 12}
+                      y={point.y - 12}
+                      width="24"
+                      height="24"
+                      color="white"
+                    />
+                </g> */}
+                <g
+                  className={`transition-transform duration-300 ease-out`}
+                  style={{ transitionDelay: `${index * 100 + 200}ms` }}
+                >
+                    <Icon
+                      x={point.x - 12}
+                      y={point.y - 12}
+                      width="24"
+                      height="24"
+                      color="white"
+                    />
                 </g>
                 {isCompleted && (
                   <g
