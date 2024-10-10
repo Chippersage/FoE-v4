@@ -12,6 +12,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import Header2 from "@/components/Header2";
 
 interface Subconcept {
   subconceptId: string;
@@ -116,8 +117,9 @@ export default function SubConceptsPage() {
 
   return (
     <div className="w-full h-[400px] overflow-hidden relative">
+      <Header2/>
       <svg
-        className="w-full h-full"
+        className="w-full h-full mt-10"
         viewBox="0 0 1000 400"
         preserveAspectRatio="xMidYMid meet"
       >
