@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // @ts-ignore
       const currentUser = JSON.parse(localStorage.getItem("user"));
-      console.log(currentUser);
+      // console.log(currentUser);
       if (currentUser) {
         setUser({
           userId: currentUser.userId,
