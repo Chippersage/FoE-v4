@@ -49,13 +49,13 @@ const SingleSubconcept = () => {
     // Listen for message events from the iframe
     window.addEventListener("message", function (event) {
       // Ensure that the event comes from the S3 domain
-      console.log("Received message request for userData from html file", event)
+      // console.log("Received message request for userData from html file", event)
       // if (event.origin !== subconcept.subconceptLink) return;
 
       if (event.data === "requestUserData") {
         // Send userData back to the iframe
         const userData = localStorage.getItem("userData");
-        console.log("userData", userData);
+        // console.log("userData", userData);
         event.source.postMessage(userData, event.origin);
       }
     });

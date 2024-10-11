@@ -7,6 +7,7 @@ import { CircleCheck } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useUserContext } from "@/context/AuthContext";
 // Define a type for the stage object
 interface Stage {
   stageEnabled: boolean;
@@ -23,6 +24,7 @@ interface StagesProps {
 export default function Stages({ stages }) {
   const [expandedModule, setExpandedModule] = useState(null);
   const [hoveredUnit, setHoveredUnit] = useState(null);
+  const { user } = useUserContext();
 
   // Ensure that stages is not null or undefined before converting it to an array
   const stagesArray = stages ? Object.values(stages) : [];
@@ -70,14 +72,19 @@ export default function Stages({ stages }) {
               >
                 {stage.units ? (
                   Object.values(stage.units).map((unit, unitIndex) => {
+                    // @ts-ignore
+                    const completionStatus = JSON.parse(localStorage.getItem(`unitCompletionStatus_${user.userId}`))
+                    const unitCompletionStatus = completionStatus?.[unit.unitId]
+                    console.log(unitCompletionStatus)
                     const indexOfFirstIncompleteUnit = Object.values(stage.units).findIndex(unit => unit.completionStatus === "incomplete")
                     return (
                       <Link
                         to={
-                          unitIndex === indexOfFirstIncompleteUnit ||
-                          unitIndex === 0
-                            ? `/subconcepts/${unit.unitId}`
-                            : null
+                          // unitIndex === indexOfFirstIncompleteUnit ||
+                          // unitIndex === 0
+                            // ?
+                             `/subconcepts/${unit.unitId}`
+                            // : null
                         }
                         state={{
                           currentUnitId: unit.unitId,
@@ -92,7 +99,7 @@ export default function Stages({ stages }) {
                         onMouseEnter={() => setHoveredUnit(unit.unitName)}
                         onMouseLeave={() => setHoveredUnit(null)}
                       >
-                        {unit.completionStatus === "yes" && (
+                        {unitCompletionStatus === "yes" && (
                           <CircleCheck
                             className="absolute top-0 left-0 text-green-500 "
                             size={16}
