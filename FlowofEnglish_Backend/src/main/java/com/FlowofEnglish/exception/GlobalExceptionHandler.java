@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email address already in use");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your are trying to do unique thing again it's  already in use");
     }
     
     // You can also add more exception handlers here if needed

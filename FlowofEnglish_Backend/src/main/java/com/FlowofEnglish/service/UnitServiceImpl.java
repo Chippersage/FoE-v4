@@ -2,7 +2,6 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.dto.StageDTO;
-import com.FlowofEnglish.dto.SubconceptResponseDTO;
 import com.FlowofEnglish.dto.UnitResponseDTO;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.model.ProgramConceptsMapping;
@@ -106,8 +105,7 @@ public class UnitServiceImpl implements UnitService {
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
             } else {
-  //              boolean stageCompleted = true;
-
+  
                 for (int j = 0; j < units.size(); j++) {
                     Unit unit = units.get(j);
                     UnitResponseDTO unitResponse = new UnitResponseDTO();
@@ -130,22 +128,32 @@ public class UnitServiceImpl implements UnitService {
                     } else if (completedSubConceptCount == totalSubConceptCount) {
                         // All subconcepts completed
                         unitCompletionStatus = "yes";
-                    } else if (completedSubConceptCount > 0) {
-                        // Some subconcepts are completed, but not all
-                        unitCompletionStatus = "incomplete";
-                        stageCompleted = false;
-                        programCompleted = false;
                     } else {
+                        // Check the previous unit's completion status for enabling/disabling logic
+                        if (j > 0) {
+                            Unit previousUnit = units.get(j - 1);
+                            String previousUnitStatus = unitMap.get(String.valueOf(j - 1)).getCompletionStatus();
+
+                            if ("yes".equals(previousUnitStatus)) {
+                                // Mark this unit as incomplete if the previous unit is completed
+                                unitCompletionStatus = "incomplete";
+                            }else {
                         // No subconcepts completed, unit is locked
                         unitCompletionStatus = "disabled";
-                        stageCompleted = false;
-                        programCompleted = false;
+                            }
+                    }else {
+                        // First unit logic (first unit in the stage)
+                        unitCompletionStatus = completedSubConceptCount > 0 ? "incomplete" : "disabled";
                     }
 
-                    // Set the unit status and add it to the unit map
-                    unitResponse.setCompletionStatus(unitCompletionStatus);
-                    unitMap.put(String.valueOf(j), unitResponse);
-                    totalUnitCount++;
+                    stageCompleted = false; // As this unit is not fully completed
+                    programCompleted = false; // At least one unit is not completed
+                }
+
+                // Set the unit status and add it to the unit map
+                unitResponse.setCompletionStatus(unitCompletionStatus);
+                unitMap.put(String.valueOf(j), unitResponse);
+                totalUnitCount++;
                 }
 
                 // Check if all units are completed to mark the stage as completed

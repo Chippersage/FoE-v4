@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "UserSubConcept_completion")
+@Table(name = "UserSubConcept_completion",
+      uniqueConstraints = @UniqueConstraint(columnNames = {"subconcept_id", "user_id"})) // Added unique constraint
 public class UserSubConcept {
 
     @Id
@@ -33,7 +34,9 @@ public class UserSubConcept {
     private Subconcept subconcept;
     
     
-
+    // A transient field to represent completion status without persisting it
+    @Transient
+    private boolean completionStatus;
 	
 
     @Column(name = "uuid", nullable = false, unique = true)
@@ -116,8 +119,12 @@ public class UserSubConcept {
         }
     }
 
-	public void setCompletionStatus(boolean b) {
-		// TODO Auto-generated method stub
-		
-	}
+ // Setters and Getters for completionStatus (non-persistent)
+    public boolean getCompletionStatus() {
+        return completionStatus;
+    }
+
+    public void setCompletionStatus(boolean completionStatus) {
+        this.completionStatus = completionStatus;
+    }
 }
