@@ -69,10 +69,10 @@ public class UserController {
         return userService.createUser(user);
     }
 
-//    @PostMapping("/bulkcreate")
-//    public List<User> createUsers(@RequestBody List<User> users) {
-//        return userService.createUsers(users);
-//    }
+    @PostMapping("/bulkcreate")
+    public List<User> createUsers(@RequestBody List<User> users) {
+        return userService.createUsers(users);
+    }
     
     @PostMapping("/bulkcreate/csv")
     public ResponseEntity<Map<String, String>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
@@ -115,8 +115,13 @@ public class UserController {
         
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
-
-
+        
+     // Call authenticateUser method
+        return authenticateUser(userId, userPassword, response);
+    }
+    
+    private ResponseEntity<?> authenticateUser(String userId, String userPassword, Map<String, Object> response) {
+        
         // Use Optional to handle potential absence of user
         Optional<User> userOpt = userService.findByUserId(userId);
         
@@ -171,7 +176,7 @@ public class UserController {
 
                 return ResponseEntity.ok(response);
             } else {
-                response.put("error", "Invalid password");
+                response.put("error", "Invalid userpassword");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
         } else {
@@ -214,6 +219,59 @@ public class UserController {
         
 } 
           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // this will be get the all details
 

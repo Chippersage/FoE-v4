@@ -32,11 +32,5 @@ public class UnitResponseDTO {
 			this.completionStatus = completionStatus;
 		}
 		public void setSub_concepts(Map<String, SubconceptResponseDTO> subconcepts) {
-			// TODO Auto-generated method stub
-			
 		}
-
-	
-	
-	
 }

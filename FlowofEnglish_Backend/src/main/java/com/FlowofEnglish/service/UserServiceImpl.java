@@ -31,17 +31,17 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private CohortService cohortService; // Autowire CohortService
+    private CohortService cohortService; 
 
     @Autowired
-    private ProgramService programService; // Autowire ProgramService
+    private ProgramService programService; 
 
     @Autowired
-    private UserCohortMappingRepository userCohortMappingRepository; // Autowire UserCohortMappingRepository
+    private UserCohortMappingRepository userCohortMappingRepository; 
 
     @Autowired
-    private CohortProgramRepository cohortProgramRepository; // Autowire CohortProgramRepository
-
+    private CohortProgramRepository cohortProgramRepository;
+    
     @Autowired
     private OrganizationRepository organizationRepository;
     
@@ -226,6 +226,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
     public boolean isDefaultPassword(User user) {
         return passwordEncoder.matches(DEFAULT_PASSWORD, user.getUserPassword());
     }
