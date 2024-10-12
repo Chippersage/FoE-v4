@@ -5,6 +5,8 @@ import { useUserContext } from "../../context/AuthContext";
 const SingleSubconcept = () => {
   const { user } = useUserContext();
   const location = useLocation();
+  // @ts-ignore
+  const sessionId = localStorage.getItem("authToken");
   const subconcept = location.state?.subconcept;
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
@@ -12,6 +14,7 @@ const SingleSubconcept = () => {
   console.log("currentUnitId", currentUnitId);
   console.log("stageId", stageId);
   console.log(user);
+  console.log("sessionId", sessionId);
 
   useEffect(() => {
     if(user){
@@ -30,7 +33,7 @@ const SingleSubconcept = () => {
             userId: user.userId,
           
           
-            sessionId: "744ef498c7704b668cc167d973047394506625989029300",
+            sessionId: sessionId,
           
           
             subconceptId: subconcept.subconceptId,
@@ -46,11 +49,13 @@ const SingleSubconcept = () => {
     // Listen for message events from the iframe
     window.addEventListener("message", function (event) {
       // Ensure that the event comes from the S3 domain
-      if (event.origin !== subconcept.subconceptLink) return;
+      // console.log("Received message request for userData from html file", event)
+      // if (event.origin !== subconcept.subconceptLink) return;
 
       if (event.data === "requestUserData") {
         // Send userData back to the iframe
         const userData = localStorage.getItem("userData");
+        // console.log("userData", userData);
         event.source.postMessage(userData, event.origin);
       }
     });

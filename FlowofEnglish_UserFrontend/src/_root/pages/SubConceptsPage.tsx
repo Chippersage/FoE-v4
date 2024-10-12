@@ -7,10 +7,13 @@ import {
   Headphones,
   PenTool,
   Play,
+  Flag,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import Header2 from "@/components/Header2";
+import { useUserContext } from "@/context/AuthContext";
 
 interface Subconcept {
   subconceptId: string;
@@ -25,7 +28,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  software: BookOpen,
+  Software: BookOpen,
   Literal: Mic,
   activity: PenTool,
   video: PlayCircle,
@@ -37,18 +40,36 @@ export default function SubConceptsPage() {
   const stageId = location.state?.stageId;
   const currentUnitId = location.state?.currentUnitId;
   const { unitId } = useParams();
-  const { userId } = useParams();
+  const {user} = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   const [started, setStarted] = useState(true);
   const [totalSteps, setTotalSteps] = useState(2);
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // console.log("rendered")
+// @ts-ignore
+  function updateUnitCompletionStatus(unitId, completionStatus = "incomplete") {
+    // Retrieve existing status from local storage
+    const key = `unitCompletionStatus_${user.userId}`;
+    // @ts-ignore
+    const existingStatus = JSON.parse(localStorage.getItem(key)) || {};
+
+    // Update the completion status for the specific unit
+    existingStatus[unitId] = completionStatus;
+
+    // Save the updated status back to local storage
+    localStorage.setItem(
+      key,
+      JSON.stringify(existingStatus)
+    );
+  }
   
   const fetchSubconcepts = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/v1/programconceptsmappings/${userId}/unit/${unitId}`
+        `http://localhost:8080/api/v1/programconceptsmappings/${user.userId}/unit/${unitId}`
       );
       return response.data;
     } catch (error) {
@@ -59,19 +80,22 @@ export default function SubConceptsPage() {
 
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
-      try {
-        const result = await fetchSubconcepts();
-        const fetchedSubconcepts: SubconceptData = result.subConcepts;
-        setSubconcepts(Object.values(fetchedSubconcepts));
-      } catch (err) {
-        setError("Failed to fetch data.");
-      } finally {
-        setLoading(false);
+      if(user){
+        try {
+          const result = await fetchSubconcepts();
+          console.log(result);
+          const fetchedSubconcepts: SubconceptData = result.subConcepts;
+          setSubconcepts(Object.values(fetchedSubconcepts));
+        } catch (err) {
+          setError("Failed to fetch data.");
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
     fetchAndSetSubconcepts();
-  }, [userId, unitId]);
+  }, [user, unitId]);
 
   useEffect(() => {
     setTotalSteps(subconcepts.length + 2); // Including start and end
@@ -113,8 +137,9 @@ export default function SubConceptsPage() {
 
   return (
     <div className="w-full h-[400px] overflow-hidden relative">
+      <Header2/>
       <svg
-        className="w-full h-full"
+        className="w-full h-full mt-10"
         viewBox="0 0 1000 400"
         preserveAspectRatio="xMidYMid meet"
       >
@@ -125,19 +150,7 @@ export default function SubConceptsPage() {
           strokeWidth="4"
           className="curve-path"
         />
-        {/* {[...Array(totalSteps)].map((_, index) => {
-          const point = getPointOnPath(index / (totalSteps - 1));
-          const subconcept =
-            index > 0 && index < totalSteps - 1 ? subconcepts[index - 1] : null;
-          const Icon = subconcept
-            ? iconMap[subconcept.subconceptType] || PenTool
-            : index === 0
-            ? Play
-            : CheckCircle2;
-          const isCompleted = subconcept && subconcept.completionStatus === "yes";
-          const isEnabled =
-            started &&
-            (index === 0 || subconcepts.slice(0, index - 1).every(s => s.completionStatus === "yes")); */}
+        
 {[...Array(totalSteps)].map((_, index) => {
   const point = getPointOnPath(index / (totalSteps - 1));
   const subconcept =
@@ -148,74 +161,89 @@ export default function SubConceptsPage() {
     ? iconMap[subconcept.subconceptType as keyof typeof iconMap] || PenTool
     : index === 0
     ? Play
-    : CheckCircle2;
+    : Flag;
     
   const isCompleted = subconcept && subconcept.completionStatus === "yes";
+  // Check if all subconcepts are completed for this unit and set in localstorage to put a tick on unit in dashboard page
+  const isAllSubconceptsCompleted = subconcepts.every((s) => s.completionStatus === "yes");
+  if (isAllSubconceptsCompleted) {
+    updateUnitCompletionStatus(unitId, "yes");
+  }
   
-  const isEnabled =
+  const isEnabled = 
     started &&
-    (index === 0 || subconcepts.slice(0, index - 1).every(s => s.completionStatus === "yes"));
+    (index === 0  ||
+      (index === totalSteps - 1 && isAllSubconceptsCompleted) ||
+      (subconcept?.completionStatus !== "disabled" && index !== totalSteps - 1)
+    );
 
-  // Your rendering logic here
-
+  console.log(subconcept);
 
           return (
-            <Link
-              to={`/subconcept/${subconcept?.subconceptId}`}
-              state={{ subconcept, stageId, currentUnitId }}
-              key={index}
-            >
-              <g
-                className={`transition-transform duration-300 ease-out ${
-                  animationTrigger ? "scale-100" : "scale-0"
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
+            <>
+              <Link
+                // @ts-ignore
+                to={ (isEnabled && index !== totalSteps - 1 && index !== 0) ? `/subconcept/${subconcept?.subconceptId}` : null}
+                state={{ subconcept, stageId, currentUnitId }}
+                key={index}
+                className={`${!isEnabled && "cursor-not-allowed"}`}
               >
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r="20"
-                  fill={isEnabled ? (isCompleted ? "#4CAF50" : "#2196F3") : "#9E9E9E"}
-                  className="transition-all duration-300"
-                />
                 <g
                   className={`transition-transform duration-300 ease-out ${
-                    isEnabled ? "scale-100" : "scale-0"
+                    animationTrigger ? "scale-100" : "scale-0"
                   }`}
-                  style={{ transitionDelay: `${index * 100 + 200}ms` }}
+                  style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <Icon
-                    x={point.x - 12}
-                    y={point.y - 12}
-                    width="24"
-                    height="24"
-                    color="white"
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="20"
+                    fill={
+                      isEnabled
+                        ? isCompleted
+                          ? "#4CAF50"
+                          : "#2196F3"
+                        : "#9E9E9E"
+                    }
+                    className={`transition-all duration-300`}
                   />
-                </g>
-                {isCompleted && (
                   <g
-                    className={`transition-transform duration-300 ease-out ${
-                      animationTrigger ? "scale-100" : "scale-0"
-                    }`}
-                    style={{ transitionDelay: `${index * 100 + 300}ms` }}
+                    className={`transition-transform duration-300 ease-out`}
+                    style={{ transitionDelay: `${index * 100 + 200}ms` }}
                   >
-                    <circle
-                      cx={point.x + 12}
-                      cy={point.y - 12}
-                      r="8"
-                      fill="#4CAF50"
-                    />
-                    <CheckCircle2
-                      x={point.x + 8}
-                      y={point.y - 16}
-                      width="8"
-                      height="8"
+                    <Icon
+                      x={point.x - 12}
+                      y={point.y - 12}
+                      width="24"
+                      height="24"
                       color="white"
                     />
                   </g>
-                )}
-              </g>
-            </Link>
+                  {isCompleted && (
+                    <g
+                      className={`transition-transform duration-300 ease-out ${
+                        animationTrigger ? "scale-100" : "scale-0"
+                      }`}
+                      style={{ transitionDelay: `${index * 100 + 300}ms` }}
+                    >
+                      <circle
+                        cx={point.x + 12}
+                        cy={point.y - 12}
+                        r="8"
+                        fill="#4CAF50"
+                      />
+                      <CheckCircle2
+                        x={point.x + 8}
+                        y={point.y - 16}
+                        width="8"
+                        height="8"
+                        color="white"
+                      />
+                    </g>
+                  )}
+                </g>
+              </Link>
+            </>
           );
         })}
       </svg>
