@@ -34,63 +34,41 @@ export const INITIAL_USER_STATE = {
 
 /// Define initial state for AuthContext
 export const INITIAL_STATE = {
-  user: null, // Defaulting to null
+  user: INITIAL_USER_STATE,
   isLoading: false,
   isAuthenticated: false,
-  setUser: (user: typeof INITIAL_USER_STATE | null) => {}, // Default function, needs to match the expected Dispatch signature
-  setIsAuthenticated: (isAuthenticated: boolean) => {},
+  setUser: () => {},
+  setIsAuthenticated: () => {},
   checkAuthUser: async () => false,
 };
 
-// Correctly type the context value
-interface UserContextType {
-  user: typeof INITIAL_USER_STATE | null; // Allow user to be null
-  setUser: React.Dispatch<React.SetStateAction<typeof INITIAL_USER_STATE | null>>; // Correct typing for setUser
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  setIsAuthenticated: (isAuthenticated: boolean) => void;
-  checkAuthUser: () => Promise<boolean>;
-}
-
 // Create AuthContext
-const AuthContext = createContext<UserContextType>({
-  user: null,
-  isLoading: false,
-  isAuthenticated: false,
-  setUser: () => {}, // This is a placeholder; React's context will handle it correctly
-  setIsAuthenticated: () => {},
-  checkAuthUser: async () => false,
-});
+const AuthContext = createContext(INITIAL_STATE);
 
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-// AuthProvider component
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+// @ts-ignore
+export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<typeof INITIAL_USER_STATE | null>(null); // Set user state to null initially
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState(INITIAL_USER_STATE);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Function to check if the user is authenticated
-  const checkAuthUser = async (): Promise<boolean> => {
+  const checkAuthUser = async () => {
     setIsLoading(true);
     try {
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      
-      
-      if (currentUser?.userDetails) {
+      // @ts-ignore
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      // console.log(currentUser);
+      if (currentUser) {
         setUser({
-          userId: currentUser.userDetails.userId,
-          userAddress: currentUser.userDetails.userAddress,
-          userEmail: currentUser.userDetails.userEmail,
-          userName: currentUser.userDetails.userName,
-          userPhoneNumber: currentUser.userDetails.userPhoneNumber,
-          organization: currentUser.userDetails.organization,
-          cohort: currentUser.userDetails.cohort,
-          program: currentUser.userDetails.program,
+          userId: currentUser.userId,
+          userAddress: currentUser.userAddress,
+          userEmail: currentUser.userEmail,
+          userName: currentUser.userName,
+          userPhoneNumber: currentUser.userPhoneNumber,
+          organization: currentUser.organization,
+          cohort: currentUser.cohort,
+          program: currentUser.program,
         });
 
         setIsAuthenticated(true);
@@ -107,9 +85,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Check authentication on mount
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      navigate("/login");
+    const user = localStorage.getItem("user");
+    if (!user) {
+      navigate("/sign-in");
     }
     checkAuthUser();
   }, [navigate]);
@@ -123,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsAuthenticated,
     checkAuthUser,
   };
-
+  // @ts-ignore
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

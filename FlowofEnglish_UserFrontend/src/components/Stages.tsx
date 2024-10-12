@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CircleCheck } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useUserContext } from "@/context/AuthContext";
 // Define a type for the stage object
 interface Stage {
   stageEnabled: boolean;
@@ -22,6 +24,7 @@ interface StagesProps {
 export default function Stages({ stages }) {
   const [expandedModule, setExpandedModule] = useState(null);
   const [hoveredUnit, setHoveredUnit] = useState(null);
+  const { user } = useUserContext();
 
   // Ensure that stages is not null or undefined before converting it to an array
   const stagesArray = stages ? Object.values(stages) : [];
@@ -68,24 +71,66 @@ export default function Stages({ stages }) {
                 className={`mt-4 grid grid-cols-2 gap-4 overflow-hidden transition-all duration-300 ease-in-out ${expandedModule === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
               >
                 {stage.units ? (
-                  Object.values(stage.units).map((unit, unitIndex) => (
-                    <Link
-                      to={`/subconcepts/${unit.unitId}`}
-                      state={{
-                        currentUnitId: unit.unitId,
-                        stageId: stage.stageId,
-                      }}
-                      key={unitIndex}
-                      className={`flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${hoveredUnit === unit.unitName ? "bg-black bg-opacity-30" : ""}`}
-                      onMouseEnter={() => setHoveredUnit(unit.unitName)}
-                      onMouseLeave={() => setHoveredUnit(null)}
-                    >
-                      <Book className={`h-6 w-6 ${stage.stageEnabled ? "text-gray-900" : "text-gray-400"}`} />
-                      <span className={`text-sm ${stage.stageEnabled ? "text-gray-900" : "text-gray-400"} ${hoveredUnit === unit.unitName ? "opacity-100 translate-x-1 font-semibold" : ""}`}>
-                        {unit.unitName}
-                      </span>
-                    </Link>
-                  ))
+                  Object.values(stage.units).map((unit, unitIndex) => {
+                    // @ts-ignore
+                    const completionStatus = JSON.parse(localStorage.getItem(`unitCompletionStatus_${user.userId}`))
+                    const unitCompletionStatus = completionStatus?.[unit.unitId]
+                    console.log(unitCompletionStatus)
+                    const indexOfFirstIncompleteUnit = Object.values(stage.units).findIndex(unit => unit.completionStatus === "incomplete")
+                    return (
+                      <Link
+                        to={
+                          // unitIndex === indexOfFirstIncompleteUnit ||
+                          // unitIndex === 0
+                            // ?
+                             `/subconcepts/${unit.unitId}`
+                            // : null
+                        }
+                        state={{
+                          currentUnitId: unit.unitId,
+                          stageId: stage.stageId,
+                        }}
+                        key={unitIndex}
+                        className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${
+                          hoveredUnit === unit.unitName
+                            ? "bg-black bg-opacity-30"
+                            : ""
+                        }`}
+                        onMouseEnter={() => setHoveredUnit(unit.unitName)}
+                        onMouseLeave={() => setHoveredUnit(null)}
+                      >
+                        {unitCompletionStatus === "yes" && (
+                          <CircleCheck
+                            className="absolute top-0 left-0 text-green-500 "
+                            size={16}
+                          />
+                        )}
+
+                        <Book
+                          className={`h-6 w-6 ${
+                            stage.stageEnabled
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }`}
+                        />
+                        <span
+                          className={`text-sm ${
+                            stage.stageEnabled
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          } ${
+                            hoveredUnit === unit.unitName
+                              ? "opacity-100 translate-x-1 font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {unit.unitName}
+                        </span>
+                      </Link>
+                    );
+                  }
+                    
+                  )
                 ) : (
                   <p className="text-gray-500">No units available</p>
                 )}

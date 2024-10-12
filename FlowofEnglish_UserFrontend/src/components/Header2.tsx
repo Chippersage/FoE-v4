@@ -1,4 +1,4 @@
-import React from "react"; // Ensure React is imported
+// import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
@@ -26,11 +26,10 @@ const Header2 = () => {
       // Clear user info and setUser to null after logout
       localStorage.removeItem("authToken");
       localStorage.removeItem("userType");
-      localStorage.removeItem("userDetails");
-      // Set user state to null to clear out the user data from context
-    setUser(null);
+      localStorage.removeItem("user");
+      // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
-      navigate("/login");
+      navigate("/sign-in");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -38,11 +37,18 @@ const Header2 = () => {
 
   return (
     <div className="page-row header2 mt-20">
-      <h3 className="hellohead" style={{ fontSize: '18px', fontWeight: 'normal', color: '#262525' }}>
+      <h3
+        className="hellohead"
+        style={{ fontSize: "18px", fontWeight: "normal", color: "#262525" }}
+      >
         {user ? `Hello, ${user.userName}` : "Hello, Guest"}
       </h3>
-      <h3 className="hellohead mx-auto" style={{ fontSize: '18px', fontWeight: 'normal', color: '#262525' }}>
-        {user ? `Continue, ${user.program.programName}` : "Continue as Guest"}  {/* Show "Continue as Guest" if user is null */}
+      <h3
+        className="hellohead mx-auto"
+        style={{ fontSize: "18px", fontWeight: "normal", color: "#262525" }}
+      >
+        {user ? `Continue, ${user.program.programName}` : "Continue as Guest"}{" "}
+        {/* Show "Continue as Guest" if user is null */}
       </h3>
       <div className="logout-button">
         {user && (
@@ -51,7 +57,7 @@ const Header2 = () => {
             alt="Logout"
             className="logout-icon"
             onClick={handleLogout} // Attach the logout handler to the image
-            style={{ width: '40px', height: '30px', cursor: 'pointer' }} // Set size and make clickable
+            style={{ width: "40px", height: "30px", cursor: "pointer" }} // Set size and make clickable
           />
         )}
       </div>
