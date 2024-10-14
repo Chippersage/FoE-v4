@@ -67,14 +67,12 @@ public class SubconceptServiceImpl implements SubconceptService {
         SubconceptResponseDTO dto = new SubconceptResponseDTO();
         dto.setSubconceptId(subconcept.getSubconceptId());
         dto.setDependency(subconcept.getDependency());
-        dto.setShowTo(subconcept.getShowTo());
+        dto.setSubconceptMaxscore(subconcept.getSubconceptMaxscore());
         dto.setSubconceptDesc(subconcept.getSubconceptDesc());
         dto.setSubconceptGroup(subconcept.getSubconceptGroup());
         dto.setSubconceptTitle(subconcept.getSubconceptTitle());
         dto.setSubconceptType(subconcept.getSubconceptType());
         dto.setSubconceptLink(subconcept.getSubconceptLink());
-        dto.setCompletionStatus("no");  // You can update this based on your logic
-        
 
         return dto;
     }

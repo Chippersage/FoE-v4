@@ -85,9 +85,9 @@ public class UnitServiceImpl implements UnitService {
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
         
-        boolean previousStageCompleted = true;  // Flag to determine if the previous stage is completed
-        boolean programCompleted = true;  // Track if the entire program is complete
-
+        boolean previousStageCompleted = true;  
+        boolean programCompleted = true;  
+        
         // Iterate through stages and build the stage map
         for (int i = 0; i < stages.size(); i++) {
             Stage stage = stages.get(i);
@@ -113,24 +113,28 @@ public class UnitServiceImpl implements UnitService {
                     unitResponse.setUnitName(unit.getUnitName());
                     unitResponse.setUnitDesc(unit.getUnitDesc());
 
-                    // Fetch user subconcepts for the current unit
+                    // Fetch user sub concepts for the current unit
                     List<UserSubConcept> userSubConceptsForUnit = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
 
-                    // Fetch the total number of subconcepts associated with the unit
+                    // Fetch the total number of sub concepts associated with the unit
                     int totalSubConceptCount = getTotalSubConceptCount(unit.getUnitId());
                     int completedSubConceptCount = userSubConceptsForUnit.size();
 
                     String unitCompletionStatus;
                     
                     if (totalSubConceptCount == 0) {
-                        // No subconcepts in the unit
+                        // No sub concepts in the unit
                         unitCompletionStatus = "No subconcepts in this unit";
                     } else if (completedSubConceptCount == totalSubConceptCount) {
-                        // All subconcepts completed
+                        // All sub concepts completed
                         unitCompletionStatus = "yes";
                     } else {
                         // Check the previous unit's completion status for enabling/disabling logic
-                        if (j > 0) {
+                    	if (j == 0) {
+                    	    // First unit logic (first unit in the stage)
+                    	    unitCompletionStatus = completedSubConceptCount > 0 ? "incomplete" : "incomplete"; 
+                    	}
+                           else  {
                             Unit previousUnit = units.get(j - 1);
                             String previousUnitStatus = unitMap.get(String.valueOf(j - 1)).getCompletionStatus();
 
@@ -138,12 +142,9 @@ public class UnitServiceImpl implements UnitService {
                                 // Mark this unit as incomplete if the previous unit is completed
                                 unitCompletionStatus = "incomplete";
                             }else {
-                        // No subconcepts completed, unit is locked
+                        // No sub concepts completed, unit is locked
                         unitCompletionStatus = "disabled";
                             }
-                    }else {
-                        // First unit logic (first unit in the stage)
-                        unitCompletionStatus = completedSubConceptCount > 0 ? "incomplete" : "disabled";
                     }
 
                     stageCompleted = false; // As this unit is not fully completed
@@ -191,7 +192,7 @@ public class UnitServiceImpl implements UnitService {
         return programResponse;
     }
     /**
-     * Helper method to get the total subconcept count for a unit.
+     * Helper method to get the total sub concept count for a unit.
      */
     private int getTotalSubConceptCount(String unitId) {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);

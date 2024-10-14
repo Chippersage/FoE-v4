@@ -24,7 +24,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
     
     @Autowired
-    private UserSubConceptRepository userSubConceptRepository; // Inject the repository
+    private UserSubConceptRepository userSubConceptRepository; 
     
     @Override
     public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
@@ -51,7 +51,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         responseDTO.setUnitId(unitId);
 
         // Set stageId (assuming all mappings belong to the same stage)
-        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); // Adjust according to your entity structure
+        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
 
         // Initialize the sub_concepts map
         Map<String, SubconceptResponseDTO> subconcepts = new HashMap<>();
@@ -76,11 +76,11 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptResponseDTO.setSubconceptType(mapping.getSubconcept().getSubconceptType());
             subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
             subconceptResponseDTO.setDependency(mapping.getSubconcept().getDependency());
-            subconceptResponseDTO.setShowTo(mapping.getSubconcept().getShowTo());
+            subconceptResponseDTO.setSubconceptMaxscore(mapping.getSubconcept().getSubconceptMaxscore());
             subconceptResponseDTO.setSubconceptGroup(mapping.getSubconcept().getSubconceptGroup());
             subconceptResponseDTO.setSubconceptTitle(mapping.getSubconcept().getSubconceptTitle());
          
-         // Check if the current subconcept has been completed by the user
+            // Check if the current subconcept has been completed by the user
             boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());
 
             if (isCompleted) {

@@ -54,12 +54,9 @@ public class UserCohortMapping  {
     public void setLeaderboardScore(int leaderboardScore) {
         this.leaderboardScore = leaderboardScore;
     }
-
     public String getUuid() {
         return uuid;
     }
-    
-
     public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}

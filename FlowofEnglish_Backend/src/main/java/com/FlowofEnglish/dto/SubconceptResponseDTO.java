@@ -5,7 +5,7 @@ package com.FlowofEnglish.dto;
 public class SubconceptResponseDTO {
 	 private String subconceptId;
 	 private String dependency;
-	 private String showTo;
+	 private Integer subconceptMaxscore;
 	 private String subconceptDesc;
 	 private String subconceptGroup;
 	 private String subconceptTitle;
@@ -28,11 +28,12 @@ public class SubconceptResponseDTO {
 	public void setDependency(String dependency) {
 		this.dependency = dependency;
 	}
-	public String getShowTo() {
-		return showTo;
+	
+	public Integer getSubconceptMaxscore() {
+		return subconceptMaxscore;
 	}
-	public void setShowTo(String showTo) {
-		this.showTo = showTo;
+	public void setSubconceptMaxscore(Integer subconceptMaxscore) {
+		this.subconceptMaxscore = subconceptMaxscore;
 	}
 	public String getSubconceptDesc() {
 		return subconceptDesc;

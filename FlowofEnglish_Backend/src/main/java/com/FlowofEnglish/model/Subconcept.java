@@ -38,6 +38,10 @@ public class Subconcept {
     @Column(name = "user_type", length = 1000)
     private String userType;
 
+    
+    @Column(name = "subconcept_maxscore", nullable = true)
+    private Integer subconceptMaxscore;
+
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
@@ -52,10 +56,11 @@ public class Subconcept {
 	public Subconcept() {
 		
 	}
-
-	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc, String subconceptDesc2, 
-			String subconceptGroup, String subconceptLink, String subconceptTitle, String subconceptType,
-			String userType, String uuid, Concept concept, ContentMaster content) {
+	
+	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc,
+			String subconceptDesc2, String subconceptGroup, String subconceptLink, String subconceptTitle,
+			String subconceptType, String userType, Integer subconceptMaxscore, String uuid, Concept concept,
+			ContentMaster content) {
 		super();
 		this.subconceptId = subconceptId;
 		this.dependency = dependency;
@@ -67,10 +72,12 @@ public class Subconcept {
 		this.subconceptTitle = subconceptTitle;
 		this.subconceptType = subconceptType;
 		this.userType = userType;
+		this.subconceptMaxscore = subconceptMaxscore;
 		this.uuid = uuid;
 		this.concept = concept;
 		this.content = content;
 	}
+
 
 	// Getters and Setters
 	public String getSubconceptId() {
@@ -153,6 +160,14 @@ public class Subconcept {
 		this.userType = userType;
 	}
 
+	public Integer getSubconceptMaxscore() {
+		return subconceptMaxscore;
+	}
+
+	public void setSubconceptMaxscore(Integer subconceptMaxscore) {
+		this.subconceptMaxscore = subconceptMaxscore;
+	}
+
 	public String getUuid() {
 		return uuid;
 	}
@@ -182,8 +197,8 @@ public class Subconcept {
 		return "Subconcept [subconceptId=" + subconceptId + ", dependency=" + dependency + ", showTo=" + showTo
 				+ ", subconceptDesc=" + subconceptDesc + ", subconceptDesc2=" + subconceptDesc2 + ", subconceptGroup="
 				+ subconceptGroup + ", subconceptLink=" + subconceptLink + ", subconceptTitle=" + subconceptTitle
-				+ ", subconceptType=" + subconceptType + ", userType=" + userType + ", uuid=" + uuid + ", concept="
-				+ concept + ", content=" + content + "]";
+				+ ", subconceptType=" + subconceptType + ", userType=" + userType + ", subconceptMaxscore="
+				+ subconceptMaxscore + ", uuid=" + uuid + ", concept=" + concept + ", content=" + content + "]";
 	}
 	// Method to ensure UUID and generate subconceptId before persisting
     @PrePersist
