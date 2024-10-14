@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.User;
@@ -12,10 +13,11 @@ import com.FlowofEnglish.repository.UserRepository;
 import com.opencsv.CSVReader;
 import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import com.FlowofEnglish.repository.CohortProgramRepository;
+import com.FlowofEnglish.repository.CohortRepository;
 import com.FlowofEnglish.repository.OrganizationRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -43,11 +45,16 @@ public class UserServiceImpl implements UserService {
     private CohortProgramRepository cohortProgramRepository;
     
     @Autowired
+    private CohortRepository cohortRepository;
+    
+    @Autowired
     private OrganizationRepository organizationRepository;
     
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
 
     // The default password that every new user is assigned
     private final String DEFAULT_PASSWORD = "Welcome123";
@@ -70,10 +77,6 @@ public class UserServiceImpl implements UserService {
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            if (isDefaultPassword(user)) {
-                // Redirect to reset password page or add an indicator in the response
-                throw new RuntimeException("Redirect to reset password");
-            }
             return Optional.of(convertToDTO(user));
         } else {
             return Optional.empty();
@@ -88,48 +91,166 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+
+    
     @Override
     public User createUser(User user) {
-        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
-        return userRepository.save(user);
+        String plainPassword = DEFAULT_PASSWORD;
+        user.setUserPassword(passwordEncoder.encode(plainPassword));  // Hash the password for DB storage
+        
+        User savedUser = userRepository.save(user);
+        
+        // If the email is present, send credentials to user
+        if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+            emailService.sendEmail(user.getUserEmail(), 
+                "Your Credentials",
+                "UserID: " + user.getUserId() + "\nPassword: " + plainPassword);
+        }
+        
+        return savedUser;
     }
+
     
     @Override
     public List<User> createUsers(List<User> users) {
         return userRepository.saveAll(users);
     }
     
+//    @Override
+//    public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
+//        List<User> usersToCreate = new ArrayList<>();
+//        String[] line;
+//        try {
+//        	// Read header row to skip it
+//            csvReader.readNext(); 
+//            while ((line = csvReader.readNext()) != null) {
+//                
+//                String userId = line[0];
+//             // Check if userId already exists in the database
+//                if (userRepository.existsById(userId)) {
+//                    errorMessages.add("UserID: " + userId + " already exists");
+//                    continue; // Skip creating this user and move to the next one
+//                }
+//                
+//                User user = new User();
+//                user.setUserId(userId);
+//                user.setUserEmail(line[1]);
+//                user.setUserName(line[2]);
+//                user.setUserAddress(line[3]);
+//                user.setUserPhoneNumber(line[4]);
+//                String plainPassword = DEFAULT_PASSWORD;
+//                user.setUserPassword(passwordEncoder.encode(plainPassword)); // Set the default password
+//                user.setUserType(line[5]);
+//                user.setUuid(UUID.randomUUID().toString());
+//
+//                Organization organization = organizationRepository.findById(line[6])
+//                		.orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " ));
+//                System.out.println("Looking up organization for ID: " + line[6]);
+//
+//                user.setOrganization(organization);
+//
+//                usersToCreate.add(user);
+//               
+//             
+//             // Send email if the email field is not null
+//                if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+//                    emailService.sendEmail(user.getUserEmail(),
+//                        "Your Credentials",
+//                        "UserID: " + user.getUserId() + "\nPassword: " + plainPassword);
+//                }  
+//              }
+//
+//            userRepository.saveAll(usersToCreate);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
+//        }
+//
+//        return usersToCreate; // Return only successfully created users
+//    }
+//    
+    
     @Override
-    public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader) {
-        List<User> users = new ArrayList<>();
+    public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
+        List<User> usersToCreate = new ArrayList<>();
+        List<UserCohortMapping> userCohortMappingsToCreate = new ArrayList<>();
         String[] line;
+
         try {
-        	// Read header row to skip it
-            csvReader.readNext(); // Skip header row
+            // Read header row to skip it
+            csvReader.readNext(); 
+            
             while ((line = csvReader.readNext()) != null) {
+                String userId = line[0];
+
+                // Check if userId already exists in the database
+                if (userRepository.existsById(userId)) {
+                    errorMessages.add("UserID: " + userId + " already exists");
+                    continue; // Skip creating this user and move to the next one
+                }
+
+                // Proceed to create the user
                 User user = new User();
-                user.setUserId(line[0]);
+                user.setUserId(userId);
                 user.setUserEmail(line[1]);
                 user.setUserName(line[2]);
                 user.setUserAddress(line[3]);
                 user.setUserPhoneNumber(line[4]);
-                user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD)); // Set the default password
+                String plainPassword = DEFAULT_PASSWORD;
+                user.setUserPassword(passwordEncoder.encode(plainPassword)); // Set the default password
                 user.setUserType(line[5]);
                 user.setUuid(UUID.randomUUID().toString());
 
-                Organization organization = organizationRepository.findById(line[6])
-                		.orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " ));
-                System.out.println("Looking up organization for ID: " + line[6]);
+                // Find the organization by its ID
+                try {
+                    // Fetch organization by ID
+                    Organization organization = organizationRepository.findById(line[6])
+                            .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " ));
+                    System.out.println("Looking up organization for ID: " + line[6]);
+                    user.setOrganization(organization);
+                } catch (IllegalArgumentException ex) {
+                    errorMessages.add("Error for UserID " + userId + ": " + ex.getMessage());
+                    continue; // Skip this user and move to the next one
+                }
 
-                user.setOrganization(organization);
+                // Add user to the list for bulk saving
+                usersToCreate.add(user);
+                
+                // Send email if the email field is not null
+                if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+                    emailService.sendEmail(user.getUserEmail(),
+                        "Your Credentials",
+                        "UserID: " + user.getUserId() + "\nPassword: " + plainPassword);
+                }
 
-                users.add(user);
+                // Now handle the cohort information (assuming cohort ID is in line[7])
+                String cohortId = line[7];
+
+                // Find the cohort by its ID
+                Cohort cohort = cohortRepository.findById(cohortId)
+                    .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
+
+                // Create the UserCohortMapping
+                UserCohortMapping userCohortMapping = new UserCohortMapping();
+                userCohortMapping.setUser(user);
+                userCohortMapping.setCohort(cohort);
+                userCohortMapping.setLeaderboardScore(0); // Initial score, you can set this as needed
+                userCohortMapping.setUuid(UUID.randomUUID().toString());
+
+                // Add to the list of mappings to be saved later
+                userCohortMappingsToCreate.add(userCohortMapping);
             }
 
-            return userRepository.saveAll(users);
+            // Save all new users that don't already exist
+            userRepository.saveAll(usersToCreate);
+
+            // Save the user-cohort mappings
+            userCohortMappingRepository.saveAll(userCohortMappingsToCreate);
+
         } catch (Exception e) {
             throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
         }
+
+        return usersToCreate; // Return only successfully created users
     }
 
     @Override
@@ -154,18 +275,8 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(String userId) {
         userRepository.deleteById(userId);
     }
-    
-    @Override
-    public Optional<User> authenticateUser(String userId, String password) {
-        return userRepository.findById(userId).filter(user -> {
-            boolean isAuthenticated = verifyPassword(password, user.getUserPassword());
-            if (isAuthenticated && isDefaultPassword(user)) {
-                throw new IllegalStateException("Please reset your password.");
-            }
-            return isAuthenticated;
-        });
-    }
-    
+
+
     public void resetPassword(String userId, String newPassword) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -173,8 +284,12 @@ public class UserServiceImpl implements UserService {
         user.setUserPassword(passwordEncoder.encode(newPassword)); // Encode new password
         userRepository.save(user);
     }
+    
+    public boolean verifyPassword(String plainPassword, String encodedPassword) {
+        return passwordEncoder.matches(plainPassword, encodedPassword);
+    }
 
-  
+    
     @Override
     public UserDTO getUserDetailsWithProgram(String userId) {
         // Fetch the UserCohortMapping
@@ -218,17 +333,6 @@ public class UserServiceImpl implements UserService {
         dto.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
         dto.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
         return dto;
-    }
-    
-    @Override
-    public boolean verifyPassword(String providedPassword, String storedPassword) {
-        return passwordEncoder.matches(providedPassword, storedPassword);
-    }
-
-
-    @Override
-    public boolean isDefaultPassword(User user) {
-        return passwordEncoder.matches(DEFAULT_PASSWORD, user.getUserPassword());
     }
     
 }

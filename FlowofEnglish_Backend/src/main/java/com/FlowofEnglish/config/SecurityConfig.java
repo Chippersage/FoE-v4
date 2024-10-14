@@ -55,7 +55,6 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()
                     .requestMatchers("/api/v1/programs/create").permitAll()
                     .requestMatchers("/api/v1/stages/**").permitAll()
-                    .requestMatchers("/api/v1/stages/create").permitAll()
                     .requestMatchers("/api/v1/units/**").permitAll()
                     .requestMatchers("/api/v1/user-attempts/**").permitAll()
                     .requestMatchers("/api/v1/user-session-mappings/**").permitAll()

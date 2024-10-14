@@ -22,11 +22,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -38,12 +40,11 @@ public class UserController {
     @Autowired
     private UserSessionMappingService userSessionMappingService;
     
-    
     @Autowired
     private HttpSession session;
 
     @Autowired
-    private UserCohortMappingService userCohortMappingService; // Add this line to inject UserCohortMappingService
+    private UserCohortMappingService userCohortMappingService; 
 
     
     @GetMapping
@@ -75,19 +76,47 @@ public class UserController {
     }
     
     @PostMapping("/bulkcreate/csv")
-    public ResponseEntity<Map<String, String>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "CSV file is missing."));
         }
 
+        // Initialize a list to store error messages during user creation
+        List<String> errorMessages = new ArrayList<>();
+
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
-            List<User> users = userService.parseAndCreateUsersFromCsv(reader);
-            return ResponseEntity.ok(Map.of("message", "Users created successfully"));
+            // Parse the CSV and create users, but catch errors for already existing users
+            List<User> createdUsers = userService.parseAndCreateUsersFromCsv(reader, errorMessages);
+
+            // Successful user creation info
+            List<Map<String, String>> createdUsersInfo = createdUsers.stream()
+                .map(user -> Map.of("userId", user.getUserId(), "password", "Welcome123"))
+                .collect(Collectors.toList());
+
+            // Total users processed (successful + errors)
+            String message = createdUsersInfo.size() + " users created successfully.";
+
+            // Prepare the response
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", message);
+            response.put("createdUsersCount", createdUsersInfo.size()); // Number of users created
+            response.put("createdUsers", createdUsersInfo); // List of created users
+
+            // Check if there are errors (already existing users)
+            if (!errorMessages.isEmpty()) {
+                response.put("errors", errorMessages); // Include error messages in response
+            }
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body(Map.of("message", "Error processing CSV file: " + e.getMessage()));
         }
     }
+
+
+
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
         try {
@@ -116,29 +145,16 @@ public class UserController {
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
         
-     // Call authenticateUser method
-        return authenticateUser(userId, userPassword, response);
-    }
-    
-    private ResponseEntity<?> authenticateUser(String userId, String userPassword, Map<String, Object> response) {
-        
-        // Use Optional to handle potential absence of user
         Optional<User> userOpt = userService.findByUserId(userId);
         
-
         if (userOpt.isPresent()) {
-            User user = userOpt.get();  // Unwrap the Optional safely
-            System.out.println("Stored password: " + user.getUserPassword()); // Debug: print stored password
+            User user = userOpt.get();
+            System.out.println("Stored password: " + user.getUserPassword());
 
+            // Debugging the user type
+            System.out.println("User Type: " + user.getUserType());
 
             if (userService.verifyPassword(userPassword, user.getUserPassword())) {
-            	
-            	// Check if user is using the default password
-                if (userService.isDefaultPassword(user)) {
-                    // Return a response directing to reset password page
-                    return new ResponseEntity<>("Redirect to reset password page", HttpStatus.FOUND);
-                }
-            	
             	// Set session attribute with userId to track user session
                 session.setAttribute("userId", userId);
                 
@@ -184,6 +200,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
+  
     
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String userId, @RequestParam String newPassword) {

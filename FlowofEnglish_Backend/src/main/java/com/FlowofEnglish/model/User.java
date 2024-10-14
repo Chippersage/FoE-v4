@@ -1,7 +1,6 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.UUID;
 
 @Entity
@@ -38,8 +37,7 @@ public class User {
     private Organization organization;
 
     public User() {
-        // Set the default password and encode it
-        this.userPassword = encodePassword("Welcome123");
+        
     }
 
     public User(String userId, String userAddress, String userEmail, String userName, String userPhoneNumber,
@@ -49,17 +47,13 @@ public class User {
         this.userEmail = userEmail;
         this.userName = userName;
         this.userPhoneNumber = userPhoneNumber;
-        this.userPassword = encodePassword(userPassword);  // Encode the provided password
+        this.userPassword = userPassword;
         this.userType = userType;
         this.uuid = uuid;
         this.organization = organization;
     }
 
-    // Method to encode the password
-    private String encodePassword(String password) {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        return passwordEncoder.encode(password);
-    }
+    
 
     // Getters and Setters
     public String getUserId() {
@@ -107,7 +101,7 @@ public class User {
     }
 
     public void setUserPassword(String userPassword) {
-        this.userPassword = encodePassword(userPassword);  // Ensure password is encoded
+        this.userPassword = userPassword;  
     }
 
     public String getUserType() {

@@ -17,14 +17,11 @@ public interface UserService {
     List<User> createUsers(List<User> users);
     User updateUser(String userId, User user);
     void deleteUser(String userId);
-    boolean verifyPassword(String providedPassword, String storedPassword);
 	UserDTO getUserDetailsWithProgram(String userId);
     
-	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader);
-	
-	Optional<User> authenticateUser(String userId, String password);
-	
-	boolean isDefaultPassword(User user);
+	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
+    boolean verifyPassword(String plainPassword, String encodedPassword);
+    
 }
 
 
