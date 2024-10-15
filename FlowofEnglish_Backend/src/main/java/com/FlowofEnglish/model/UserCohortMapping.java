@@ -7,7 +7,8 @@ import java.util.UUID;
 
 @Entity
 //@IdClass(UserCohortMappingId.class)
-@Table(name = "UserCohortMapping")
+@Table(name = "UserCohortMapping",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "user_id"}))
 public class UserCohortMapping  {
 
 	@Id
