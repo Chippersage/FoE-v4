@@ -16,11 +16,14 @@ public interface UserService {
     User createUser(User user);
     List<User> createUsers(List<User> users);
     User updateUser(String userId, User user);
-    void deleteUser(String userId);
+    String deleteUser(String userId);
+    String deleteUsers(List<String> userIds);
 	UserDTO getUserDetailsWithProgram(String userId);
-    
+	String getCohortIdByUserId(String userId);
+	
 	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
     boolean verifyPassword(String plainPassword, String encodedPassword);
+	boolean resetPassword(String userId, String newPassword);
     
 }
 

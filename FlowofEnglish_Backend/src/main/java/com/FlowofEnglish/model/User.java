@@ -1,6 +1,9 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,9 +39,21 @@ public class User {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    public User() {
-        
-    }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserAttempts> userAttempts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserCohortMapping> userCohortMappings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSessionMapping> userSessions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSubConcept> userSubConcept = new ArrayList<>();
+
+    
+    public User() { }
+    
 
     public User(String userId, String userAddress, String userEmail, String userName, String userPhoneNumber,
                 String userPassword, String userType, String uuid, Organization organization) {

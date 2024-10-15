@@ -82,10 +82,6 @@ public class UserAttempts {
 		this.uuid = uuid;
 	}
 
-
- 
-
-
 // Getters and Setters
 
 	public Long getUserAttemptId() {
@@ -123,8 +119,6 @@ public class UserAttempts {
 		return userAttemptStartTimestamp;
 	}
 
-
-
 	public void setUserAttemptStartTimestamp(LocalDateTime userAttemptStartTimestamp) {
 		this.userAttemptStartTimestamp = userAttemptStartTimestamp;
 	}
@@ -156,8 +150,6 @@ public class UserAttempts {
 		return program;
 	}
 
-
-
 	public void setProgram(Program program) {
 		this.program = program;
 	}
@@ -166,48 +158,33 @@ public class UserAttempts {
 		return stage;
 	}
 
-
-
 	public void setStage(Stage stage) {
 		this.stage = stage;
 	}
-
 
 	public UserSessionMapping getSession() {
 		return session;
 	}
 
-
-
 	public void setSession(UserSessionMapping session) {
 		this.session = session;
 	}
-
-
 
 	public Subconcept getSubconcept() {
 		return subconcept;
 	}
 
-
-
 	public void setSubconcept(Subconcept subconcept) {
 		this.subconcept = subconcept;
 	}
-
-
 
 	public String getUuid() {
 		return uuid;
 	}
 
-
-
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
-
-
 
 	@Override
 	public String toString() {
@@ -217,9 +194,6 @@ public class UserAttempts {
 				+ ", stage=" + stage + ", user=" + user + ", session=" + session + ", subconcept=" + subconcept
 				+ ", uuid=" + uuid + "]";
 	}
-
-
-
 	
 	// Method to ensure UUID and generate userAttemptId before persisting
     @PrePersist
