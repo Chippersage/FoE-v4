@@ -69,11 +69,6 @@ public class UserController {
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
-
-    @PostMapping("/bulkcreate")
-    public List<User> createUsers(@RequestBody List<User> users) {
-        return userService.createUsers(users);
-    }
     
     @PostMapping("/bulkcreate/csv")
     public ResponseEntity<Map<String, Object>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {

@@ -14,7 +14,6 @@ public interface UserService {
     Optional<UserDTO> getUserById(String userId);
     List<UserDTO> getUsersByOrganizationId(String organizationId);
     User createUser(User user);
-    List<User> createUsers(List<User> users);
     User updateUser(String userId, User user);
     String deleteUser(String userId);
     String deleteUsers(List<String> userIds);
@@ -26,14 +25,3 @@ public interface UserService {
 	boolean resetPassword(String userId, String newPassword);
     
 }
-
-
-
-
-
-
-//List<User> getAllUsers();
-//Optional<User> getUserById(String userId);
-//List<User> getUsersByOrganizationId(String organizationId);
-//Optional<UserDTO> getUserDetails(String userId);
-//User findByUserId(String userId);

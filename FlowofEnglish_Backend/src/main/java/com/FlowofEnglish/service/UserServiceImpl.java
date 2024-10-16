@@ -113,10 +113,7 @@ public class UserServiceImpl implements UserService {
     }
 
     
-    @Override
-    public List<User> createUsers(List<User> users) {
-        return userRepository.saveAll(users);
-    }
+    
     
     @Override
     public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
@@ -173,21 +170,15 @@ public class UserServiceImpl implements UserService {
                 // Add user to the list for bulk saving
                 usersToCreate.add(user);
                 
-                // Send email if the email field is not null
-                if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
-                    emailService.sendEmail(user.getUserEmail(),
-                        "Your Credentials",
-                        "UserID: " + user.getUserId() + "\nPassword: " + plainPassword);
-                }
-
-                // Now handle the cohort information (assuming cohort ID is in line[7])
+             // Now handle the cohort information (assuming cohort ID is in line[7])
                 String cohortId = line[7];
-
+                try {
                 // Find the cohort by its ID
                 Cohort cohort = cohortRepository.findById(cohortId)
                     .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
 
                 // Create the UserCohortMapping
+                
                 UserCohortMapping userCohortMapping = new UserCohortMapping();
                 userCohortMapping.setUser(user);
                 userCohortMapping.setCohort(cohort);
@@ -196,14 +187,44 @@ public class UserServiceImpl implements UserService {
 
                 // Add to the list of mappings to be saved later
                 userCohortMappingsToCreate.add(userCohortMapping);
+            }catch (IllegalArgumentException ex) {
+                errorMessages.add("Error for UserID " + userId + ": " + ex.getMessage());
+                continue;
             }
+        }
 
-            // Save all new users that don't already exist
-            userRepository.saveAll(usersToCreate);
+        // Save all new users that don't already exist
+        List<User> savedUsers = userRepository.saveAll(usersToCreate);
 
             // Save the user-cohort mappings
             userCohortMappingRepository.saveAll(userCohortMappingsToCreate);
-            
+
+                
+                // Send email if the email field is not null
+            for (User savedUser : savedUsers) {
+            	String plainPassword = DEFAULT_PASSWORD;
+            	if (savedUser.getUserEmail() != null && !savedUser.getUserEmail().isEmpty()) {
+                    UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserId(savedUser.getUserId())
+                            .orElseThrow(() -> new IllegalArgumentException("Cohort not found for userId: " + savedUser.getUserId()));
+
+                    Cohort cohort = userCohortMapping.getCohort();
+                    CohortProgram cohortProgram = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
+                            .orElseThrow(() -> new IllegalArgumentException("Program not found for cohortId: " + cohort.getCohortId()));
+
+                    Organization organization = savedUser.getOrganization();
+                    emailService.sendUserCreationEmail(
+                            savedUser.getUserEmail(),
+                            savedUser.getUserName(),
+                            savedUser.getUserId(),
+                            plainPassword,
+                            cohortProgram.getProgram().getProgramName(),
+                            cohort.getCohortName(),
+                            organization.getOrganizationAdminEmail(),
+                            organization.getOrganizationName()
+                    );
+                }
+            }
+                            
          // Log the count of users in the database after insertion
             long totalUsersInDatabase = userRepository.count();
             System.out.println("Total users in the database after insertion: " + totalUsersInDatabase);
