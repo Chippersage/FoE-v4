@@ -73,18 +73,16 @@ export default function Stages({ stages }) {
                 {stage.units ? (
                   Object.values(stage.units).map((unit, unitIndex) => {
                     // @ts-ignore
-                    const completionStatus = JSON.parse(localStorage.getItem(`unitCompletionStatus_${user.userId}`))
-                    const unitCompletionStatus = completionStatus?.[unit.unitId]
-                    console.log(unitCompletionStatus)
-                    const indexOfFirstIncompleteUnit = Object.values(stage.units).findIndex(unit => unit.completionStatus === "incomplete")
+                    // const completionStatus = JSON.parse(localStorage.getItem(`unitCompletionStatus_${user.userId}`))
+                    // const unitCompletionStatus = completionStatus?.[unit.unitId]
+                    // console.log(unitCompletionStatus)
+                    // const indexOfFirstIncompleteUnit = Object.values(stage.units).findIndex(unit => unit.completionStatus === "incomplete")
                     return (
                       <Link
                         to={
-                          // unitIndex === indexOfFirstIncompleteUnit ||
-                          // unitIndex === 0
-                            // ?
+                          (unit.completionStatus !== "disabled" || unitIndex === 0) ?
                              `/subconcepts/${unit.unitId}`
-                            // : null
+                            : null
                         }
                         state={{
                           currentUnitId: unit.unitId,
@@ -99,7 +97,7 @@ export default function Stages({ stages }) {
                         onMouseEnter={() => setHoveredUnit(unit.unitName)}
                         onMouseLeave={() => setHoveredUnit(null)}
                       >
-                        {unitCompletionStatus === "yes" && (
+                        {unit.completionStatus === "yes" && (
                           <CircleCheck
                             className="absolute top-0 left-0 text-green-500 "
                             size={16}

@@ -40,7 +40,7 @@ export default function SubConceptsPage() {
   const stageId = location.state?.stageId;
   const currentUnitId = location.state?.currentUnitId;
   const { unitId } = useParams();
-  const {user} = useUserContext();
+  const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   const [started, setStarted] = useState(true);
   const [totalSteps, setTotalSteps] = useState(2);
@@ -49,23 +49,23 @@ export default function SubConceptsPage() {
   const [error, setError] = useState("");
 
   // console.log("rendered")
-// @ts-ignore
-  function updateUnitCompletionStatus(unitId, completionStatus = "incomplete") {
-    // Retrieve existing status from local storage
-    const key = `unitCompletionStatus_${user.userId}`;
-    // @ts-ignore
-    const existingStatus = JSON.parse(localStorage.getItem(key)) || {};
+  // @ts-ignore
+  // function updateUnitCompletionStatus(unitId, completionStatus = "incomplete") {
+  //   // Retrieve existing status from local storage
+  //   const key = `unitCompletionStatus_${user.userId}`;
+  //   // @ts-ignore
+  //   const existingStatus = JSON.parse(localStorage.getItem(key)) || {};
 
-    // Update the completion status for the specific unit
-    existingStatus[unitId] = completionStatus;
+  //   // Update the completion status for the specific unit
+  //   existingStatus[unitId] = completionStatus;
 
-    // Save the updated status back to local storage
-    localStorage.setItem(
-      key,
-      JSON.stringify(existingStatus)
-    );
-  }
-  
+  //   // Save the updated status back to local storage
+  //   localStorage.setItem(
+  //     key,
+  //     JSON.stringify(existingStatus)
+  //   );
+  // }
+
   const fetchSubconcepts = async () => {
     try {
       const response = await axios.get(
@@ -80,7 +80,7 @@ export default function SubConceptsPage() {
 
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
-      if(user){
+      if (user) {
         try {
           const result = await fetchSubconcepts();
           console.log(result);
@@ -108,7 +108,7 @@ export default function SubConceptsPage() {
   }, [started]);
   useEffect(() => {
     setAnimationTrigger(true);
-}, []);  // Empty dependency array to trigger on initial render
+  }, []); // Empty dependency array to trigger on initial render
 
   const getPath = () => {
     const width = 1000;
@@ -116,7 +116,9 @@ export default function SubConceptsPage() {
     const curveHeight = height / 2;
     return `M0,${curveHeight} 
             C${width / 4},0 ${width / 4},${height} ${width / 2},${curveHeight}
-            C${(3 * width) / 4},0 ${(3 * width) / 4},${height} ${width},${curveHeight}`;
+            C${(3 * width) / 4},0 ${
+      (3 * width) / 4
+    },${height} ${width},${curveHeight}`;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -137,7 +139,7 @@ export default function SubConceptsPage() {
 
   return (
     <div className="w-full h-[400px] overflow-hidden relative">
-      <Header2/>
+      <Header2 />
       <svg
         className="w-full h-full mt-10"
         viewBox="0 0 1000 400"
@@ -150,40 +152,49 @@ export default function SubConceptsPage() {
           strokeWidth="4"
           className="curve-path"
         />
-        
-{[...Array(totalSteps)].map((_, index) => {
-  const point = getPointOnPath(index / (totalSteps - 1));
-  const subconcept =
-    index > 0 && index < totalSteps - 1 ? subconcepts[index - 1] : null;
-    
-  // Cast subconceptType to keyof typeof iconMap and provide a fallback (PenTool)
-  const Icon = subconcept
-    ? iconMap[subconcept.subconceptType as keyof typeof iconMap] || PenTool
-    : index === 0
-    ? Play
-    : Flag;
-    
-  const isCompleted = subconcept && subconcept.completionStatus === "yes";
-  // Check if all subconcepts are completed for this unit and set in localstorage to put a tick on unit in dashboard page
-  const isAllSubconceptsCompleted = subconcepts.every((s) => s.completionStatus === "yes");
-  if (isAllSubconceptsCompleted) {
-    updateUnitCompletionStatus(unitId, "yes");
-  }
-  
-  const isEnabled = 
-    started &&
-    (index === 0  ||
-      (index === totalSteps - 1 && isAllSubconceptsCompleted) ||
-      (subconcept?.completionStatus !== "disabled" && index !== totalSteps - 1)
-    );
 
-  console.log(subconcept);
+        {[...Array(totalSteps)].map((_, index) => {
+          const point = getPointOnPath(index / (totalSteps - 1));
+          const subconcept =
+            index > 0 && index < totalSteps - 1 ? subconcepts[index - 1] : null;
+
+          // Cast subconceptType to keyof typeof iconMap and provide a fallback (PenTool)
+          const Icon = subconcept
+            ? iconMap[subconcept.subconceptType as keyof typeof iconMap] ||
+              PenTool
+            : index === 0
+            ? Play
+            : Flag;
+
+          const isCompleted =
+            subconcept && subconcept.completionStatus === "yes";
+          // Check if all subconcepts are completed for this unit and set in localstorage to put a tick on unit in dashboard page
+          const isAllSubconceptsCompleted = subconcepts.every(
+            (s) => s.completionStatus === "yes"
+          );
+          // if (isAllSubconceptsCompleted) {
+          //   updateUnitCompletionStatus(unitId, "yes");
+          // }
+
+          const isEnabled =
+            started &&
+            (index === 0 ||
+              (index === totalSteps - 1 && isAllSubconceptsCompleted) ||
+              (subconcept?.completionStatus !== "disabled" &&
+                index !== totalSteps - 1));
+
+          console.log(subconcept);
 
           return (
             <>
               <Link
                 // @ts-ignore
-                to={ (isEnabled && index !== totalSteps - 1 && index !== 0) ? `/subconcept/${subconcept?.subconceptId}` : null}
+                to={
+                  isEnabled && index !== totalSteps - 1 && index !== 0
+                    ? 
+                    `/subconcept/${subconcept?.subconceptId}`
+                    : null
+                }
                 state={{ subconcept, stageId, currentUnitId }}
                 key={index}
                 className={`${!isEnabled && "cursor-not-allowed"}`}
