@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Activity</title>
+    <style>
+        .buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Complete the activity</h1>
+
+    <div id="contentArea">
+        <!-- Dynamic content will be loaded here based on subconcept type -->
+    </div>
+
+    <div class="buttons">
+        <button id="completeBtn">Complete</button>
+        <button id="backBtn">Go Back to Activities</button>
+    </div>
+
+    <script>
+        // Listen for the postMessage from the parent window
+        window.addEventListener("message", function(event) {
+            const subconcept = event.data;
+
+            // Render content dynamically based on subconcept type
+            renderContent(subconcept);
+
+            // Set up event listeners for buttons after content is rendered
+            setupEventListeners(subconcept);
+        });
+
+        // Function to render content dynamically
+        function renderContent(subconceptData) {
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = ''; // Clear any previous content
+
+            const type = subconceptData.subconceptType; // e.g., 'audio', 'video', 'pdf', 'image'
+            const url = subconceptData.subconceptLink; // URL of the content
+
+            let contentElement;
+
+            switch (type) {
+                case 'audio':
+                    contentElement = document.createElement('audio');
+                    contentElement.controls = true;
+                    contentElement.innerHTML = `<source src="${url}" type="audio/mp3"> Your browser does not support the audio element.`;
+                    break;
+                case 'video':
+                    contentElement = document.createElement('video');
+                    contentElement.controls = true;
+                    contentElement.innerHTML = `<source src="${url}" type="video/mp4"> Your browser does not support the video element.`;
+                    break;
+                case 'image':
+                    contentElement = document.createElement('img');
+                    contentElement.src = url;
+                    contentElement.alt = "Image content";
+                    contentElement.style.maxWidth = "100%";
+                    break;
+                case 'pdf':
+                    contentElement = document.createElement('iframe');
+                    contentElement.src = url;
+                    contentElement.width = "100%";
+                    contentElement.height = "500px";
+                    contentElement.title = "PDF Document";
+                    break;
+                default:
+                    contentElement = document.createElement('p');
+                    contentElement.textContent = "Unsupported content type.";
+                    break;
+            }
+
+            // Append the dynamically created element to the content area
+            contentArea.appendChild(contentElement);
+        }
+
+        // Function to set up event listeners for buttons
+        function setupEventListeners(subconceptData) {
+            const completeBtn = document.getElementById('completeBtn');
+            const backBtn = document.getElementById('backBtn');
+            let audioPlayedPercentage = 0;
+
+            const contentType = subconceptData.subconceptType;
+            const contentElement = document.querySelector(contentType === 'audio' ? 'audio' : 'video');
+
+            if (contentType === 'audio' || contentType === 'video') {
+                // Track how much the media was played
+                contentElement.addEventListener('timeupdate', () => {
+                    const playedTime = contentElement.currentTime;
+                    const totalTime = contentElement.duration;
+                    audioPlayedPercentage = (playedTime / totalTime) * 100;
+                });
+            }
+
+            // Handle "Complete" button click
+            completeBtn.addEventListener('click', () => {
+                if (contentType === 'audio' || contentType === 'video') {
+                    console.log("Played percentage:", audioPlayedPercentage);
+                    contentElement.pause();
+                }
+
+                window.parent.postMessage("requestUserData", "*");
+
+                window.addEventListener(
+                    "message",
+                    function (event) {
+                        let userData;
+                        try {
+                            userData = JSON.parse(event.data);
+
+                            if (!userData) {
+                                console.error("No userData received or userData is empty.");
+                                return;
+                            }
+
+                            console.log("Received userData:", userData);
+
+                            // Calculate the final score
+                            let finalScore = (audioPlayedPercentage >= 80)
+                                ? 10 // change to userData.subconceptMaxscore
+                                : 0;
+
+                            const payload = {
+                                userAttemptFlag: true,
+                                userAttemptScore: finalScore,
+                                userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
+                                userAttemptEndTimestamp: new Date().toISOString(),
+                                unit: { unitId: userData.unitId },
+                                program: { programId: userData.programId },
+                                stage: { stageId: userData.stageId },
+                                user: { userId: userData.userId },
+                                session: { sessionId: userData.sessionId },
+                                subconcept: { subconceptId: userData.subconceptId },
+                            };
+
+                            console.log(payload);
+
+                            // Send the data to the server
+                            fetch("http://localhost:8080/api/v1/user-attempts", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload),
+                            })
+                                .then((response) => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then((data) => {
+                                    console.log("Data sent successfully", data);
+                                })
+                                .catch((error) => {
+                                    console.error("Error:", error);
+                                });
+
+                        } catch (e) {
+                            console.error("Error parsing userData:", e);
+                        }
+                    },
+                    { once: true }
+                );
+            });
+
+            // Handle "Go Back to Activities" button click
+            backBtn.addEventListener('click', () => {
+                window.history.back();
+            });
+        }
+    </script>
+</body>
+</html>

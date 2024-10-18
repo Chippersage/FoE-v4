@@ -17,33 +17,27 @@ const SingleSubconcept = () => {
   console.log("sessionId", sessionId);
 
   useEffect(() => {
-    if(user){
-        const userData = {
-          userAttemptStartTimestamp: new Date().toISOString(),
-          
-            unitId: currentUnitId,
-          
-          
-            programId: user.program.programId,
-          
-          
-            stageId: stageId,
-        
-          
-            userId: user.userId,
-          
-          
-            sessionId: sessionId,
-          
-          
-            subconceptId: subconcept.subconceptId,
-          
-        };
-        localStorage.setItem("userData", JSON.stringify(userData));
-    }
-    
-  },[user]);
+    if (user) {
+      const userData = {
+        userAttemptStartTimestamp: new Date().toISOString(),
 
+        unitId: currentUnitId,
+
+        programId: user.program.programId,
+
+        stageId: stageId,
+
+        userId: user.userId,
+
+        sessionId: sessionId,
+
+        subconceptId: subconcept?.subconceptId,
+
+        subconceptMaxscore: subconcept?.subconceptMaxscore,
+      };
+      localStorage.setItem("userData", JSON.stringify(userData));
+    }
+  }, [user]);
 
   useEffect(() => {
     // Listen for message events from the iframe
@@ -61,16 +55,36 @@ const SingleSubconcept = () => {
     });
   }, []);
 
+  // Function to check if an element is an IFrame
+  const isIFrame = (input: HTMLElement | null): input is HTMLIFrameElement =>
+    input !== null && input.tagName === "IFRAME";
+
+  // Function to send userData to the iframe
+  const sendSubconcept = () => {
+      const iframe = document.getElementById("embeddedContent");
+
+      if (
+        iframe &&
+        subconcept &&
+        isIFrame(iframe) &&
+        iframe.contentWindow
+      ) {
+        iframe.contentWindow.postMessage(subconcept, "*"); // Send message to iframe
+      }
+    }
+  
+
   return (
     <>
       <iframe
         id="embeddedContent"
-        src={subconcept.subconceptLink}
+        src={ subconcept?.subconceptType === "html" ? subconcept.subconceptLink : "/media.html" }
         title="Embedded Content"
         width="100%"
         height="800px"
-        style={{ border: "none", overflow: "hidden" }}
+        style={{ border: "none", overflow: "scroll" }}
         scrolling="no"
+        onLoad={subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}} // Send data when iframe loads
       />
     </>
   );
