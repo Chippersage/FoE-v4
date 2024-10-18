@@ -6,14 +6,14 @@ public class SubconceptResponseDTO {
 	 private String subconceptId;
 	 private String dependency;
 	 private Integer subconceptMaxscore;
+	 private Integer numQuestions;
+	 private String showTo;
 	 private String subconceptDesc;
 	 private String subconceptGroup;
-	 private String subconceptTitle;
+	 private String subconceptDesc2;
 	 private String subconceptType;
      private String subconceptLink;
      private String completionStatus;
-    
-
      
   // Getters and Setters
 	public String getSubconceptId() {
@@ -28,12 +28,23 @@ public class SubconceptResponseDTO {
 	public void setDependency(String dependency) {
 		this.dependency = dependency;
 	}
-	
 	public Integer getSubconceptMaxscore() {
 		return subconceptMaxscore;
 	}
 	public void setSubconceptMaxscore(Integer subconceptMaxscore) {
 		this.subconceptMaxscore = subconceptMaxscore;
+	}
+	public Integer getNumQuestions() {
+		return numQuestions;
+	}
+	public void setNumQuestions(Integer numQuestions) {
+		this.numQuestions = numQuestions;
+	}
+	public String getShowTo() {
+		return showTo;
+	}
+	public void setShowTo(String showTo) {
+		this.showTo = showTo;
 	}
 	public String getSubconceptDesc() {
 		return subconceptDesc;
@@ -47,11 +58,11 @@ public class SubconceptResponseDTO {
 	public void setSubconceptGroup(String subconceptGroup) {
 		this.subconceptGroup = subconceptGroup;
 	}
-	public String getSubconceptTitle() {
-		return subconceptTitle;
+	public String getSubconceptDesc2() {
+		return subconceptDesc2;
 	}
-	public void setSubconceptTitle(String subconceptTitle) {
-		this.subconceptTitle = subconceptTitle;
+	public void setSubconceptDesc2(String subconceptDesc2) {
+		this.subconceptDesc2 = subconceptDesc2;
 	}
 	public String getSubconceptType() {
 		return subconceptType;
@@ -71,6 +82,6 @@ public class SubconceptResponseDTO {
 	public void setCompletionStatus(String completionStatus) {
 		this.completionStatus = completionStatus;
 	}
-	
-    
+     
+     
 }

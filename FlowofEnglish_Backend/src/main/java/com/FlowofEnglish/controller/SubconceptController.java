@@ -6,8 +6,10 @@ import com.FlowofEnglish.service.SubconceptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -28,13 +30,17 @@ public class SubconceptController {
         return subconcept.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     
-    
-
     @PostMapping("/create")
     public Subconcept createSubconcept(@RequestBody Subconcept subconcept) {
         return subconceptService.createSubconcept(subconcept);
     }
 
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadSubconcepts(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> response = subconceptService.uploadSubconceptsCSV(file);
+        return ResponseEntity.ok(response);
+    }
+    
     @PutMapping("/{subconceptId}")
     public ResponseEntity<Subconcept> updateSubconcept(@PathVariable String subconceptId, @RequestBody Subconcept subconcept) {
         return ResponseEntity.ok(subconceptService.updateSubconcept(subconceptId, subconcept));

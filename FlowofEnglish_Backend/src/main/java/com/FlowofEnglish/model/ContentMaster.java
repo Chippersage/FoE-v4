@@ -11,16 +11,16 @@ public class ContentMaster {
     @Column(name = "content_id")
     private int contentId;
     
-    @Column(name = "content_name", length = 500, nullable = false)
+    @Column(name = "content_name", length = 500, nullable = true)
     private String contentName;
 
-	@Column(name = "content_desc", length = 500, nullable = false)
+	@Column(name = "content_desc", length = 500, nullable = true)
     private String contentDesc;
 
-    @Column(name = "content_origin", length = 500, nullable = false)
+    @Column(name = "content_origin", length = 500, nullable = true)
     private String contentOrigin;
 
-    @Column(name = "content_topic", length = 255, nullable = false)
+    @Column(name = "content_topic", length = 255, nullable = true)
     private String contentTopic;
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
@@ -39,8 +39,6 @@ public class ContentMaster {
 		this.contentTopic = contentTopic;
 		this.uuid = uuid;
 	}
-
-	
 
 	// Getters and Setters
 	public int getContentId() {

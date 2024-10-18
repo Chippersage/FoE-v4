@@ -73,12 +73,15 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             SubconceptResponseDTO subconceptResponseDTO = new SubconceptResponseDTO();
             subconceptResponseDTO.setSubconceptId(mapping.getSubconcept().getSubconceptId());
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
+            subconceptResponseDTO.setSubconceptDesc2(mapping.getSubconcept().getSubconceptDesc2());
             subconceptResponseDTO.setSubconceptType(mapping.getSubconcept().getSubconceptType());
             subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
             subconceptResponseDTO.setDependency(mapping.getSubconcept().getDependency());
             subconceptResponseDTO.setSubconceptMaxscore(mapping.getSubconcept().getSubconceptMaxscore());
+            subconceptResponseDTO.setNumQuestions(mapping.getSubconcept().getNumQuestions());
+            subconceptResponseDTO.setShowTo(mapping.getSubconcept().getShowTo());
             subconceptResponseDTO.setSubconceptGroup(mapping.getSubconcept().getSubconceptGroup());
-            subconceptResponseDTO.setSubconceptTitle(mapping.getSubconcept().getSubconceptTitle());
+            
          
             // Check if the current subconcept has been completed by the user
             boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());

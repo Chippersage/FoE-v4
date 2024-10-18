@@ -5,8 +5,10 @@ import com.FlowofEnglish.service.ContentMasterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -32,6 +34,16 @@ public class ContentMasterController {
     public ResponseEntity<ContentMaster> createContent(@RequestBody ContentMaster content) {
         ContentMaster newContent = contentMasterService.createContent(content);
         return ResponseEntity.ok(newContent);
+    }
+    
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadContents(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, Object> response = contentMasterService.uploadContents(file);
+            return ResponseEntity.ok(response); // Send back the response data
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "File upload failed: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
