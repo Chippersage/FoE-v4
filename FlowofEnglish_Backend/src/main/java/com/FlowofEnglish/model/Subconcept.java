@@ -8,35 +8,33 @@ import java.util.UUID;
 public class Subconcept {
 
     @Id
-    @Column(name = "subconcept_id", length = 255)
+    @Column(name = "subconcept_id", length = 255, nullable = false)
     private String subconceptId;
 
-    @Column(name = "dependency", length = 1000)
+    @Column(name = "dependency", length = 1000, nullable = true)
     private String dependency;
 
-    @Column(name = "show_to", length = 1000)
+    @Column(name = "show_to", length = 1000, nullable = true)
     private String showTo;
 
-    @Column(name = "subconcept_desc", length = 255)
+    @Column(name = "subconcept_desc", length = 1000, nullable = true)
     private String subconceptDesc;
     
-    @Column(name = "subconcept_desc 2", length = 255)
+    @Column(name = "subconcept_desc_2", length = 1000, nullable = true)
     private String subconceptDesc2;
     
-    @Column(name = "subconcept_group", length = 1000)
+    @Column(name = "subconcept_group", length = 1000, nullable = true)
     private String subconceptGroup;
 
     @Column(name = "subconcept_link", columnDefinition = "MEDIUMTEXT")
     private String subconceptLink;
 
-    @Column(name = "subconcept_title", length = 1000)
-    private String subconceptTitle;
 
-    @Column(name = "subconcept_type", length = 1000)
+    @Column(name = "subconcept_type", length = 1000, nullable = true)
     private String subconceptType;
 
-    @Column(name = "user_type", length = 1000)
-    private String userType;
+    @Column(name = "num_questions", length = 100, nullable = true)
+    private Integer numQuestions;
 
     
     @Column(name = "subconcept_maxscore", nullable = true)
@@ -56,11 +54,10 @@ public class Subconcept {
 	public Subconcept() {
 		
 	}
-	
+
 	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc,
-			String subconceptDesc2, String subconceptGroup, String subconceptLink, String subconceptTitle,
-			String subconceptType, String userType, Integer subconceptMaxscore, String uuid, Concept concept,
-			ContentMaster content) {
+			String subconceptDesc2, String subconceptGroup, String subconceptLink, String subconceptType,
+			Integer numQuestions, Integer subconceptMaxscore, String uuid, Concept concept, ContentMaster content) {
 		super();
 		this.subconceptId = subconceptId;
 		this.dependency = dependency;
@@ -69,14 +66,14 @@ public class Subconcept {
 		this.subconceptDesc2 = subconceptDesc2;
 		this.subconceptGroup = subconceptGroup;
 		this.subconceptLink = subconceptLink;
-		this.subconceptTitle = subconceptTitle;
 		this.subconceptType = subconceptType;
-		this.userType = userType;
+		this.numQuestions = numQuestions;
 		this.subconceptMaxscore = subconceptMaxscore;
 		this.uuid = uuid;
 		this.concept = concept;
 		this.content = content;
 	}
+
 
 
 	// Getters and Setters
@@ -136,14 +133,6 @@ public class Subconcept {
 		this.subconceptLink = subconceptLink;
 	}
 
-	public String getSubconceptTitle() {
-		return subconceptTitle;
-	}
-
-	public void setSubconceptTitle(String subconceptTitle) {
-		this.subconceptTitle = subconceptTitle;
-	}
-
 	public String getSubconceptType() {
 		return subconceptType;
 	}
@@ -152,12 +141,12 @@ public class Subconcept {
 		this.subconceptType = subconceptType;
 	}
 
-	public String getUserType() {
-		return userType;
+	public Integer getNumQuestions() {
+		return numQuestions;
 	}
 
-	public void setUserType(String userType) {
-		this.userType = userType;
+	public void setNumQuestions(Integer numQuestions) {
+		this.numQuestions = numQuestions;
 	}
 
 	public Integer getSubconceptMaxscore() {
@@ -192,14 +181,16 @@ public class Subconcept {
 		this.content = content;
 	}
 
+	
 	@Override
 	public String toString() {
 		return "Subconcept [subconceptId=" + subconceptId + ", dependency=" + dependency + ", showTo=" + showTo
 				+ ", subconceptDesc=" + subconceptDesc + ", subconceptDesc2=" + subconceptDesc2 + ", subconceptGroup="
-				+ subconceptGroup + ", subconceptLink=" + subconceptLink + ", subconceptTitle=" + subconceptTitle
-				+ ", subconceptType=" + subconceptType + ", userType=" + userType + ", subconceptMaxscore="
-				+ subconceptMaxscore + ", uuid=" + uuid + ", concept=" + concept + ", content=" + content + "]";
+				+ subconceptGroup + ", subconceptLink=" + subconceptLink + ", subconceptType=" + subconceptType
+				+ ", numQuestions=" + numQuestions + ", subconceptMaxscore=" + subconceptMaxscore + ", uuid=" + uuid
+				+ ", concept=" + concept + ", content=" + content + "]";
 	}
+
 	// Method to ensure UUID and generate subconceptId before persisting
     @PrePersist
     private void ensureUuid() {
