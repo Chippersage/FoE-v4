@@ -5,6 +5,9 @@ import com.FlowofEnglish.dto.UnitResponseDTO;
 import com.FlowofEnglish.model.Unit;
 
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UnitService {
    
@@ -15,4 +18,5 @@ public interface UnitService {
     void deleteUnit(String unitId);
     void deleteUnits(List<String> unitIds);
     List<UnitResponseDTO> getAllUnits(); 
+    Map<String, Object> bulkUploadUnits(MultipartFile file);
 }

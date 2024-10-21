@@ -7,7 +7,7 @@ public class ProgramDTO {
     private String programId;
     private String programName;
     private String programDesc;
-    private int stagesCount; // Renamed for clarity
+    private int stagesCount; 
     private int unitCount;
     private Map<String, StageDTO> stages;
     private String programCompletionStatus;
@@ -38,11 +38,11 @@ public class ProgramDTO {
         this.programDesc = programDesc;
     }
 
-    public int getStagesCount() { // Getter for stages count
+    public int getStagesCount() {
         return stagesCount;
     }
 
-    public void setStagesCount(int stagesCount) { // Setter for stages count
+    public void setStagesCount(int stagesCount) { 
         this.stagesCount = stagesCount;
     }
 

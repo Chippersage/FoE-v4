@@ -162,19 +162,20 @@ public class UserController {
         return ResponseEntity.ok(resultMessage);
     }
 
- // New Login Method
+   // New Login Method
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
     	String userId = loginData.get("userId");
         String userPassword = loginData.get("userPassword");
+        String selectedProgramId = loginData.get("programId");
 
         // Debug logging
         System.out.println("Received userId: " + userId);
         System.out.println("Received password: " + userPassword);
+        System.out.println("Received programId: " + selectedProgramId);
         
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
-        
         Optional<User> userOpt = userService.findByUserId(userId);
         
         if (userOpt.isPresent()) {
@@ -185,17 +186,19 @@ public class UserController {
             System.out.println("User Type: " + user.getUserType());
 
             if (userService.verifyPassword(userPassword, user.getUserPassword())) {
+            	
             	// Set session attribute with userId to track user session
                 session.setAttribute("userId", userId);
                 
                 // Generate session ID
                 String sessionId = session.getId();
              
-             // Fetch the UserCohortMapping for the user using the instance
-                UserCohortMapping userCohortMapping = userCohortMappingService.findByUserUserId(user.getUserId());
-
+             // Check if the user is part of the selected program
+                Optional<UserCohortMapping> userCohortMappingOpt = userCohortMappingService.findByUserUserIdAndProgramId(userId, selectedProgramId);
                 
-                if (userCohortMapping != null) {
+                if (userCohortMappingOpt.isPresent()) {
+                    UserCohortMapping userCohortMapping = userCohortMappingOpt.get();
+                   
                     // Store session details in UserSessionMapping table
                     UserSessionMapping userSession = new UserSessionMapping();
                     userSession.setSessionId(sessionId);
@@ -208,20 +211,21 @@ public class UserController {
                         userSession.setUuid(UUID.randomUUID().toString());
                     }
                     userSessionMappingService.createUserSessionMapping(userSession);
-                } else {
-                    // Handle case where userCohortMapping is not found
-                    throw new RuntimeException("No cohort mapping found for user with ID: " + user.getUserId());
-                }
-                               
-                
-             // Fetch additional user details with cohort and program
-                UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
+                    
+                    
+                 // Fetch additional user details with selected program and cohort
+                UserDTO userDTO = userService.getUserDetailsWithProgram(userId, selectedProgramId);
+                    
                 response.put("userType", user.getUserType());
                 response.put("userDetails", userDTO); // Include user details (with cohort and program)
                 response.put("sessionId", sessionId); // Add session ID to response
 
                 return ResponseEntity.ok(response);
-            } else {
+            }else {
+                response.put("error", "User is not enrolled in the selected program.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            } 
+           }else {
                 response.put("error", "Invalid userpassword");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }

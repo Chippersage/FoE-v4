@@ -3,7 +3,10 @@ package com.FlowofEnglish.service;
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.model.Program;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ProgramService {
 
@@ -20,4 +23,6 @@ public interface ProgramService {
     void deletePrograms(List<String> programIds);
 
 	ProgramDTO convertToDTO(Program program);
+	
+	Map<String, Object> uploadProgramsCSV(MultipartFile file);
 }
