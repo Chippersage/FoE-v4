@@ -11,7 +11,7 @@ public class Concept {
     @Column(name = "concept_id", length = 255)
     private String conceptId;
     
-    @Column(name = "concept_name", length = 50, nullable = false)
+    @Column(name = "concept_name", length = 50, nullable = true)
     private String conceptName;
 
 

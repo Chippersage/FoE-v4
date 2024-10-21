@@ -2,6 +2,8 @@ package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.UserCohortMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,9 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
     List<UserCohortMapping> findAllByUserUserId(String userId);
 
     void deleteByUserUserId(String userId);
+    
+ // Add this method to your repository
+    @Query("SELECT u FROM UserCohortMapping u WHERE u.user.userId = :userId AND u.cohort.cohortId IN " +
+           "(SELECT cp.cohort.cohortId FROM CohortProgram cp WHERE cp.program.programId = :programId)")
+    Optional<UserCohortMapping> findByUserUserIdAndProgramId(@Param("userId") String userId, @Param("programId") String programId);
 }

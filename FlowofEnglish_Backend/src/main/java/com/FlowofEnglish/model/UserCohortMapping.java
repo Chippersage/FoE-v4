@@ -2,12 +2,11 @@ package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
 
-//import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
-//@IdClass(UserCohortMappingId.class)
-@Table(name = "UserCohortMapping")
+@Table(name = "UserCohortMapping",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "user_id"}))
 public class UserCohortMapping  {
 
 	@Id
@@ -54,12 +53,9 @@ public class UserCohortMapping  {
     public void setLeaderboardScore(int leaderboardScore) {
         this.leaderboardScore = leaderboardScore;
     }
-
     public String getUuid() {
         return uuid;
     }
-    
-
     public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}

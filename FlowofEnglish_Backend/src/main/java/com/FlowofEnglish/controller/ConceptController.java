@@ -5,8 +5,10 @@ import com.FlowofEnglish.service.ConceptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +32,12 @@ public class ConceptController {
     @PostMapping("/create")
     public Concept createConcept(@RequestBody Concept concept) {
         return conceptService.createConcept(concept);
+    }
+    
+    @PostMapping("/bulk-upload")
+    public ResponseEntity<Map<String, Object>> bulkUploadConcepts(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = conceptService.bulkUploadConcepts(file);
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/{conceptId}")

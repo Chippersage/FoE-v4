@@ -27,12 +27,10 @@ public class Stage {
 
     // Default constructor
     public Stage() {
-        //this.stageId = UUID.randomUUID().toString(); // Auto-generate unique stageId
     }
 
     public Stage(String stageId, String stageName, String stageDesc, Program program, String uuid) {
         this.stageId = stageId;
-        		//UUID.randomUUID().toString();
         this.stageName = stageName;
         this.stageDesc = stageDesc;
         this.program = program;
