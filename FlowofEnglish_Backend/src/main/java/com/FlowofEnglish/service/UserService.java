@@ -12,6 +12,7 @@ public interface UserService {
     List<UserDTO> getAllUsers();
     Optional<User> findByUserId(String userId);
     Optional<UserDTO> getUserById(String userId);
+    UserDTO getUserDetailsWithProgram(String userId, String programId);
     List<UserDTO> getUsersByOrganizationId(String organizationId);
     User createUser(User user);
     User updateUser(String userId, User user);

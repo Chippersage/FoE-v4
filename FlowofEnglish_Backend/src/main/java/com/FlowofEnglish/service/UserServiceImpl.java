@@ -47,6 +47,10 @@ public class UserServiceImpl implements UserService {
     private CohortProgramRepository cohortProgramRepository;
     
     @Autowired
+    private UserCohortMappingService userCohortMappingService;
+
+    
+    @Autowired
     private CohortRepository cohortRepository;
     
     @Autowired
@@ -93,6 +97,58 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    
+ // New method to fetch user details based on selected program
+    @Override
+    public UserDTO getUserDetailsWithProgram(String userId, String programId) {
+        UserDTO userDTO = new UserDTO();
+        User user = findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+     // Set basic user details
+        userDTO.setUserId(user.getUserId());
+        userDTO.setUserName(user.getUserName());
+        userDTO.setUserEmail(user.getUserEmail());
+        userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
+        userDTO.setUserAddress(user.getUserAddress());
+        
+        // Set organization details in UserDTO
+        userDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
+        
+        // Fetch UserCohortMapping based on userId and programId
+        Optional<UserCohortMapping> userCohortMappingOpt = userCohortMappingService.findByUserUserIdAndProgramId(userId, programId);
+        
+        if (userCohortMappingOpt.isPresent()) {
+            UserCohortMapping userCohortMapping = userCohortMappingOpt.get();
+            
+         // Set cohort details in CohortDTO
+            CohortDTO cohortDTO = new CohortDTO();
+            cohortDTO.setCohortId(userCohortMapping.getCohort().getCohortId());
+            cohortDTO.setCohortName(userCohortMapping.getCohort().getCohortName());
+            userDTO.setCohort(cohortDTO);
+            
+         // Fetch the program from CohortProgramRepository
+            Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(userCohortMapping.getCohort().getCohortId());
+
+            if (cohortProgramOpt.isPresent()) {
+                CohortProgram cohortProgram = cohortProgramOpt.get();
+
+                // Set program details in ProgramDTO
+                ProgramDTO programDTO = new ProgramDTO();
+                programDTO.setProgramId(cohortProgram.getProgram().getProgramId());
+                programDTO.setProgramName(cohortProgram.getProgram().getProgramName());
+                programDTO.setProgramDesc(cohortProgram.getProgram().getProgramDesc());
+                programDTO.setStagesCount(cohortProgram.getProgram().getStages());
+                programDTO.setUnitCount(cohortProgram.getProgram().getUnitCount());
+                userDTO.setProgram(programDTO);
+            } else {
+                throw new IllegalArgumentException("Program not found for cohortId: " + userCohortMapping.getCohort().getCohortId());
+            }
+        } else {
+            throw new IllegalArgumentException("UserCohortMapping not found for userId: " + userId + " and programId: " + programId);
+        }
+
+        return userDTO;
+    }
 
     
     @Override

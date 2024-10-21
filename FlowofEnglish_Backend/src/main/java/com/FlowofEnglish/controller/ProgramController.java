@@ -2,11 +2,14 @@ package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.service.ProgramService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/programs")
@@ -31,6 +34,18 @@ public class ProgramController {
     public Program createProgram(@RequestBody Program program) {
         return programService.createProgram(program);
     }
+    
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadProgramsCSV(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, Object> result = programService.uploadProgramsCSV(file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = Map.of("error", "Failed to upload programs: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<Program> updateProgram(@PathVariable String id, @RequestBody Program program) {

@@ -15,12 +15,20 @@ import com.FlowofEnglish.repository.UnitRepository;
 import com.FlowofEnglish.repository.UserSubConceptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +54,97 @@ public class UnitServiceImpl implements UnitService {
         return unitRepository.save(unit);
     }
 
+    @Override
+    public Map<String, Object> bulkUploadUnits(MultipartFile file) {
+        List<String> errorMessages = new ArrayList<>();
+        Set<String> csvUnitIds = new HashSet<>(); // To track unitIds within the CSV file
+        int successCount = 0;
+        int failCount = 0;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            boolean isFirstLine = true; // Flag to skip the header
+
+            while ((line = br.readLine()) != null) {
+                // Skip the first line if it's the header
+                if (isFirstLine) {
+                    isFirstLine = false;
+                    continue;
+                }
+
+                String[] data = line.split(",");
+                if (data.length < 5) {
+                    errorMessages.add("Invalid row format: " + line);
+                    failCount++;
+                    continue;
+                }
+
+                String unitId = data[0];
+                String unitName = data[1];
+                String unitDesc = data[2];
+                String programId = data[3];
+                String stageId = data[4];
+
+                // Check if the unitId is a duplicate within the CSV file
+                if (csvUnitIds.contains(unitId)) {
+                    errorMessages.add("Unit ID " + unitId + " is a duplicate in the CSV file.");
+                    failCount++;
+                    continue;
+                }
+
+                // Validate if unitId already exists in the database
+                if (unitRepository.existsById(unitId)) {
+                    errorMessages.add("Unit ID " + unitId + " already exists in the database.");
+                    failCount++;
+                    continue;
+                }
+
+                // Validate program and stage existence
+                Optional<Program> program = programRepository.findById(programId);
+                Optional<Stage> stage = stageRepository.findById(stageId);
+
+                if (program.isEmpty()) {
+                    errorMessages.add("Program ID " + programId + " not found for Unit ID " + unitId);
+                    failCount++;
+                    continue;
+                }
+
+                if (stage.isEmpty()) {
+                    errorMessages.add("Stage ID " + stageId + " not found for Unit ID " + unitId);
+                    failCount++;
+                    continue;
+                }
+
+                // Create new Unit
+                Unit newUnit = new Unit();
+                newUnit.setUnitId(unitId);
+                newUnit.setUnitName(unitName);
+                newUnit.setUnitDesc(unitDesc);
+                newUnit.setProgram(program.get());
+                newUnit.setStage(stage.get());
+                newUnit.setUuid(UUID.randomUUID().toString());
+
+                // Save the new Unit
+                unitRepository.save(newUnit);
+                successCount++;
+
+                // Add unitId to the CSV tracking set
+                csvUnitIds.add(unitId);
+            }
+        } catch (Exception e) {
+            errorMessages.add("Failed to process file: " + e.getMessage());
+        }
+
+        // Return response with success and error details
+        Map<String, Object> response = new HashMap<>();
+        response.put("successCount", successCount);
+        response.put("failCount", failCount);
+        response.put("errors", errorMessages);
+
+        return response;
+    }
+
+    
     @Override
     public Unit updateUnit(String unitId, Unit unit) {
         Optional<Unit> existingUnit = unitRepository.findById(unitId);

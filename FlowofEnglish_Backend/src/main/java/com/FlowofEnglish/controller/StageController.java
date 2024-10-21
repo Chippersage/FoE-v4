@@ -5,8 +5,10 @@ import com.FlowofEnglish.service.StageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +32,16 @@ public class StageController {
     @PostMapping("/create")
     public Stage createStage(@RequestBody Stage stage) {
         return stageService.createStage(stage);
+    }
+    
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadStagesCSV(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, Object> result = stageService.uploadStagesCSV(file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to upload stages: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{stageId}")

@@ -7,12 +7,13 @@ import com.FlowofEnglish.service.UnitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
 
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/units")
@@ -22,12 +23,18 @@ public class UnitController {
     private UnitService unitService;
 
     // Create Unit
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<Unit> createUnit(@RequestBody Unit unit) {
         Unit createdUnit = unitService.createUnit(unit);
         return ResponseEntity.ok(createdUnit);
     }
 
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> bulkUploadUnits(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> response = unitService.bulkUploadUnits(file);
+        return ResponseEntity.ok(response);
+    }
+    
     // Update Unit
     @PutMapping("/{unitId}")
     public ResponseEntity<Unit> updateUnit(@PathVariable String unitId, @RequestBody Unit unit) {

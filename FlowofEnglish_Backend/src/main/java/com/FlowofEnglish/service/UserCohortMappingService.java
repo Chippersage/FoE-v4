@@ -10,6 +10,7 @@ public interface UserCohortMappingService {
     UserCohortMapping findByUserUserId(String userId);
     Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId);
     List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId);
+    Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId);
     UserCohortMapping createUserCohortMapping(UserCohortMapping userCohortMapping);
     UserCohortMapping updateUserCohortMapping(String userId, UserCohortMapping userCohortMapping);
     void deleteUserCohortMappingByUserId(String userId);
