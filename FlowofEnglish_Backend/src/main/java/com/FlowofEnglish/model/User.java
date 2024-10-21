@@ -1,7 +1,9 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -12,10 +14,10 @@ public class User {
     @Column(name = "user_id", length = 255)
     private String userId;
 
-    @Column(name = "user_address", length = 200)
+    @Column(name = "user_address", length = 1000)
     private String userAddress;
 
-    @Column(name = "user_email", length = 50, nullable = false)
+    @Column(name = "user_email", length = 50, nullable = true)
     private String userEmail;
 
     @Column(name = "user_name", length = 100)
@@ -37,10 +39,21 @@ public class User {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    public User() {
-        // Set the default password and encode it
-        this.userPassword = encodePassword("Welcome123");
-    }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserAttempts> userAttempts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserCohortMapping> userCohortMappings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSessionMapping> userSessions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSubConcept> userSubConcept = new ArrayList<>();
+
+    
+    public User() { }
+    
 
     public User(String userId, String userAddress, String userEmail, String userName, String userPhoneNumber,
                 String userPassword, String userType, String uuid, Organization organization) {
@@ -49,17 +62,13 @@ public class User {
         this.userEmail = userEmail;
         this.userName = userName;
         this.userPhoneNumber = userPhoneNumber;
-        this.userPassword = encodePassword(userPassword);  // Encode the provided password
+        this.userPassword = userPassword;
         this.userType = userType;
         this.uuid = uuid;
         this.organization = organization;
     }
 
-    // Method to encode the password
-    private String encodePassword(String password) {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        return passwordEncoder.encode(password);
-    }
+    
 
     // Getters and Setters
     public String getUserId() {
@@ -107,7 +116,7 @@ public class User {
     }
 
     public void setUserPassword(String userPassword) {
-        this.userPassword = encodePassword(userPassword);  // Ensure password is encoded
+        this.userPassword = userPassword;  
     }
 
     public String getUserType() {

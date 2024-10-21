@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMappingService {
@@ -22,7 +24,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
     
     @Autowired
-    private UserSubConceptRepository userSubConceptRepository; // Inject the repository
+    private UserSubConceptRepository userSubConceptRepository; 
     
     @Override
     public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
@@ -49,7 +51,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         responseDTO.setUnitId(unitId);
 
         // Set stageId (assuming all mappings belong to the same stage)
-        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); // Adjust according to your entity structure
+        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
 
         // Initialize the sub_concepts map
         Map<String, SubconceptResponseDTO> subconcepts = new HashMap<>();
@@ -58,6 +60,11 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
      // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unitId);
         
+     // Initialize a set to hold completed subconcept IDs for easier comparison
+        Set<String> completedSubconceptIds = userSubConcepts.stream()
+            .map(us -> us.getSubconcept().getSubconceptId())
+            .collect(Collectors.toSet());
+
      // Keep track of the enabled state of subconcepts
         boolean enableNextSubconcept = true; // Initially, the first subconcept is enabled
 
@@ -66,16 +73,18 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             SubconceptResponseDTO subconceptResponseDTO = new SubconceptResponseDTO();
             subconceptResponseDTO.setSubconceptId(mapping.getSubconcept().getSubconceptId());
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
+            subconceptResponseDTO.setSubconceptDesc2(mapping.getSubconcept().getSubconceptDesc2());
             subconceptResponseDTO.setSubconceptType(mapping.getSubconcept().getSubconceptType());
             subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
             subconceptResponseDTO.setDependency(mapping.getSubconcept().getDependency());
+            subconceptResponseDTO.setSubconceptMaxscore(mapping.getSubconcept().getSubconceptMaxscore());
+            subconceptResponseDTO.setNumQuestions(mapping.getSubconcept().getNumQuestions());
             subconceptResponseDTO.setShowTo(mapping.getSubconcept().getShowTo());
             subconceptResponseDTO.setSubconceptGroup(mapping.getSubconcept().getSubconceptGroup());
-            subconceptResponseDTO.setSubconceptTitle(mapping.getSubconcept().getSubconceptTitle());
+            
          
-         // Check if the current subconcept has been completed by the user
-            boolean isCompleted = userSubConcepts.stream()
-                .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(mapping.getSubconcept().getSubconceptId()));
+            // Check if the current subconcept has been completed by the user
+            boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());
 
             if (isCompleted) {
                 subconceptResponseDTO.setCompletionStatus("yes");
@@ -95,7 +104,9 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptCount++;
         }
      // Check if all subconcepts are completed to mark the unit as completed
-        boolean allSubconceptsCompleted = userSubConcepts.size() == subconceptCount;
+        boolean allSubconceptsCompleted = completedSubconceptIds.size() == subconceptCount;
+        System.out.println("Subconcept Count: " + subconceptCount);
+        System.out.println("User Subconcepts Completed: " + completedSubconceptIds.size());
 
      
         // Add subconcept count to the response

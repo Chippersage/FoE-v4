@@ -32,6 +32,11 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     public Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId);
     }
+    
+    @Override
+    public Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId) {
+        return userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId);
+    }
 
     @Override
     public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId) {

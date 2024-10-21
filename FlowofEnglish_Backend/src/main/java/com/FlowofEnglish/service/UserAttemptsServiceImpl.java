@@ -21,10 +21,9 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     private UserAttemptsRepository userAttemptsRepository;
 
     @Autowired
-    private UserCohortMappingService userCohortMappingService; // Inject the service for updating leaderboard
-
+    private UserCohortMappingService userCohortMappingService; 
     @Autowired
-    private UserSubConceptService userSubConceptService; // Inject the service for UserSubConcept
+    private UserSubConceptService userSubConceptService;
 
     @Override
     public List<UserAttempts> getAllUserAttempts() {
@@ -35,11 +34,6 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     public Optional<UserAttempts> getUserAttemptById(Long userAttemptId) {
         return userAttemptsRepository.findById(userAttemptId);
     }
-
-//    @Override
-//    public UserAttempts createUserAttempt(UserAttempts userAttempt) {
-//        return userAttemptsRepository.save(userAttempt);
-//    }
     
     @Override
     public UserAttempts saveUserAttempt(UserAttempts userAttempt) {

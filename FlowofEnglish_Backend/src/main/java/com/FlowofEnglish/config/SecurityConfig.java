@@ -34,11 +34,11 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(authorize -> authorize
-            		.requestMatchers("/api/v1/superadmin/**").permitAll() // Allow public access to super admin endpoints
-                    .requestMatchers("/api/v1/organizations/login").permitAll() // Allow public access to login end  point
-                    .requestMatchers("/api/v1/organizations/forgotorgpassword").permitAll() // Allow public access to forgot password endpoint
-                    .requestMatchers("/api/v1/organizations/resetorgpassword").permitAll() // Allow public access to reset password endpoint
-                    .requestMatchers("/api/v1/organizations/create").permitAll() // Allow public access to create endpoint
+            		.requestMatchers("/api/v1/superadmin/**").permitAll() 
+                    .requestMatchers("/api/v1/organizations/login").permitAll() 
+                    .requestMatchers("/api/v1/organizations/forgotorgpassword").permitAll() 
+                    .requestMatchers("/api/v1/organizations/resetorgpassword").permitAll() 
+                    .requestMatchers("/api/v1/organizations/create").permitAll() 
                     .requestMatchers("/api/v1/users/create").permitAll()
                     .requestMatchers("/api/v1/users/login").permitAll()
                     .requestMatchers("/api/v1/users/**").permitAll()
@@ -55,13 +55,12 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()
                     .requestMatchers("/api/v1/programs/create").permitAll()
                     .requestMatchers("/api/v1/stages/**").permitAll()
-                    .requestMatchers("/api/v1/stages/create").permitAll()
                     .requestMatchers("/api/v1/units/**").permitAll()
                     .requestMatchers("/api/v1/user-attempts/**").permitAll()
                     .requestMatchers("/api/v1/user-session-mappings/**").permitAll()
                     .requestMatchers("/api/v1/userSubConceptsCompletion/**").permitAll()
                     .requestMatchers("/api/v1/programconceptsmappings/**").permitAll()
-                    //.requestMatchers("/api/v1/users/user/user1@chippersage.com/details").permitAll()
+             
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF protection

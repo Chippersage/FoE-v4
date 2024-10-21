@@ -12,23 +12,17 @@ public interface UserService {
     List<UserDTO> getAllUsers();
     Optional<User> findByUserId(String userId);
     Optional<UserDTO> getUserById(String userId);
+    UserDTO getUserDetailsWithProgram(String userId, String programId);
     List<UserDTO> getUsersByOrganizationId(String organizationId);
     User createUser(User user);
-    List<User> createUsers(List<User> users);
     User updateUser(String userId, User user);
-    void deleteUser(String userId);
-    boolean verifyPassword(String providedPassword, String storedPassword);
+    String deleteUser(String userId);
+    String deleteUsers(List<String> userIds);
 	UserDTO getUserDetailsWithProgram(String userId);
+	String getCohortIdByUserId(String userId);
+	
+	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
+    boolean verifyPassword(String plainPassword, String encodedPassword);
+	boolean resetPassword(String userId, String newPassword);
     
-	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader);
-	
-	Optional<User> authenticateUser(String userId, String password);
-	
-	boolean isDefaultPassword(User user);
 }
-
-//List<User> getAllUsers();
-//Optional<User> getUserById(String userId);
-//List<User> getUsersByOrganizationId(String organizationId);
-//Optional<UserDTO> getUserDetails(String userId);
-//User findByUserId(String userId);
