@@ -111,14 +111,14 @@ export default function SubConceptsPage() {
   }, []); // Empty dependency array to trigger on initial render
 
   const getPath = () => {
-    const width = 1000;
-    const height = 400;
-    const curveHeight = height / 2;
-    return `M0,${curveHeight} 
-            C${width / 4},0 ${width / 4},${height} ${width / 2},${curveHeight}
-            C${(3 * width) / 4},0 ${
-      (3 * width) / 4
-    },${height} ${width},${curveHeight}`;
+    const height = 1000; // Change height to a larger value since the curve is now vertical
+    const width = 1000; // Adjust the width accordingly
+    const curveWidth = width / 2;
+    return `M${curveWidth},0 
+          C0,${height / 4} ${width},${height / 4} ${curveWidth},${height / 2}
+          C0,${(3 * height) / 4} ${width},${
+      (3 * height) / 4
+    } ${curveWidth},${height}`;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -138,27 +138,26 @@ export default function SubConceptsPage() {
   }
 
   return (
-    <div className="w-full h-[400px] overflow-hidden relative">
+    <div className="w-full h-dvh overflow-scroll">
       <Header2 />
       <svg
-        className="w-full h-full mt-10"
-        viewBox="0 0 1000 400"
-        preserveAspectRatio="xMidYMid meet"
+        className="w-full h-auto mt-40"
+        viewBox="0 -100 1000 1400" // Adjusted for vertical snake curve
+        // ,,height
+        preserveAspectRatio="xMinYMin meet"
       >
         <path
           d={getPath()}
           fill="none"
           stroke="#e0e0e0"
-          strokeWidth="4"
+          strokeWidth="10"
           className="curve-path"
         />
-
         {[...Array(totalSteps)].map((_, index) => {
           const point = getPointOnPath(index / (totalSteps - 1));
           const subconcept =
             index > 0 && index < totalSteps - 1 ? subconcepts[index - 1] : null;
 
-          // Cast subconceptType to keyof typeof iconMap and provide a fallback (PenTool)
           const Icon = subconcept
             ? iconMap[subconcept.subconceptType as keyof typeof iconMap] ||
               PenTool
@@ -168,93 +167,77 @@ export default function SubConceptsPage() {
 
           const isCompleted =
             subconcept && subconcept.completionStatus === "yes";
-          // Check if all subconcepts are completed for this unit and set in localstorage to put a tick on unit in dashboard page
-          const isAllSubconceptsCompleted = subconcepts.every(
-            (s) => s.completionStatus === "yes"
-          );
-          // if (isAllSubconceptsCompleted) {
-          //   updateUnitCompletionStatus(unitId, "yes");
-          // }
-
           const isEnabled =
             started &&
             (index === 0 ||
-              (index === totalSteps - 1 && isAllSubconceptsCompleted) ||
+              (index === totalSteps - 1 &&
+                subconcepts.every((s) => s.completionStatus === "yes")) ||
               (subconcept?.completionStatus !== "disabled" &&
                 index !== totalSteps - 1));
 
-          console.log(subconcept);
-
           return (
-            <>
-              <Link
-                // @ts-ignore
-                to={
-                  isEnabled && index !== totalSteps - 1 && index !== 0
-                    ? 
-                    `/subconcept/${subconcept?.subconceptId}`
-                    : null
-                }
-                state={{ subconcept, stageId, currentUnitId }}
-                key={index}
-                className={`${!isEnabled && "cursor-not-allowed"}`}
+            <Link
+              to={
+                isEnabled && index !== totalSteps - 1 && index !== 0
+                  ? `/subconcept/${subconcept?.subconceptId}`
+                  : null
+              }
+              state={{ subconcept, stageId, currentUnitId }}
+              key={index}
+              className={`${!isEnabled && "cursor-not-allowed"}`}
+            >
+              <g
+                className={`transition-transform duration-300 ease-out ${
+                  animationTrigger ? "scale-100" : "scale-0"
+                }`}
+                style={{ transitionDelay: `${index * 100}ms` }}
               >
-                <g
-                  className={`transition-transform duration-300 ease-out ${
-                    animationTrigger ? "scale-100" : "scale-0"
-                  }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
-                  <circle
-                    cx={point.x}
-                    cy={point.y}
-                    r="20"
-                    fill={
-                      isEnabled
-                        ? isCompleted
-                          ? "#4CAF50"
-                          : "#2196F3"
-                        : "#9E9E9E"
-                    }
-                    className={`transition-all duration-300`}
-                  />
+                <rect
+                  x={point.x - 24}
+                  y={point.y - 24}
+                  width="48"
+                  height="48"
+                  rx="12" // Controls the roundness of the edges, can be adjusted
+                  ry="12"
+                  fill={
+                    isEnabled
+                      ? isCompleted
+                        ? "#4CAF50"
+                        : "#2196F3"
+                      : "#9E9E9E"
+                  }
+                />
+                <Icon
+                  x={point.x - 12}
+                  y={point.y - 12}
+                  width="24"
+                  height="24"
+                  color="white"
+                />
+                {isCompleted && (
                   <g
-                    className={`transition-transform duration-300 ease-out`}
-                    style={{ transitionDelay: `${index * 100 + 200}ms` }}
+                    className={`transition-transform duration-300 ease-out ${
+                      animationTrigger ? "scale-100" : "scale-0"
+                    }`}
+                    style={{ transitionDelay: `${index * 100 + 300}ms` }}
                   >
-                    <Icon
-                      x={point.x - 12}
-                      y={point.y - 12}
-                      width="24"
-                      height="24"
+                    <circle
+                      cx={point.x + 12}
+                      cy={point.y - 12}
+                      r="8"
+                      fill="#4CAF50"
+                    />
+                    <CheckCircle2
+                      x={point.x + 8}
+                      y={point.y - 16}
+                      width="8"
+                      height="8"
                       color="white"
                     />
                   </g>
-                  {isCompleted && (
-                    <g
-                      className={`transition-transform duration-300 ease-out ${
-                        animationTrigger ? "scale-100" : "scale-0"
-                      }`}
-                      style={{ transitionDelay: `${index * 100 + 300}ms` }}
-                    >
-                      <circle
-                        cx={point.x + 12}
-                        cy={point.y - 12}
-                        r="8"
-                        fill="#4CAF50"
-                      />
-                      <CheckCircle2
-                        x={point.x + 8}
-                        y={point.y - 16}
-                        width="8"
-                        height="8"
-                        color="white"
-                      />
-                    </g>
-                  )}
-                </g>
-              </Link>
-            </>
+                )}
+              </g>
+            </Link>
           );
         })}
       </svg>

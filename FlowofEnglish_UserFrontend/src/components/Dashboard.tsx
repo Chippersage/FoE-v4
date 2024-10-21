@@ -4,6 +4,8 @@ import { useUserContext } from "../context/AuthContext";
 import '../Styles/Stages.css';
 import Leaderboard from './Leaderboard';
 import Stages from './Stages';
+import StagesSkeleton from './skeletons/StageSkeleton';
+import LeaderboardSkeleton from './skeletons/LeaderboardSkeleton';
 
 function Dashboard() {
 
@@ -95,14 +97,14 @@ function Dashboard() {
         // @ts-ignore
         <Stages stages={programInfo.stages} />
       ) : (
-        <div>No stages available</div>
+        <StagesSkeleton/>
       )}
       {/* @ts-ignore */}
       {leaderBoardInfo ? (
         // @ts-ignore
         <Leaderboard leaderboard={leaderBoardInfo} cohortName={leaderBoardInfo[0]?.cohortName} />
       ) : (
-        <div>No leaderboard info available</div>
+        <LeaderboardSkeleton/>
       )}
     </div>
   );

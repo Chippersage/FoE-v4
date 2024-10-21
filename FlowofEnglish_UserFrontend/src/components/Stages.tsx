@@ -36,6 +36,8 @@ export default function Stages({ stages }) {
     }
   };
 
+
+
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
       {stagesArray.length > 0 ? (
