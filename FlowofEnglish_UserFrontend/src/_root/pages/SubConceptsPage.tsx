@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
   BookOpen,
@@ -47,24 +47,7 @@ export default function SubConceptsPage() {
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // console.log("rendered")
-  // @ts-ignore
-  // function updateUnitCompletionStatus(unitId, completionStatus = "incomplete") {
-  //   // Retrieve existing status from local storage
-  //   const key = `unitCompletionStatus_${user.userId}`;
-  //   // @ts-ignore
-  //   const existingStatus = JSON.parse(localStorage.getItem(key)) || {};
-
-  //   // Update the completion status for the specific unit
-  //   existingStatus[unitId] = completionStatus;
-
-  //   // Save the updated status back to local storage
-  //   localStorage.setItem(
-  //     key,
-  //     JSON.stringify(existingStatus)
-  //   );
-  // }
+  const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
 
   const fetchSubconcepts = async () => {
     try {
@@ -106,19 +89,23 @@ export default function SubConceptsPage() {
       setAnimationTrigger(true);
     }
   }, [started]);
+
   useEffect(() => {
     setAnimationTrigger(true);
   }, []); // Empty dependency array to trigger on initial render
 
   const getPath = () => {
-    const height = 1000; // Change height to a larger value since the curve is now vertical
-    const width = 1000; // Adjust the width accordingly
-    const curveWidth = width / 2;
+    const height = 1000;
+    const width = 1000;
+    const curveWidth = width;
+
     return `M${curveWidth},0 
-          C0,${height / 4} ${width},${height / 4} ${curveWidth},${height / 2}
-          C0,${(3 * height) / 4} ${width},${
-      (3 * height) / 4
-    } ${curveWidth},${height}`;
+          C0,${height / 16} ${width / 0.5},${height / 16} ${curveWidth / 0.8},${
+      height / 8
+    }
+          C0,${(3 * height) / 16} ${width / 0.5},${(3 * height) / 16} ${
+      curveWidth / 0.8
+    },${height / 4}`;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -138,19 +125,18 @@ export default function SubConceptsPage() {
   }
 
   return (
-    <div className="w-full h-dvh overflow-scroll">
+    <div className="w-full h-screen overflow-scroll" style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}>
       <Header2 />
       <svg
         className="w-full h-auto mt-40"
-        viewBox="0 -100 1000 1400" // Adjusted for vertical snake curve
-        // ,,height
+        viewBox="600 -100 1000 1400"
         preserveAspectRatio="xMinYMin meet"
       >
         <path
           d={getPath()}
           fill="none"
           stroke="#e0e0e0"
-          strokeWidth="10"
+          strokeWidth="6"
           className="curve-path"
         />
         {[...Array(totalSteps)].map((_, index) => {
@@ -176,68 +162,95 @@ export default function SubConceptsPage() {
                 index !== totalSteps - 1));
 
           return (
-            <Link
-              to={
-                isEnabled && index !== totalSteps - 1 && index !== 0
-                  ? `/subconcept/${subconcept?.subconceptId}`
-                  : null
-              }
-              state={{ subconcept, stageId, currentUnitId }}
-              key={index}
-              className={`${!isEnabled && "cursor-not-allowed"}`}
-            >
-              <g
-                className={`transition-transform duration-300 ease-out ${
-                  animationTrigger ? "scale-100" : "scale-0"
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
+            <g key={index}>
+              <Link
+                to={
+                  isEnabled && index !== totalSteps - 1 && index !== 0
+                    ? `/subconcept/${subconcept?.subconceptId}`
+                    : null
+                }
+                state={{ subconcept, stageId, currentUnitId }}
+                className={`${!isEnabled && "cursor-not-allowed"}`}
+                onMouseEnter={() => setActiveTooltip(index)}
+                onMouseLeave={() => setActiveTooltip(null)}
               >
-                <rect
-                  x={point.x - 24}
-                  y={point.y - 24}
-                  width="48"
-                  height="48"
-                  rx="12" // Controls the roundness of the edges, can be adjusted
-                  ry="12"
-                  fill={
-                    isEnabled
-                      ? isCompleted
-                        ? "#4CAF50"
-                        : "#2196F3"
-                      : "#9E9E9E"
-                  }
-                />
-                <Icon
-                  x={point.x - 12}
-                  y={point.y - 12}
-                  width="24"
-                  height="24"
-                  color="white"
-                />
-                {isCompleted && (
-                  <g
-                    className={`transition-transform duration-300 ease-out ${
-                      animationTrigger ? "scale-100" : "scale-0"
-                    }`}
-                    style={{ transitionDelay: `${index * 100 + 300}ms` }}
+                <g
+                  className={`transition-transform duration-300 ease-out ${
+                    animationTrigger ? "scale-100" : "scale-0"
+                  }`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <rect
+                    x={point.x - 24}
+                    y={point.y - 24}
+                    width="36"
+                    height="36"
+                    rx="12"
+                    ry="12"
+                    fill={
+                      isEnabled
+                        ? isCompleted
+                          ? "#4CAF50"
+                          : "#2196F3"
+                        : "#9E9E9E"
+                    }
+                  />
+                  <Icon
+                    x={point.x - 14}
+                    y={point.y - 14}
+                    width="16"
+                    height="16"
+                    color="white"
+                  />
+                  {isCompleted && (
+                    <g
+                      className={`transition-transform duration-300 ease-out ${
+                        animationTrigger ? "scale-100" : "scale-0"
+                      }`}
+                      style={{ transitionDelay: `${index * 100 + 300}ms` }}
+                    >
+                      <circle
+                        cx={point.x + 12}
+                        cy={point.y - 12}
+                        r="8"
+                        fill="#4CAF50"
+                      />
+                      <CheckCircle2
+                        x={point.x + 8}
+                        y={point.y - 16}
+                        width="8"
+                        height="8"
+                        color="white"
+                      />
+                    </g>
+                  )}
+                </g>
+              </Link>
+              {activeTooltip === index && (
+                <foreignObject
+                  x={point.x - 100}
+                  y={point.y - 60}
+                  width="200"
+                  height="40"
+                >
+                  <div
+                    className="bg-[#22C55E] text-white p-1 rounded-[5px] text-[8px] text-center font-medium"
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    <circle
-                      cx={point.x + 12}
-                      cy={point.y - 12}
-                      r="8"
-                      fill="#4CAF50"
-                    />
-                    <CheckCircle2
-                      x={point.x + 8}
-                      y={point.y - 16}
-                      width="8"
-                      height="8"
-                      color="white"
-                    />
-                  </g>
-                )}
-              </g>
-            </Link>
+                    {subconcept
+                      ? subconcept.subconceptDesc
+                      : index === 0
+                      ? "Start"
+                      : "Finish"}
+                  </div>
+                </foreignObject>
+              )}
+            </g>
           );
         })}
       </svg>
