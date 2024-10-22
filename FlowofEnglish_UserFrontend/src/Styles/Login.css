@@ -368,3 +368,49 @@
                 margin-top: 15px;
         }
 }
+
+/* Styling for the select field for programs */
+#login_programs {
+    display: block;
+    width: 73%;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    appearance: none;
+    background-color: var(--bs-body-bg);
+    background-clip: padding-box;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: 10px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    margin-top: 1.25rem !important;
+    margin-left: 55px;
+    height: 50px;
+    cursor: pointer;
+}
+
+#login_programs:focus {
+    border-color: var(--bs-primary);
+    outline: none;
+}
+
+#login_programs option {
+    padding: 5px;
+}
+
+/* Mobile View Adjustments */
+@media only screen and (max-width: 767px) {
+    #login_programs {
+        width: 73%;
+        margin-left: 44px;
+    }
+}
+
+/* Tablet View Adjustments */
+@media only screen and (min-width: 768px) and (max-width: 1024px) {
+    #login_programs {
+        width: 73%;
+        margin-left: 55px;
+    }
+}
