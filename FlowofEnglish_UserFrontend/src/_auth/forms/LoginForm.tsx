@@ -156,7 +156,9 @@ const LoginForm = () => {
                   Select a Program
                 </option>
                 {programs.map((program) => (
+                  // @ts-ignore
                   <option key={program.uuid} value={program.programId}>
+                    {/* @ts-ignore */}
                     {program.programName}
                   </option>
                 ))}
