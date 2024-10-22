@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   CheckCircle2,
   BookOpen,
@@ -125,11 +125,14 @@ export default function SubConceptsPage() {
   }
 
   return (
-    <div className="w-full h-screen overflow-scroll" style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}>
+    <div
+      className="w-full h-screen overflow-scroll"
+      style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
+    >
       <Header2 />
       <svg
         className="w-full h-auto mt-40"
-        viewBox="600 -100 1000 1400"
+        viewBox="600 -50 1000 1400"
         preserveAspectRatio="xMinYMin meet"
       >
         <path
@@ -164,6 +167,7 @@ export default function SubConceptsPage() {
           return (
             <g key={index}>
               <Link
+              // @ts-ignore
                 to={
                   isEnabled && index !== totalSteps - 1 && index !== 0
                     ? `/subconcept/${subconcept?.subconceptId}`

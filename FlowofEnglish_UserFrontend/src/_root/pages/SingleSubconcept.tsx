@@ -50,6 +50,7 @@ const SingleSubconcept = () => {
         // Send userData back to the iframe
         const userData = localStorage.getItem("userData");
         // console.log("userData", userData);
+        // @ts-ignore
         event.source.postMessage(userData, event.origin);
       }
     });

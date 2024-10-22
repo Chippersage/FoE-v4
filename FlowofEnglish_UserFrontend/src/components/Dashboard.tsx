@@ -11,8 +11,8 @@ function Dashboard() {
 
   const { user } = useUserContext();
   const [programInfo, setProgramInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState(null);
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   
@@ -58,7 +58,7 @@ function Dashboard() {
           // @ts-ignore
           setError(err.message);
         } finally {
-          setLoading(false);
+          // setLoading(false);
         }
       };
 
@@ -76,7 +76,7 @@ function Dashboard() {
         // @ts-ignore
         setError(err.message);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
 

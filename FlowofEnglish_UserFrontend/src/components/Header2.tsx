@@ -7,7 +7,7 @@ import "../Styles/Header2.css";
 import logoutImage from "../assets/Img/logout.png";
 
 const Header2 = () => {
-  const { user, setUser } = useUserContext();
+  const { user } = useUserContext();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
