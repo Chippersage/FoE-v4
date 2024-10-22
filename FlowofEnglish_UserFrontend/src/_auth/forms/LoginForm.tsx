@@ -1,21 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEye,
+  faEyeSlash,
+  faInfoCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import { useUserContext } from "../../context/AuthContext";
 import logo from "../../assets/Img/main-logo.png";
 import "../../Styles/Login.css";
 import axios from "axios";
 
 const LoginForm = () => {
-
   const { checkAuthUser } = useUserContext();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [programs, setPrograms] = useState([]);
+  const [selectedProgramId, setSelectedProgramId] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch programs from API when the component mounts
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/v1/programs"
+        );
+        setPrograms(response.data); // assuming the response is the array of programs
+      } catch (err) {
+        console.error("Error fetching programs:", err);
+        setError("Unable to fetch programs. Please try again.");
+      }
+    };
+
+    fetchPrograms();
+  }, []);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -29,7 +51,8 @@ const LoginForm = () => {
         "http://localhost:8080/api/v1/users/login",
         {
           userId: email,
-          password: password,
+          userPassword: password,
+          programId: selectedProgramId, // Send the selected program ID
         },
         {
           withCredentials: true,
@@ -49,36 +72,19 @@ const LoginForm = () => {
 
       const { sessionId, userType, userDetails } = login.data;
 
-      // Store sessionId, userType, and userDetails in localStorage
       localStorage.setItem("authToken", sessionId);
       localStorage.setItem("userType", userType);
       localStorage.setItem("user", JSON.stringify(userDetails));
 
-      // setIsAuthenticated(true); // Update the authentication status in App.tsx
-
-      // // Optionally, navigate directly after successful login
-      // navigate("/home");
-
       const isLoggedIn = await checkAuthUser();
 
       if (isLoggedIn) {
-        // toast({
-        //   title: "Signin Successful!",
-        //   className:
-        //     "bg-success-green text-xs sm:text-lg font-semibold w-fit h-fit p-3 fixed right-10 bottom-10",
-        //   duration: 3000,
-        // });
         console.log("Signin Successful!");
         navigate("/");
+      } else {
+        setError("Oops!, Login failed. Please try again.");
+        console.log("Oops!, Login failed. Please try again.");
       }
-      // toast({
-      //   title: "Oops!, Login failed. Please try again.",
-      //   className:
-      //     "bg-danger-red font-semibold p-3 w-fit h-fit fixed right-10 bottom-10 ml-10",
-      // });
-      else setError("Oops!, Login failed. Please try again.");
-      console.log("Oops!, Login failed. Please try again.");
-
     } catch (error) {
       setError("Oops!, Login failed. Please try again.");
       console.log(error);
@@ -87,7 +93,8 @@ const LoginForm = () => {
     }
   };
 
-  const canSubmit = email.trim() !== "" && password.trim() !== "";
+  const canSubmit =
+    email.trim() !== "" && password.trim() !== "" && selectedProgramId !== "";
 
   return (
     <div className="main_login">
@@ -100,19 +107,19 @@ const LoginForm = () => {
             <h2 className="login-main_heading">Log In</h2>
             <div className="login-position-relative">
               <input
-                type="email"
+                type="text"
                 id="login_email"
-                placeholder="Enter Your Email"
+                placeholder="Enter Your userid"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <span
+              {/* <span
                 className="info-icon"
                 data-tooltip="The email that you used during the sign-up process."
               >
                 <FontAwesomeIcon icon={faInfoCircle} />
-              </span>
+              </span> */}
             </div>
             <div className="login-position-relative">
               <input
@@ -123,12 +130,12 @@ const LoginForm = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <span
+              {/* <span
                 className="info-icon"
                 data-tooltip="Your password must be at least 8 characters long."
               >
                 <FontAwesomeIcon icon={faInfoCircle} />
-              </span>
+              </span> */}
               <span
                 className="login-eye-toggle-password"
                 onClick={togglePasswordVisibility}
@@ -136,6 +143,32 @@ const LoginForm = () => {
                 <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
               </span>
             </div>
+
+            {/* Program Select Field */}
+            <div className="login-position-relative">
+              <select
+                id="login_programs"
+                value={selectedProgramId}
+                onChange={(e) => setSelectedProgramId(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select a Program
+                </option>
+                {programs.map((program) => (
+                  <option key={program.uuid} value={program.programId}>
+                    {program.programName}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="info-icon"
+                data-tooltip="Select the program you are enrolled in."
+              >
+                <FontAwesomeIcon icon={faInfoCircle} />
+              </span>
+            </div>
+
             {error && <div className="text-danger text-center">{error}</div>}
             <div className="login-button-main">
               <button
@@ -154,15 +187,3 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
-
-
-            {/* <div className="login-forgot-password">
-              <a onClick={() => navigate("/forgot-password")}>
-                Forgot Password?
-              </a>
-            </div> */}
-            {/* <div className="login-sign-up-text">
-              <p>
-                <a onClick={() => navigate("/signUp")}>&nbsp;SignUp</a>
-              </p>
-              </div> */}
