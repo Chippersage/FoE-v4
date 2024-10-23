@@ -155,7 +155,6 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
         String plainPassword = DEFAULT_PASSWORD;
         user.setUserPassword(passwordEncoder.encode(plainPassword));  // Hash the password for DB storage
-        
         User savedUser = userRepository.save(user);
         
         // If the email is present, send credentials to user
@@ -274,6 +273,7 @@ public class UserServiceImpl implements UserService {
                             savedUser.getUserId(),
                             plainPassword,
                             cohortProgram.getProgram().getProgramName(),
+                            cohortProgram.getProgram().getProgramId(),
                             cohort.getCohortName(),
                             organization.getOrganizationAdminEmail(),
                             organization.getOrganizationName()

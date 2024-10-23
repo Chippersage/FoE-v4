@@ -1,7 +1,6 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -13,17 +12,14 @@ public class Cohort {
     @Column(name = "cohort_id", length = 255)
     private String cohortId;
 
-    @Column(name = "cohort_creation", nullable = false)
-    private LocalDateTime cohortCreation;
-
     @Column(name = "cohort_name", length = 100, nullable = false)
     private String cohortName;
 
-    @Column(name = "cohort_end_date", nullable = false)
-    private LocalDate cohortEndDate;
+    @Column(name = "cohort_end_date", nullable = true)
+    private LocalDateTime cohortEndDate;
 
     @Column(name = "cohort_start_date", nullable = false)
-    private LocalDate cohortStartDate;
+    private LocalDateTime cohortStartDate;
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
@@ -38,16 +34,16 @@ public class Cohort {
     }
 
     // Parameterized constructor
-    public Cohort(String cohortId, LocalDateTime cohortCreation, String cohortName, LocalDate cohortEndDate,
-            LocalDate cohortStartDate, String uuid, Organization organization) {
-  this.cohortId = cohortId;
-  this.cohortCreation = cohortCreation;
-  this.cohortName = cohortName;
-  this.cohortEndDate = cohortEndDate;
-  this.cohortStartDate = cohortStartDate;
-  this.uuid = uuid; // This should be either provided or handled by @PrePersist
-  this.organization = organization;
-}
+    public Cohort(String cohortId,  String cohortName, LocalDateTime cohortEndDate,
+			LocalDateTime cohortStartDate, String uuid, Organization organization) {
+		super();
+		this.cohortId = cohortId;
+		this.cohortName = cohortName;
+		this.cohortEndDate = cohortEndDate;
+		this.cohortStartDate = cohortStartDate;
+		this.uuid = uuid;
+		this.organization = organization;
+	}
 
 
 	public String getCohortId() {
@@ -58,14 +54,6 @@ public class Cohort {
 		this.cohortId = cohortId;
 	}
 
-	public LocalDateTime getCohortCreation() {
-		return cohortCreation;
-	}
-
-	public void setCohortCreation(LocalDateTime cohortCreation) {
-		this.cohortCreation = cohortCreation;
-	}
-
 	public String getCohortName() {
 		return cohortName;
 	}
@@ -74,19 +62,19 @@ public class Cohort {
 		this.cohortName = cohortName;
 	}
 
-	public LocalDate getCohortEndDate() {
+	public LocalDateTime getCohortEndDate() {
 		return cohortEndDate;
 	}
 
-	public void setCohortEndDate(LocalDate cohortEndDate) {
+	public void setCohortEndDate(LocalDateTime cohortEndDate) {
 		this.cohortEndDate = cohortEndDate;
 	}
 
-	public LocalDate getCohortStartDate() {
+	public LocalDateTime getCohortStartDate() {
 		return cohortStartDate;
 	}
 
-	public void setCohortStartDate(LocalDate cohortStartDate) {
+	public void setCohortStartDate(LocalDateTime cohortStartDate) {
 		this.cohortStartDate = cohortStartDate;
 	}
 
@@ -108,9 +96,8 @@ public class Cohort {
 
 	@Override
 	public String toString() {
-		return "Cohort [cohortId=" + cohortId + ", cohortCreation=" + cohortCreation + ", cohortName=" + cohortName
-				+ ", cohortEndDate=" + cohortEndDate + ", cohortStartDate=" + cohortStartDate + ", uuid=" + uuid
-				+ ", organization=" + organization + "]";
+		return "Cohort [cohortId=" + cohortId + ", cohortName=" + cohortName + ", cohortEndDate=" + cohortEndDate
+				+ ", cohortStartDate=" + cohortStartDate + ", uuid=" + uuid + ", organization=" + organization + "]";
 	}
 
 	// Method to ensure UUID and generate cohortId before persisting

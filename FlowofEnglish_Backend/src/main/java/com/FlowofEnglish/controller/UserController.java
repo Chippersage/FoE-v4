@@ -162,7 +162,7 @@ public class UserController {
         return ResponseEntity.ok(resultMessage);
     }
 
-   // New Login Method
+   // Login Method
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
     	String userId = loginData.get("userId");
@@ -269,50 +269,6 @@ public class UserController {
     }
         
 } 
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
