@@ -21,14 +21,13 @@ const LoginForm = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch programs from API when the component mounts
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/api/v1/programs"
-        );
+        const response = await axios.get(`${API_BASE_URL}/programs`);
         setPrograms(response.data); // assuming the response is the array of programs
       } catch (err) {
         console.error("Error fetching programs:", err);
@@ -39,6 +38,19 @@ const LoginForm = () => {
     fetchPrograms();
   }, []);
 
+  //check if user is already logged in then dont allow user to login again
+    useEffect(() => {
+      
+      const isAlreadyLoggedIn = async () => {
+        const isLoggedIn = await checkAuthUser();
+        if (isLoggedIn) {
+          navigate(-1);
+        }
+      }
+
+      isAlreadyLoggedIn();
+    }, [navigate]);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -48,7 +60,7 @@ const LoginForm = () => {
     setIsSubmitting(true);
     try {
       const login = await axios.post(
-        "http://localhost:8080/api/v1/users/login",
+        `${API_BASE_URL}/users/login`,
         {
           userId: email,
           userPassword: password,
@@ -97,7 +109,7 @@ const LoginForm = () => {
     email.trim() !== "" && password.trim() !== "" && selectedProgramId !== "";
 
   return (
-    <div className="main_login">
+    <div className="main_login h-fit">
       <div className="login_card">
         <div className="login-card-body">
           <div className="login-img-div">
