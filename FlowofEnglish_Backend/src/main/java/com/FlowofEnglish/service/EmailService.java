@@ -19,10 +19,10 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, String programName, String cohortName, String orgAdminEmail, String orgName) {
+    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, String programName, String programId, String cohortName, String orgAdminEmail, String orgName) {
         String subject = "Welcome to " + programName + "!";
         String body = "Dear " + userName + ",\n\n"
-                + "We are delighted to welcome you to " + programName + " ! You are now part of an exciting learning journey, and we are here to support you every step of the way.\n\n"
+                + "We are delighted to welcome you to " + programName + " (Program ID: " + programId + ")! You are now part of an exciting learning journey, and we are here to support you every step of the way.\n\n"
                 + "To get started, please find your login credentials below:\n\n"
                 + "User ID: " + userId + "\n"
                 + "Password: " + plainPassword + "\n\n"
