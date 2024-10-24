@@ -11,6 +11,8 @@ function Dashboard() {
 
   const { user } = useUserContext();
   const [programInfo, setProgramInfo] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // const [loading, setLoading] = useState(true);
   // const [error, setError] = useState(null);
 
@@ -22,7 +24,7 @@ function Dashboard() {
        const userId = encodeURIComponent(user.userId); // Extract userId here
        try {
          const response = await axios.get(
-           `http://localhost:8080/api/v1/units/${userId}/program/${programId}`
+           `${API_BASE_URL}/units/${userId}/program/${programId}`
          );
 
          console.log('Program Info Response:', response.data); // Log response data for program info
@@ -38,7 +40,7 @@ function Dashboard() {
   const getLeaderBoardInfo = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/api/v1/user-cohort-mappings"
+        `${API_BASE_URL}/user-cohort-mappings`
       );
       return response.data;
     } catch (error) {
@@ -71,6 +73,7 @@ function Dashboard() {
     const fetchAndSetLeaderBoardInfo = async () => {
       try {
         const result = await getLeaderBoardInfo();
+        console.log("Leaderboard info", result);
         setLeaderBoardInfo(result);
       } catch (err) {
         // @ts-ignore
@@ -102,7 +105,7 @@ function Dashboard() {
       {/* @ts-ignore */}
       {leaderBoardInfo ? (
         // @ts-ignore
-        <Leaderboard leaderboard={leaderBoardInfo} cohortName={leaderBoardInfo[0]?.cohortName} />
+        <Leaderboard leaderboard={leaderBoardInfo} userId={user?.userId} cohortName={user?.cohort?.cohortName} cohortId={user?.cohort?.cohortId}/>
       ) : (
         <LeaderboardSkeleton/>
       )}
