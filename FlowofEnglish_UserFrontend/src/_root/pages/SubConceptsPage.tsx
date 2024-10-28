@@ -52,20 +52,23 @@ export default function SubConceptsPage() {
 
 
   const fetchSubconcepts = async () => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/programconceptsmappings/${user.userId}/unit/${unitId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching subconcepts:", error);
-      throw error;
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/programconceptsmappings/${user.userId}/unit/${unitId}`,
+          { withCredentials: true }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching subconcepts:", error);
+        throw error;
+      }
     }
-  };
+    
 
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
-      if (user) {
+      if (user.userId && unitId) {
+        console.log(user)
         try {
           const result = await fetchSubconcepts();
           console.log(result);
