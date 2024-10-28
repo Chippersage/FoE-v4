@@ -84,7 +84,7 @@ export default function DashboardOrgClientPage() {
     };
 
     axios
-      .get(`${apiUrl}/api/v1/organizations/${id}`, { headers })
+      .get(`${apiUrl}/organizations/${id}`, { headers })
       // console.log(req.params.id);
       .then((res) => {
         // console.log(`id issss ${id}`);
@@ -99,7 +99,7 @@ export default function DashboardOrgClientPage() {
       });
 
     axios
-      .get(`${apiUrl}/organisations/organisationsx/${id}api/v1/programs`, { headers })
+      .get(`${apiUrl}/organisations/organisationsx/${id}/programs`, { headers })
       .then((res) => {
         setPrograms(res.data);
         setSelectedProgram(res.data.length > 0 ? res.data[0].id : 0);
