@@ -20,39 +20,8 @@ export default function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-  //   try {
-  //   const response = await axios.post(`${apiUrl}/api/v1/superadmin/login`, {
-  //     userId,
-  //     password,
-  //   });
-    
-
-  //     const data = response.data; // Access data from the response
-  //      console.log(data.token);
-  //      console.log(data.userType);
-
-  //     if (data.token && data.userType === 'superAdmin') {
-  //       localStorage.setItem('token', data.token);
-  //       setUserType(data.userType); // Setting userType using setUserType from context
-  //       navigate('/dashboard', { replace: true });
-  //     } else {
-  //       setError(data.error || 'Login failed');
-  //     }
-  //   }
-  //   catch (error) {
-  //     if (error.response && error.response.status === 401) {
-  //       setError('Invalid credentials');
-  //     } else if (error.response && error.response.status === 500) {
-  //       setError('Server error. Please try again later.');
-  //     } else {
-  //       setError('Error during login');
-  //     }
-  //   }
-    
-  // };
   try {
-    const response = await axios.post(`${apiUrl}/api/v1/superadmin/login`, {
+    const response = await axios.post(`${apiUrl}/superadmin/login`, {
       userId,
       password,
     });
@@ -132,9 +101,9 @@ export default function LoginForm() {
       <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleSuperAdmin}>
         Go to organization admin Page
       </LoadingButton>
-      <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleRedirectToUserLogin}>
+      {/* <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleRedirectToUserLogin}>
         Go to User Login Page
-      </LoadingButton>
+      </LoadingButton> */}
     </>
   );
 }
