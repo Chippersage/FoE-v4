@@ -13,7 +13,7 @@ const Signup = () => {
     event.preventDefault();
     console.log("Submitting form with:", userId, password);
     try {
-        const response = await axios.post(`${apiUrl}/api/v1/superadmin/create`, {
+        const response = await axios.post(`${apiUrl}/superadmin/create`, {
         userId,
         password,
       });

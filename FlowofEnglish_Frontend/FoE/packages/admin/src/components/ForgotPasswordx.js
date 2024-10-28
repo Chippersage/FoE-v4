@@ -11,7 +11,7 @@ const ForgotPassword = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post(`${apiUrl}/api/v1/organizations/forgotorgpassword`, {
+      const response = await axios.post(`${apiUrl}/organizations/forgotorgpassword`, {
         organisationName,
         email,
       });
