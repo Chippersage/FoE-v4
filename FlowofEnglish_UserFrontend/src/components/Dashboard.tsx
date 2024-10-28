@@ -27,7 +27,6 @@ function Dashboard() {
            `${API_BASE_URL}/units/${userId}/program/${programId}`
          );
 
-         console.log('Program Info Response:', response.data); // Log response data for program info
          return response.data;
        } catch (error) {
          console.log('Error fetching program info:', error); // Log any error during fetching
@@ -73,7 +72,6 @@ function Dashboard() {
     const fetchAndSetLeaderBoardInfo = async () => {
       try {
         const result = await getLeaderBoardInfo();
-        console.log("Leaderboard info", result);
         setLeaderBoardInfo(result);
       } catch (err) {
         // @ts-ignore
