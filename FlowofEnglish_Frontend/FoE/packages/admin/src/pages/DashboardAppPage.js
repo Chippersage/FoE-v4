@@ -26,7 +26,7 @@ export default function DashboardAppPage() {
   // Fetch organization details on component mount
   useEffect(() => {
     axios
-      .get(`${apiUrl}/api/v1/organizations`)
+      .get(`${apiUrl}/organizations`)
       .then((res) => {
         setOrgs(res.data);
       })
@@ -35,7 +35,7 @@ export default function DashboardAppPage() {
       });
   
     axios
-      .get(`${apiUrl}/api/v1/users`)
+      .get(`${apiUrl}/users`)
       .then((res) => {
         setUsers(res.data);
       })
@@ -44,7 +44,7 @@ export default function DashboardAppPage() {
       });
 
     axios
-      .get(`${apiUrl}/api/v1/cohorts`)
+      .get(`${apiUrl}/cohorts`)
       .then((res) => {
         // console.log(res.data);
         setCourses(res.data);
@@ -54,7 +54,7 @@ export default function DashboardAppPage() {
       });
 
     axios
-      .get(`${apiUrl}/api/v1/programs`)
+      .get(`${apiUrl}/programs`)
       .then((res) => {
         setLangs(res.data);
       })
