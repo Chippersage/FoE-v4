@@ -34,6 +34,8 @@ const SingleSubconcept = () => {
         subconceptId: subconcept?.subconceptId,
 
         subconceptMaxscore: subconcept?.subconceptMaxscore,
+
+        API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
       };
       localStorage.setItem("userData", JSON.stringify(userData));
     }
@@ -80,13 +82,15 @@ const SingleSubconcept = () => {
       <iframe
         id="embeddedContent"
         src={ subconcept?.subconceptType === "html" ? subconcept.subconceptLink : "/media.html" }
-        // src={ "/Passages/Being-Sick-Passage.html" }
+        // src={"/Sentences/dictation/stage2/simpleUnit-1.html"}
         title="Embedded Content"
         width="100%"
         height="800px"
         style={{ border: "none", overflow: "scroll" }}
         scrolling="no"
-        onLoad={subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}} // Send data when iframe loads
+        onLoad={
+          subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}
+        } // Send data when iframe loads
       />
     </>
   );
