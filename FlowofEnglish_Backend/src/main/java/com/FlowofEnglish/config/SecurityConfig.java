@@ -24,7 +24,8 @@ public class SecurityConfig {
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://13.234.42.153:8080", "http://13.234.42.153:3000",
-                    		"http://13.234.42.153:5173", "http://localhost:5173", "https://chippersageblr.s3.ap-south-1.amazonaws.com"));
+                    		"https://flowofenglish.thechippersage.com", "https://flowofenglish.thechippersage.com/admin",
+                    		"http://localhost:5173", "https://chippersageblr.s3.ap-south-1.amazonaws.com"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -48,7 +49,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-cohort-mappings/**").permitAll()
                     .requestMatchers("/api/v1/cohortprogram/**").permitAll()
                     .requestMatchers("/api/v1/cohortprogram/create").permitAll()
-                    .requestMatchers("/api/v1/organizations/**").permitAll() // Require authentication for all other organization operations
+                    .requestMatchers("/api/v1/organizations/**").permitAll()
                     .requestMatchers("/api/v1/cohorts/create").permitAll()
                     .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()
                     .requestMatchers("/api/v1/programs/create").permitAll()

@@ -19,22 +19,24 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, String programName, String programId, String cohortName, String orgAdminEmail, String orgName) {
+    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, String programName, String programId, String cohortName, String orgAdminEmail, String orgName) { 
         String subject = "Welcome to " + programName + "!";
         String body = "Dear " + userName + ",\n\n"
-                + "We are delighted to welcome you to " + programName + " (Program ID: " + programId + ")! You are now part of an exciting learning journey, and we are here to support you every step of the way.\n\n"
+                + "We are delighted to welcome you to the " + programName + " (Program ID: " + programId + "). You are now part of an exciting learning journey, and we are committed to supporting you every step of the way.\n\n"
                 + "To get started, please find your login credentials below:\n\n"
                 + "User ID: " + userId + "\n"
                 + "Password: " + plainPassword + "\n\n"
                 + "You can log in to the learning portal using the following link:\n"
-                + "Login Here Link\n\n"
-                + "If you have any questions or need assistance, feel free to reach out to your organization administrator at " + orgAdminEmail + ".\n"
-                + "Your organization name: " + orgName + "\n"
-                + "Your cohort name: " + cohortName + "\n\n"
-                + "We are thrilled to have you Onboard and look forward to your success in this program. Let's get started and make the most of this learning experience!\n\n"
+                + "https://flowofenglish.thechippersage.com/sign-in\n\n"
+                + "If you have any questions or need assistance, please feel free to reach out to your organization administrator:\n"
+                + "Administrator Email: " + orgAdminEmail + "\n"
+                + "Organization Name: " + orgName + "\n"
+                + "Cohort Name: " + cohortName + "\n\n"
+                + "We are thrilled to have you onboard and look forward to your achievements in this program. Let’s get started and make the most of this learning experience together!\n\n"
                 + "Best regards,\n"
-                + "Latha Srinivasan\n";
+                + "Team Chippersage\n";
 
         sendEmail(userEmail, subject, body);
     }
+
 }

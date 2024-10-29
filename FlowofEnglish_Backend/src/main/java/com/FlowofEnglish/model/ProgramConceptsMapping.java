@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Program_Subconcepts")
+@Table(name = "Program_Subconcepts",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"unit_id", "subconcept_id"}))
 public class ProgramConceptsMapping {
 
     @Id
@@ -13,7 +14,7 @@ public class ProgramConceptsMapping {
     private Long programConceptId;
     
 
-    @Column(name = "program_concept_desc", length = 500, nullable = false)
+    @Column(name = "program_concept_desc", length = 5000, nullable = false)
     private String programConceptDesc;
 
     @ManyToOne
