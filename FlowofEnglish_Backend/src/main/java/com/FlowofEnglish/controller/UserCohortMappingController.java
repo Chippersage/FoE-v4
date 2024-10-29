@@ -22,6 +22,13 @@ public class UserCohortMappingController {
     public List<UserCohortMappingDTO> getAllUserCohortMappings() {
         return userCohortMappingService.getAllUserCohortMappings();
     }
+    
+ // GET user cohort mappings by cohortId
+    @GetMapping("/cohort/{cohortId}")
+    public List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
+        return userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
+    }
+
 
     // GET user cohort mappings by userId
     @GetMapping("/user/{userId}")

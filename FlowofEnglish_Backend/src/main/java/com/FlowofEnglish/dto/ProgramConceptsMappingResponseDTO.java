@@ -4,10 +4,10 @@ import java.util.Map;
 
 public class ProgramConceptsMappingResponseDTO {
     private String programId;
-    private String unitId;  // Changed from unit_id to unitId
+    private String unitId;  
     private String stageId; 
-    private Map<String, SubconceptResponseDTO> subConcepts; // Changed from sub_concepts to subConcepts
-    private String unitCompletionStatus; // Changed from unit_completion_status to unitCompletionStatus
+    private Map<String, SubconceptResponseDTO> subConcepts; 
+    private String unitCompletionStatus; 
     private int subconceptCount;
 
   
