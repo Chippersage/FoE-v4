@@ -29,7 +29,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
     <Card
       className={`w-full max-w-md mx-auto overflow-y-auto ${
         !showMore ? "no-scrollbar" : "custom-scrollbar-2"
-      }  h-full`}
+      } h-full`}
     >
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
@@ -71,7 +71,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
           ))}
 
           {/* If current user is not in top 3, display them after top 3 with special effect */}
-          {currentUserRank > 3 && currentUser && (
+          {currentUserRank > 3 && currentUser && !showMore && (
             <div
               className={`flex justify-between items-center py-2 bg-blue-100 p-2 rounded-xl shadow-xl`}
             >
