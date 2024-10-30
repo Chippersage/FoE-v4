@@ -39,7 +39,7 @@ function Dashboard() {
   const getLeaderBoardInfo = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/user-cohort-mappings`
+        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}`
       );
       return response.data;
     } catch (error) {
@@ -92,20 +92,28 @@ function Dashboard() {
   // }, [user]); // Log only when `user` state changes
   
   return (
-    <div className="w-full flex flex-col md:flex-row mt-44 gap-2 px-2">
+    <div className="w-full flex flex-col md:flex-row mt-44 overflow-scroll no-scrollbar gap-2 px-2">
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
-        // @ts-ignore
-        <Stages stages={programInfo.stages} />
+        <div className="w-full flex-1">
+          {/* @ts-ignore */}
+          <Stages stages={programInfo.stages} />
+        </div>
       ) : (
-        <StagesSkeleton/>
+        <StagesSkeleton />
       )}
       {/* @ts-ignore */}
       {leaderBoardInfo ? (
-        // @ts-ignore
-        <Leaderboard leaderboard={leaderBoardInfo} userId={user?.userId} cohortName={user?.cohort?.cohortName} cohortId={user?.cohort?.cohortId}/>
+        <div className="w-full flex-1 mt-9">
+          <Leaderboard
+            leaderboard={leaderBoardInfo}
+            userId={user?.userId}
+            cohortName={user?.cohort?.cohortName}
+            cohortId={user?.cohort?.cohortId}
+          />
+        </div>
       ) : (
-        <LeaderboardSkeleton/>
+        <LeaderboardSkeleton />
       )}
     </div>
   );

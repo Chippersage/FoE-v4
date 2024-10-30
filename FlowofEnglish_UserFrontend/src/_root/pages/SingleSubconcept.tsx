@@ -81,7 +81,12 @@ const SingleSubconcept = () => {
     <>
       <iframe
         id="embeddedContent"
-        src={ subconcept?.subconceptType === "html" ? subconcept.subconceptLink : "/media.html" }
+        src={
+          (subconcept?.subconceptType === "html" ||
+          subconcept?.subconceptType === "passage")
+            ? subconcept.subconceptLink
+            : "/media.html"
+        }
         // src={"/Sentences/dictation/stage2/simpleUnit-1.html"}
         title="Embedded Content"
         width="100%"
