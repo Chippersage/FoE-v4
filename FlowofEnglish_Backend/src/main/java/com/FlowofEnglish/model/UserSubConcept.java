@@ -3,9 +3,9 @@ package com.FlowofEnglish.model;
 import jakarta.persistence.*;
 import java.util.UUID;
 
-@Entity
+@Entity 
 @Table(name = "UserSubConcept_completion",
-      uniqueConstraints = @UniqueConstraint(columnNames = {"subconcept_id", "user_id"})) // Added unique constraint
+	    uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "user_id", "unit_id", "subconcept_id"}))
 public class UserSubConcept {
 
     @Id

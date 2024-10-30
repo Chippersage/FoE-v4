@@ -26,9 +26,6 @@ public class UserAttempts {
     @Column(name = "user_attempt_start_timestamp", nullable = false)
     private LocalDateTime userAttemptStartTimestamp;
 
-//    @ManyToOne
-//    @JoinColumn(name = "concept_id", nullable = true)
-//    private Concept concept;
 
     @ManyToOne
     @JoinColumn(name = "unit_id", nullable = false)
@@ -123,13 +120,7 @@ public class UserAttempts {
 		this.userAttemptStartTimestamp = userAttemptStartTimestamp;
 	}
 
-//	public Concept getConcept() {
-//		return concept;
-//	}
-//
-//	public void setConcept(Concept concept) {
-//		this.concept = concept;
-//	}
+
 	public User getUser() {
 		return user;
 	}
