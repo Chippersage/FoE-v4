@@ -11,6 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserCohortMappingRepository extends JpaRepository<UserCohortMapping, Integer> {
+	
+	List<UserCohortMapping> findAllByCohortCohortId(String cohortId);
 
     Optional<UserCohortMapping> findByUserUserId(String userId);
 

@@ -11,17 +11,17 @@ public class Concept {
     @Column(name = "concept_id", length = 255)
     private String conceptId;
     
-    @Column(name = "concept_name", length = 50, nullable = true)
+    @Column(name = "concept_name", length = 5000, nullable = true)
     private String conceptName;
 
 
-	@Column(name = "concept_desc", length = 50, nullable = false)
+	@Column(name = "concept_desc", length = 5000, nullable = true)
     private String conceptDesc;
 
-    @Column(name = "concept_skill_1", length = 50, nullable = false)
+    @Column(name = "concept_skill_1", length = 5000, nullable = true)
     private String conceptSkill1;
 
-    @Column(name = "concept_skill_2", length = 50, nullable = false)
+    @Column(name = "concept_skill_2", length = 5000, nullable = true)
     private String conceptSkill2;
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
