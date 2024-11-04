@@ -40,7 +40,7 @@ export default function Stages({ stages }) {
 
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-md mx-auto space-y-4 overflow-y-auto">
       {stagesArray.length > 0 ? (
         stagesArray.map((stage, index) => (
           <Card
@@ -110,12 +110,12 @@ export default function Stages({ stages }) {
                         key={unitIndex}
                         className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${
                           // @ts-ignore
-                          hoveredUnit === unit.unitName
+                          hoveredUnit === unit.unitId
                             ? "bg-black bg-opacity-30"
                             : ""
                         }`}
                         // @ts-ignore
-                        onMouseEnter={() => setHoveredUnit(unit.unitName)}
+                        onMouseEnter={() => setHoveredUnit(unit.unitId)}
                         onMouseLeave={() => setHoveredUnit(null)}
                       >
                         {/* @ts-ignore */}
@@ -142,7 +142,7 @@ export default function Stages({ stages }) {
                               : "text-gray-400"
                           } ${
                             // @ts-ignore
-                            hoveredUnit === unit.unitName
+                            hoveredUnit === unit.unitId
                               ? "opacity-100 translate-x-1 font-semibold"
                               : ""
                           }`}
