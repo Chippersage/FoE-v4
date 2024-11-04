@@ -21,7 +21,7 @@ public class Concept {
     @Column(name = "concept_skill_1", length = 5000, nullable = true)
     private String conceptSkill1;
 
-    @Column(name = "concept_skill_2", length = 5000, nullable = true)
+    @Column(name = "concept_skill_2", length = 500, nullable = true)
     private String conceptSkill2;
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true)

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity 
-@Table(name = "UserSubConcept_completion",
+@Table(name = "UserSubconcept_completion",
 	    uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "user_id", "unit_id", "subconcept_id"}))
 public class UserSubConcept {
 
@@ -43,8 +43,7 @@ public class UserSubConcept {
     private String uuid;
 
     // Default constructor
-    public UserSubConcept() {
-        // Auto-generate UUID
+    public UserSubConcept() { 
     }
 
     public UserSubConcept(User user, Program program, Stage stage, Unit unit, Subconcept subconcept) {

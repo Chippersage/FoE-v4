@@ -29,6 +29,10 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         return userSessionMappingRepository.save(userSessionMapping);
     }
 
+    @Override
+    public Optional<UserSessionMapping> findBySessionId(String sessionId) {
+        return userSessionMappingRepository.findBySessionId(sessionId);
+    }
     
     @Override
     public UserSessionMapping updateUserSessionMapping(String sessionId, UserSessionMapping userSessionMapping) {
