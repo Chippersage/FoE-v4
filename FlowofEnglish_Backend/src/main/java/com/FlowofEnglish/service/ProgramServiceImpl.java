@@ -41,6 +41,12 @@ public class ProgramServiceImpl implements ProgramService {
     }
     
     @Override
+    public Optional<Program> findByProgramId(String programId) {
+        return programRepository.findByProgramId(programId);
+    }
+    
+    
+    @Override
     public Map<String, Object> uploadProgramsCSV(MultipartFile file) {
         Map<String, Object> result = new HashMap<>();
         int createdCount = 0;

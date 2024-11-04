@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 public interface ProgramService {
 
     List<Program> getAllPrograms();
+    
+    Optional<Program> findByProgramId(String programId);
 
     Optional<Program> getProgramById(String programId);
 

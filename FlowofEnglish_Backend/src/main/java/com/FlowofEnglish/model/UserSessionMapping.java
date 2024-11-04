@@ -10,7 +10,7 @@ public class UserSessionMapping {
 
     @Id
     @Column(name = "session_id", length = 128)
-    private String sessionId;  // 128-bit string for session ID
+    private String sessionId;  
 
     @Column(name = "session_end_timestamp")
     private LocalDateTime sessionEndTimestamp;

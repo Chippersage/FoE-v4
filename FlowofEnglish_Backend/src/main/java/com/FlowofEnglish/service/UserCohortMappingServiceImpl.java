@@ -15,6 +15,17 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Override
+    public Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId) {
+        return userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+    }
+    
+    @Override
+    public void updateUserCohortMapping(int userCohortId, UserCohortMapping userCohortMapping) {
+        // Assuming userCohortId is the primary key, simply save the updated entity
+        userCohortMappingRepository.save(userCohortMapping);
+    }
 
     @Override
     public List<UserCohortMappingDTO> getAllUserCohortMappings() {
