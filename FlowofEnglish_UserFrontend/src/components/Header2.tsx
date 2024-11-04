@@ -28,6 +28,7 @@ const Header2 = () => {
       localStorage.removeItem("authToken");
       localStorage.removeItem("userType");
       localStorage.removeItem("user");
+      localStorage.removeItem("hasSeenWelcome");
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
       navigate("/sign-in");
@@ -55,7 +56,7 @@ const Header2 = () => {
         className="hellohead mx-auto"
         style={{ fontSize: "18px", fontWeight: "bold", color: "#262525" }}
       >
-        {user ? `Continue, ${user.program.programName}` : "Continue as Guest"}{" "}
+        {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
         {/* Show "Continue as Guest" if user is null */}
       </h3>
       <div className="logout-button">

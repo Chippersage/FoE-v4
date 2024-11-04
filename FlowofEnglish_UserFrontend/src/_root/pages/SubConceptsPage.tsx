@@ -50,25 +50,23 @@ export default function SubConceptsPage() {
   const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
   const fetchSubconcepts = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/programconceptsmappings/${user.userId}/unit/${unitId}`,
-          { withCredentials: true }
-        );
-        return response.data;
-      } catch (error) {
-        console.error("Error fetching subconcepts:", error);
-        throw error;
-      }
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/programconceptsmappings/${user.userId}/unit/${unitId}`,
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching subconcepts:", error);
+      throw error;
     }
-    
+  };
 
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
       if (user.userId && unitId) {
-        console.log(user)
+        console.log(user);
         try {
           const result = await fetchSubconcepts();
           console.log(result);
@@ -133,7 +131,7 @@ export default function SubConceptsPage() {
     <>
       <Header2 />
       <div
-        className="w-full h-screen overflow-scroll mt-36"
+        className="w-full h-screen overflow-scroll custom-scrollbar-2 mt-36"
         style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
       >
         <svg
@@ -178,8 +176,7 @@ export default function SubConceptsPage() {
                   // @ts-ignore
                   to={
                     isEnabled && index !== totalSteps - 1 && index !== 0
-                      ? 
-                      `/subconcept/${subconcept?.subconceptId}`
+                      ? `/subconcept/${subconcept?.subconceptId}`
                       : null
                   }
                   state={{ subconcept, stageId, currentUnitId }}
