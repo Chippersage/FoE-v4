@@ -5,14 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, Long> {
  	List<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
-	List<UserSubConcept> findAllByUser_UserId(String userId);  // Updated method to find by userId
+	List<UserSubConcept> findAllByUser_UserId(String userId);  
 	List<UserSubConcept> findByUser_UserIdAndProgram_ProgramId(String userId, String programId);
 	
-	// List<UserSubConcept> findByUnit_UnitId(String unitId);
+	Optional<UserSubConcept> findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(
+		    String userId, String programId, String stageId, String unitId, String subconceptId);
 
 }
 

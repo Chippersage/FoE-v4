@@ -6,6 +6,7 @@ import com.FlowofEnglish.model.Unit;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +20,5 @@ public interface UnitService {
     void deleteUnits(List<String> unitIds);
     List<UnitResponseDTO> getAllUnits(); 
     Map<String, Object> bulkUploadUnits(MultipartFile file);
+	Optional<Unit> findByUnitId(String unitId);
 }

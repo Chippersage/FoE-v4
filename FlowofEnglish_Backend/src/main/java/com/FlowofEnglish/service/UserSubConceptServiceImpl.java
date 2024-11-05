@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -15,11 +16,21 @@ public class UserSubConceptServiceImpl implements UserSubConceptService {
     private UserSubConceptRepository userSubConceptRepository;
 
     @Override
+    public Optional<UserSubConcept> findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(
+            String userId, String programId, String stageId, String unitId, String subconceptId) {
+        return userSubConceptRepository
+                .findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(userId, programId, stageId, unitId, subconceptId);
+    }
+    
+    @Override
     public UserSubConcept createUserSubConcept(UserSubConcept userSubConcept) {
         return userSubConceptRepository.save(userSubConcept);
     }
     
-
+    @Override
+    public UserSubConcept updateUserSubConcept(UserSubConcept userSubConcept) {
+        return userSubConceptRepository.save(userSubConcept);
+    }
 
     @Override
     public UserSubConcept getUserSubConceptById(Long userSubconceptId) {
@@ -33,18 +44,23 @@ public class UserSubConceptServiceImpl implements UserSubConceptService {
 
     @Override
     public List<UserSubConcept> getAllUserSubConceptsByUserId(String userId) {
-        return userSubConceptRepository.findAllByUser_UserId(userId);  // New method implementation
+        return userSubConceptRepository.findAllByUser_UserId(userId);
     }
 
     @Override
     public UserSubConcept updateUserSubConcept(Long userSubconceptId, UserSubConcept userSubConcept) {
-        if (userSubConceptRepository.existsById(userSubconceptId)) {
-            userSubConcept.setUserSubconceptId(userSubconceptId);
-            return userSubConceptRepository.save(userSubConcept);
-        }
-        return null;
+        return userSubConceptRepository.findById(userSubconceptId).map(existingSubConcept -> {
+            existingSubConcept.setUser(userSubConcept.getUser());
+            existingSubConcept.setProgram(userSubConcept.getProgram());
+            existingSubConcept.setStage(userSubConcept.getStage());
+            existingSubConcept.setUnit(userSubConcept.getUnit());
+            existingSubConcept.setSubconcept(userSubConcept.getSubconcept());
+            existingSubConcept.setCompletionStatus(userSubConcept.getCompletionStatus());
+            existingSubConcept.setUuid(userSubConcept.getUuid());
+            return userSubConceptRepository.save(existingSubConcept);
+        }).orElseThrow(() -> new RuntimeException("UserSubConcept not found with ID: " + userSubconceptId));
     }
-
+    
     @Override
     public void deleteUserSubConcept(Long userSubconceptId) {
         userSubConceptRepository.deleteById(userSubconceptId);

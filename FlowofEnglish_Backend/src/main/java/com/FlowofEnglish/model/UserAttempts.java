@@ -69,7 +69,6 @@ public class UserAttempts {
 		this.userAttemptFlag = userAttemptFlag;
 		this.userAttemptScore = userAttemptScore;
 		this.userAttemptStartTimestamp = userAttemptStartTimestamp;
-//		this.concept = concept;
 		this.user = user;
 		this.unit = unit;
 		this.program = program;

@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserAttempts;
 import com.FlowofEnglish.model.UserCohortMapping;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserAttemptsServiceImpl implements UserAttemptsService {
@@ -22,6 +24,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
 
     @Autowired
     private UserCohortMappingService userCohortMappingService; 
+    
     @Autowired
     private UserSubConceptService userSubConceptService;
 
@@ -37,76 +40,89 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     
     @Override
     public UserAttempts saveUserAttempt(UserAttempts userAttempt) {
-        return userAttemptsRepository.save(userAttempt); // Implement the save logic
+        return userAttemptsRepository.save(userAttempt);
     }
-
+   
     
     @Override
     @Transactional
-    public UserAttempts createUserAttempt(UserAttempts userAttempt) {
-    	// Save the user attempt first
+    public UserAttempts createUserAttempt(UserAttempts userAttempt, String cohortId) {
+        // Save the user attempt first
         UserAttempts savedAttempt = userAttemptsRepository.save(userAttempt);
         
-     // Update leaderboard after saving attempt
-        updateLeaderboard(savedAttempt);
+        // Update leaderboard after saving attempt
+        updateLeaderboard(savedAttempt, cohortId);
         
-     // Update or create entry in UserSubConcept table
+        // Update or create entry in UserSubConcept table
         updateUserSubConceptCompletionStatus(savedAttempt);
      
         return savedAttempt;
     }
     
- // Method to update or create entry in UserSubConcept table
-    private void updateUserSubConceptCompletionStatus(UserAttempts userAttempt) {
-        // Retrieve the details from the user attempt
-        String userId = userAttempt.getUser().getUserId();
+    private void updateUserSubConceptCompletionStatus(UserAttempts userAttempt) { 
+    	// Retrieve the details from the user attempt 
+    	String userId = userAttempt.getUser().getUserId(); 
+        String programId = userAttempt.getProgram().getProgramId();
+        String stageId = userAttempt.getStage().getStageId();
+        String unitId = userAttempt.getUnit().getUnitId();
         String subconceptId = userAttempt.getSubconcept().getSubconceptId();
-     
-        // Check if the entry for the user and the subconcept already exists in the UserSubConcept table
-        List<UserSubConcept> userSubConceptList = userSubConceptService.getAllUserSubConceptsByUserId(userId);
+        
+     // Check if a UserSubConcept entry already exists for the unique constraint fields
+        Optional<UserSubConcept> existingEntry = userSubConceptService
+                .findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(userId, programId, stageId, unitId, subconceptId);
 
-        // Check if the user has already attempted this subconcept
-        boolean subconceptCompleted = userSubConceptList.stream()
-            .anyMatch(subconcept -> subconcept.getSubconcept().getSubconceptId().equals(subconceptId));
-
-        if (!subconceptCompleted) {
-            // If the subconcept is not completed, create a new entry in UserSubConcept table
-            UserSubConcept userSubConcept = new UserSubConcept();
-            userSubConcept.setUser(userAttempt.getUser());
-            userSubConcept.setProgram(userAttempt.getProgram());
-            userSubConcept.setStage(userAttempt.getStage());
-            userSubConcept.setUnit(userAttempt.getUnit());
-            userSubConcept.setSubconcept(userAttempt.getSubconcept());
-            userSubConcept.setCompletionStatus(true);  // Mark the subconcept as completed
-            userSubConceptService.createUserSubConcept(userSubConcept);
+        if (existingEntry.isEmpty()) {
+            // No entry exists, create a new one
+    	UserSubConcept userSubConcept = new UserSubConcept(); 
+    	userSubConcept.setUser(userAttempt.getUser()); 
+    	userSubConcept.setProgram(userAttempt.getProgram()); 
+    	userSubConcept.setStage(userAttempt.getStage()); 
+    	userSubConcept.setUnit(userAttempt.getUnit()); 
+    	userSubConcept.setSubconcept(userAttempt.getSubconcept()); 
+    	userSubConcept.setCompletionStatus(true);
+    	userSubConcept.setUuid(UUID.randomUUID().toString());
+    	
+    	userSubConceptService.createUserSubConcept(userSubConcept);
+    	} else {
+            // Entry already exists, update completion status if needed
+            UserSubConcept userSubConcept = existingEntry.get();
+            userSubConcept.setCompletionStatus(true); 
+            userSubConceptService.updateUserSubConcept(userSubConcept);
         }
     }
 
- // Method to update the leaderboard score
-    private void updateLeaderboard(UserAttempts userAttempt) {
+   // Revised updateLeaderboard method to handle multiple cohorts
+    private void updateLeaderboard(UserAttempts userAttempt, String cohortId) {
         User user = userAttempt.getUser();
         int score = userAttempt.getUserAttemptScore();
 
-        // Retrieve the user's cohort mapping
-        Optional<UserCohortMapping> userCohortMappingOpt = userCohortMappingService.getUserCohortMappingByUserId(user.getUserId());
-        
+        // Retrieve the user's specific cohort mapping for the cohort tied to this attempt
+        Optional<UserCohortMapping> userCohortMappingOpt = 
+            userCohortMappingService.findByUser_UserIdAndCohort_CohortId(user.getUserId(), cohortId);
+
         if (userCohortMappingOpt.isPresent()) {
-            // Update existing leaderboard score
+            // Update existing leaderboard score for the specified cohort
             UserCohortMapping userCohortMapping = userCohortMappingOpt.get();
             int updatedScore = userCohortMapping.getLeaderboardScore() + score;
             userCohortMapping.setLeaderboardScore(updatedScore);
-            userCohortMappingService.updateUserCohortMapping(user.getUserId(), userCohortMapping);
+            
+            // Save the updated UserCohortMapping
+            userCohortMappingService.updateUserCohortMapping(userCohortMapping. getUserCohortId(), userCohortMapping);
         } else {
-            // Create new leaderboard entry if it doesn't exist
+            // If no mapping found, create a new leaderboard entry
             UserCohortMapping newEntry = new UserCohortMapping();
+            Cohort cohort = new Cohort();
+            cohort.setCohortId(cohortId); 
+            newEntry.setCohort(cohort); 
             newEntry.setUser(user);
             newEntry.setLeaderboardScore(score);
-            // Set other necessary fields, like cohort, if needed
+            newEntry.setUuid(UUID.randomUUID().toString());
+            
+            // Save the new UserCohortMapping entry
             userCohortMappingService.createUserCohortMapping(newEntry);
         }
     }
-    
-    
+
     @Override
     public UserAttempts updateUserAttempt(Long userAttemptId, UserAttempts userAttempt) {
         return userAttemptsRepository.findById(userAttemptId).map(existingAttempt -> {
@@ -114,7 +130,6 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
             existingAttempt.setUserAttemptFlag(userAttempt.isUserAttemptFlag());
             existingAttempt.setUserAttemptScore(userAttempt.getUserAttemptScore());
             existingAttempt.setUserAttemptStartTimestamp(userAttempt.getUserAttemptStartTimestamp());
-            //existingAttempt.setConcept(userAttempt.getConcept());
             existingAttempt.setUser(userAttempt.getUser());
             existingAttempt.setStage(userAttempt.getStage());
             existingAttempt.setUnit(userAttempt.getUnit());

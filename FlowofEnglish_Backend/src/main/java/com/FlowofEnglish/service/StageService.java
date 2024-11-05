@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface StageService {
     List<Stage> getAllStages();
     Optional<Stage> getStageById(String stageId);
+    Optional<Stage> findByStageId(String stageId);
     Stage createStage(Stage stage);
     Stage updateStage(String stageId, Stage stage);
     void deleteStage(String stageId);
