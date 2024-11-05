@@ -9,6 +9,13 @@ import {
   Play,
   Flag,
 } from "lucide-react";
+import PenNib from "@/components/PenNib";
+import Book from "@/components/Book";
+import Camera from "@/components/Camera";
+import Speaker from "@/components/Speaker";
+import Picture from "@/components/Picture";
+import ReadAlongBook from "@/components/ReadAlongBook";
+import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
@@ -28,11 +35,12 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  Software: BookOpen,
-  Literal: Mic,
-  activity: PenTool,
-  video: PlayCircle,
-  listen: Headphones,
+  html: PenNib,
+  pdf: Book,
+  video: Camera,
+  audio: Speaker,
+  image: Picture,
+  passage: ReadAlongBook,
 };
 
 export default function SubConceptsPage() {
@@ -102,13 +110,13 @@ export default function SubConceptsPage() {
     const width = 1000;
     const curveWidth = width;
 
-    return `M${curveWidth},0 
-          C0,${height / 16} ${width / 0.5},${height / 16} ${curveWidth / 0.8},${
-      height / 8
-    }
-          C0,${(3 * height) / 16} ${width / 0.5},${(3 * height) / 16} ${
+    return `M${curveWidth},${height} 
+          C0,${height - height / 16} ${width / 0.5},${height - height / 16} ${
       curveWidth / 0.8
-    },${height / 4}`;
+    },${height - height / 8}
+          C0,${height - (3 * height) / 16} ${width / 0.5},${
+      height - (3 * height) / 16
+    } ${curveWidth / 0.8},${height - height / 4}`;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -195,22 +203,26 @@ export default function SubConceptsPage() {
                       y={point.y - 24}
                       width="36"
                       height="36"
-                      rx="12"
-                      ry="12"
-                      fill={
+                      rx="2"
+                      ry="2"
+                      fill={(index === 0 || index === totalSteps - 1)? "#2196F3" : "none"} // This removes the fill color
+                      stroke={
                         isEnabled
                           ? isCompleted
-                            ? "#4CAF50"
-                            : "#2196F3"
-                          : "#9E9E9E"
+                            ? "#4CAF50" // Outline color when completed
+                            : "#2196F3" // Outline color when enabled but not completed
+                          : "#9E9E9E" // Outline color when not enabled
                       }
+                      strokeWidth="2" 
                     />
+
                     <Icon
-                      x={point.x - 14}
-                      y={point.y - 14}
-                      width="16"
-                      height="16"
+                      x={point.x - 20}
+                      y={point.y - 20}
+                      width="25"
+                      height="25"
                       color="white"
+                      className="object-contain"
                     />
                     {isCompleted && (
                       <g
@@ -246,12 +258,13 @@ export default function SubConceptsPage() {
                     <div
                       className={`${
                         isEnabled ? "bg-[#22C55E]" : "bg-slate-400"
-                      } text-white p-1 rounded-[5px] text-[8px] text-center font-medium`}
+                      } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
                       style={{
                         position: "absolute",
                         left: "50%",
                         transform: "translateX(-50%)",
                         whiteSpace: "nowrap",
+                        zIndex: 1000
                       }}
                     >
                       {subconcept

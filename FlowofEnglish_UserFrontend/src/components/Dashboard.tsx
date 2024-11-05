@@ -14,7 +14,7 @@ function Dashboard() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
+  const [error, setError] = useState(null);
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   
@@ -51,6 +51,7 @@ function Dashboard() {
   
   useEffect(() => {
     if(user){
+      console.log(user)
       const fetchAndSetProgramInfo = async () => {
         try {
           const result = await getProgramInfoByProgramId();
@@ -69,6 +70,7 @@ function Dashboard() {
   }, [user]);
 
   useEffect(() => {
+    if(user?.cohort?.cohortId){
     const fetchAndSetLeaderBoardInfo = async () => {
       try {
         const result = await getLeaderBoardInfo();
@@ -82,8 +84,8 @@ function Dashboard() {
     };
 
         fetchAndSetLeaderBoardInfo();
-
-  }, []);
+  }
+}, [user]);
 
   // useEffect(() => {
   //   if (user) {
