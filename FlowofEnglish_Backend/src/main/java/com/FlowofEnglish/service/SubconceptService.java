@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface SubconceptService {
     List<SubconceptResponseDTO> getAllSubconcepts();
+    Optional<Subconcept> findBySubconceptId(String subconceptId);
     Optional<SubconceptResponseDTO> getSubconceptById(String subconceptId);
     Subconcept createSubconcept(Subconcept subconcept);
     Subconcept updateSubconcept(String subconceptId, Subconcept subconcept);

@@ -7,8 +7,8 @@ import java.util.Optional;
 public interface UserAttemptsService {
     List<UserAttempts> getAllUserAttempts();
     Optional<UserAttempts> getUserAttemptById(Long userAttemptId);
-    UserAttempts saveUserAttempt(UserAttempts userAttempt); // Add this line
-    UserAttempts createUserAttempt(UserAttempts userAttempt);
+    UserAttempts saveUserAttempt(UserAttempts userAttempt); 
+    UserAttempts createUserAttempt(UserAttempts userAttempt, String cohortId);
     UserAttempts updateUserAttempt(Long userAttemptId, UserAttempts userAttempt);
     void deleteUserAttempt(Long userAttemptId);
 }

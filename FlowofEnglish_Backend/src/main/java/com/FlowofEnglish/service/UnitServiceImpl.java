@@ -53,6 +53,11 @@ public class UnitServiceImpl implements UnitService {
     public Unit createUnit(Unit unit) {
         return unitRepository.save(unit);
     }
+    
+    @Override
+    public Optional<Unit> findByUnitId(String unitId) {
+        return unitRepository.findByUnitId(unitId);
+    }
 
     @Override
     public Map<String, Object> bulkUploadUnits(MultipartFile file) {

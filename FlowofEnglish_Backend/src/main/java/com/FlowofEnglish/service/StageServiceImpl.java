@@ -37,6 +37,11 @@ public class StageServiceImpl implements StageService {
     }
 
     @Override
+    public Optional<Stage> findByStageId(String stageId) {
+        return stageRepository.findByStageId(stageId);
+    }
+    
+    @Override
     public Stage createStage(Stage stage) {
         return stageRepository.save(stage);
     }
