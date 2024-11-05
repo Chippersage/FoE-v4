@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
+import MediaContent from "@/components/MediaContent";
 
 const SingleSubconcept = () => {
   const { user } = useUserContext();
@@ -79,24 +80,24 @@ const SingleSubconcept = () => {
 
   return (
     <>
-      <iframe
-        id="embeddedContent"
-        src={
-          (subconcept?.subconceptType === "html" ||
-          subconcept?.subconceptType === "passage")
-            ? subconcept.subconceptLink
-            : "/media.html"
-        }
-        // src={"/Sentences/dictation/stage2/simpleUnit-1.html"}
-        title="Embedded Content"
-        width="100%"
-        height="800px"
-        style={{ border: "none", overflow: "scroll" }}
-        scrolling="no"
-        onLoad={
-          subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}
-        } // Send data when iframe loads
-      />
+      {subconcept?.subconceptType === "html" ||
+      subconcept?.subconceptType === "passage" ? (
+        <iframe
+          id="embeddedContent"
+          src={subconcept.subconceptLink}
+          // src={"/Sentences/readAndRespond/stage1/bee.html"}
+          title="Embedded Content"
+          width="100%"
+          height="800px"
+          style={{ border: "none", overflow: "scroll" }}
+          scrolling="no"
+          onLoad={
+            subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}
+          }
+        />
+      ) : (
+        <MediaContent subconceptData={subconcept}/>
+      )}
     </>
   );
 };
