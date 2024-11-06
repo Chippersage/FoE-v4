@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   CheckCircle2,
-  BookOpen,
-  Mic,
-  PlayCircle,
-  Headphones,
+  // BookOpen,
+  // Mic,
+  // PlayCircle,
+  // Headphones,
   PenTool,
   Play,
   Flag,
@@ -15,7 +15,7 @@ import Camera from "@/components/Camera";
 import Speaker from "@/components/Speaker";
 import Picture from "@/components/Picture";
 import ReadAlongBook from "@/components/ReadAlongBook";
-import TeachingIcon from "@/assets/icons/workshop.svg";
+// import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
