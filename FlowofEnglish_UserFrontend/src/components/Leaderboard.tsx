@@ -29,7 +29,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
     <Card
       className={`w-full max-w-md mx-auto overflow-y-auto ${
         !showMore ? "no-scrollbar" : "custom-scrollbar-2"
-      } h-full`}
+      } h-auto max-h-full`}
     >
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
@@ -38,6 +38,9 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
       <CardContent>
         <div className="space-y-4">
           {/* Display the appropriate number of scorers (top 3 or full leaderboard) */}
+          {displayedLeaderboard.length === 0 && (
+            <div className="text-center">No leaderboard data available</div>
+          )}
           {displayedLeaderboard.map((entry, index) => (
             <div
               key={entry.userId}
@@ -99,7 +102,8 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
           {!showMore ? (
             <Button
               onClick={() => setShowMore(true)}
-              className="w-full text-center rounded-[5px] mt-10"
+              className={`w-full text-center rounded-[5px] mt-10`}
+              disabled={displayedLeaderboard.length === 0}
             >
               Show more
             </Button>
