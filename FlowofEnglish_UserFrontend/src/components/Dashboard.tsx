@@ -14,6 +14,7 @@ function Dashboard() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // const [loading, setLoading] = useState(true);
+  // @ts-ignore
   const [error, setError] = useState(null);
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
@@ -97,7 +98,7 @@ function Dashboard() {
     <div className="w-full flex flex-col md:flex-row mt-44 overflow-scroll no-scrollbar gap-2 px-2">
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
-        <div className="w-full flex-1">
+        <div className="sm:w-[50%]">
           {/* @ts-ignore */}
           <Stages stages={programInfo.stages} />
         </div>
@@ -106,7 +107,7 @@ function Dashboard() {
       )}
       {/* @ts-ignore */}
       {leaderBoardInfo ? (
-        <div className="w-full flex-1 mt-9">
+        <div className="sm:w-[50%]">
           <Leaderboard
             leaderboard={leaderBoardInfo}
             userId={user?.userId}
