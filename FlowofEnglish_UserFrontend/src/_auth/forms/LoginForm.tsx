@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [userRole, setUserRole] = useState("student");
 
   // Fetch programs from API when the component mounts
     useEffect(() => {
@@ -48,6 +49,7 @@ export default function LoginPage() {
           userId: userId,
           userPassword: password,
           programId: selectedProgramId, // Send the selected program ID
+          userType: userRole,
         },
         {
           withCredentials: true,
@@ -101,10 +103,10 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
         <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
-          Login to your <br /> Student Account
+          Login to your <br /> Account
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <input
               type="text"
@@ -170,6 +172,34 @@ export default function LoginPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="flex justify-between items-center text-sm text-gray-600 px-4">
+            <label className="font-medium">Sign in as:</label>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="userRole"
+                  value="student"
+                  checked={userRole === "student"}
+                  onChange={() => setUserRole("student")}
+                  className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
+                />
+                Student
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="userRole"
+                  value="teacher"
+                  checked={userRole === "teacher"}
+                  onChange={() => setUserRole("teacher")}
+                  className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
+                />
+                Teacher
+              </label>
+            </div>
           </div>
 
           <p className="text-red-600 text-center text-sm font-medium mt-8">

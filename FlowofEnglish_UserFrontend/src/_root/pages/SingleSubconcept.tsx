@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
+import MediaContent from "@/components/MediaContent";
 
 const SingleSubconcept = () => {
   const { user } = useUserContext();
@@ -16,10 +17,26 @@ const SingleSubconcept = () => {
   console.log(user);
   console.log("sessionId", sessionId);
 
+
   useEffect(() => {
     if (user) {
+
+      const date = new Date();
+
+      // Calculate IST offset (UTC+5:30)
+      const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+
+      // Convert to IST by adding the offset
+      const ISTTime = new Date(date.getTime() + ISTOffset);
+
+      // Format IST time to "YYYY-MM-DDTHH:mm:ss"
+      const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
+
+      console.log(formattedISTTimestamp);
+
+      
       const userData = {
-        userAttemptStartTimestamp: new Date().toISOString(),
+        userAttemptStartTimestamp: formattedISTTimestamp,
 
         unitId: currentUnitId,
 
@@ -36,6 +53,8 @@ const SingleSubconcept = () => {
         subconceptMaxscore: subconcept?.subconceptMaxscore,
 
         API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+
+        cohortId: user.cohort.cohortId,
       };
       localStorage.setItem("userData", JSON.stringify(userData));
     }
@@ -79,24 +98,24 @@ const SingleSubconcept = () => {
 
   return (
     <>
-      <iframe
-        id="embeddedContent"
-        src={
-          (subconcept?.subconceptType === "html" ||
-          subconcept?.subconceptType === "passage")
-            ? subconcept.subconceptLink
-            : "/media.html"
-        }
-        // src={"/Sentences/dictation/stage2/simpleUnit-1.html"}
-        title="Embedded Content"
-        width="100%"
-        height="800px"
-        style={{ border: "none", overflow: "scroll" }}
-        scrolling="no"
-        onLoad={
-          subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}
-        } // Send data when iframe loads
-      />
+      {subconcept?.subconceptType === "html" ||
+      subconcept?.subconceptType === "passage" ? (
+        <iframe
+          id="embeddedContent"
+          src={subconcept.subconceptLink}
+          // src={"/Sentences/readAndRespond/stage1/bee.html"}
+          title="Embedded Content"
+          width="100%"
+          height="800px"
+          style={{ border: "none", overflow: "scroll" }}
+          scrolling="no"
+          onLoad={
+            subconcept?.subconceptType !== "html" ? sendSubconcept : () => {}
+          }
+        />
+       ) : ( 
+         <MediaContent subconceptData={subconcept}/> 
+       )}
     </>
   );
 };
