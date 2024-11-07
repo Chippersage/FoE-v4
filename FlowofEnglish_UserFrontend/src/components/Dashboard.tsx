@@ -14,7 +14,8 @@ function Dashboard() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
+  // @ts-ignore
+  const [error, setError] = useState(null);
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   
@@ -51,6 +52,7 @@ function Dashboard() {
   
   useEffect(() => {
     if(user){
+      console.log(user)
       const fetchAndSetProgramInfo = async () => {
         try {
           const result = await getProgramInfoByProgramId();
@@ -69,6 +71,7 @@ function Dashboard() {
   }, [user]);
 
   useEffect(() => {
+    if(user?.cohort?.cohortId){
     const fetchAndSetLeaderBoardInfo = async () => {
       try {
         const result = await getLeaderBoardInfo();
@@ -82,8 +85,8 @@ function Dashboard() {
     };
 
         fetchAndSetLeaderBoardInfo();
-
-  }, []);
+  }
+}, [user]);
 
   // useEffect(() => {
   //   if (user) {
@@ -95,7 +98,7 @@ function Dashboard() {
     <div className="w-full flex flex-col md:flex-row mt-44 overflow-scroll no-scrollbar gap-2 px-2">
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
-        <div className="w-full flex-1">
+        <div className="sm:w-[50%]">
           {/* @ts-ignore */}
           <Stages stages={programInfo.stages} />
         </div>
@@ -104,7 +107,7 @@ function Dashboard() {
       )}
       {/* @ts-ignore */}
       {leaderBoardInfo ? (
-        <div className="w-full flex-1 mt-9">
+        <div className="sm:w-[50%]">
           <Leaderboard
             leaderboard={leaderBoardInfo}
             userId={user?.userId}
