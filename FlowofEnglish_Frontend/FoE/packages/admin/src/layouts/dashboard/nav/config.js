@@ -77,20 +77,25 @@ const getNavConfig = () => {
         icon: icon('ic_user'),
       },
       {
-        title: 'Courses',
-        path: '/dashboard/courses',
-        icon: icon('ic_course'),
+        title: 'Add Users',
+        path: '/dashboard/Create Users',
+        icon: icon('ic_lan'),
       },
-      {
-        title: 'Languages',
-        path: '/dashboard/languages',
-        icon: icon('ic_lang'),
-      },
-      {
-        title: 'Add course to org',
-        path: '/dashboard/addcto',
-        icon: icon('ic_lang'),
-      },
+      // {
+      //   title: 'Programs',
+      //   path: '/dashboard/programs',
+      //   icon: icon('ic_course'),
+      // },
+      // {
+      //   title: 'Languages',
+      //   path: '/dashboard/languages',
+      //   icon: icon('ic_lang'),
+      // },
+      // {
+      //   title: 'Add course to org',
+      //   path: '/dashboard/addcto',
+      //   icon: icon('ic_lang'),
+      // },
       {
         title: 'Report',
         path: '/dashboard/superreport',
@@ -106,6 +111,7 @@ const getNavConfig = () => {
         path: '/dashboard/superpassword',
         icon: icon('ic_lan'),
       },
+      
     ];
   }
   if (userType === 'orgAdmin') {

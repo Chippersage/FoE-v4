@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.UserDTO;
+import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.model.UserSessionMapping;
@@ -66,8 +67,8 @@ public class UserController {
     
 
     @PostMapping("/create")
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public User createUser(@RequestBody UsercreateDTO userDTO) {
+        return userService.createUser(userDTO);
     }
     
     @PostMapping("/bulkcreate/csv")
@@ -180,7 +181,6 @@ public class UserController {
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            System.out.println("Stored password: " + user.getUserPassword());
 
             // Debugging the user type
             System.out.println("User Type: " + user.getUserType());
@@ -269,42 +269,3 @@ public class UserController {
     }
         
 } 
-
-
-
-
-
-
-
-
-
-
-
-// this will be get the all details
-
-//@GetMapping("/{userId}/details")
-//public ResponseEntity<UserDTO> getUserDetailsWithProgram(@PathVariable String userId) {
-//  UserDTO userDTO = userService.getUserDetailsWithProgram(userId);
-//  return ResponseEntity.ok(userDTO);
-//}
-
-//@GetMapping
-//public List<User> getAllUsers() {
-//  return userService.getAllUsers();
-//}
-//
-//@GetMapping("/{id}")
-//public ResponseEntity<User> getUserById(@PathVariable String id) {
-//  return userService.getUserById(id)
-//          .map(ResponseEntity::ok)
-//          .orElse(ResponseEntity.notFound().build());
-//}
-//
-//@GetMapping("/organization/{organizationId}")
-//public List<User> getUsersByOrganizationId(@PathVariable String organizationId) {
-//  return userService.getUsersByOrganizationId(organizationId);
-//}
-
-    
-    
-    

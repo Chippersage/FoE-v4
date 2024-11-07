@@ -57,7 +57,7 @@ public class OrganizationController {
     // Delete an organization by ID
     @DeleteMapping("/{organizationId}")
     public ResponseEntity<Void> deleteOrganization(@PathVariable String organizationId) {
-        organizationService.deleteOrganizationById(organizationId);
+        organizationService.deleteOrganization(organizationId);
         return ResponseEntity.noContent().build();
     }
 
@@ -65,7 +65,7 @@ public class OrganizationController {
     @DeleteMapping
     public ResponseEntity<Void> deleteOrganizations(@RequestBody List<String> organizationIds) {
         for (String id : organizationIds) {
-            organizationService.deleteOrganizationById(id);
+            organizationService.deleteOrganization(id);
         }
         return ResponseEntity.noContent().build();
     }

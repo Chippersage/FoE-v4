@@ -14,6 +14,7 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
 	
 	List<UserCohortMapping> findAllByCohortCohortId(String cohortId);
 	Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
+	boolean existsByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
 
     Optional<UserCohortMapping> findByUserUserId(String userId);
 

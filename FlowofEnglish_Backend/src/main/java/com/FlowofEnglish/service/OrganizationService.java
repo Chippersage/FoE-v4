@@ -1,6 +1,6 @@
 package com.FlowofEnglish.service;
 
-//import org.apache.commons.lang3.RandomStringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,9 +9,12 @@ import org.springframework.stereotype.Service;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.repository.OrganizationRepository;
 import com.FlowofEnglish.util.RandomStringUtil;
+import jakarta.persistence.EntityNotFoundException;
 
 import jakarta.transaction.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -159,10 +162,11 @@ public class OrganizationService {
     }
 
     // Delete an organization by ID
-    public void deleteOrganizationById(String id) {
-        organizationRepository.deleteById(id);
+    public void deleteOrganization(String organizationId) {
+        Organization organization = organizationRepository.findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization not found"));
+        organization.setDeletedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+        organizationRepository.save(organization);
     }
-
     // Create a new organization
     public Organization createOrganization(Organization organization) {
         return saveOrganization(organization);
@@ -176,6 +180,5 @@ public class OrganizationService {
     public boolean verifyPassword(String plainPassword, String encodedPassword) {
         return passwordEncoder.matches(plainPassword, encodedPassword);
     }
-
 
 }

@@ -1,7 +1,7 @@
 // api.js
 import axios from 'axios';
 
-const apiUrl = 'https://flowofenglish.thechippersage.com/api/v1'; // Ensure this matches your backend URL
+const apiUrl ='https://flowofenglish.thechippersage.com/api/v1';
 
 // Organisations API calls
 
@@ -25,7 +25,6 @@ export const createOrg = async (data) => {
       },
     });
     return response.data;
-    // console.log('Organization added successfully:', response.data);
   } catch (error) {
     console.error('Error creating organization:', error);
     return null;
@@ -144,16 +143,15 @@ export async function getCohorts() {
   return null;
 }
 
-export async function getOrgCohorts(id) {
+export async function getOrgCohorts(organizationId) {
   try {
-    const res = await axios.get(`${apiUrl}/cohorts/organization/${id}`);
+    const res = await axios.get(`${apiUrl}/cohorts/organization/${organizationId}`);
     return res.data;
   } catch (err) {
     console.log(err);
   }
   return null;
 }
-
 
 export async function createCohort(data) {
   try {
@@ -165,7 +163,6 @@ export async function createCohort(data) {
   return null;
 }
 
-
 export async function updateCohort(id, data) {
   try {
     const res = await axios.put(`${apiUrl}/cohorts/${id}`, data);
@@ -176,7 +173,6 @@ export async function updateCohort(id, data) {
   return null;
 }
 
-
 export async function deleteCohort(id) {
   try {
     const res = await axios.delete(`${apiUrl}/cohorts/${id}`);
@@ -186,9 +182,6 @@ export async function deleteCohort(id) {
   }
   return null;
 }
-
-
-
 
 // Programs API calls
 
@@ -630,8 +623,6 @@ export async function deleteLangs(ids) {
 }
 
 
-
-
 // Users API calls
 
 export async function getUsers() {
@@ -657,14 +648,16 @@ export async function createUser(data) {
 
 export async function createUsers(data) {
   try {
-    const res = await axios.post(`${apiUrl}/users/bulkcreate`, data);
-    return res.data;
+      const res = await axios.post(`${apiUrl}/users/bulkcreate/csv`, data);
+      return res.data;
   } catch (err) {
-    console.log(err);
+      console.error('API error:', err);
+      return { 
+          message: 'Error processing CSV file.',
+          errors: err.response?.data?.errors || []
+      };
   }
-  return null;
 }
-
 
 export async function deleteUser(id) {
   try {
@@ -676,6 +669,24 @@ export async function deleteUser(id) {
   return null;
 }
 
+export async function deleteUsers(userIds) {
+  try {
+    const response = await axios.delete({
+      method: 'delete',
+      url: `${apiUrl}/users/bulk-delete`,
+      data: userIds,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    console.log("Delete response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting users:", error);
+    throw error;
+  }
+}
+
+
+deleteUsers();
 
 export async function getUser(id) {
   try {
@@ -687,10 +698,19 @@ export async function getUser(id) {
   return null;
 }
 
-
-export async function getOrgUsers(id) {
+export async function updateUser(id, data) {
   try {
-    const res = await axios.get(`${apiUrl}/users/organization/${id}`);
+    const res = await axios.put(`${apiUrl}/users/${id}`, data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function getOrgUsers(organizationId) {
+  try {
+    const res = await axios.get(`${apiUrl}/users/organization/${organizationId}`);
     return res.data;
   } catch (err) {
     console.log(err);
