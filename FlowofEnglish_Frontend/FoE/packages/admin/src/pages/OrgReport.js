@@ -28,7 +28,7 @@ const OrganisationCoursesPage = () => {
     };
 
     axios
-      .get(`${apiUrl}/report/listorgcourses/${orgId}`, { headers })
+      .get(`${apiUrl}/report/listorgcourses/${organizationId}`, { headers })
       .then((response) => {
         const fetchedCourses = response.data.map((item) => item.course_name);
         setCourses(fetchedCourses);
@@ -38,7 +38,7 @@ const OrganisationCoursesPage = () => {
       });
 
     axios
-      .get(`${apiUrl}/report/organisation/${orgId}/users`, { headers })
+      .get(`${apiUrl}/report/organisation/${organizationId}/users`, { headers })
       .then((response) => {
         setUsers(response.data);
       })
@@ -47,7 +47,7 @@ const OrganisationCoursesPage = () => {
       });
 
     axios
-      .get(`${apiUrl}/cohorts/orgCohorts/${orgId}`, { headers })
+      .get(`${apiUrl}/cohorts/orgCohorts/${organizationId}`, { headers })
       .then((response) => {
         setCohorts(response.data);
       })

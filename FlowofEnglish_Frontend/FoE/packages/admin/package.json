@@ -3,7 +3,7 @@
   "author": "Praveen",
   "version": "1.0.0",
   "private": false,
-  "proxy": "https://flowofenglish.thechippersage.com/api/v1",
+  "proxy": "http://13.234.42.153:8080/api/v1",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -58,6 +58,7 @@
     "react": "^18.3.1",
     "react-apexcharts": "^1.4.0",
     "react-beautiful-dnd": "^13.1.1",
+    "react-csv": "^2.2.2",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",

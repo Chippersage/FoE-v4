@@ -23,6 +23,7 @@ import ReportPage from './pages/ReportPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import UserPage from './pages/UserPage';
 import UsersPage from './pages/UsersPage';
+import UserCreate from './pages/UserCreate';
 // import OrgDash from './pages/OrgDash';
 import DashboardOrgClientPage from './pages/DashboardOrgClientPage';
 import ForgotPassword from './pages/ForgotPassword';
@@ -52,8 +53,9 @@ export default function Router() {
         { path: 'contents/:id', element: <ContentPage /> },
         { path: 'languages', element: <LanguagePage /> },
         { path: 'levels/:id', element: <LevelPage /> },
-        { path: 'cohorts/:id', element: <CohortPage /> },
+        { path: 'cohorts/organization/:organizationId', element: <CohortPage /> },
         { path: 'products', element: <ProductsPage /> },
+        { path: 'Create Users', element: <UserCreate /> },
         { path: 'blog', element: <BlogPage /> },
         // { path: 'orgdash', element: <OrgDash /> },
         { path: 'superreport', element: <ReportPage /> },

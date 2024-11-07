@@ -1,6 +1,7 @@
 package com.FlowofEnglish.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,7 +54,6 @@ public class Organization {
 
     // Default constructor
     public Organization() {
-        // UUID and organizationId are generated in @PrePersist method
     }
 
     // Parameterized constructor
@@ -73,6 +73,7 @@ public class Organization {
     }
 
     // Getters and Setters
+ // Getters and Setters
     public String getOrganizationId() {
         return organizationId;
     }
@@ -122,7 +123,7 @@ public class Organization {
     }
 
     public LocalDateTime getCreatedAt() {
-        return createdAt;
+        return createdAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
@@ -130,7 +131,7 @@ public class Organization {
     }
 
     public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+        return updatedAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
     }
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
@@ -138,7 +139,7 @@ public class Organization {
     }
 
     public LocalDateTime getDeletedAt() {
-        return deletedAt;
+        return deletedAt != null ? deletedAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime() : null;
     }
 
     public void setDeletedAt(LocalDateTime deletedAt) {

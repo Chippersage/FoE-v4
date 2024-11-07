@@ -57,7 +57,7 @@ const StyledCard = styled(Card)({
   margin: '10px auto',
   padding: '20px',
   Button: {
-    marginTop: '10px',
+  marginTop: '10px',
   },
 });
 
@@ -300,7 +300,7 @@ export default function UserPage() {
       organizationAdminEmail: selectedRow.organizationAdminEmail,
       organizationAdminPhone: selectedRow.organizationAdminPhone,
       orgpassword: selectedRow.orgpassword, // Ensure this is handled correctly if needed
-      createdAt: selectedRow.created_at,
+      createdAt: selectedRow.createdAt,
       updatedAt: selectedRow.updated_at,
       deletedAt: selectedRow.deleted_at,
     });
@@ -382,7 +382,7 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> Organisation | Mindfultalk </title>
+        <title> Organisation | Chippersage </title>
       </Helmet>
 
       <Container>
@@ -417,7 +417,7 @@ export default function UserPage() {
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { organizationId, organizationName, created_at, avatarUrl } = row;
+                    const { organizationId, organizationName, createdAt, avatarUrl } = row;
                     const selectedUser = selected.indexOf(organizationName) !== -1;
 
                     return (
@@ -439,7 +439,7 @@ export default function UserPage() {
                             </Typography>
                           </Stack>
                         </TableCell>
-                        <TableCell align="left">{created_at}</TableCell>
+                        <TableCell align="left">{createdAt}</TableCell>
                         {/* <TableCell align="left">{company}</TableCell>
 
                         <TableCell align="left">{role}</TableCell> */}
@@ -543,7 +543,7 @@ export default function UserPage() {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            navigate(`/dashboard/cohorts/${selectedRow.id}`, { replace: true });
+            navigate(`/dashboard/cohorts/organization/${selectedRow.organizationId}`, { replace: true });
           }}
         >
           <Iconify icon={'eva:people-outline'} sx={{ mr: 2 }} />

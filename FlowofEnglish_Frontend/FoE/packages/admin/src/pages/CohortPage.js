@@ -1,54 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-
-import axios from 'axios';
 import { styled } from '@mui/material/styles';
-
-import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
-import { sentenceCase } from 'change-case';
+import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useParams } from 'react-router-dom';
 // @mui
-import {
-  Card,
-  Table,
-  Stack,
-  Paper,
-  Avatar,
-  Button,
-  Popover,
-  Checkbox,
-  TableRow,
-  MenuItem,
-  TableBody,
-  TableCell,
-  Container,
+import {Card, Table, Stack, Paper, Avatar,  Button, Popover, Checkbox, TableRow, MenuItem, TableBody, TableCell, Container,
   Typography,
   IconButton,
+  MenuItem,
+  Modal,
+  Paper,
+  Popover,
+  Stack,
+  Table,
+  TableBody, TableCell,
   TableContainer,
   TablePagination,
-  Modal,
+  TableRow,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
+  Typography
 } from '@mui/material';
 
 // components
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // sections
+import { createCohort, deleteCohort, getOrgCohorts, updateCohort } from '../api';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
-import { updateCohort, getOrgCohorts, createCohort, deleteCohort } from '../api';
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'level', label: 'Name', alignRight: false },
-  { id: 'organisation', label: 'Organisation', alignRight: false },
-  { id: 'created_at', label: 'Created Date', alignRight: false },
-  { id: '' },
+  { id: 'level', label: 'CohortName', alignRight: false },
+  { id: 'organization', label: 'Organization', alignRight: false },
+  { id: 'cohortStartDate', label: 'Created Date', alignRight: false },
+  { id: 'cohortEndDate', label: 'End Date', alignRight: false}
+
 ];
 
 // ----------------------------------------------------------------------
@@ -87,13 +74,13 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user.level.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_cohort) => _cohort.cohort.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
 
 export default function CohortPage() {
-  const { id: orgId } = useParams();
+  const { organizationId } = useParams();
 
   const [open, setOpen] = useState(null);
 
@@ -116,30 +103,30 @@ export default function CohortPage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    id: '',
-    cohort: '',
-    id_organisation: orgId,
-    created_at: '',
-    updated_at: '',
-    deleted_at: '',
+    cohortName: '',
+    cohortStartDate: '',
+    cohortEndDate: '',
+    organization: { organizationId },
   });
+  
 
   const [formErrors, setFormErrors] = useState({});
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.cohort.trim()) {
-      errors.cohort = 'Cohort name is required';
+    if (!formData.cohortName.trim()) {
+      errors.cohortName = 'Cohort name is required';
     }
     return errors;
   };
+  
 
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = () => {
     setIsOpen(true);
     setIsEditMode(false);
-    setSelectedRow(null);
+    setFormData({ id: '', cohort: '', cohortEndDate: '', organization: { organizationId } });
   };
 
   const handleClose = () => {
@@ -148,75 +135,64 @@ export default function CohortPage() {
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value,
+    }));
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
     if (Object.keys(errors).length === 0) {
-      if (isEditMode) {
-        try {
-          await updateCohort(formData.id, formData);
-          handleClose();
-          getOrgCohorts(orgId).then((res) => {
-            // console.log(res);
-            setCohorts(res);
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      } else {
-        try {
+      try {
+        if (isEditMode) {
+          await updateCohort(formData.cohortId, formData);
+        } else {
           await createCohort(formData);
-          handleClose();
-          getOrgCohorts(orgId).then((res) => {
-            // console.log(res);
-            setCohorts(res);
-          });
-        } catch (error) {
-          console.error(error);
         }
+        handleClose();
+  
+        const res = await getOrgCohorts(organizationId);
+        setCohorts(res);
+      } catch (error) {
+        console.error("Error creating/updating cohort:", error.response?.data || error.message);
       }
     } else {
       setFormErrors(errors);
     }
   };
+  
 
-  const handleDelete = async () => {
-    try {
-      const { id } = selectedRow;
-      await deleteCohort(id);
-      getOrgCohorts(orgId).then((res) => {
-        // console.log(res);
-        setCohorts(res);
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+const handleDelete = async () => {
+  try {
+    await deleteCohort(selectedRow.id);
+    getOrgCohorts(organizationId).then((res) => {
+      setCohorts(res);
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const handleEdit = () => {
-    handleCloseMenu();
     setIsEditMode(true);
     setIsOpen(true);
     setFormData({
-      id: selectedRow.id,
-      cohort: selectedRow.cohort,
-      id_organisation: orgId,
-      created_at: selectedRow.created_at,
-      updated_at: selectedRow.updated_at,
-      deleted_at: selectedRow.deleted_at,
+        id: selectedRow.cohortId,
+        cohortName: selectedRow.cohortName,
+        organization: selectedRow.organization,
     });
-  };
+};
 
-  useEffect(() => {
-    // Fetch cohort details on component mount
-    getOrgCohorts(orgId).then((res) => {
-      // console.log(res);
-      setCohorts(res);
-    });
-  }, []);
+useEffect(() => {
+  getOrgCohorts(organizationId).then((res) => {
+    console.log("Fetched cohorts:", res); // Check if cohorts data is being retrieved
+    setCohorts(res);
+  }).catch(error => console.error("Error fetching cohorts:", error));
+}, [organizationId]);
+
 
   const handleOpenMenu = (event, row) => {
     setOpen(event.currentTarget);
@@ -280,7 +256,7 @@ export default function CohortPage() {
   return (
     <>
       <Helmet>
-        <title> Cohorts | Mindfultalk </title>
+        <title> Cohorts | Chippersage </title>
       </Helmet>
 
       <Container>
@@ -310,7 +286,7 @@ export default function CohortPage() {
                 />
                 <TableBody>
                   {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, cohort, created_at } = row;
+                    const { id, cohort, cohortStartDate } = row;
                     const selectedCohort = selected.indexOf(cohort) !== -1;
 
                     return (
@@ -326,9 +302,9 @@ export default function CohortPage() {
                             </Typography>
                           </Stack>
                         </TableCell>
-                        <TableCell align="left">{row.organisation.organisation_name}</TableCell>
+                        <TableCell align="left">{row.organization.organizationId}</TableCell>
 
-                        <TableCell align="left">{created_at}</TableCell>
+                        <TableCell align="left">{cohortStartDate}</TableCell>
 
                         {/*  <TableCell align="left">{role}</TableCell> */}
 
@@ -432,15 +408,36 @@ export default function CohortPage() {
           <div>
             <h2>{isEditMode ? 'Edit Cohort' : 'Add Cohort'}</h2>
             <form noValidate>
+            
               <TextField
                 name="cohort"
                 label="Cohort Name"
-                value={formData.cohort}
+                value={formData.cohortName}
                 onChange={handleFormChange}
                 variant="outlined"
                 error={!!formErrors.cohort}
                 helperText={formErrors.cohort}
                 fullWidth
+              />
+              <TextField
+              name="cohortId"
+              label="Cohort ID"
+              value={formData.cohortId}
+              onChange={handleFormChange}
+              variant="outlined"
+              error={!!formErrors.cohortId}
+              helperText={formErrors.cohortId}
+              fullWidth
+              />
+              <TextField
+              name="OrganizationId"
+              label="Organization ID"
+              value={formData.OrganizationId}
+              onChange={handleFormChange}
+              variant="outlined"
+              error={!!formErrors.OrganizationId}
+              helperText={formErrors.OrganizationId}
+              fullWidth
               />
               <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth>
                 {isEditMode ? 'Save' : 'Add'}
