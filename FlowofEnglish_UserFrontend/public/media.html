@@ -166,7 +166,7 @@ button:focus {
         // Listen for the postMessage from the parent window
         window.addEventListener("message", function(event) {
             const subconcept = event.data;
-
+            console.log(subconcept)
             // Render content dynamically based on subconcept type
             renderContent(subconcept);
 
@@ -283,7 +283,7 @@ button:focus {
                             console.log(payload);
 
                             // Send the data to the server
-                            fetch(`${import.meta.env.API_BASE_URL}/user-attempts`, {
+                            fetch(`${userData.API_BASE_URL}/user-attempts`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify(payload),
