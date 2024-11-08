@@ -1,6 +1,7 @@
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper,
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Stack, Typography, 
     Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Checkbox, IconButton } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { CSVLink } from "react-csv";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Menu from '@mui/material/Menu';
@@ -188,6 +189,16 @@ const UserCreate = () => {
     };
 
     return (
+       <>
+      <Helmet>
+        <title> Users | Chipper Sage </title>
+      </Helmet>
+
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+          <Typography variant="h4" gutterBottom>
+            Users
+          </Typography>
+          </Stack>
         <div style={{ padding: '20px' }}>
             <Button variant="contained" color="primary" onClick={() => setOpenCreateDialog(true)} style={{ marginRight: '10px' }}>
                 Create User
@@ -297,6 +308,7 @@ const UserCreate = () => {
                 message={snackbarMessage}
             />
         </div>
+        </>
     );
 };
 
