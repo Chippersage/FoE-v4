@@ -113,6 +113,7 @@ public class UserServiceImpl implements UserService {
         userDTO.setUserEmail(user.getUserEmail());
         userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
         userDTO.setUserAddress(user.getUserAddress());
+        userDTO.setUserType(user.getUserType());
         
         // Set organization details in UserDTO
         userDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
@@ -454,8 +455,9 @@ public class UserServiceImpl implements UserService {
         dto.setUserEmail(user.getUserEmail());
         dto.setUserName(user.getUserName());
         dto.setUserPhoneNumber(user.getUserPhoneNumber());
+        dto.setUserType(user.getUserType());
         dto.setOrganization(convertOrganizationToDTO(user.getOrganization()));
-        // Cohort and Program will be set in getUserDetailsWithProgram()
+
         return dto;
     }
 
