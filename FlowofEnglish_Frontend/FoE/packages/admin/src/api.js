@@ -138,9 +138,8 @@ export async function getCohorts() {
     const res = await axios.get(`${apiUrl}/cohorts`);
     return res.data;
   } catch (err) {
-    console.log(err);
+    throw new Error(err.response?.data?.message || 'Error fetching cohorts');
   }
-  return null;
 }
 
 export async function getOrgCohorts(organizationId) {
@@ -148,9 +147,8 @@ export async function getOrgCohorts(organizationId) {
     const res = await axios.get(`${apiUrl}/cohorts/organization/${organizationId}`);
     return res.data;
   } catch (err) {
-    console.log(err);
+    throw new Error(err.response?.data?.message || 'Error fetching organization cohorts');
   }
-  return null;
 }
 
 export async function createCohort(data) {
@@ -158,9 +156,8 @@ export async function createCohort(data) {
     const res = await axios.post(`${apiUrl}/cohorts/create`, data);
     return res.data;
   } catch (err) {
-    console.log(err);
+    throw new Error(err.response?.data?.message || 'Error creating cohort');
   }
-  return null;
 }
 
 export async function updateCohort(id, data) {
@@ -168,9 +165,8 @@ export async function updateCohort(id, data) {
     const res = await axios.put(`${apiUrl}/cohorts/${id}`, data);
     return res.data;
   } catch (err) {
-    console.log(err);
+    throw new Error(err.response?.data?.message || 'Error updating cohort');
   }
-  return null;
 }
 
 export async function deleteCohort(id) {
@@ -178,9 +174,8 @@ export async function deleteCohort(id) {
     const res = await axios.delete(`${apiUrl}/cohorts/${id}`);
     return res.data;
   } catch (err) {
-    console.log(err);
+    throw new Error(err.response?.data?.message || 'Error deleting cohort');
   }
-  return null;
 }
 
 // Programs API calls
