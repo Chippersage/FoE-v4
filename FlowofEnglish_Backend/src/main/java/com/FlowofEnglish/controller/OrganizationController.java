@@ -25,10 +25,19 @@ public class OrganizationController {
         List<Organization> organizations = organizationService.getAllOrganizations();
         return ResponseEntity.ok(organizations);
     }
+    
+    @GetMapping("/{organizationId}")
+    public ResponseEntity<Organization> getOrganizationById(@PathVariable String organizationId) {
+        Organization organization = organizationService.getOrganizationById(organizationId);
+        if (organization != null) {
+            return ResponseEntity.ok(organization);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 
     // Create a new organization
     @PostMapping("/create")
-//    @PreAuthorize("hasRole('SuperADMIN')
     public ResponseEntity<Organization> createOrganization(@RequestBody Organization organization) {
         Organization createdOrganization = organizationService.createOrganization(organization);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrganization);
