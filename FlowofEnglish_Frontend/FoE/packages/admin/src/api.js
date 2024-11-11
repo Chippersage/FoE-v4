@@ -888,9 +888,9 @@ export async function deleteUserSessionMapping(sessionId) {
 
 // Din't updated
 
-export async function getOrgPrograms(id) {
+export async function getOrgPrograms(organisationId) {
   try {
-    const res = await axios.get(`${apiUrl}/organisations/organisationy/${id}/Programs`);
+    const res = await axios.get(`${apiUrl}/organisations/${organisationId}/Programs`);
     return res.data;
   } catch (err) {
     console.log(err);
@@ -983,9 +983,9 @@ export async function runContentWorkflow() {
 
 
 // get users by organisation id , level, Program
-export async function getProgramLevelUsers(org_id, Program_id, level_id) {
+export async function getOrgCohortUsers(organisationId, cohortId, Program_id) {
   try {
-    const res = await axios.get(`${apiUrl}/users/orgusers/${org_id}/${level_id}/${Program_id}`);
+    const res = await axios.get(`${apiUrl}/users/organization/${organisationId}/${cohortId}/${Program_id}`);
     return res.data;
   } catch (err) {
     console.log(err);
@@ -1027,9 +1027,9 @@ export async function getUserDetails(user_id) {
 }
 
 // export users
-export async function exportUsers(org_id) {
+export async function exportUsers(organizationId) {
   try {
-    const res = await axios.post(`${apiUrl}/users/export/${org_id}`);
+    const res = await axios.get(`${apiUrl}/users/organization/${organizationId}`);
     return res.data;
   } catch (err) {
     console.log(err);

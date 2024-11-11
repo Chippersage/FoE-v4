@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import {
-  Card, Table, Stack, Paper, Button, Popover, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,
-  Typography, IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions
-} from '@mui/material';
+  Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
+  IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
+  Link} from '@mui/material';
 
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -189,6 +189,8 @@ function CohortPage() {
     setOrderBy(property);
   };
 
+  
+
   const handleOpenActionMenu = (event, row) => {
     setActionAnchorEl(event.currentTarget);
     setSelectedRow(row);
@@ -230,31 +232,34 @@ function CohortPage() {
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
-                <TableBody>
-                  {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { cohortName, organizationName, cohortStartDate, cohortEndDate } = row;
-                    const selectedCohort = selected.indexOf(cohortName) !== -1;
+      <TableBody>
+        {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+          const { cohortId, cohortName, cohortStartDate, cohortEndDate } = row;
+          const selectedCohort = selected.indexOf(cohortName) !== -1;
 
-                    return (
-                      <TableRow hover key={row.cohortName} tabIndex={-1} role="checkbox" selected={selectedCohort}>
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortName)} />
-                        </TableCell>
-                        <TableCell component="th" scope="row" padding="none">
-                          <Typography variant="subtitle2" noWrap>
-                            {cohortName}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="left">{row.organization.organizationName}</TableCell>
-                        <TableCell align="left">{cohortStartDate}</TableCell>
-                        <TableCell align="left">{cohortEndDate}</TableCell>
-                        <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
-                            <Iconify icon="eva:more-vertical-fill" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
+              return (
+              <TableRow hover key={row.cohortName} tabIndex={-1} role="checkbox" selected={selectedCohort} >
+              <TableCell padding="checkbox">
+                <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortName)} />
+              </TableCell>
+              <TableCell component="th" scope="row" padding="none">
+                <Typography variant="subtitle2" noWrap>
+                <Link href ={`/admin/org-dashboard/${cohortId}/user-cohort`} color = "inherit" underline="hover" >
+                {cohortName}
+              </Link>
+              
+                </Typography>
+              </TableCell>
+              <TableCell align="left">{row.organization.organizationName}</TableCell>
+              <TableCell align="left">{cohortStartDate}</TableCell>
+              <TableCell align="left">{cohortEndDate}</TableCell>
+              <TableCell align="right">
+                <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
+                  <Iconify icon="eva:more-vertical-fill" />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          );
                   })}
                 </TableBody>
 

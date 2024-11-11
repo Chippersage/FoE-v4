@@ -10,7 +10,6 @@ import { AppWidgetSummary } from '../sections/@dashboard/app';
 
 export default function DashboardClientPage() {
   const theme = useTheme();
-  const [organization, setOrganization] = useState({});
   const [orgDetails, setOrgDetails] = useState({});
   const [users, setUsers] = useState([]);
   const [cohorts, setCohorts] = useState([]);
@@ -37,7 +36,7 @@ export default function DashboardClientPage() {
       .catch((err) => console.error(err));
 
     // Fetch programs for selection dropdown
-    axios.get(`${process.env.REACT_APP_API_URL}/programs/organization/${organizationId}`)
+    axios.get(`${process.env.REACT_APP_API_URL}/programs`)
       .then((res) => setPrograms(res.data))
       .catch((err) => console.log(err));
   }, [organizationId]);
@@ -65,7 +64,7 @@ export default function DashboardClientPage() {
         <Grid container justifyContent="space-between" spacing={4}>
           <Grid item xs={12} sm={6} md={4}>
             <Typography variant="h4" sx={{ mb: 5 }}>
-              Welcome back, {organization.organizationName}!
+              Welcome back, {orgDetails.organizationName}!
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
