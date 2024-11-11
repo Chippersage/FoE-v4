@@ -2,7 +2,7 @@
 import { styled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { CSVLink } from "react-csv";
 import { filter } from 'lodash';
 import { Helmet } from 'react-helmet-async';
 // @mui
@@ -107,7 +107,8 @@ export default function UserPage() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [orgs, setOrgs] = useState([]);
-
+  const [csvData, setCsvData] = useState([]);
+  const [isDataReady, setIsDataReady] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -257,38 +258,26 @@ export default function UserPage() {
   const handleExport = async () => {
     try {
       handleCloseMenu();
-      const ids = selectedRow.id;
-      const path = await exportUsers(ids);
-      console.log('path', path.path);
-
-      fetch(`/download-csv/${path.path}`)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'users.csv'; // Specify the desired file name
-          a.click();
-          URL.revokeObjectURL(url);
-        });
-      fetch(`/download-csv/${path.path}`)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'users.csv'; // Specify the desired file name
-          a.click();
-          URL.revokeObjectURL(url);
-        })
-        .catch((error) => {
-          console.error('Error downloading CSV file:', error);
-        });
+      const orgId = selectedRow?.organizationId; 
+      if (!orgId) {
+        console.error("No organization selected. Please select an organization to export.");
+        return;
+      }
+      console.log("Organization ID:", orgId);
+      const data = await exportUsers(orgId);
+  
+      if (data && Array.isArray(data)) {
+        setCsvData(data);
+        setIsDataReady(true);
+      } else {
+        console.error("Export response error:", data);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error in handleExport:", error);
     }
   };
-
+  
+  
   const handleEdit = () => {
     handleCloseMenu();
     setIsEditMode(true);
@@ -369,15 +358,10 @@ export default function UserPage() {
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orgs.length) : 0;
-
   const filteredUsers = applySortFilter(orgs, getComparator(order, orderBy), filterName);
-
   const isNotFound = !filteredUsers.length && !!filterName;
-
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
-  
 
   return (
     <>
@@ -551,8 +535,20 @@ export default function UserPage() {
         </MenuItem>
         <MenuItem onClick={handleExport}>
           <Iconify icon={'eva:cloud-download-outline'} sx={{ mr: 2 }} />
-          Export
+          Export Users
         </MenuItem>
+        {/* Conditionally render CSVLink after data is fetched */}
+      {isDataReady && (
+        <CSVLink
+          data={csvData}
+          filename={`users_${selectedRow.organizationName}.csv`} // Unique filename based on organization ID
+          onClick={() => setIsDataReady(false)} // Reset after download
+          style={{ display: 'none' }} // Hide the link in the UI
+        >
+          Download CSV
+        </CSVLink>
+      )}
+
         <MenuItem
           sx={{ color: 'error.main' }}
           onClick={() => {
