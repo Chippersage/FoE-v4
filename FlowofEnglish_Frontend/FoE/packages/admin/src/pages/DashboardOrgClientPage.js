@@ -24,7 +24,7 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { deleteUserProgramInfo, getProgramLevelUsers } from '../api';
+import { deleteUserProgramInfo, getOrgCohortUsers } from '../api';
 // sections
 import { AppNewsUpdate, AppWebsiteVisits, AppWidgetSummary } from '../sections/@dashboard/app';
 
@@ -119,7 +119,7 @@ export default function DashboardOrgClientPage() {
         console.log(err);
       });
 
-    getProgramLevelUsers(id, selectedProgram, null)
+      getOrgCohortUsers(id, selectedProgram, null)
       .then((res) => {
         setUsers((prev) => res);
       })

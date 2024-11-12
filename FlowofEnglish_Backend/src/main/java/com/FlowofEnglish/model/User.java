@@ -14,7 +14,7 @@ public class User {
     @Column(name = "user_id", length = 255)
     private String userId;
 
-    @Column(name = "user_address", length = 1000)
+    @Column(name = "user_address", length = 1000, nullable = true)
     private String userAddress;
 
     @Column(name = "user_email", length = 50, nullable = true)
