@@ -139,12 +139,12 @@ export default function SubConceptsPage() {
     <>
       <Header2 />
       <div
-        className="w-full h-screen overflow-scroll custom-scrollbar-2 mt-36"
+        className="w-full overflow-scroll custom-scrollbar-2 mt-36"
         style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
       >
         <svg
           className="w-full h-auto"
-          viewBox="600 -60 1000 1400"
+          viewBox="600 680 1000 1400" // increase to bring left, increase to bring top, decrease to expand horizontally, 
           preserveAspectRatio="xMinYMin meet"
         >
           <path
