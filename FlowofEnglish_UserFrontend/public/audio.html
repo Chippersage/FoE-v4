@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Activity</title>
+    <style>
+        .buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Listen to the audio and complete the activity</h1>
+
+    <audio id="audio" controls>
+        <source src="https://chippersageblr.s3.ap-south-1.amazonaws.com/Learner+-+Stripped+version/Passages1/Stage+3/Yaks/AudioFile/Passage23.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="buttons">
+        <button id="completeBtn">Complete</button>
+        <button id="backBtn">Go Back to Activities</button>
+    </div>
+
+    <script>
+        console.log("Audio activity started");
+        const audio = document.getElementById('audio');
+        const completeBtn = document.getElementById('completeBtn');
+        const backBtn = document.getElementById('backBtn');
+
+        let audioPlayedPercentage = 0;
+
+        // Automatically start playing the audio once it is loaded
+        audio.addEventListener('loadeddata', () => {
+            audio.play().catch((error) => {
+                console.error("Error playing audio:", error);
+            });
+        });
+
+        // Track how much the audio was played
+        audio.addEventListener('timeupdate', () => {
+            const playedTime = audio.currentTime;
+            const totalTime = audio.duration;
+            audioPlayedPercentage = (playedTime / totalTime) * 100;
+        });
+
+        // When "Complete" button is clicked
+        completeBtn.addEventListener('click', () => {
+        console.log("audioPlayedPercentage", audioPlayedPercentage);
+        audio.pause();
+
+        window.parent.postMessage("requestUserData", "*");
+
+          window.addEventListener(
+            "message",
+            function (event) {
+              let userData;
+              try {
+                // Parse the userData received from the parent
+                userData = JSON.parse(event.data);
+
+                if (!userData) {
+                  console.error("No userData received or userData is empty.");
+                  return;
+                }
+
+                // Proceed with using userData in your logic
+                console.log("Received userData:", userData);
+
+                // Further processing, etc.
+              } catch (e) {
+                console.error("Error parsing userData:", e);
+              }
+
+            let finalScore = (audioPlayedPercentage >= 80) 
+                ? 10 //change to userData.subconceptMaxscore
+                : 0
+
+            const payload = {
+                userAttemptFlag: true,
+                userAttemptScore: finalScore,
+                userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
+                userAttemptEndTimestamp: new Date().toISOString(),
+                unit: {
+                  unitId: userData.unitId,
+                },
+                program: {
+                  programId: userData.programId,
+                },
+                stage: {
+                  stageId: userData.stageId,
+                },
+                user: {
+                  userId: userData.userId,
+                },
+                session: {
+                  sessionId: userData.sessionId,
+                },
+                subconcept: {
+                  subconceptId: userData.subconceptId,
+                },
+              };
+
+              console.log(payload);
+
+              // Set the flag before making the request
+              isRequestInProgress = true;
+
+            fetch("http://localhost:8080/api/v1/user-attempts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json(); // Parse the JSON response
+                })
+                .then((data) => {
+                    console.log("Data sent successfully", data);
+                    isRequestInProgress = false; // Reset the flag after success
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    isRequestInProgress = false; // Reset the flag on error
+                });
+
+            //   $.ajax({
+            //     url: "http://localhost:8080/api/v1/user-attempts",
+            //     type: "POST",
+            //     contentType: "application/json",
+            //     data: JSON.stringify(payload),
+            //     success: function (response) {
+            //       console.log("Data sent successfully", response);
+            //       isRequestInProgress = false; // Reset the flag after success
+            //     },
+            //     error: function (xhr, status, error) {
+            //       console.error("Error:", error);
+            //       isRequestInProgress = false; // Reset the flag on error
+            //     },
+            //   });
+
+            // Send calculated score and other user data back to parent React app
+            // window.parent.postMessage(message, 'your-parent-app-origin');
+            },{once: true});
+
+    });
+
+        // Handle "Go Back to Activities" button
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>
