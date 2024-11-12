@@ -23,6 +23,8 @@ import ReportPage from './pages/ReportPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import UserPage from './pages/UserPage';
 import UsersPage from './pages/UsersPage';
+import UserCreate from './pages/UserCreate';
+import UserCohortpage from './pages/UserCohortpage';
 // import OrgDash from './pages/OrgDash';
 import DashboardOrgClientPage from './pages/DashboardOrgClientPage';
 import ForgotPassword from './pages/ForgotPassword';
@@ -46,20 +48,24 @@ export default function Router() {
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
         { path: 'user', element: <UserPage /> },
-        { path: 'addcto', element: <AddCtO /> },
-        { path: 'addctoc/:organisationId', element: <AddCtOc /> },
-        { path: 'programs', element: <ProgramPage /> },
-        { path: 'contents/:id', element: <ContentPage /> },
-        { path: 'languages', element: <LanguagePage /> },
-        { path: 'levels/:id', element: <LevelPage /> },
-        { path: 'cohorts/:id', element: <CohortPage /> },
-        { path: 'products', element: <ProductsPage /> },
-        { path: 'blog', element: <BlogPage /> },
-        // { path: 'orgdash', element: <OrgDash /> },
+        { path: 'cohorts/organization/:organizationId', element: <CohortPage /> },
+        { path: 'user-cohort/:cohortId', element: <UserCohortpage /> },
+        { path: 'Create Users', element: <UserCreate /> },
         { path: 'superreport', element: <ReportPage /> },
         { path: 'superuserreport', element: <SuperUserReport /> },
         { path: 'superpassword', element: <SuperAdminPassword /> },
         { path: 'superadmincreate', element: <SuperAdminCreate /> },
+
+
+
+        { path: 'blog', element: <BlogPage /> },
+        { path: 'programs', element: <ProgramPage /> },
+        { path: 'contents/:id', element: <ContentPage /> },
+        { path: 'addcto', element: <AddCtO /> },
+        { path: 'addctoc/:organisationId', element: <AddCtOc /> },
+        { path: 'languages', element: <LanguagePage /> },
+        { path: 'levels/:id', element: <LevelPage /> },
+        { path: 'products', element: <ProductsPage /> },
       ],
     },
     {
