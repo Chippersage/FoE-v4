@@ -21,7 +21,7 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
   try {
-    const response = await axios.post(`${apiUrl}/superadmin/login`, {
+    const response = await axios.post(`${apiUrl}/superadmin/login`,{
       userId,
       password,
     });

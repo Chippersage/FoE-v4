@@ -2,8 +2,11 @@ package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
 @Entity
 @Table(name = "UserSessionMapping")
 public class UserSessionMapping {
@@ -12,12 +15,13 @@ public class UserSessionMapping {
     @Column(name = "session_id", length = 128)
     private String sessionId;  
 
-    @Column(name = "session_end_timestamp")
+    @Column(name = "session_end_timestamp", nullable = true)
     private LocalDateTime sessionEndTimestamp;
 
-    @Column(name = "session_start_timestamp")
+    @Column(name = "session_start_timestamp", nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime sessionStartTimestamp;
-
+    
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
 
@@ -104,7 +108,14 @@ public class UserSessionMapping {
         }
     }
 
+ // Utility method to get IST timestamps
+    public ZonedDateTime getSessionStartTimestampInIST() {
+        return sessionStartTimestamp != null ? sessionStartTimestamp.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Kolkata")) : null;
+    }
 
+    public ZonedDateTime getSessionEndTimestampInIST() {
+        return sessionEndTimestamp != null ? sessionEndTimestamp.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Kolkata")) : null;
+    }
     
     
 }

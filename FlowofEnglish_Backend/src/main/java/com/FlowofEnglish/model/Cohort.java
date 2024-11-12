@@ -4,24 +4,27 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
 @Table(name = "Cohorts")
 public class Cohort {
 
     @Id
-    @Column(name = "cohort_id", length = 255)
+    @Column(name = "cohort_id", length = 255, nullable = false)
     private String cohortId;
 
-    @Column(name = "cohort_name", length = 100, nullable = false)
+    @Column(name = "cohort_name", length = 255, nullable = false)
     private String cohortName;
 
     @Column(name = "cohort_end_date", nullable = true)
     private LocalDateTime cohortEndDate;
 
-    @Column(name = "cohort_start_date", nullable = false)
+    @Column(name = "cohort_start_date", nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime cohortStartDate;
 
-    @Column(name = "uuid", length = 255, nullable = false, unique = true)
+    @Column(name = "uuid", length = 255, nullable = false, unique = true, updatable = false)
     private String uuid;
 
     @ManyToOne

@@ -9,6 +9,7 @@ import com.FlowofEnglish.dto.CohortDTO;
 import com.FlowofEnglish.dto.OrganizationDTO;
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.dto.UserDTO;
+import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.repository.UserRepository;
 import com.opencsv.CSVReader;
 import com.FlowofEnglish.repository.UserCohortMappingRepository;
@@ -21,8 +22,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -110,6 +113,7 @@ public class UserServiceImpl implements UserService {
         userDTO.setUserEmail(user.getUserEmail());
         userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
         userDTO.setUserAddress(user.getUserAddress());
+        userDTO.setUserType(user.getUserType());
         
         // Set organization details in UserDTO
         userDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
@@ -152,37 +156,68 @@ public class UserServiceImpl implements UserService {
 
     
     @Override
-    public User createUser(User user) {
+    public User createUser(UsercreateDTO userDTO) {
+        User user = userDTO.getUser();
+        String cohortId = userDTO.getCohortId();
         String plainPassword = DEFAULT_PASSWORD;
-        user.setUserPassword(passwordEncoder.encode(plainPassword));  // Hash the password for DB storage
+        
+        user.setUserPassword(passwordEncoder.encode(plainPassword));
+        
         User savedUser = userRepository.save(user);
         
+           // Handle UserCohortMapping creation
+        Cohort cohort = cohortRepository.findById(cohortId) 
+                .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
+
+        UserCohortMapping userCohortMapping = new UserCohortMapping();
+        userCohortMapping.setUser(savedUser);
+        userCohortMapping.setCohort(cohort);
+        userCohortMapping.setLeaderboardScore(0); 
+        userCohortMapping.setUuid(UUID.randomUUID().toString());
+
+        // Save the UserCohortMapping to the repository
+        userCohortMappingRepository.save(userCohortMapping);
+        
         // If the email is present, send credentials to user
-        if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
-            emailService.sendEmail(user.getUserEmail(), 
-                "Your Credentials",
-                "UserID: " + user.getUserId() + "\nPassword: " + plainPassword);
-        }
+        sendWelcomeEmail(savedUser, plainPassword);
         
         return savedUser;
     }
 
-    
-    
-    
+   
     @Override
     public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
         List<User> usersToCreate = new ArrayList<>();
         List<UserCohortMapping> userCohortMappingsToCreate = new ArrayList<>();
         Set<String> userIdSet = new HashSet<>();
+        String[] headerRow;
         String[] line;
 
         try {
-            // Read header row to skip it
-            csvReader.readNext(); 
-            
+            // Read header row to map columns dynamically
+            headerRow = csvReader.readNext();
+            if (headerRow == null) {
+                throw new IllegalArgumentException("CSV file is empty or missing header row.");
+            }
+
+            // Map column indices to field names
+            Map<String, Integer> columnIndexMap = new HashMap<>();
+            for (int i = 0; i < headerRow.length; i++) {
+                columnIndexMap.put(headerRow[i].trim().toLowerCase(), i);
+            }
+
+            // Check for required columns
+            List<String> requiredColumns = List.of("userid", "username", "usertype", "organizationid", "cohortid" );
+            for (String col : requiredColumns) {
+                if (!columnIndexMap.containsKey(col.toLowerCase())) {
+                    errorMessages.add("Missing required column: " + col);
+                    return usersToCreate;  // Exit early due to missing headers
+                }
+            }
+
             while ((line = csvReader.readNext()) != null) {
-                String userId = line[0];
+            	String userId = line[columnIndexMap.get("userid")];
+
                 
              // Check if userId already exists in the Same CSV batch
                 if (userIdSet.contains(userId)) {
@@ -190,54 +225,53 @@ public class UserServiceImpl implements UserService {
                     continue;
 
                 }
-                userIdSet.add(userId); // Add userId to the set
+                userIdSet.add(userId); 
 
                 // Check if userId already exists in the database
                 if (userRepository.existsById(userId)) {
                     errorMessages.add("UserID: " + userId + " already exists in the database. Skipping.");
-                    continue; // Skip creating this user and move to the next one
+                    continue; 
                 }
 
-                // Proceed to create the user
-                User user = new User();
-                user.setUserId(userId);
-                user.setUserEmail(line[1]);
-                user.setUserName(line[2]);
-                user.setUserAddress(line[3]);
-                user.setUserPhoneNumber(line[4]);
-                String plainPassword = DEFAULT_PASSWORD;
-                user.setUserPassword(passwordEncoder.encode(plainPassword)); // Set the default password
-                user.setUserType(line[5]);
-                user.setUuid(UUID.randomUUID().toString());
-
-                // Find the organization by its ID
                 try {
-                    // Fetch organization by ID
-                    Organization organization = organizationRepository.findById(line[6])
-                            .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " ));
-                    System.out.println("Looking up organization for ID: " + line[6]);
-                    user.setOrganization(organization);
-                } catch (IllegalArgumentException ex) {
-                    errorMessages.add("Error for UserID " + userId + ": " + ex.getMessage());
-                    continue; // Skip this user and move to the next one
-                }
+                    User user = new User();
+                    user.setUserId(userId);
+                    user.setUserName(line[columnIndexMap.get("username")]);
+                    user.setUserType(line[columnIndexMap.get("usertype")]);
+                    user.setUuid(UUID.randomUUID().toString());
+                    user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
+                    user.setUserEmail(columnIndexMap.containsKey("useremail") ? line[columnIndexMap.get("useremail")] : null);
+                    user.setUserPhoneNumber(columnIndexMap.containsKey("userphonenumber") ? line[columnIndexMap.get("userphonenumber")] : null);
+                    user.setUserAddress(columnIndexMap.containsKey("useraddress") ? line[columnIndexMap.get("useraddress")] : null);
+
+                
+                    // Fetch organization by ID
+                    String organizationId = line[columnIndexMap.get("organizationid")];
+                    Organization organization = organizationRepository.findById(organizationId)
+                            .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + organizationId ));
+                    user.setOrganization(organization);
+                    
                 // Add user to the list for bulk saving
                 usersToCreate.add(user);
                 
-             // Now handle the cohort information (assuming cohort ID is in line[7])
-                String cohortId = line[7];
-                try {
-                // Find the cohort by its ID
+             // Handle UserCohortMapping
+                String cohortId = line[columnIndexMap.get("cohortid")];
                 Cohort cohort = cohortRepository.findById(cohortId)
-                    .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
+                        .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
 
+             // Check for existing UserCohortMapping before creating a new one
+                if (userCohortMappingRepository.existsByUser_UserIdAndCohort_CohortId(userId, cohortId)) {
+                    errorMessages.add("UserID " + userId + " is already mapped to CohortID " + cohortId + ". Skipping this mapping.");
+                    continue;
+                }
+                
                 // Create the UserCohortMapping
                 
                 UserCohortMapping userCohortMapping = new UserCohortMapping();
                 userCohortMapping.setUser(user);
                 userCohortMapping.setCohort(cohort);
-                userCohortMapping.setLeaderboardScore(0); // Initial score, you can set this as needed
+                userCohortMapping.setLeaderboardScore(0);
                 userCohortMapping.setUuid(UUID.randomUUID().toString());
 
                 // Add to the list of mappings to be saved later
@@ -254,43 +288,48 @@ public class UserServiceImpl implements UserService {
             // Save the user-cohort mappings
             userCohortMappingRepository.saveAll(userCohortMappingsToCreate);
 
-                
-                // Send email if the email field is not null
+         
+            // Send welcome email for each new user
             for (User savedUser : savedUsers) {
-            	String plainPassword = DEFAULT_PASSWORD;
-            	if (savedUser.getUserEmail() != null && !savedUser.getUserEmail().isEmpty()) {
-                    UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserId(savedUser.getUserId())
-                            .orElseThrow(() -> new IllegalArgumentException("Cohort not found for userId: " + savedUser.getUserId()));
-
-                    Cohort cohort = userCohortMapping.getCohort();
-                    CohortProgram cohortProgram = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
-                            .orElseThrow(() -> new IllegalArgumentException("Program not found for cohortId: " + cohort.getCohortId()));
-
-                    Organization organization = savedUser.getOrganization();
-                    emailService.sendUserCreationEmail(
-                            savedUser.getUserEmail(),
-                            savedUser.getUserName(),
-                            savedUser.getUserId(),
-                            plainPassword,
-                            cohortProgram.getProgram().getProgramName(),
-                            cohortProgram.getProgram().getProgramId(),
-                            cohort.getCohortName(),
-                            organization.getOrganizationAdminEmail(),
-                            organization.getOrganizationName()
-                    );
+                if (savedUser.getUserEmail() != null && !savedUser.getUserEmail().isEmpty()) {
+                    sendWelcomeEmail(savedUser, DEFAULT_PASSWORD);
                 }
             }
-                            
-         // Log the count of users in the database after insertion
-            long totalUsersInDatabase = userRepository.count();
-            System.out.println("Total users in the database after insertion: " + totalUsersInDatabase);
 
         } catch (Exception e) {
             throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
         }
 
-        return usersToCreate; // Return only successfully created users
+        return usersToCreate; 
     }
+
+    // Helper function to send welcome email
+    private void sendWelcomeEmail(User user, String plainPassword) {
+        try {
+            UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserId(user.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("Cohort not found for userId: " + user.getUserId()));
+
+            Cohort cohort = userCohortMapping.getCohort();
+            CohortProgram cohortProgram = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
+                    .orElseThrow(() -> new IllegalArgumentException("Program not found for cohortId: " + cohort.getCohortId()));
+
+            Organization organization = user.getOrganization();
+            emailService.sendUserCreationEmail(
+                    user.getUserEmail(),
+                    user.getUserName(),
+                    user.getUserId(),
+                    plainPassword,
+                    cohortProgram.getProgram().getProgramName(),
+                    cohortProgram.getProgram().getProgramId(),
+                    cohort.getCohortName(),
+                    organization.getOrganizationAdminEmail(),
+                    organization.getOrganizationName()
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email for user: " + user.getUserId() + ", error: " + e.getMessage());
+        }
+    }  
+              
 
     @Override
     public String getCohortIdByUserId(String userId) {
@@ -308,9 +347,10 @@ public class UserServiceImpl implements UserService {
                     user.setUserEmail(updatedUser.getUserEmail());
                     user.setUserName(updatedUser.getUserName());
                     user.setUserPhoneNumber(updatedUser.getUserPhoneNumber());
+                    user.setUserType(updatedUser.getUserType());
                  // Check if the password is being updated
                     if (updatedUser.getUserPassword() != null && !updatedUser.getUserPassword().isEmpty()) {
-                        user.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword())); // Encode new password
+                        user.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword()));
                     }
                     user.setOrganization(updatedUser.getOrganization());
                     return userRepository.save(user);
@@ -372,11 +412,11 @@ public class UserServiceImpl implements UserService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             String encodedPassword = passwordEncoder.encode(newPassword);
-            user.setUserPassword(encodedPassword);  // Update the password
-            userRepository.save(user);  // Save the user with updated password
+            user.setUserPassword(encodedPassword);  
+            userRepository.save(user);  
             return true;
         } else {
-            return false;  // User not found
+            return false;  
         }
     }
     
@@ -415,8 +455,9 @@ public class UserServiceImpl implements UserService {
         dto.setUserEmail(user.getUserEmail());
         dto.setUserName(user.getUserName());
         dto.setUserPhoneNumber(user.getUserPhoneNumber());
+        dto.setUserType(user.getUserType());
         dto.setOrganization(convertOrganizationToDTO(user.getOrganization()));
-        // Cohort and Program will be set in getUserDetailsWithProgram()
+
         return dto;
     }
 

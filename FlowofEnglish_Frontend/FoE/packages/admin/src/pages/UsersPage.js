@@ -8,42 +8,11 @@ import { Helmet } from 'react-helmet-async';
 import { filter, set } from 'lodash';
 import { sentenceCase } from 'change-case';
 // @mui
-import {
-  Card,
-  Table,
-  Stack,
-  Paper,
-  Avatar,
-  Button,
-  Popover,
-  Checkbox,
-  TableRow,
-  MenuItem,
-  TableBody,
-  TableCell,
-  Container,
-  Typography,
-  IconButton,
-  TableContainer,
-  TablePagination,
-  Modal,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText,
-  Box,
-  Grid,
-  Switch,
-  FormControlLabel,
-  FormGroup,
-} from '@mui/material';
 
+import { FormControl, InputLabel, Select, FormHelperText, Box, Grid, Switch, FormControlLabel, FormGroup, Avatar, Popover,
+  MenuItem, Container, Card, TablePagination, Modal, DialogContentText, Button, CircularProgress, Dialog, DialogActions, 
+  DialogContent, DialogTitle, Paper, Stack, Typography, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, TextField, Checkbox, IconButton } from '@mui/material';
 // components
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -51,9 +20,9 @@ import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 import {
-  getProgramLevelUsers,
+  getOrgCohortUsers,
   getProgramLevels,
-  getLevels,
+  getUsers,
   createLevel,
   updateLevel,
   deleteLevel,
@@ -133,7 +102,7 @@ export default function UsersPage() {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const handleSelectLevel = (event) => {
     setSelectedLevel(event.target.value);
-    getProgramLevelUsers(id, selectedProgram, event.target.value).then((res) => {
+    getOrgCohortUsers(id, selectedProgram, event.target.value).then((res) => {
       // console.log(res);
       setUsers(res);
     });
@@ -189,7 +158,7 @@ export default function UsersPage() {
         try {
           await updateLevel(formData.id, formData);
           handleClose();
-          getLevels().then((res) => {
+          getUsers().then((res) => {
             // console.log(res);
             setlevels(res);
           });
@@ -276,7 +245,7 @@ export default function UsersPage() {
   const [selectedProgram, setselectedProgram] = useState(null);
   const handleSelectProgram = (event) => {
     setselectedProgram(event.target.value);
-    getProgramLevelUsers(id, event.target.value, selectedLevel).then((res) => {
+    getOrgCohortUsers(id, event.target.value, selectedLevel).then((res) => {
       // console.log(res);
       setUsers(res);
     });
@@ -298,7 +267,7 @@ export default function UsersPage() {
   }, []);
   useEffect(() => {
     // Fetch level details on component mount
-    getProgramLevelUsers(id, selectedProgram, selectedLevel).then((res) => {
+    getOrgCohortUsers(id, selectedProgram, selectedLevel).then((res) => {
       // console.log(res);
       setUsers(res);
     });
@@ -374,7 +343,7 @@ export default function UsersPage() {
   return (
     <>
       <Helmet>
-        <title> Levels | Chipper Sage </title>
+        <title> Users Details | Chipper Sage </title>
       </Helmet>
 
       <Container>
