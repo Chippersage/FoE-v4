@@ -46,7 +46,7 @@ export default function DashboardAppPage() {
     axios
       .get(`${apiUrl}/cohorts`)
       .then((res) => {
-        // console.log(res.data);
+      console.log(res.data);
         setCourses(res.data);
       })
       .catch((err) => {
@@ -66,7 +66,7 @@ export default function DashboardAppPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard | Mindfultalk </title>
+        <title> Dashboard | Chippersage </title>
       </Helmet>
 
       <Container maxWidth="xl">
@@ -98,7 +98,11 @@ export default function DashboardAppPage() {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Programs" total={langs.length} color="error" icon={'ant-design:flag-outlined'} />
+            <AppWidgetSummary title="Programs" 
+            total={langs.length} 
+            color="error" 
+            icon={'ant-design:flag-outlined'}
+             />
           </Grid>
 
           <Grid item xs={12} md={6} lg={8}>

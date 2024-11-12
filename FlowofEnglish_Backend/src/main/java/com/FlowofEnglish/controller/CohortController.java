@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+import com.FlowofEnglish.exception.CohortNotFoundException;
 import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.service.CohortService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,11 @@ public class CohortController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCohort(@PathVariable String id) {
-        cohortService.deleteCohort(id);
-        return ResponseEntity.noContent().build();
+        try {
+            cohortService.deleteCohort(id);
+            return ResponseEntity.noContent().build();
+        } catch (CohortNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

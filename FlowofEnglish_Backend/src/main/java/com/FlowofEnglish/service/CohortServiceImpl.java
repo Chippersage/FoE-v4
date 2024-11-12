@@ -51,6 +51,9 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     public void deleteCohort(String cohortId) {
+        if (!cohortRepository.existsById(cohortId)) {
+            throw new IllegalArgumentException("Cohort not found with id: " + cohortId);
+        }
         cohortRepository.deleteById(cohortId);
     }
     
@@ -60,7 +63,6 @@ public class CohortServiceImpl implements CohortService {
         CohortDTO dto = new CohortDTO();
         dto.setCohortId(cohort.getCohortId());
         dto.setCohortName(cohort.getCohortName());
-        //dto.setOrganizationId(cohort.getOrganization().getOrganizationId());
         return dto;
     }
 }

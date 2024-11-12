@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface CohortRepository extends JpaRepository<Cohort, String> {
 
-    // Custom query to find cohorts by organization ID
     List<Cohort> findByOrganizationOrganizationId(String organizationId);
 }

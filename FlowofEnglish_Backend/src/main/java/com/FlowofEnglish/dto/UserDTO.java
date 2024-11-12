@@ -7,6 +7,7 @@ public class UserDTO {
     private String userEmail;
     private String userName;
     private String userPhoneNumber;
+    private String userType;
     
     private OrganizationDTO organization;
     private CohortDTO cohort;
@@ -46,7 +47,15 @@ public class UserDTO {
         this.userName = userName;
     }
 
-    public String getUserPhoneNumber() {
+    public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	public String getUserPhoneNumber() {
         return userPhoneNumber;
     }
 
