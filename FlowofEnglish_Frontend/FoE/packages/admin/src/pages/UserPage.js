@@ -424,15 +424,6 @@ export default function UserPage() {
                           </Stack>
                         </TableCell>
                         <TableCell align="left">{createdAt}</TableCell>
-                        {/* <TableCell align="left">{company}</TableCell>
-
-                        <TableCell align="left">{role}</TableCell> */}
-
-                        {/* <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell> */}
-
-                        {/* <TableCell align="left">
-                          <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
-                        </TableCell> */}
 
                         <TableCell align="right">
                           <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
@@ -526,10 +517,10 @@ export default function UserPage() {
           Edit
         </MenuItem>
         <MenuItem
-          onClick={() => {
-            navigate(`/dashboard/cohorts/organization/${selectedRow.organizationId}`, { replace: true });
-          }}
-        >
+  onClick={() => {
+    navigate(`/org-dashboard/${selectedRow.organizationId}/cohorts/organization/${selectedRow.organizationId}`, { replace: true });
+  }}
+  >
           <Iconify icon={'eva:people-outline'} sx={{ mr: 2 }} />
           Cohorts
         </MenuItem>
