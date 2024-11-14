@@ -23,8 +23,8 @@ const getNavConfig = () => {
         icon: icon('ic_user'),
       },
       {
-        title: 'Add Users',
-        path: '/dashboard/Create Users',
+        title: 'Learners',
+        path: '/dashboard/Create-Users',
         icon: icon('ic_lan'),
       },
       {
@@ -75,14 +75,9 @@ const getNavConfig = () => {
         icon: icon('ic_lang'),
       },
       {
-        title: 'Courses',
-        path: '/dashboard/courses',
-        icon: icon('ic_course'),
-      },
-      {
-        title: 'Languages',
-        path: '/dashboard/languages',
-        icon: icon('ic_lang'),
+        title: 'Learners',
+        path: `/org-dashboards/${orgId}/org-Create-Users`,
+        icon: icon('ic_lan'),
       },
       {
         title: 'Organisation Report',
@@ -94,6 +89,17 @@ const getNavConfig = () => {
         path: `/org-dashboards/${orgId}/appx`,
         icon: icon('ic_lang'),
       },
+      // {
+      //   title: 'Courses',
+      //   path: '/dashboard/courses',
+      //   icon: icon('ic_course'),
+      // },
+      // {
+      //   title: 'Languages',
+      //   path: '/dashboard/languages',
+      //   icon: icon('ic_lang'),
+      // },
+      
     ];
   }
 
