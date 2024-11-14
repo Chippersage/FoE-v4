@@ -16,6 +16,16 @@ export const getOrgs = async () => {
   }
 };
 
+export const getOrg = async (organizationId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/organizations/${organizationId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching organization:', error);
+    return null;
+  }
+};
+
 // Create a new organization
 export const createOrg = async (data) => {
   try {
@@ -76,61 +86,6 @@ export const deleteOrgs = async (organizationIds) => {
   }
 };
 
-
-// content CRUD operations
-export async function getContents() {
-  try {
-    const res = await axios.get(`${apiUrl}/content-masters`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function updateContent(id, data) {
-  try {
-    const res = await axios.put(`${apiUrl}/content-masters/${id}`, data);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function createContent(data) {
-  try {
-    const res = await axios.post(`${apiUrl}/content-masters/create`, data);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function deleteContent(id) {
-  // console.log('Delete Workflow', id);
-  try {
-    const res = await axios.delete(`${apiUrl}/content-masters/${id}`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function deleteContents(id) {
-  // console.log('ids', id);
-  try {
-    const res = await axios.delete(`${apiUrl}/content-masters/delete/${id}`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-
 // Cohorts API calls
 
 export async function getCohorts() {
@@ -177,6 +132,178 @@ export async function deleteCohort(id) {
     throw new Error(err.response?.data?.message || 'Error deleting cohort');
   }
 }
+
+// Users API calls
+
+export async function getUsers() {
+  try {
+    const res = await axios.get(`${apiUrl}/users`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function createUser(data) {
+  try {
+    const res = await axios.post(`${apiUrl}/users/create`, data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+
+export async function createUsers(data) {
+  try {
+      const res = await axios.post(`${apiUrl}/users/bulkcreate/csv`, data);
+      return res.data;
+  } catch (err) {
+      console.error('API error:', err);
+      return { 
+          message: 'Error processing CSV file.',
+          errors: err.response?.data?.errors || []
+      };
+  }
+}
+
+export async function deleteUser(id) {
+  try {
+    const res = await axios.delete(`${apiUrl}/users/${id}`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function deleteUsers(userIds) {
+  try {
+    const response = await axios({
+      method: 'delete',
+      url: `${apiUrl}/users/bulk-delete`,
+      data: { userIds },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    console.log("Delete response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting users:", error);
+    throw error;
+  }
+}
+
+export async function getUser(id) {
+  try {
+    const res = await axios.get(`${apiUrl}/users/${id}`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function updateUser(id, data) {
+  try {
+    const res = await axios.put(`${apiUrl}/users/${id}`, data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function getOrgUsers(organizationId) {
+  try {
+    const res = await axios.get(`${apiUrl}/users/organization/${organizationId}`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+// UserCohortMappings API Calls
+
+// Get all UserCohortMappings
+export async function getUserCohortMappings() {
+  try {
+    const response = await axios.get(`${apiUrl}/user-cohort-mappings`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching UserCohortMappings:", error);
+  }
+  return null;
+}
+
+export async function getCohortMapping(cohortId) {
+  console.log("Cohort ID received:", cohortId); // Log the received cohortId
+  
+  try {
+    const response = await axios.get(`${apiUrl}/user-cohort-mappings/cohort/${cohortId}`);
+    
+    console.log("Response received for Cohort ID:", cohortId); // Log the response for the given cohortId
+    console.log("Response data:", response.data); // Log the actual response data
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching UserCohortMapping:", error); 
+  }
+  
+  return null; // In case of error, return null
+}
+
+
+export async function getUserCohortMapping(userId) {
+  try {
+    const response = await axios.get(`${apiUrl}/user-cohort-mappings/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching UserCohortMapping:", error);
+  }
+  return null;
+}
+
+// Create a new UserCohortMapping
+
+export async function createUserCohortMapping(data) {
+  try {
+    const response = await axios.post(`${apiUrl}/user-cohort-mappings/create`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating UserCohortMapping:", error);
+    return null;
+  }
+}
+
+
+export async function updateUserCohortMapping(userId, data) {
+  try {
+    const response = await axios.put(`${apiUrl}/user-cohort-mappings/user/${userId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating UserCohortMapping:", error);
+  }
+  return null;
+}
+
+
+export async function deleteUserCohortMapping(userId) {
+  try {
+    const response = await axios.delete(`${apiUrl}/user-cohort-mappings/user${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting UserCohortMapping:", error);
+  }
+  return null;
+}
+
+
+
+
+
 
 // Programs API calls
 
@@ -618,159 +745,6 @@ export async function deleteLangs(ids) {
 }
 
 
-// Users API calls
-
-export async function getUsers() {
-  try {
-    const res = await axios.get(`${apiUrl}/users`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function createUser(data) {
-  try {
-    const res = await axios.post(`${apiUrl}/users/create`, data);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-
-export async function createUsers(data) {
-  try {
-      const res = await axios.post(`${apiUrl}/users/bulkcreate/csv`, data);
-      return res.data;
-  } catch (err) {
-      console.error('API error:', err);
-      return { 
-          message: 'Error processing CSV file.',
-          errors: err.response?.data?.errors || []
-      };
-  }
-}
-
-export async function deleteUser(id) {
-  try {
-    const res = await axios.delete(`${apiUrl}/users/${id}`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function deleteUsers(userIds) {
-  try {
-    const response = await axios.delete({
-      method: 'delete',
-      url: `${apiUrl}/users/bulk-delete`,
-      data: userIds,
-      headers: { 'Content-Type': 'application/json' }
-    });
-    console.log("Delete response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting users:", error);
-    throw error;
-  }
-}
-
-
-deleteUsers();
-
-export async function getUser(id) {
-  try {
-    const res = await axios.get(`${apiUrl}/users/${id}`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function updateUser(id, data) {
-  try {
-    const res = await axios.put(`${apiUrl}/users/${id}`, data);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-export async function getOrgUsers(organizationId) {
-  try {
-    const res = await axios.get(`${apiUrl}/users/organization/${organizationId}`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
-
-// UserCohortMappings API Calls
-
-// Get all UserCohortMappings
-export async function getUserCohortMappings() {
-  try {
-    const response = await axios.get(`${apiUrl}/user-cohort-mappings`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching UserCohortMappings:", error);
-  }
-  return null;
-}
-
-// Get a specific UserCohortMapping by leaderboardScore
-export async function getUserCohortMapping(leaderboardScore) {
-  try {
-    const response = await axios.get(`${apiUrl}/user-cohort-mappings/${leaderboardScore}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching UserCohortMapping:", error);
-  }
-  return null;
-}
-
-// Create a new UserCohortMapping
-
-export async function createUserCohortMapping(data) {
-  try {
-    const response = await axios.post(`${apiUrl}/user-cohort-mappings`, data);
-    return response.data;
-  } catch (error) {
-    console.error("Error creating UserCohortMapping:", error);
-    return null;
-  }
-}
-
-// Update an existing UserCohortMapping by leaderboardScore
-export async function updateUserCohortMapping(leaderboardScore, data) {
-  try {
-    const response = await axios.put(`${apiUrl}/user-cohort-mappings/${leaderboardScore}`, data);
-    return response.data;
-  } catch (error) {
-    console.error("Error updating UserCohortMapping:", error);
-  }
-  return null;
-}
-
-// Delete a UserCohortMapping by leaderboardScore
-export async function deleteUserCohortMapping(leaderboardScore) {
-  try {
-    const response = await axios.delete(`${apiUrl}/user-cohort-mappings/${leaderboardScore}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting UserCohortMapping:", error);
-  }
-  return null;
-}
-
 // UserAttempts API Calls
 
 // Get all UserAttempts
@@ -1030,6 +1004,59 @@ export async function getUserDetails(user_id) {
 export async function exportUsers(organizationId) {
   try {
     const res = await axios.get(`${apiUrl}/users/organization/${organizationId}`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+// content CRUD operations
+export async function getContents() {
+  try {
+    const res = await axios.get(`${apiUrl}/content-masters`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function updateContent(id, data) {
+  try {
+    const res = await axios.put(`${apiUrl}/content-masters/${id}`, data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function createContent(data) {
+  try {
+    const res = await axios.post(`${apiUrl}/content-masters/create`, data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function deleteContent(id) {
+  // console.log('Delete Workflow', id);
+  try {
+    const res = await axios.delete(`${apiUrl}/content-masters/${id}`);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export async function deleteContents(id) {
+  // console.log('ids', id);
+  try {
+    const res = await axios.delete(`${apiUrl}/content-masters/delete/${id}`);
     return res.data;
   } catch (err) {
     console.log(err);

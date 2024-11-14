@@ -1,167 +1,139 @@
 /*eslint-disable*/
 import React, { useState } from 'react';
-import { Container, TextField, Button, Typography, Paper, IconButton, InputAdornment } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import { Container, TextField, Button, Typography, Paper, IconButton, InputAdornment, Card, CardContent, CardHeader } from '@mui/material';
+import { styled } from '@mui/system';
 import axios from 'axios';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
 const apiUrl = process.env.REACT_APP_API_URL;
-const useStyles = makeStyles((theme) => ({
-  container: {
-    marginTop: theme.spacing(10),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  paper: {
-    padding: theme.spacing(3),
-    marginTop: theme.spacing(3),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
-  },
-}));
 
-const PasswordUpdateForm = () => {
-  const classes = useStyles();
-  const [currentPassword, setCurrentPassword] = useState('');
+const StyledPaper = styled(Paper)({
+  padding: '24px',
+  marginTop: '24px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+});
+
+const StyledCard = styled(Card)({
+  marginBottom: '24px',
+});
+
+const PasswordUpdateForm = ({ orgData }) => {
+  const [organizationName, setOrganizationName] = useState('');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [orgUsername, setOrgUsername] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Basic validation for password match
-    if (newPassword !== confirmNewPassword) {
-      setErrorMessage('New password and confirm new password do not match');
-      return;
-    }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     try {
-      const response = await axios.post(`${apiUrl}/auth/loginreset`, {
-        username: orgUsername,
-        currentPassword,
-        newPassword,
+      const response = await axios.post(`${apiUrl}/organizations/resetorgpassword`, {
+        organisationName: organizationName,
+        email: email,
+        otp: otp,
       });
 
-      if (response.data.error) {
-        setErrorMessage(response.data.error);
-        setSuccessMessage('');
-      } else {
-        setSuccessMessage(response.data.message);
-        setErrorMessage('');
-      }
+      // If the request is successful
+      alert(response.data.message);
+      setNewPassword('');  // Clear the password field after reset
     } catch (error) {
-      console.error(error);
-      setErrorMessage('An error occurred during password reset');
-      setSuccessMessage('');
+      // Display error message
+      setErrorMessage(error.response ? error.response.data.message : 'An error occurred.');
     }
   };
 
+  // Toggle password visibility
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper className={classes.paper} elevation={6}>
-        <Typography component="h1" variant="h5">
-          Update Password
+    <Container maxWidth="sm" sx={{ marginTop: 10 }}>
+      {/* Organization Info Card */}
+      <StyledCard>
+        <CardHeader title="Organization Info" />
+        <CardContent>
+        <Typography variant="h6">Organization: {orgData?.organizationName || 'Loading...'}</Typography>
+<Typography variant="body2">OrganizationId: {orgData?.organizationId || 'Loading...'}</Typography>
+<Typography variant="body2">Admin: {orgData?.organizationAdminName || 'Loading...'}</Typography>
+<Typography variant="body2">Email: {orgData?.organizationAdminEmail || 'Loading...'}</Typography>
+<Typography variant="body2">Phone: {orgData?.organizationAdminPhone || 'Loading...'}</Typography>
+
+        </CardContent>
+      </StyledCard>
+
+      {/* Password Update Form */}
+      <StyledPaper>
+        <Typography variant="h5" sx={{ marginBottom: 2 }}>
+          Reset Organization Password
         </Typography>
-        <form className={classes.form} noValidate onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}style={{ width: '100%', marginTop: 8 }}>
           <TextField
+            label="Organization Name"
             variant="outlined"
-            margin="normal"
-            required
             fullWidth
-            name="orgUsername"
-            label="Organization Username"
-            type="text"
-            id="orgUsername"
-            autoComplete="username"
-            value={orgUsername}
-            onChange={(e) => setOrgUsername(e.target.value)}
+            sx={{ marginBottom: 2 }}
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
+            required
           />
           <TextField
+            label="Email"
             variant="outlined"
-            margin="normal"
-            required
             fullWidth
-            name="currentPassword"
-            label="Current Password"
-            type={showCurrentPassword ? 'text' : 'password'}
-            id="currentPassword"
-            autoComplete="current-password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowCurrentPassword(!showCurrentPassword)} edge="end">
-                    {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            sx={{ marginBottom: 2 }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            required
           />
           <TextField
+            label="OTP"
             variant="outlined"
-            margin="normal"
-            required
             fullWidth
-            name="newPassword"
+            sx={{ marginBottom: 2 }}
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            required
+          />
+          <TextField
             label="New Password"
-            type={showNewPassword ? 'text' : 'password'}
-            id="newPassword"
+            variant="outlined"
+            fullWidth
+            sx={{ marginBottom: 2 }}
+            type={showPassword ? 'text' : 'password'}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowNewPassword(!showNewPassword)} edge="end">
-                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
             required
-            fullWidth
-            name="confirmNewPassword"
-            label="Confirm New Password"
-            type={showConfirmNewPassword ? 'text' : 'password'}
-            id="confirmNewPassword"
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)} edge="end">
-                    {showConfirmNewPassword ? <VisibilityOff /> : <Visibility />}
+                  <IconButton onClick={handleClickShowPassword}>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
           />
-          {errorMessage && <Typography color="error">{errorMessage}</Typography>}
-          {successMessage && <Typography color="primary">{successMessage}</Typography>}
-          <Button type="submit" fullWidth variant="contained" color="primary" className={classes.submit}>
-            Update Password
+          {errorMessage && (
+            <Typography color="error" variant="body2" style={{ marginTop: '8px' }}>
+              {errorMessage}
+            </Typography>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ marginTop: 2 }}
+          >
+            Reset Password
           </Button>
         </form>
-      </Paper>
+        </StyledPaper>
     </Container>
   );
 };

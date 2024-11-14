@@ -5,11 +5,13 @@ import { Helmet } from 'react-helmet-async';
 import { CSVLink } from "react-csv";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Menu from '@mui/material/Menu';
+import { useParams } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';
 
-import { createUser, createUsers, deleteUser, deleteUsers, getUsers, updateUser } from '../api';
+import { createUser, createUsers, deleteUser, deleteUsers, getOrgUsers, getUserCohortMapping, updateUser } from '../api';
 
-const UserCreate = () => {
+const OrgUserCreate = () => {
+    const { id } = useParams();
     const [users, setUsers] = useState([]);
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [userId, setUserId] = useState('');
@@ -19,7 +21,7 @@ const UserCreate = () => {
     const [userPhoneNumber, setUserPhoneNumber] = useState('');
     const [userPassword, setUserPassword] = useState('');
     const [userAddress, setUserAddress] = useState('');
-    const [organizationId, setOrganizationId] = useState('');
+    const [organizationId, setOrganizationId] = useState(id);
     const [cohortId, setCohortId] = useState('');
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -31,19 +33,45 @@ const UserCreate = () => {
 
     useEffect(() => {
         fetchUsers();
-    }, []);
-
+    }, [organizationId]);
+    
     const fetchUsers = async () => {
+        console.log("Fetching users for organization ID: ", organizationId);
         setLoading(true);
-        const usersData = await getUsers();
-        if (usersData) {
-            setUsers(usersData);
-        } else {
+        try {
+            const users = await getOrgUsers(organizationId);
+            if (users) {
+                // For each user, fetch cohort details and add them to the user data
+            const usersWithCohorts = await Promise.all(
+                users.map(async (user) => {
+                    try {
+                        const userCohortMapping = await getUserCohortMapping(user.userId);
+                        console.log("User Cohort Mapping for User ID", user.userId, ":", userCohortMapping);
+                        return {
+                            ...user,
+                            cohort: userCohortMapping?.cohort || null,
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching cohort mapping for user ${user.userId}:`, error);
+                        return { ...user, cohort: null };
+                    }
+                })
+            );
+            console.log("Users with Cohorts:", JSON.stringify(usersWithCohorts, null, 2));
+            setUsers(usersWithCohorts);
+            } else {
+                setSnackbarMessage('Error fetching users');
+                setOpenSnackbar(true);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
             setSnackbarMessage('Error fetching users');
             setOpenSnackbar(true);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
+    
 
     const handleCreateUser = async () => {
         const newUser = {
@@ -231,7 +259,8 @@ const UserCreate = () => {
                         {/* </TableCell> */}
                             <TableCell>User ID</TableCell>
                             <TableCell>User Name</TableCell>
-                            <TableCell>User Organazation</TableCell>
+                            {/* <TableCell>User Cohort</TableCell> */}
+                            <TableCell>User Type</TableCell>
                             <TableCell>Actions</TableCell>
                         </TableRow>
                     </TableHead>
@@ -245,7 +274,8 @@ const UserCreate = () => {
                                     </TableCell>
                                 <TableCell>{user.userId}</TableCell>
                                 <TableCell>{user.userName}</TableCell>
-                                <TableCell>{user.organization?.organizationName}</TableCell>
+                                <TableCell>{user.userType}</TableCell>
+                            {/* <TableCell>{user.cohort ? user.cohort.cohortName : 'No Cohort Assigned'}</TableCell> */}
                                 <TableCell>
                                 <IconButton onClick={(e) => openMenu(e, user)}>
                                         <MoreVertIcon />
@@ -312,4 +342,4 @@ const UserCreate = () => {
     );
 };
 
-export default UserCreate;
+export default OrgUserCreate;
