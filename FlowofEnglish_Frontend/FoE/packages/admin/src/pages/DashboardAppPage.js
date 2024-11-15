@@ -76,7 +76,10 @@ export default function DashboardAppPage() {
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Users" total={users.length} icon={'ant-design:user-outlined'} />
+            <AppWidgetSummary 
+            title="Learners" 
+            total={users.length} 
+            icon={'ant-design:user-outlined'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
@@ -107,18 +110,18 @@ export default function DashboardAppPage() {
 
           <Grid item xs={12} md={6} lg={8}>
             <AppNewsUpdate
-              title="Users Update"
+              title="Learners Update"
               list={[...users].map((user, index) => ({
                 id: index,
                 title: user.userName,
                 description: user.userPhoneNumber,
                 image: `/assets/images/covers/cover_1.jpg`,
-                postedAt: user.created_at,
+                OrgName: user.organization?.organizationName,
               }))}
             />
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          {/* <Grid item xs={12} md={6} lg={4}>
             <AppOrderTimeline
               title=" Timeline"
               list={[...users].map((user, index) => ({
@@ -142,7 +145,7 @@ export default function DashboardAppPage() {
                 time: user.created_at,
               }))}
             />
-          </Grid>
+          </Grid> */}
         </Grid>
       </Container>
     </>
