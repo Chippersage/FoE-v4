@@ -45,13 +45,13 @@ NewsItem.propTypes = {
   news: PropTypes.shape({
     description: PropTypes.string,
     image: PropTypes.string,
-    postedAt: PropTypes.string,
+    OrgName: PropTypes.string,
     title: PropTypes.string,
   }),
 };
 
 function NewsItem({ news, onDelete }) {
-  const { image, title, description, postedAt } = news;
+  const { image, title, description, OrgName } = news;
 
   return (
     <Stack direction="row" alignItems="center" spacing={2}>
@@ -66,11 +66,11 @@ function NewsItem({ news, onDelete }) {
       </Box>
 
       <Typography variant="caption" sx={{ pr: 3, flexShrink: 0, color: 'text.secondary' }}>
-        {fToNow(postedAt)}
+        {OrgName}
       </Typography>
-      <IconButton size="large" style={{ marginRight: 16 }} color="inherit" onClick={(event) => onDelete(news)}>
+      {/* <IconButton size="large" style={{ marginRight: 16 }} color="inherit" onClick={(event) => onDelete(news)}>
         <Iconify icon={'eva:trash-2-outline'} />
-      </IconButton>
+      </IconButton> */}
     </Stack>
   );
 }

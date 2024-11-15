@@ -44,24 +44,8 @@ const getNavConfig = () => {
       },
       
     ];
-
-      // {
-      //   title: 'Programs',
-      //   path: '/dashboard/programs',
-      //   icon: icon('ic_course'),
-      // },
-      // {
-      //   title: 'Languages',
-      //   path: '/dashboard/languages',
-      //   icon: icon('ic_lang'),
-      // },
-      // {
-      //   title: 'Add course to org',
-      //   path: '/dashboard/addcto',
-      //   icon: icon('ic_lang'),
-      // },
-      
   }
+  
   if (userType === 'orgAdmin') {
     return [
       {
@@ -70,7 +54,7 @@ const getNavConfig = () => {
         icon: icon('ic_analytics'),
       },
       {
-        title: 'Cohort',
+        title: 'Cohorts',
         path: `/org-dashboards/${orgId}/orgdashc`,
         icon: icon('ic_lang'),
       },
@@ -79,6 +63,11 @@ const getNavConfig = () => {
         path: `/org-dashboards/${orgId}/org-Create-Users`,
         icon: icon('ic_lan'),
       },
+      {
+          title: 'Programs',
+          path: `/org-dashboard/${orgId}/programs`,
+          icon: icon('ic_course'),
+        },
       {
         title: 'Organisation Report',
         path: `/org-dashboards/${orgId}/orgreport`,
@@ -89,17 +78,6 @@ const getNavConfig = () => {
         path: `/org-dashboards/${orgId}/appx`,
         icon: icon('ic_lang'),
       },
-      // {
-      //   title: 'Courses',
-      //   path: '/dashboard/courses',
-      //   icon: icon('ic_course'),
-      // },
-      // {
-      //   title: 'Languages',
-      //   path: '/dashboard/languages',
-      //   icon: icon('ic_lang'),
-      // },
-      
     ];
   }
 

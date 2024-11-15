@@ -1,10 +1,11 @@
 /*eslint-disable*/
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, TextField, Button, Typography, Paper, IconButton, InputAdornment, Card, CardContent, CardHeader } from '@mui/material';
 import { styled } from '@mui/system';
 import axios from 'axios';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -20,17 +21,35 @@ const StyledCard = styled(Card)({
   marginBottom: '24px',
 });
 
-const PasswordUpdateForm = ({ orgData }) => {
+const PasswordUpdateForm = () => {
   const [organizationName, setOrganizationName] = useState('');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [orgData, setOrgData] = useState({});
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/loginorg');
+      return;
+    }
+    const headers = { Authorization: `${token}` };
+
+    axios.get(`${apiUrl}/organizations/${id}`, { headers })
+      .then((res) => setOrgData(res.data))
+      .catch((err) => {
+        localStorage.removeItem('token');
+        navigate('/loginorg');
+      });
+  }, [id, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     try {
       const response = await axios.post(`${apiUrl}/organizations/resetorgpassword`, {
         organisationName: organizationName,
@@ -38,15 +57,12 @@ const PasswordUpdateForm = ({ orgData }) => {
         otp: otp,
       });
 
-      // If the request is successful
       alert(response.data.message);
-      setNewPassword('');  // Clear the password field after reset
+      setNewPassword('');
     } catch (error) {
-      // Display error message
       setErrorMessage(error.response ? error.response.data.message : 'An error occurred.');
     }
   };
-
   // Toggle password visibility
   const handleClickShowPassword = () => setShowPassword(!showPassword);
 
@@ -56,11 +72,11 @@ const PasswordUpdateForm = ({ orgData }) => {
       <StyledCard>
         <CardHeader title="Organization Info" />
         <CardContent>
-        <Typography variant="h6">Organization: {orgData?.organizationName || 'Loading...'}</Typography>
-<Typography variant="body2">OrganizationId: {orgData?.organizationId || 'Loading...'}</Typography>
-<Typography variant="body2">Admin: {orgData?.organizationAdminName || 'Loading...'}</Typography>
-<Typography variant="body2">Email: {orgData?.organizationAdminEmail || 'Loading...'}</Typography>
-<Typography variant="body2">Phone: {orgData?.organizationAdminPhone || 'Loading...'}</Typography>
+        <Typography variant="h6">Organization: {orgData?.organizationName || 'N/A'}</Typography>
+        <Typography variant="body2">OrganizationId: {orgData?.organizationId || 'Loading...'}</Typography>
+        <Typography variant="body2">Admin: {orgData?.organizationAdminName || 'Loading...'}</Typography>
+        <Typography variant="body2">Email: {orgData?.organizationAdminEmail || 'Loading...'}</Typography>
+        <Typography variant="body2">Phone: {orgData?.organizationAdminPhone || 'Loading...'}</Typography>
 
         </CardContent>
       </StyledCard>
