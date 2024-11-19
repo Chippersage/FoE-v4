@@ -39,7 +39,7 @@ public class UserCohortMapping  {
 		super();
 		this.userCohortId = userCohortId;
 		this.user = user;
-		this.leaderboardScore = leaderboardScore;
+		this.leaderboardScore = 0;
 		this.uuid = uuid;
 		this.cohort = cohort;
 	}
