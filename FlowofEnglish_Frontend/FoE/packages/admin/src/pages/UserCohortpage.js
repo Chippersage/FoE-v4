@@ -1,24 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { CSVLink } from "react-csv";
+import { filter } from 'lodash';
+
 import {
-    Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Typography,
+    Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Typography, Paper,
     Grid, Card, TableBody, TableCell, TableHead, TableRow, TableSortLabel,
-    CircularProgress, IconButton, Menu, MenuItem,  Stack
+    CircularProgress, IconButton, Menu, MenuItem,  Stack, TablePagination, TableContainer, Container
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+
 import { Edit as EditIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { getCohortMapping, createUserCohortMapping, updateUserCohortMapping, deleteUserCohortMapping } from '../api';
+// Custom Components
+import Iconify from '../components/iconify';
+import Scrollbar from '../components/scrollbar';
+import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
+
+import { getCohortMapping, createUserCohortMapping, updateUserCohortMapping, deleteUserCohortMapping, 
+    importUserCohortMappings } from '../api';
+
+
+  // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-    { id: 'select', label: '', alignRight: false },
-    { id: 'userName', label: 'User Name', alignRight: false },
-    { id: 'userId', label: 'User Id', alignRight: false },
+    { id: 'learnerName', label: 'Learner Name', alignRight: false },
+    { id: 'learnerId', label: 'Learner Id', alignRight: false },
     { id: 'leaderboardScore', label: 'Leaderboard Score', alignRight: false },
     { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
+// -----------------------------------------------------------------------
+
+// Styled Components
+const StyledCard = styled(Card)({
+    width: '40%',
+    margin: '10px auto',
+    padding: '20px',
+    Button: {
+      marginTop: '10px',
+    },
+  });
+
+// Helper Functions
+const descendingComparator = (a, b, orderBy) => {
+    if (b[orderBy] < a[orderBy]) return -1;
+    if (b[orderBy] > a[orderBy]) return 1;
+    return 0;
+  };
+  
+  const getComparator = (order, orderBy) => {
+    return order === 'desc'
+      ? (a, b) => descendingComparator(a, b, orderBy)
+      : (a, b) => -descendingComparator(a, b, orderBy);
+  };
+  
+  const applySortFilter = (array, comparator, query) => {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+      const order = comparator(a[0], b[0]);
+      if (order !== 0) return order;
+      return a[1] - b[1];
+    });
+    
+    if (query) {
+      return filter(array, (_user) => _user.userName.toLowerCase().includes(query.toLowerCase()));
+    }
+    return stabilizedThis.map((el) => el[0]);
+  };
+
 const UserCohortPage = () => {
     const { cohortId } = useParams();
+    const [file, setFile] = useState(null);
+    const [response, setResponse] = useState(null);
     const [userCohortData, setUserCohortData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
     const [cohortName, setCohortName] = useState("");
@@ -28,10 +82,19 @@ const UserCohortPage = () => {
     const [formValues, setFormValues] = useState({});
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [loading, setLoading] = useState(false);
+    const [filterName, setFilterName] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const [activeRowId, setActiveRowId] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
     const [selectedRowsMessage, setSelectedRowsMessage] = useState('');
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('cohortId');
+    const [selected, setSelected] = useState([]);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [page, setPage] = useState(0);
+    const [open, setOpen] = useState(null);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [actionAnchorEl, setActionAnchorEl] = useState(null);
 
     useEffect(() => {
         if (cohortId) {
@@ -76,6 +139,51 @@ const UserCohortPage = () => {
             showSnackbar('Error saving data', 'error');
         }
     };
+
+    const handleSelectAllClick = (event) => {
+        if (event.target.checked) {
+          const newSelected = userCohortData.map((n) => n.userName);
+          setSelected(newSelected);
+        } else {
+          setSelected([]);
+        }
+      };
+    
+      const handleClick = (userName) => {
+        const selectedIndex = selected.indexOf(userName);
+        let newSelected = [];
+        if (selectedIndex === -1) {
+          newSelected = newSelected.concat(selected, userName);
+        } else if (selectedIndex === 0) {
+          newSelected = newSelected.concat(selected.slice(1));
+        } else if (selectedIndex === selected.length - 1) {
+          newSelected = newSelected.concat(selected.slice(0, -1));
+        } else if (selectedIndex > 0) {
+          newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+        }
+        setSelected(newSelected);
+      };
+
+      const handleClose = () => setOpen(false);
+
+    const handleRequestSort = (event, property) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+      };
+    const handleFileChange = (event) => {
+        setFile(event.target.files[0]);
+      };
+    
+      const handleUpload = async () => {
+        if (!file) {
+          alert("Please select a file to upload.");
+          return;
+        }
+    
+        const response = await importUserCohortMappings(file);
+        setResponse(response);
+      };
 
     const handleDelete = async (userCohortId) => {
         if (window.confirm('Are you sure you want to delete this record?')) {
@@ -161,70 +269,67 @@ const UserCohortPage = () => {
         setIsModalOpen(true);
     };
 
+    const filteredUserCohortData = applySortFilter(userCohortData, getComparator(order, orderBy), filterName);
+    const isNotFound = !filteredUserCohortData.length && !!filterName;
+
     return (
     <>
     <Helmet>
     <title> Cohort | Chipper Sage </title>
     </Helmet>
 
+    <Container>
     <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography variant="h4" gutterBottom>
         {cohortName}
         </Typography>
     </Stack>
 
-        <Box padding={3}>
-            <Grid container justifyContent="space-between" alignItems="center" marginBottom={2}>
-                <TextField
-                    label="Search by User"
-                    variant="outlined"
-                    onChange={(e) => handleSearch(e.target.value)}
-                    style={{ width: 300 }}
-                />
-                <Button variant="contained" color="primary" onClick={() => setIsModalOpen(true)}>
-                Add Learner to Cohort
-                </Button>
-            </Grid>
+            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+            <Button variant="contained"  onClick={() => setIsModalOpen(true)} style={{ marginRight: '10px' }} startIcon={<Iconify icon="eva:plus-fill" />}>
+            Add Learner to Cohort
+            </Button>
 
-            <Card>
-                {loading ? (
-                    <CircularProgress />
-                ) : (
-        <Table>
-        <TableHead>
-            <TableRow>
-                {TABLE_HEAD.map((head) => (
-                    <TableCell key={head.id} align={head.alignRight ? 'right' : 'left'}>
-                        {head.id === 'select' ? (
-                            <Checkbox
-                            checked={selectedRows.length === userCohortData.length}
-                            indeterminate={
-                                selectedRows.length > 0 &&
-                                selectedRows.length < userCohortData.length
-                            }
-                            onChange={handleSelectAll}
-                        />
-                        ) : (
-                            <TableSortLabel
-                                active={sortConfig.key === head.id}
-                                direction={sortConfig.direction}
-                                onClick={() => handleSort(head.id)}
-                            >
-                                {head.label}
-                            </TableSortLabel>
-                        )}
-                    </TableCell>
-                ))}
-            </TableRow>
-        </TableHead>
+            <Button variant="contained"  component="label" style={{ marginRight: '10px' }} startIcon={<Iconify icon="eva:plus-fill" />}>
+                Upload CSV
+                <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
+            </Button>
+
+            <CSVLink
+                data={userCohortData}
+                filename="users.csv"
+                className="btn btn-primary"
+            >
+            <Button variant="contained" >Export Users</Button>
+            </CSVLink>
+            </Stack>   
+        <Card>
+          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={(e) => setFilterName(e.target.value)} />
+
+          <Scrollbar>
+          {loading && <CircularProgress />}
+            <TableContainer sx={{ minWidth: 800 }}>
+              <Table>
+                <UserListHead
+                  order={order}
+                  orderBy={orderBy}
+                  headLabel={TABLE_HEAD}
+                  rowCount={userCohortData.length}
+                  numSelected={selected.length}
+                  onRequestSort={handleRequestSort}
+                  onSelectAllClick={handleSelectAllClick}
+                />
         <TableBody>
-            {userCohortData.map((row) => (
-                <TableRow key={row.userCohortId}>
-                    <TableCell>
-                        <Checkbox
-                            checked={selectedRows.includes(row.userCohortId)}
-                            onChange={() => handleSelectRow(row.userCohortId)}
-                        />
+        {userCohortData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+    const {  userId, userName, cohortId,leaderboardScore } = row;
+    const selectedUser = selected.indexOf(userId) !== -1;
+    return (
+      <TableRow hover key={row.userId} tabIndex={-1} role="checkbox" selected={selectedUser} > 
+                    <TableCell padding="checkbox">
+                    <Checkbox
+                        checked={selected.includes(row.userId)}
+                        onChange={() => handleClick(row.userId)}
+                    />
                     </TableCell>
                     <TableCell>{row.userName}</TableCell>
                     <TableCell>{row.userId}</TableCell>
@@ -245,11 +350,41 @@ const UserCohortPage = () => {
                         )}
                     </TableCell>
                 </TableRow>
-            ))}
+                );
+            })}
         </TableBody>
+
+        {isNotFound && (
+                  <TableBody>
+                    <TableRow>
+                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                        <Paper sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" paragraph>
+                            Not found
+                          </Typography>
+                          <Typography variant="body2">
+                            No results found for &quot;{filterName}&quot;. Try checking for typos or using complete words.
+                          </Typography>
+                        </Paper>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                )}
         </Table>
-        )}
-        </Card>
+        </TableContainer>
+            </Scrollbar>
+            <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredUserCohortData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(event, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
+          />
+          </Card>
+            </Container>
+        
         {/* Selected Rows Message */}
         {selectedRowsMessage && (
                 <Snackbar
@@ -319,7 +454,6 @@ const UserCohortPage = () => {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         />
-        </Box>
         </>
         );
         };
