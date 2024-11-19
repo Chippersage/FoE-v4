@@ -13,7 +13,7 @@ const ResetPassword = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-        const response = await axios.post(`${apiUrl}/organizations/resetorgpassword`, {
+        const response = await axios.post(`${apiUrl}/organizations/reset-password`, {
             organisationName,
             email,
             otp,

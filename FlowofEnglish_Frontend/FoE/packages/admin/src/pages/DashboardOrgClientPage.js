@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { Grid, Container, Typography, Box, Button, Card, CardContent, CardHeader } from '@mui/material';
 import { AppWidgetSummary, AppNewsUpdate } from '../sections/@dashboard/app';
 
-import { getOrgCohorts, getOrgUsers } from '../api';
+import { getOrgCohorts, getOrgUsers, getOrgPrograms } from '../api';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -14,6 +14,7 @@ export default function DashboardOrgClientPage() {
   const { id } = useParams();
   const [orgData, setOrgData] = useState({});
   const [cohorts, setCohorts] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [users, setUsers] = useState([]);
 
   // Fetch organization details, cohorts, and users
@@ -36,6 +37,7 @@ export default function DashboardOrgClientPage() {
     // Fetch cohorts and users for the organization
     getOrgCohorts(id).then(setCohorts).catch(console.error);
     getOrgUsers(id).then(setUsers).catch(console.error);
+    getOrgPrograms(id).then(setPrograms).catch(console.error);
   }, [id, navigate]);
 
   return (
@@ -72,8 +74,9 @@ export default function DashboardOrgClientPage() {
             </Grid>
             {/* Programs Card */}
            <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Programs" 
-            total={cohorts.length} 
+            <AppWidgetSummary 
+            title="Programs" 
+            total={programs.length} 
             color="error" 
             icon={'ant-design:flag-outlined'}
              />
