@@ -1,7 +1,7 @@
 // api.js
 import axios from 'axios';
 
-const apiUrl ='https://flowofenglish.thechippersage.com/api/v1';
+const apiUrl = process.env.REACT_APP_API_URL;
 
 // Organisations API calls
 
@@ -22,6 +22,16 @@ export const getOrg = async (organizationId) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching organization:', error);
+    return null;
+  }
+};
+
+export const getOrgPrograms = async (organizationId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/organizations/${organizationId}/programs`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching organization programs:', error);
     return null;
   }
 };
@@ -289,6 +299,23 @@ export async function updateUserCohortMapping(userId, data) {
   return null;
 }
 
+export async function importUserCohortMappings(file) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post(`${apiUrl}/user-cohort-mappings/bulkcreate`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data; // The map with success and error messages
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    return null;
+  }
+}
 
 export async function deleteUserCohortMapping(userId) {
   try {
@@ -862,15 +889,6 @@ export async function deleteUserSessionMapping(sessionId) {
 
 // Din't updated
 
-export async function getOrgPrograms(organisationId) {
-  try {
-    const res = await axios.get(`${apiUrl}/organisations/${organisationId}/Programs`);
-    return res.data;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
-}
 
 export const addProgramsToOrganization = async (organisationId, ProgramIds) => {
   try {

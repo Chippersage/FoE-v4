@@ -24,6 +24,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  Tooltip,
   TablePagination,
   TableRow,
   TextField,
@@ -48,15 +49,14 @@ import {
   deleteUser,
   deleteUsers,
   getOrgUsers,
-  getUserCohortMapping,
   updateUser
 } from '../api';
 
 // Constants
 const TABLE_HEAD = [
-  { id: 'userName', label: 'User Name', alignRight: false },
-  { id: 'userId', label: 'UserId', alignRight: false },
-  { id: 'cohortName', label: 'Cohort Name', alignRight: false },
+  { id: 'learnerName', label: 'Learner Name', alignRight: false },
+  { id: 'learnerId', label: 'LearnerId', alignRight: false },
+  { id: 'cohortId', label: 'CohortIds', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true }
 ];
 
@@ -114,6 +114,16 @@ const OrgUserCreate = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [userId, setUserId] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userType, setUserType] = useState('');
+  const [userPhoneNumber, setUserPhoneNumber] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [userAddress, setUserAddress] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [organizationId, setOrganizationId] = useState(id);
+  const [cohortId, setCohortId] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -140,31 +150,22 @@ const OrgUserCreate = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const users = await getOrgUsers(formData.organizationId);
-      if (users) {
-        const usersWithCohorts = await Promise.all(
-          users.map(async (user) => {
-            try {
-              const userCohortMapping = await getUserCohortMapping(user.userId);
-              return {
-                ...user,
-                cohort: userCohortMapping?.cohort || null,
-              };
-            } catch (error) {
-              console.error(`Error fetching cohort mapping for user ${user.userId}:`, error);
-              return { ...user, cohort: null };
-            }
-          })
-        );
-        setUsers(usersWithCohorts);
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      showNotification('Error fetching users');
-    } finally {
-      setLoading(false);
+      const response = await getOrgUsers(formData.organizationId);
+    if (response) {
+      const usersWithCohorts = response.map((user) => ({
+        ...user,
+        allCohorts: user.allCohorts || [],
+      }));
+
+      setUsers(usersWithCohorts);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    showNotification('Error fetching users');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCreateUser = async () => {
     try {
@@ -185,12 +186,18 @@ const OrgUserCreate = () => {
   };
 
   const handleUpdateUser = async () => {
+    const updatedUser = {
+        userId: selectedUserId,
+        userName,
+        userEmail,
+        userPhoneNumber,
+        userAddress,
+        userPassword,
+        userType,
+        organization: { organizationId }
+    };
     try {
-      const updatedUser = {
-        ...formData,
-        organization: { organizationId: formData.organizationId }
-      };
-      await updateUser(formData.userId, updatedUser);
+      await updateUser(selectedUserId, updatedUser);
       showNotification('User updated successfully');
       setOpenUpdateDialog(false);
       fetchUsers();
@@ -324,6 +331,7 @@ const OrgUserCreate = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => {
                   const selectedUser = selected.indexOf(row.userName) !== -1;
+                  const cohortIds = row.allCohorts?.map(cohort => cohort.cohortId).join(', ') || 'No Cohorts';
                   return (
                     <TableRow
                       hover
@@ -353,7 +361,20 @@ const OrgUserCreate = () => {
                         </Link>
                       </TableCell>
                       <TableCell>{row.userId}</TableCell>
-                      <TableCell>{row.cohort?.cohortName || 'No Cohort'}</TableCell>
+                      <TableCell>
+                        <Tooltip title={cohortIds} placement="top">
+                          <Typography
+                            sx={{
+                              maxWidth: 200,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {cohortIds}
+                          </Typography>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={(e) => handleOpenActionMenu(e, row)}>
                           <MoreVertIcon />
@@ -397,7 +418,7 @@ const OrgUserCreate = () => {
             onClick={() => setOpenCreateDialog(true)}
             startIcon={<Iconify icon="eva:plus-fill" />}
           >
-            Create User
+            Create Learner
           </Button>
           <Button
             variant="contained"
@@ -409,7 +430,7 @@ const OrgUserCreate = () => {
           </Button>
           <CSVLink data={users} filename="users.csv">
             <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}>
-              Export Users
+              Export Learners
             </Button>
           </CSVLink>
         </Stack>
@@ -417,48 +438,103 @@ const OrgUserCreate = () => {
         {renderTable()}
         {renderActionMenu()}
 
-        {/* Dialogs */}
+        {/* Create User Dialog */}
         <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
-          <DialogTitle>Create User</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              {Object.keys(formData).map((field) => (
-                <TextField
-                  key={field}
-                  label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  value={formData[field]}
-                  onChange={handleFormChange(field)}
-                  fullWidth
-                />
-              ))}
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateUser} variant="contained">Create</Button>
-          </DialogActions>
-        </Dialog>
+                <DialogTitle>Create Learner</DialogTitle>
+                <DialogContent>
+                    <TextField
+                    label="User ID *"
+                    fullWidth
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    style={{ marginBottom: '10px' }}
+                    error={!userId}
+                    helperText={!userId && "This field is required"}
+                    />
+                    <TextField
+                    label="User Name *"
+                    fullWidth
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    style={{ marginBottom: '10px' }}
+                    error={!userName}
+                    helperText={!userName && "This field is required"}
+                    />
+                    <TextField
+                      label="User Email"
+                      fullWidth
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      />
+                      <TextField
+                      label="User Phone Number"
+                      fullWidth
+                      value={userPhoneNumber}
+                      onChange={(e) => setUserPhoneNumber(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      />
+                      <TextField
+                      label="User Address"
+                      fullWidth
+                      value={userAddress}
+                      onChange={(e) => setUserAddress(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      />
+                      <TextField
+                      label="User Type *"
+                      fullWidth
+                      value={userType}
+                      onChange={(e) => setUserType(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      error={!userType}
+                      helperText={!userType && "This field is required"}
+                      />
+                      <TextField
+                      label="Organization ID *"
+                      fullWidth
+                      value={organizationId}
+                      onChange={(e) => setOrganizationId(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      error={!organizationId}
+                      helperText={!organizationId && "This field is required"}
+                      />
+                      <TextField
+                      label="Cohort ID *"
+                      fullWidth
+                      value={cohortId}
+                      onChange={(e) => setCohortId(e.target.value)}
+                      style={{ marginBottom: '10px' }}
+                      error={!cohortId}
+                      helperText={!cohortId && "This field is required"}
+                      />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenCreateDialog(false)} color="primary">Cancel</Button>
+                    <Button onClick={handleCreateUser} color="primary"
+                    disabled={!userId || !userName || !userType || !organizationId || !cohortId}
+                    >Create</Button>
+                </DialogActions>
+            </Dialog>
 
-        <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
-          <DialogTitle>Update User</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              {Object.keys(formData).map((field) => (
-                <TextField
-                  key={field}
-                  label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  value={formData[field]}
-                  onChange={handleFormChange(field)}
-                  fullWidth
-                />
-              ))}
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenUpdateDialog(false)}>Cancel</Button>
-            <Button onClick={handleUpdateUser} variant="contained">Update</Button>
-          </DialogActions>
-        </Dialog>
+        {/* Update User Dialog */}
+      <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
+                <DialogTitle>Update Learner</DialogTitle>
+                <DialogContent>
+                    <TextField label="User ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="User Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField label="Organization ID" fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} />
+                </DialogContent>
+                <DialogActions>
+                <Button onClick={() => setOpenUpdateDialog(false)} color="primary">Cancel</Button>
+                    <Button onClick={handleUpdateUser} color="primary">Update</Button>
+                </DialogActions>
+            </Dialog>
 
         <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
           <StyledCard>
