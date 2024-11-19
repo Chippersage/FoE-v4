@@ -2,7 +2,7 @@
 import React from 'react';
 import { Container, Typography, Box } from '@mui/material';
 import ForgotPasswordx from '../components/ForgotPasswordx';
-import ResetPasswordx from '../components/ResetPasswordx';
+
 
 const ForgotPassword = () => {
   return (
@@ -12,7 +12,6 @@ const ForgotPassword = () => {
           Forgot Password
         </Typography>
         <ForgotPasswordx />
-        <ResetPasswordx />
       </Box>
     </Container>
   );
