@@ -6,8 +6,10 @@ import com.FlowofEnglish.service.UserCohortMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -38,15 +40,44 @@ public class UserCohortMappingController {
 
     // POST (create) a new user-cohort mapping
     @PostMapping("/create")
-    public UserCohortMapping createUserCohortMapping(@RequestBody UserCohortMapping userCohortMapping) {
-        return userCohortMappingService.createUserCohortMapping(userCohortMapping);
+    public ResponseEntity<String> createUserCohortMapping(@RequestParam String userId, @RequestParam String cohortId) {
+        try {
+            userCohortMappingService.createUserCohortMapping(userId, cohortId);
+            return ResponseEntity.ok("User-Cohort mapping created successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
+    
+    @PostMapping("/bulkcreate")
+    public ResponseEntity<Map<String, List<String>>> importUserCohortMappings(@RequestParam("file") MultipartFile file) {
+        Map<String, List<String>> response = userCohortMappingService.importUserCohortMappingsWithResponse(file);
+        return ResponseEntity.ok(response);
+    }
+
+    
+    @PutMapping("/cohort/{cohortId}")
+    public ResponseEntity<String> updateUserCohortMappingByCohortId(
+            @PathVariable String cohortId, 
+            @RequestBody UserCohortMapping userCohortMapping) {
+        try {
+            userCohortMappingService.updateUserCohortMappingByCohortId(cohortId, userCohortMapping);
+            return ResponseEntity.ok("User-Cohort mapping updated successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Unexpected error: " + e.getMessage());
+        }
+    }
+
 
     // PUT (update) an existing mapping by userId
     @PutMapping("/user/{userId}")
     public ResponseEntity<UserCohortMapping> updateUserCohortMapping(@PathVariable String userId, @RequestBody UserCohortMapping userCohortMapping) {
         return ResponseEntity.ok(userCohortMappingService.updateUserCohortMapping(userId, userCohortMapping));
     }
+    
+    
 
     // DELETE a specific mapping by userId
     @DeleteMapping("/user/{userId}")

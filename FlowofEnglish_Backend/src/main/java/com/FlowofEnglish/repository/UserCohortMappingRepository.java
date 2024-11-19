@@ -13,13 +13,14 @@ import java.util.Optional;
 public interface UserCohortMappingRepository extends JpaRepository<UserCohortMapping, Integer> {
 	
 	List<UserCohortMapping> findAllByCohortCohortId(String cohortId);
+	List<UserCohortMapping> findByCohortCohortId(String cohortId);
 	Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
 	boolean existsByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
 
     Optional<UserCohortMapping> findByUserUserId(String userId);
 
     List<UserCohortMapping> findAllByUserUserId(String userId);
-
+    void deleteByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
     void deleteByUserUserId(String userId);
     
  // Add this method to your repository
