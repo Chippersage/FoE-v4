@@ -7,6 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.FlowofEnglish.model.Organization;
+import com.FlowofEnglish.model.Program;
+import com.FlowofEnglish.repository.CohortProgramRepository;
 import com.FlowofEnglish.repository.OrganizationRepository;
 import com.FlowofEnglish.util.RandomStringUtil;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +28,9 @@ public class OrganizationService {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+    
+    @Autowired
+    private  CohortProgramRepository cohortProgramRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -33,8 +38,7 @@ public class OrganizationService {
     @Autowired
     private JavaMailSender mailSender;
     
-
-
+    
 
     // Temporary store for OTPs (in a real-world app, use a more secure solution like Redis)
     private Map<String, String> otpStorage = new HashMap<>();
@@ -70,32 +74,40 @@ public class OrganizationService {
         }
     }
 
-    // Method to reset the organization password using OTP
-    public void resetPassword(String organisationName, String email, String otp) {
-        Organization organization = getOrganizationByEmail(email);
+    
+ // Send OTP after verifying organization name and email
+    public void sendForgotPasswordOTP(String organizationName, String email) {
+        Organization organization = organizationRepository.findByOrganizationAdminEmail(email);
+        if (organization == null || !organization.getOrganizationName().equalsIgnoreCase(organizationName)) {
+            throw new RuntimeException("Invalid organization name or email.");
+        }
+
+        String otp = generateOTP();
+        otpStorage.put(email, otp);
+        sendOTPEmail(email, otp);
+    }
+
+    
+ // Verify OTP and reset the password
+    public void resetPassword(String organizationName, String email, String otp, String newPassword) {
+        Organization organization = organizationRepository.findByOrganizationNameAndOrganizationAdminEmail(organizationName, email);
         if (organization == null) {
-            throw new RuntimeException("Organization not found with email: " + email);
+            throw new RuntimeException("Invalid organization name or email. Please try again.");
         }
 
         if (!otpStorage.containsKey(email) || !otpStorage.get(email).equals(otp)) {
-            throw new RuntimeException("Invalid OTP.");
+            throw new RuntimeException("Invalid or expired OTP. Please try again.");
         }
 
-        // OTP is valid; generate a new password
-        String newPassword = generateNewPassword();
+        // OTP is valid; update password
         String encodedPassword = passwordEncoder.encode(newPassword);
         organization.setOrgpassword(encodedPassword);
 
-        // Save the updated organization password
-        organizationRepository.save(organization);
+        organizationRepository.save(organization); // Save updated password
+        sendNewPasswordEmail(email, newPassword); // Notify user of the updated password
 
-        // Send new password to the organization's email
-        sendNewPasswordEmail(email, newPassword);
-
-        // Remove OTP after successful password reset
-        otpStorage.remove(email);
+        otpStorage.remove(email); // Clear the OTP after use
     }
-
     
    // Method to generate a new random password
     private String generateNewPassword() {
@@ -181,4 +193,7 @@ public class OrganizationService {
         return passwordEncoder.matches(plainPassword, encodedPassword);
     }
 
+    public List<Program> getProgramsByOrganizationId(String organizationId) {
+        return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
+    }
 }

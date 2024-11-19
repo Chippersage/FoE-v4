@@ -73,7 +73,7 @@ public class Organization {
     }
 
     // Getters and Setters
- // Getters and Setters
+ 
     public String getOrganizationId() {
         return organizationId;
     }

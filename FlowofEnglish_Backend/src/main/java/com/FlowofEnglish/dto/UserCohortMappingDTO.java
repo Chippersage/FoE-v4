@@ -1,7 +1,7 @@
 package com.FlowofEnglish.dto;
 
 public class UserCohortMappingDTO {
-    //private String organizationName;
+	 
     private String cohortId;
     private String userId;
     private String userName;
@@ -18,14 +18,6 @@ public class UserCohortMappingDTO {
 		this.leaderboardScore = leaderboardScore;
 	}
 
-//	public String getOrganizationName() {
-//		return organizationName;
-//	}
-//	
-//	
-//	public void setOrganizationName(String organizationName) {
-//		this.organizationName = organizationName;
-//	}
 	public String getCohortId() {
 		return cohortId;
 	}
@@ -49,10 +41,5 @@ public class UserCohortMappingDTO {
 	}
 	public void setCohortName(String cohortName) {
 		this.cohortName = cohortName;
-	}
-
-    
-    
-    
+	} 
 }
-
