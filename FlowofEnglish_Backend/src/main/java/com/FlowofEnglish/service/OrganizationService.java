@@ -109,11 +109,7 @@ public class OrganizationService {
         otpStorage.remove(email); // Clear the OTP after use
     }
     
-   // Method to generate a new random password
-    private String generateNewPassword() {
-        return RandomStringUtil.generateRandomAlphanumeric(8); // Generates an 8-character alphanumeric password
-    }
-
+   
     // Method to send the new password to the organization's email
     private void sendNewPasswordEmail(String to, String newPassword) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -140,18 +136,43 @@ public class OrganizationService {
         Organization savedOrganization = organizationRepository.save(organization);
         System.out.println("Saved organization: " + savedOrganization);
 
-        sendCredentialsEmail(organization.getOrganizationAdminEmail(), organization.getOrganizationAdminEmail(), plainPassword);
+        sendWelcomeEmail(savedOrganization); // Send the welcome email
 
         return savedOrganization;
     }
 
-    private void sendCredentialsEmail(String to, String username, String password) {
+    private void sendWelcomeEmail(Organization organization) {
+        String adminName = organization.getOrganizationAdminName();
+        String adminEmail = organization.getOrganizationAdminEmail();
+        String orgPassword = organization.getOrgpassword();
+        String orgAdminUrl = "https://flowofenglish.thechippersage.com/admin"; // Replace with actual URL
+        String superAdminEmail = "support@thechippersage.com"; // Replace with actual Super Admin email
+
+        String subject = "Welcome to Chippersage's Flow of English!";
+        String messageText = "Hello " + adminName + ",\n\n" +
+                "We are thrilled to have you onboard Chippersage's Flow of English program. " +
+                "We are eager to see your learners excel in speaking, writing, and reading English.\n\n" +
+                "Let's go ahead and get started:\n" +
+                "1. Create Cohorts. In your admin dashboard, create cohorts for different learners for different programs. " +
+                "Reach out to " + superAdminEmail + " if you need help setting up cohorts and assigning learners to cohorts.\n" +
+                "2. Add Learners. Add learners to your organization and assign them to different cohorts. " +
+                "A learner can belong to different cohorts. You can add multiple learners all at once by using 'Add Bulk Learners'.\n" +
+                "3. Reports. Under Reports, you can view the progress of the learners as they start their learning journey in the assigned program.\n\n" +
+                "To get started, login to your dashboard with the following credentials:\n" +
+                "User ID: " + adminEmail + "\n" +
+                "Password: " + orgPassword + "\n" +
+                "Organization Dashboard: " + orgAdminUrl + "\n\n" +
+                "If you have any questions or need assistance, please feel free to reach out to " + superAdminEmail + ".\n\n" +
+                "Best regards,\n" +
+                "Team Chippersage";
+
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Your Organization Credentials");
-        message.setText("Your credentials are as follows:\n\nUsername: " + username + "\nPassword: " + password);
+        message.setTo(adminEmail);
+        message.setSubject(subject);
+        message.setText(messageText);
         mailSender.send(message);
     }
+
 
     public Organization getOrganizationByEmail(String email) {
         System.out.println("OrganizationByEmail");

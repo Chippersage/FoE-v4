@@ -1,6 +1,6 @@
 package com.FlowofEnglish.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +18,8 @@ public class ProgramReportDTO {
     private double unitCompletionPercentage;
     private double subconceptCompletionPercentage;
     private double averageScore;
-    private LocalDateTime firstAttemptDate;
-    private LocalDateTime lastAttemptDate;
+    private OffsetDateTime firstAttemptDate;  
+    private OffsetDateTime lastAttemptDate;  
     private List<StageReportDTO> stages;
     private Map<String, Integer> scoreDistribution;
 	public String getProgramId() {
@@ -100,16 +100,17 @@ public class ProgramReportDTO {
 	public void setAverageScore(double averageScore) {
 		this.averageScore = averageScore;
 	}
-	public LocalDateTime getFirstAttemptDate() {
+	
+	public OffsetDateTime getFirstAttemptDate() {
 		return firstAttemptDate;
 	}
-	public void setFirstAttemptDate(LocalDateTime firstAttemptDate) {
+	public void setFirstAttemptDate(OffsetDateTime firstAttemptDate) {
 		this.firstAttemptDate = firstAttemptDate;
 	}
-	public LocalDateTime getLastAttemptDate() {
+	public OffsetDateTime getLastAttemptDate() {
 		return lastAttemptDate;
 	}
-	public void setLastAttemptDate(LocalDateTime lastAttemptDate) {
+	public void setLastAttemptDate(OffsetDateTime lastAttemptDate) {
 		this.lastAttemptDate = lastAttemptDate;
 	}
 	public List<StageReportDTO> getStages() {
