@@ -161,11 +161,11 @@ public class UserServiceImpl implements UserService {
         User user = userDTO.getUser();
         String cohortId = userDTO.getCohortId();
         String plainPassword = DEFAULT_PASSWORD;
-        
+
         user.setUserPassword(passwordEncoder.encode(plainPassword));
-        
+
         User savedUser = userRepository.save(user);
-        
+
            // Handle UserCohortMapping creation
         Cohort cohort = cohortRepository.findById(cohortId) 
                 .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
@@ -178,13 +178,12 @@ public class UserServiceImpl implements UserService {
 
         // Save the UserCohortMapping to the repository
         userCohortMappingRepository.save(userCohortMapping);
-        
+
         // If the email is present, send credentials to user
         sendWelcomeEmail(savedUser, plainPassword);
-        
+
         return savedUser;
     }
-
    
     @Override
     public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
