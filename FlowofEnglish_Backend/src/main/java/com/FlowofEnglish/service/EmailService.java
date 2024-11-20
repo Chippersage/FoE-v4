@@ -27,7 +27,7 @@ public class EmailService {
                 + "User ID: " + userId + "\n"
                 + "Password: " + plainPassword + "\n\n"
                 + "You can log in to the learning portal using the following link:\n"
-                + "https://flowofenglish.thechippersage.com/sign-in\n\n"
+                + "https://flowofenglish.thechippersage.com\n\n"
                 + "If you have any questions or need assistance, please feel free to reach out to your organization administrator:\n"
                 + "Administrator Email: " + orgAdminEmail + "\n"
                 + "Organization Name: " + orgName + "\n"
