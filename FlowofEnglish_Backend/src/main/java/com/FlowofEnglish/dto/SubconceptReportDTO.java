@@ -1,6 +1,7 @@
 package com.FlowofEnglish.dto;
 
-import java.time.LocalDateTime;
+
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public class SubconceptReportDTO {
@@ -9,7 +10,7 @@ public class SubconceptReportDTO {
     private boolean isCompleted;
     private double highestScore;
     private int attemptCount;
-    private LocalDateTime lastAttemptDate;
+    private OffsetDateTime lastAttemptDate;
     private String completionStatus;
     private List<AttemptDTO> attempts;
 	public String getSubconceptId() {
@@ -42,10 +43,10 @@ public class SubconceptReportDTO {
 	public void setAttemptCount(int attemptCount) {
 		this.attemptCount = attemptCount;
 	}
-	public LocalDateTime getLastAttemptDate() {
+	public OffsetDateTime getLastAttemptDate() {
 		return lastAttemptDate;
 	}
-	public void setLastAttemptDate(LocalDateTime lastAttemptDate) {
+	public void setLastAttemptDate(OffsetDateTime lastAttemptDate) {
 		this.lastAttemptDate = lastAttemptDate;
 	}
 	public String getCompletionStatus() {

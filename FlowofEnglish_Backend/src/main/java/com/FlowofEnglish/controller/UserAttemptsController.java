@@ -15,6 +15,7 @@ import com.FlowofEnglish.service.UnitService;
 import com.FlowofEnglish.service.UserAttemptsService;
 import com.FlowofEnglish.service.UserService;
 import com.FlowofEnglish.service.UserSessionMappingService;
+import java.time.ZoneOffset;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -68,10 +69,10 @@ public class UserAttemptsController {
 
         // Create UserAttempts entity
         UserAttempts userAttempt = new UserAttempts();
-        userAttempt.setUserAttemptEndTimestamp(requestDTO.getUserAttemptEndTimestamp());
+        userAttempt.setUserAttemptEndTimestamp(requestDTO.getUserAttemptEndTimestamp().atOffset(ZoneOffset.UTC));
         userAttempt.setUserAttemptFlag(requestDTO.isUserAttemptFlag());
         userAttempt.setUserAttemptScore(requestDTO.getUserAttemptScore());
-        userAttempt.setUserAttemptStartTimestamp(requestDTO.getUserAttemptStartTimestamp());
+        userAttempt.setUserAttemptStartTimestamp(requestDTO.getUserAttemptStartTimestamp().atOffset(ZoneOffset.UTC));
         userAttempt.setUser(userOpt.get());
         userAttempt.setUnit(unitOpt.get());
         userAttempt.setProgram(programOpt.get());
