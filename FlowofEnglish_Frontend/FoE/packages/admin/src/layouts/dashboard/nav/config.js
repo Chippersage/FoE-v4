@@ -61,12 +61,12 @@ const getNavConfig = () => {
       {
         title: 'Learners',
         path: `/org-dashboards/${orgId}/org-Create-Users`,
-        icon: icon('ic_lan'),
+        icon: icon('ic_Learners'),
       },
       {
           title: 'Programs',
-          path: `/org-dashboard/${orgId}/programs`,
-          icon: icon('ic_course'),
+          path: `/org-dashboards/${orgId}/programs`,
+          icon: icon('ic_program'),
         },
       {
         title: 'Organisation Report',

@@ -198,6 +198,7 @@ const UserCohortPage = () => {
     };
 
     const handleEdit = (record) => {
+      console.log(record)
         setCurrentRecord(record);
         setFormValues({
             userId: record.userId,
@@ -321,6 +322,7 @@ const UserCohortPage = () => {
                 />
         <TableBody>
         {userCohortData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+          
     const {  userId, userName, cohortId,leaderboardScore } = row;
     const selectedUser = selected.indexOf(userId) !== -1;
     return (

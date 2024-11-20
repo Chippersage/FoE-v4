@@ -235,6 +235,17 @@ export async function getOrgUsers(organizationId) {
   return null;
 }
 
+// Function to get User Session Mappings by User ID
+export async function getUserSessionMappingsByUserId(userId) {
+  try {
+    const res = await axios.get(`${apiUrl}/user-session-mappings/user/${userId}`);
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching user session mappings:", err);
+  }
+  return null;
+}
+
 // UserCohortMappings API Calls
 
 // Get all UserCohortMappings

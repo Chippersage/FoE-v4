@@ -35,6 +35,7 @@ import SuperUserReport from './pages/UsersReport';
 import OrgCohort from './pages/OrgCohort';
 import SuperAdminPassword from './pages/superAdminPassword';
 import LoginUser from './pages/LoginPageUser';
+import OrgProgramPage from './pages/OrgProgramPage';
 export default function Router() {
   const routes = useRoutes([
     {
@@ -96,6 +97,7 @@ export default function Router() {
         { path: 'appx', element: <UserPassword /> },
         { path: 'usersx', element: <UsersPage /> },
         { path: 'org-Create-Users', element: <OrgUserCreate /> },
+        { path: 'programs', element: <OrgProgramPage />},
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         { path: 'orgdashc', element: <OrgCohort /> },
         { path: 'orgreport', element: <OrgCourses /> },
