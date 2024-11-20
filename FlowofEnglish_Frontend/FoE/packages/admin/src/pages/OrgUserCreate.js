@@ -7,34 +7,9 @@ import { useParams } from 'react-router-dom';
 
 // Material UI Imports
 import {
-  Card,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Paper,
-  Stack,
-  Typography,
-  Container,
-  Snackbar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  Tooltip,
-  TablePagination,
-  TableRow,
-  TextField,
-  Checkbox,
-  IconButton,
-  Link,
-  Modal,
-  Menu,
-  MenuItem
-} from '@mui/material';
+  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, Menu, MenuItem,
+  IconButton, Link, Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, Tooltip,
+  TableRow, TextField, Typography} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 // Custom Components
@@ -124,19 +99,9 @@ const OrgUserCreate = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [organizationId, setOrganizationId] = useState(id);
   const [cohortId, setCohortId] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    userId: '',
-    userName: '',
-    userEmail: '',
-    userType: '',
-    userPhoneNumber: '',
-    userPassword: '',
-    userAddress: '',
-    organizationId: id,
-    cohortId: ''
-  });
+  
 
   // Notification State
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -144,13 +109,13 @@ const OrgUserCreate = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [id]);
+  }, [organizationId]);
 
   // API Handlers
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await getOrgUsers(formData.organizationId);
+      const response = await getOrgUsers(organizationId);
     if (response) {
       const usersWithCohorts = response.map((user) => ({
         ...user,
@@ -167,23 +132,30 @@ const OrgUserCreate = () => {
   }
 };
 
-  const handleCreateUser = async () => {
-    try {
-      const newUser = {
-        user: {
-          ...formData,
-          organization: { organizationId: formData.organizationId }
-        },
-        cohortId: formData.cohortId
-      };
-      await createUser(newUser);
-      showNotification('User created successfully');
-      setOpenCreateDialog(false);
-      fetchUsers();
-    } catch (error) {
-      showNotification('Error creating user');
-    }
+const handleCreateUser = async () => {
+  const newUser = {
+      user: {
+          userId,
+          userName,
+          userEmail,
+          userType,
+          userPhoneNumber,
+          userAddress,
+          organization: { organizationId }
+      },
+      cohortId
   };
+  try {
+    await createUser(newUser);
+    setSnackbarMessage('User created successfully');
+    setOpenSnackbar(true);
+    setOpenCreateDialog(false);
+    fetchUsers();
+} catch (error) {
+    setSnackbarMessage('Error creating user');
+    setOpenSnackbar(true);
+}
+};
 
   const handleUpdateUser = async () => {
     const updatedUser = {
@@ -198,13 +170,33 @@ const OrgUserCreate = () => {
     };
     try {
       await updateUser(selectedUserId, updatedUser);
-      showNotification('User updated successfully');
+      setSnackbarMessage('User updated successfully');
+      setOpenSnackbar(true);
       setOpenUpdateDialog(false);
       fetchUsers();
-    } catch (error) {
-      showNotification('Error updating user');
-    }
-  };
+  } catch (error) {
+      setSnackbarMessage('Error updating user');
+      setOpenSnackbar(true);
+  }
+};
+
+const openMenu = (event, user) => {
+  setSelectedUserId(user.userId);
+  setUserId(user.userId);
+  setUserName(user.userName);
+  setUserEmail(user.userEmail);
+  setUserType(user.userType);
+  setUserPassword(user.userPassword);
+  setUserPhoneNumber(user.userPhoneNumber);
+  setUserAddress(user.userAddress);
+  setOrganizationId(user.organization?.organizationId);
+  setAnchorEl(event.currentTarget);
+  setOpenUpdateDialog(true); 
+};
+
+const handleMenuClose = () => {
+  setAnchorEl(null);
+};
 
   const handleBulkCreate = async (file) => {
     const formData = new FormData();
@@ -241,9 +233,9 @@ const OrgUserCreate = () => {
     }
 };
 
-  const handleDeleteUser = async (userId) => {
+  const handleDeleteUser = async (id) => {
     try {
-      await deleteUser(userId);
+      await deleteUser(id);
       showNotification('User deleted successfully');
       setIsConfirmOpen(false);
       fetchUsers();
@@ -252,12 +244,34 @@ const OrgUserCreate = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    const userIds = selectedUsers.map(user => user.userId);
+    try {
+        const resultMessage = await deleteUsers(userIds);
+        setSnackbarMessage(resultMessage); // Display backend message on success
+        setOpenSnackbar(true);
+        fetchUsers(); // Refresh the listnm start
+    } catch (error) {
+        setSnackbarMessage(`Error bulk deleting users: ${ error.message }`);
+        setOpenSnackbar(true);
+    }
+};
+
+const handleDeleteDialogOpen = (userId) => {
+    setSelectedUserId(userId);
+};
+
+const confirmDelete = async () => {
+    await handleDeleteUser(selectedUserId);
+};
+
+
   // UI Handlers
-  const handleOpenActionMenu = (event, row) => {
-    setActionAnchorEl(event.currentTarget);
-    setSelectedRow(row);
-    setFormData(row);
+  const handleOpenActionMenu = (event, user) => {
+    openMenu(event, user);
+    setSelectedRow(user);
   };
+  
 
   const handleCloseActionMenu = () => setActionAnchorEl(null);
 
@@ -266,29 +280,27 @@ const OrgUserCreate = () => {
     setOpenSnackbar(true);
   };
 
-  const handleFormChange = (field) => (event) => {
-    setFormData({ ...formData, [field]: event.target.value });
-  };
+  
 
   // Render Methods
   const renderActionMenu = () => (
     <Menu
-      anchorEl={actionAnchorEl}
-      open={Boolean(actionAnchorEl)}
-      onClose={handleCloseActionMenu}
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={handleMenuClose}
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
       <MenuItem onClick={() => {
         setOpenUpdateDialog(true);
-        handleCloseActionMenu();
+        handleMenuClose();
       }}>
         <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
         Update
       </MenuItem>
       <MenuItem onClick={() => {
         setIsConfirmOpen(true);
-        handleCloseActionMenu();
+        handleMenuClose();
       }}>
         <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
         Delete
@@ -376,7 +388,7 @@ const OrgUserCreate = () => {
                         </Tooltip>
                       </TableCell>
                       <TableCell align="right">
-                        <IconButton onClick={(e) => handleOpenActionMenu(e, row)}>
+                        <IconButton onClick={(event) => handleOpenActionMenu(event, row)}>
                           <MoreVertIcon />
                         </IconButton>
                       </TableCell>
@@ -545,7 +557,7 @@ const OrgUserCreate = () => {
               <Button
                 variant="contained"
                 color="error"
-                onClick={() => handleDeleteUser(selectedRow?.userId)}
+                onClick={() => handleDeleteUser(selectedRow.userId)}
               >
                 Delete
               </Button>

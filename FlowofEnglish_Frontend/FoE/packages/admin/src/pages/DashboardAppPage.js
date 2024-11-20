@@ -1,9 +1,10 @@
 import axios from 'axios';
+
 import { useEffect, useState } from 'react';
 
 import { Helmet } from 'react-helmet-async';
 // @mui
-import { Container, Grid, Typography } from '@mui/material';
+import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 // components
 // sections
@@ -12,7 +13,7 @@ import {
   AppOrderTimeline,
   AppWidgetSummary
 } from '../sections/@dashboard/app';
-
+import  {  getUserSessionMappingsByUserId } from '../api'
 // ----------------------------------------------------------------------
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -20,8 +21,9 @@ export default function DashboardAppPage() {
   const theme = useTheme();
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [langs, setLangs] = useState([]);
+  const [cohorts, setCohorts] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [registeredLearners, setRegisteredLearners] = useState([]);
 
   // Fetch organization details on component mount
   useEffect(() => {
@@ -38,16 +40,29 @@ export default function DashboardAppPage() {
       .get(`${apiUrl}/users`)
       .then((res) => {
         setUsers(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
+      // Fetch session mappings for each user
+      const fetchMappings = res.data.map(async (user) => {
+        const sessionMappings = await getUserSessionMappingsByUserId(user.userId);
+        const lastSession = sessionMappings?.[0];
+        return {
+          ...user,
+          organizationName: user.organization?.organizationName || 'N/A',
+          sessionStartTimestamp: lastSession?.sessionStartTimestamp
+            ? new Date(lastSession.sessionStartTimestamp).toISOString()
+            : null,
+        };
       });
+
+      Promise.all(fetchMappings)
+        .then(setRegisteredLearners)
+        .catch(console.error);
+    })
+    .catch(console.error);
 
     axios
       .get(`${apiUrl}/cohorts`)
       .then((res) => {
-      console.log(res.data);
-        setCourses(res.data);
+        setCohorts(res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -56,7 +71,7 @@ export default function DashboardAppPage() {
     axios
       .get(`${apiUrl}/programs`)
       .then((res) => {
-        setLangs(res.data);
+        setPrograms(res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -94,7 +109,7 @@ export default function DashboardAppPage() {
           <Grid item xs={12} sm={6} md={3}>
             <AppWidgetSummary
               title="Cohorts"
-              total={courses.length}
+              total={cohorts.length}
               color="warning"
               icon={'ant-design:whats-app-outlined'}
             />
@@ -102,14 +117,14 @@ export default function DashboardAppPage() {
 
           <Grid item xs={12} sm={6} md={3}>
             <AppWidgetSummary title="Programs" 
-            total={langs.length} 
+            total={programs.length} 
             color="error" 
             icon={'ant-design:flag-outlined'}
              />
           </Grid>
 
           <Grid item xs={12} md={6} lg={8}>
-            <AppNewsUpdate
+            {/* <AppNewsUpdate
               title="Learners Update"
               list={[...users].map((user, index) => ({
                 id: index,
@@ -118,34 +133,37 @@ export default function DashboardAppPage() {
                 image: `/assets/images/covers/cover_1.jpg`,
                 OrgName: user.organization?.organizationName,
               }))}
-            />
+            /> */}
+            <Grid item xs={12}>
+  <Paper sx={{ p: 2 }}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Registered Learners
+    </Typography>
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell><strong>Learner ID</strong></TableCell>
+            <TableCell><strong>Learner Name</strong></TableCell>
+            <TableCell><strong>Cohort Name</strong></TableCell>
+            <TableCell><strong>Last Activity</strong></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {registeredLearners.map((user) => (
+            <TableRow key={user.userId}>
+              <TableCell>{user.userId}</TableCell>
+              <TableCell>{user.userName}</TableCell>
+              <TableCell>{user.organizationName}</TableCell>
+              <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+    </Paper>
+    </Grid>
           </Grid>
-
-          {/* <Grid item xs={12} md={6} lg={4}>
-            <AppOrderTimeline
-              title=" Timeline"
-              list={[...users].map((user, index) => ({
-                id: index,
-                title: [
-                  'User Registered',
-                  'User Registered',
-                  'Welcome triggered',
-                  'Welcome triggered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                  'User Registered',
-                ][index],
-                type: `order${index + 1}`,
-                time: user.created_at,
-              }))}
-            />
-          </Grid> */}
         </Grid>
       </Container>
     </>
