@@ -11,5 +11,7 @@ public interface ProgramReportService {
     StageReportDTO generateStageReport(String userId, String stageId);
     UnitReportDTO generateUnitReport(String userId, String unitId);
     List<AttemptDTO> getUserAttempts(String userId, String subconceptId);
-
+    
+    byte[] generatePdfReport(String userId, String programId); 
+    byte[] generateCsvReport(String userId, String programId);
 }
