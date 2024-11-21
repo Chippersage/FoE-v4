@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.UserDTO;
+import com.FlowofEnglish.dto.UserGetDTO;
 import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserCohortMapping;
@@ -49,19 +50,19 @@ public class UserController {
 
     
     @GetMapping
-    public List<UserDTO> getAllUsers() {
+    public List<UserGetDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable String id) {
+    public ResponseEntity<UserGetDTO> getUserById(@PathVariable String id) {
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/organization/{organizationId}")
-    public List<UserDTO> getUsersByOrganizationId(@PathVariable String organizationId) {
+    public List<UserGetDTO> getUsersByOrganizationId(@PathVariable String organizationId) {
         return userService.getUsersByOrganizationId(organizationId);
     }
     
@@ -70,6 +71,7 @@ public class UserController {
     public User createUser(@RequestBody UsercreateDTO userDTO) {
         return userService.createUser(userDTO);
     }
+
     
     @PostMapping("/bulkcreate/csv")
     public ResponseEntity<Map<String, Object>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
@@ -169,11 +171,13 @@ public class UserController {
     	String userId = loginData.get("userId");
         String userPassword = loginData.get("userPassword");
         String selectedProgramId = loginData.get("programId");
-
+        String expectedUserType = loginData.get("userType");
+        
         // Debug logging
         System.out.println("Received userId: " + userId);
         System.out.println("Received password: " + userPassword);
         System.out.println("Received programId: " + selectedProgramId);
+        System.out.println("Expected userType: " + expectedUserType);
         
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
@@ -181,9 +185,15 @@ public class UserController {
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-
+            
+         // Check user type
+            if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
+                response.put("error", "Invalid userType.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
             // Debugging the user type
-            System.out.println("User Type: " + user.getUserType());
+           System.out.println("User Type: " + user.getUserType());
 
             if (userService.verifyPassword(userPassword, user.getUserPassword())) {
             	
@@ -215,7 +225,8 @@ public class UserController {
                     
                  // Fetch additional user details with selected program and cohort
                 UserDTO userDTO = userService.getUserDetailsWithProgram(userId, selectedProgramId);
-                    
+                
+                response.put("message", "Successfully logged in as " + user.getUserType() + ".");
                 response.put("userType", user.getUserType());
                 response.put("userDetails", userDTO); // Include user details (with cohort and program)
                 response.put("sessionId", sessionId); // Add session ID to response

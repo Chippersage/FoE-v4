@@ -57,6 +57,9 @@ export default function SubConceptsPage() {
   const [error, setError] = useState("");
   const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const pathWidth = 1000; // Total width of the SVG
+  const pathHeight = 400; // Total height of the SVG
+  const rowHeight = pathHeight / 2; // Height of each row
 
   const fetchSubconcepts = async () => {
     try {
@@ -106,17 +109,21 @@ export default function SubConceptsPage() {
   }, []); // Empty dependency array to trigger on initial render
 
   const getPath = () => {
-    const height = 1000;
-    const width = 1000;
-    const curveWidth = width;
 
-    return `M${curveWidth},${height} 
-          C0,${height - height / 16} ${width / 0.5},${height - height / 16} ${
-      curveWidth / 0.8
-    },${height - height / 8}
-          C0,${height - (3 * height) / 16} ${width / 0.5},${
-      height - (3 * height) / 16
-    } ${curveWidth / 0.8},${height - height / 4}`;
+    const radius = 50; // Radius of the curves at ends
+    return `
+      M100,${rowHeight / 2} 
+      H${pathWidth - 100 - radius} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 100},${rowHeight / 2 + radius}
+      V${rowHeight + rowHeight / 2 - radius} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${rowHeight + rowHeight / 2}
+      H${100 + radius}
+      A${radius},${radius} 0 0 0 100,${rowHeight + rowHeight / 2 + radius}
+    V${rowHeight + rowHeight + rowHeight / 2 - radius} 
+    A${radius},${radius} 0 0 0 ${100 +radius},${rowHeight + rowHeight +rowHeight / 2}
+    H${pathWidth - 100 - radius}
+     
+    `;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -144,16 +151,17 @@ export default function SubConceptsPage() {
       >
         <svg
           className="w-full h-auto"
-          viewBox="600 680 1000 1400" // increase to bring left, increase to bring top, decrease to expand horizontally, 
+          viewBox={`0 0 ${pathWidth} ${pathWidth}`}
           preserveAspectRatio="xMinYMin meet"
         >
-          <path
-            d={getPath()}
-            fill="none"
-            stroke="#e0e0e0"
-            strokeWidth="6"
-            className="curve-path"
-          />
+        <path
+              d={getPath()}
+              fill="none"
+              stroke="#4CAF50"
+              strokeWidth="4"
+              className="curve-path"
+            />
+
           {[...Array(totalSteps)].map((_, index) => {
             const point = getPointOnPath(index / (totalSteps - 1));
             const subconcept =

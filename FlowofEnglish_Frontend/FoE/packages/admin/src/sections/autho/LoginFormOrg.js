@@ -11,7 +11,7 @@ import { useUser } from 'src/UserContext';
 
 export default function LoginFormOrg() {
   const navigate = useNavigate();
-  const apiUrl = 'https://flowofenglish.thechippersage.com/api/v1';
+  const apiUrl = process.env.REACT_APP_API_URL;
   const { setUserType, setOrgId } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);

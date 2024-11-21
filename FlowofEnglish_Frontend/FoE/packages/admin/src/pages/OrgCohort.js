@@ -10,6 +10,7 @@ import {
 
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
+
 import { createCohort, deleteCohort, getOrgCohorts, updateCohort } from '../api';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 
@@ -17,7 +18,7 @@ import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 
 const TABLE_HEAD = [
   { id: 'cohortName', label: 'Cohort Name', alignRight: false },
-  { id: 'organizationName', label: 'Organization Name', alignRight: false },
+  { id: 'cohortId', label: 'cohortId', alignRight: false },
   { id: 'cohortStartDate', label: 'Start Date', alignRight: false },
   { id: 'cohortEndDate', label: 'End Date', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true }
@@ -64,8 +65,8 @@ function applySortFilter(array, comparator, query) {
 }
 
 
-function CohortPage() {
-  const { organizationId } = useParams();
+function OrgCohort() {
+  const { id: organizationId } = useParams();
   const [open, setOpen] = useState(null);
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
@@ -98,18 +99,22 @@ function CohortPage() {
   };
 
   useEffect(() => {
+    console.log("Organization ID:", organizationId);
     fetchCohorts();
-  }, [organizationId]);
+  }, []);
 
   const fetchCohorts = async () => {
+    console.log("Fetching cohorts for organization ID: ", organizationId);
     try {
-      const res = await getOrgCohorts(organizationId);
-      setCohorts(res);
+      const data = await getOrgCohorts(organizationId);
+      console.log('Fetched cohorts:', data);
+      setCohorts(data);
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch cohorts';
       setErrorMsg(message);
     }
   };
+
   
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -129,6 +134,7 @@ function CohortPage() {
         fetchCohorts();
         handleClose();
       } catch (error) {
+        setErrorMsg('Failed to submit data');
         console.error("Error creating/updating cohort:", error);
       }
     } else {
@@ -250,7 +256,7 @@ function CohortPage() {
               
                 </Typography>
               </TableCell>
-              <TableCell align="left">{row.organization.organizationName}</TableCell>
+              <TableCell align="left">{row.cohortId}</TableCell>
               <TableCell align="left">{cohortStartDate}</TableCell>
               <TableCell align="left">{cohortEndDate}</TableCell>
               <TableCell align="right">
@@ -397,4 +403,4 @@ function CohortPage() {
   );
 }
 
-export default CohortPage;
+export default OrgCohort;

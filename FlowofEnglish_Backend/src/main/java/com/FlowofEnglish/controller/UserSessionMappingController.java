@@ -27,6 +27,12 @@ public class UserSessionMappingController {
         return userSessionMapping.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<UserSessionMapping>> getUserSessionMappingsByUserId(@PathVariable String userId) {
+        List<UserSessionMapping> mappings = userSessionMappingService.getUserSessionMappingsByUserId(userId);
+        return ResponseEntity.ok(mappings);
+    }
+    
     @PostMapping
     public UserSessionMapping createUserSessionMapping(@RequestBody UserSessionMapping userSessionMapping) {
         return userSessionMappingService.createUserSessionMapping(userSessionMapping);

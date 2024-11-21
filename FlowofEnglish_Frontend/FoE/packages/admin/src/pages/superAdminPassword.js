@@ -5,7 +5,7 @@ import { styled } from '@mui/system';
 import axios from 'axios';
 import { useState } from 'react';
 
-const apiUrl = 'http://13.234.42.153:8080/api/v1';
+const apiUrl = process.env.REACT_APP_API_URL;
 
 const ContainerStyled = styled(Container)(({ theme }) => ({
   marginTop: theme.spacing(10),
