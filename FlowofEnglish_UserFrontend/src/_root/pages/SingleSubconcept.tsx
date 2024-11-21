@@ -21,22 +21,8 @@ const SingleSubconcept = () => {
   useEffect(() => {
     if (user) {
 
-      const date = new Date();
-
-      // Calculate IST offset (UTC+5:30)
-      const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
-
-      // Convert to IST by adding the offset
-      const ISTTime = new Date(date.getTime() + ISTOffset);
-
-      // Format IST time to "YYYY-MM-DDTHH:mm:ss"
-      const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
-
-      console.log(formattedISTTimestamp);
-
-      
       const userData = {
-        userAttemptStartTimestamp: formattedISTTimestamp,
+        userAttemptStartTimestamp: new Date().toISOString(),
 
         unitId: currentUnitId,
 
@@ -103,7 +89,7 @@ const SingleSubconcept = () => {
         <iframe
           id="embeddedContent"
           src={subconcept.subconceptLink}
-          // src={"/Sentences/readAndRespond/stage1/bee.html"}
+          // src={"/Sentences/riddles/stage4/set1.html"}
           title="Embedded Content"
           width="100%"
           height="800px"
