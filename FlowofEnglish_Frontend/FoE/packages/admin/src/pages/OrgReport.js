@@ -9,8 +9,8 @@ import 'jspdf-autotable';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-const OrganisationCoursesPage = () => {
-  const [courses, setCourses] = useState([]);
+const OrganisationProgramsPage = () => {
+  const [programs, setPrograms] = useState([]);
   const [users, setUsers] = useState([]);
   const [cohorts, setCohorts] = useState([]);
 
@@ -28,13 +28,13 @@ const OrganisationCoursesPage = () => {
     };
 
     axios
-      .get(`${apiUrl}/report/listorgcourses/${organizationId}`, { headers })
+      .get(`${apiUrl}/reports/program/{userId}/{programId}/${organizationId}`, { headers })
       .then((response) => {
-        const fetchedCourses = response.data.map((item) => item.course_name);
-        setCourses(fetchedCourses);
+        const fetchedPrograms = response.data.map((item) => item.programName);
+        setPrograms(fetchedPrograms);
       })
       .catch((error) => {
-        console.error('Error fetching the organisation courses data:', error);
+        console.error('Error fetching the organisation Programs data:', error);
       });
 
     axios
@@ -59,12 +59,12 @@ const OrganisationCoursesPage = () => {
   const downloadReport = () => {
     const doc = new jsPDF();
 
-    doc.text('Organisation Courses, Cohorts and Users Report', 20, 10);
+    doc.text('Organisation Programs, Cohorts and Users Report', 20, 10);
 
     doc.autoTable({
       startY: 20,
-      head: [['Courses Names']],
-      body: courses.map((course) => [course]),
+      head: [['Programs Names']],
+      body: programs.map((program) => [program]),
     });
 
     doc.autoTable({
@@ -75,13 +75,13 @@ const OrganisationCoursesPage = () => {
 
     doc.autoTable({
       startY: doc.autoTable.previous.finalY + 10,
-      head: [['User ID', 'User Name', 'Phone Number', 'Course Name', 'Cohort Name']],
+      head: [['User ID', 'User Name', 'Phone Number', 'Program Name', 'Cohort Name']],
       body: users.flatMap((user) =>
-        user.user_course_info.map((info) => [
-          user.id,
-          user.name,
-          user.phone_no,
-          info.course.course_name,
+        user.user_program_info.map((info) => [
+          userId,
+          userName,
+          userPhoneNumber,
+          info.program.programName,
           info.cohort.cohort,
         ])
       ),
@@ -103,12 +103,12 @@ const OrganisationCoursesPage = () => {
       <Card style={{ margin: '20px 0', padding: '10px' }}>
         <CardContent>
           <Typography variant="h5" component="div" gutterBottom>
-            Courses Names
+            Programs Names
           </Typography>
           <Grid container spacing={2}>
-            {courses.map((course, index) => (
+            {programs.map((program, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-                <Typography variant="body1">{course}</Typography>
+                <Typography variant="body1">{program}</Typography>
               </Grid>
             ))}
           </Grid>
@@ -133,18 +133,18 @@ const OrganisationCoursesPage = () => {
       <Card style={{ margin: '20px 0', padding: '10px' }}>
         <CardContent>
           <Typography variant="h5" component="div" gutterBottom>
-            Users with Courses and Cohorts
+            Users with Programs and Cohorts
           </Typography>
           {users.map((user) => (
             <Paper style={{ margin: '10px 0', padding: '10px' }} key={user.id}>
               <Typography variant="h6">
                 {user.name} ({user.phone_no})
               </Typography>
-              {user.user_course_info.map((info, index) => (
+              {user.user_program_info.map((info, index) => (
                 <div key={index}>
-                  <Typography variant="body2">Course: {info.course.course_name}</Typography>
+                  <Typography variant="body2">Program: {info.program.programName}</Typography>
                   <Typography variant="body2">Cohort: {info.cohort.cohort}</Typography>
-                  {index < user.user_course_info.length - 1 && <Divider />}
+                  {index < user.user_program_info.length - 1 && <Divider />}
                 </div>
               ))}
             </Paper>
@@ -155,6 +155,6 @@ const OrganisationCoursesPage = () => {
   );
 };
 
-export default OrganisationCoursesPage;
+export default OrganisationProgramsPage;
 /* eslint-enable */
 /* eslint-enable */
