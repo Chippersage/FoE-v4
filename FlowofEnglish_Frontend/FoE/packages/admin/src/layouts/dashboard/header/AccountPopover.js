@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // @mui
 import { alpha } from '@mui/material/styles';
@@ -7,6 +7,7 @@ import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover 
 // mocks_
 import account from '../../../_mock/account';
 import { useUser } from 'src/UserContext';
+import { getOrg } from 'src/api';
 
 // ----------------------------------------------------------------------
 
@@ -33,6 +34,18 @@ export default function AccountPopover() {
   const { orgId, setOrgId } = useUser();
   const { userType, setUserType } = useUser();
   const [open, setOpen] = useState(null);
+
+  const [orgDetails, setOrgDetails] = useState({});
+
+  useEffect(() => {
+    // Fetch organization details on component mount
+    if (userType === 'orgAdmin' || orgId) {
+      getOrg(orgId).then((res) => {
+        console.log(res);
+        setOrgDetails(res);
+      });
+    }
+  }, [userType, orgId]);
 
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
@@ -110,17 +123,19 @@ export default function AccountPopover() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {account.displayName}
+            {/* {account.displayName} */}
+            { userType === 'orgAdmin' ? orgDetails?.organizationName : 'Admin' }
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {account.email}
+            {/* {account.email} */}
+            { userType === 'orgAdmin' ? orgDetails?.organizationAdminEmail : '' }
           </Typography>
         </Box>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <MenuItem onClick={handleLogout} sx={{ m: 1 }}>
-          Logout x
+          Logout
         </MenuItem>
       </Popover>
     </>

@@ -1,6 +1,7 @@
 package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.UserDTO;
+import com.FlowofEnglish.dto.UserGetDTO;
 import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.model.User;
 import com.opencsv.CSVReader;
@@ -10,11 +11,11 @@ import java.util.Optional;
 
 
 public interface UserService {
-    List<UserDTO> getAllUsers();
+    List<UserGetDTO> getAllUsers();
     Optional<User> findByUserId(String userId);
-    Optional<UserDTO> getUserById(String userId);
+    Optional<UserGetDTO> getUserById(String userId);
     UserDTO getUserDetailsWithProgram(String userId, String programId);
-    List<UserDTO> getUsersByOrganizationId(String organizationId);
+    List<UserGetDTO> getUsersByOrganizationId(String organizationId);
     User createUser(UsercreateDTO userDTO);
     User updateUser(String userId, User user);
     String deleteUser(String userId);
