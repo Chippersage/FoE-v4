@@ -106,6 +106,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
             int updatedScore = userCohortMapping.getLeaderboardScore() + score;
             userCohortMapping.setLeaderboardScore(updatedScore);
             
+            
             // Save the updated UserCohortMapping
             userCohortMappingService.updateUserCohortMapping(userCohortMapping. getUserCohortId(), userCohortMapping);
         } else {

@@ -1,9 +1,8 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -16,7 +15,7 @@ public class UserAttempts {
     private Long userAttemptId;
 
     @Column(name = "user_attempt_end_timestamp")
-    private LocalDateTime userAttemptEndTimestamp;
+    private OffsetDateTime userAttemptEndTimestamp;
 
     @Column(name = "user_attempt_flag", columnDefinition = "BIT", nullable = false)
     private boolean userAttemptFlag;
@@ -25,7 +24,7 @@ public class UserAttempts {
     private int userAttemptScore;
 
     @Column(name = "user_attempt_start_timestamp", nullable = false)
-    private LocalDateTime userAttemptStartTimestamp;
+    private OffsetDateTime userAttemptStartTimestamp;
 
     @ManyToOne
     @JoinColumn(name = "unit_id", nullable = false)
@@ -57,8 +56,8 @@ public class UserAttempts {
     // Default constructor
     public UserAttempts() {}
 
-    public UserAttempts(Long userAttemptId, LocalDateTime userAttemptEndTimestamp, boolean userAttemptFlag,
-                        int userAttemptScore, LocalDateTime userAttemptStartTimestamp, User user,
+    public UserAttempts(Long userAttemptId, OffsetDateTime userAttemptEndTimestamp, boolean userAttemptFlag,
+                        int userAttemptScore, OffsetDateTime userAttemptStartTimestamp, User user,
                         Unit unit, Program program, Stage stage, UserSessionMapping session,
                         Subconcept subconcept, String uuid) {
         this.userAttemptId = userAttemptId;
@@ -85,11 +84,11 @@ public class UserAttempts {
         this.userAttemptId = userAttemptId;
     }
 
-    public LocalDateTime getUserAttemptEndTimestamp() {
+    public OffsetDateTime getUserAttemptEndTimestamp() {
         return userAttemptEndTimestamp;
     }
 
-    public void setUserAttemptEndTimestamp(LocalDateTime userAttemptEndTimestamp) {
+    public void setUserAttemptEndTimestamp(OffsetDateTime userAttemptEndTimestamp) {
         this.userAttemptEndTimestamp = userAttemptEndTimestamp;
     }
 
@@ -109,11 +108,11 @@ public class UserAttempts {
         this.userAttemptScore = userAttemptScore;
     }
 
-    public LocalDateTime getUserAttemptStartTimestamp() {
+    public OffsetDateTime getUserAttemptStartTimestamp() {
         return userAttemptStartTimestamp;
     }
 
-    public void setUserAttemptStartTimestamp(LocalDateTime userAttemptStartTimestamp) {
+    public void setUserAttemptStartTimestamp(OffsetDateTime userAttemptStartTimestamp) {
         this.userAttemptStartTimestamp = userAttemptStartTimestamp;
     }
 
@@ -191,24 +190,22 @@ public class UserAttempts {
                 '}';
     }
 
-    // Ensure UUID and convert timestamps to IST
+    // Ensure UUID and default timestamps to UTC
     @PrePersist
     @PreUpdate
     private void initializeOrAdjustTimestamps() {
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
         }
-        
-        ZoneId istZoneId = ZoneId.of("Asia/Kolkata");
-        
-        if (this.userAttemptStartTimestamp != null) {
-            this.userAttemptStartTimestamp = 
-                ZonedDateTime.of(this.userAttemptStartTimestamp, istZoneId).toLocalDateTime();
+
+        ZoneOffset utcZoneOffset = ZoneOffset.UTC;
+
+        if (this.userAttemptStartTimestamp == null) {
+            this.userAttemptStartTimestamp = OffsetDateTime.now(utcZoneOffset);
         }
-        
-        if (this.userAttemptEndTimestamp != null) {
-            this.userAttemptEndTimestamp = 
-                ZonedDateTime.of(this.userAttemptEndTimestamp, istZoneId).toLocalDateTime();
+
+        if (this.userAttemptEndTimestamp == null) {
+            this.userAttemptEndTimestamp = OffsetDateTime.now(utcZoneOffset);
         }
     }
 }

@@ -23,8 +23,8 @@ const getNavConfig = () => {
         icon: icon('ic_user'),
       },
       {
-        title: 'Add Users',
-        path: '/dashboard/Create Users',
+        title: 'Learners',
+        path: '/dashboard/Create-Users',
         icon: icon('ic_lan'),
       },
       {
@@ -44,24 +44,8 @@ const getNavConfig = () => {
       },
       
     ];
-
-      // {
-      //   title: 'Programs',
-      //   path: '/dashboard/programs',
-      //   icon: icon('ic_course'),
-      // },
-      // {
-      //   title: 'Languages',
-      //   path: '/dashboard/languages',
-      //   icon: icon('ic_lang'),
-      // },
-      // {
-      //   title: 'Add course to org',
-      //   path: '/dashboard/addcto',
-      //   icon: icon('ic_lang'),
-      // },
-      
   }
+  
   if (userType === 'orgAdmin') {
     return [
       {
@@ -70,20 +54,20 @@ const getNavConfig = () => {
         icon: icon('ic_analytics'),
       },
       {
-        title: 'Cohort',
+        title: 'Cohorts',
         path: `/org-dashboards/${orgId}/orgdashc`,
         icon: icon('ic_lang'),
       },
       {
-        title: 'Courses',
-        path: '/dashboard/courses',
-        icon: icon('ic_course'),
+        title: 'Learners',
+        path: `/org-dashboards/${orgId}/org-Create-Users`,
+        icon: icon('ic_Learners'),
       },
       {
-        title: 'Languages',
-        path: '/dashboard/languages',
-        icon: icon('ic_lang'),
-      },
+          title: 'Programs',
+          path: `/org-dashboards/${orgId}/programs`,
+          icon: icon('ic_program'),
+        },
       {
         title: 'Organisation Report',
         path: `/org-dashboards/${orgId}/orgreport`,
