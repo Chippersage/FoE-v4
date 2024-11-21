@@ -9,8 +9,6 @@ import { useTheme } from '@mui/material/styles';
 // components
 // sections
 import {
-  AppNewsUpdate,
-  AppOrderTimeline,
   AppWidgetSummary
 } from '../sections/@dashboard/app';
 import  {  getUserSessionMappingsByUserId } from '../api'
@@ -124,16 +122,6 @@ export default function DashboardAppPage() {
           </Grid>
 
           <Grid item xs={12} md={6} lg={8}>
-            {/* <AppNewsUpdate
-              title="Learners Update"
-              list={[...users].map((user, index) => ({
-                id: index,
-                title: user.userName,
-                description: user.userPhoneNumber,
-                image: `/assets/images/covers/cover_1.jpg`,
-                OrgName: user.organization?.organizationName,
-              }))}
-            /> */}
             <Grid item xs={12}>
   <Paper sx={{ p: 2 }}>
     <Typography variant="h6" sx={{ mb: 2 }}>
@@ -145,7 +133,7 @@ export default function DashboardAppPage() {
           <TableRow>
             <TableCell><strong>Learner ID</strong></TableCell>
             <TableCell><strong>Learner Name</strong></TableCell>
-            <TableCell><strong>Cohort Name</strong></TableCell>
+            <TableCell><strong>Organisation Name</strong></TableCell>
             <TableCell><strong>Last Activity</strong></TableCell>
           </TableRow>
         </TableHead>

@@ -3,6 +3,9 @@
 
 # Ignore node_modules directories
 FlowofEnglish_Frontend/node_modules/
+FlowofEnglish_Frontend\FoE\packages\admin\build
+FlowofEnglish_Frontend\FoE\packages\admin\yarn.lock
+FlowofEnglish_Frontend\FoE\packages\admin\package-lock.json
 FlowofEnglish_Frontend/FoE/node_modules/
 FlowofEnglish_Frontend/FoE/packages/*/node_modules/
 FlowofEnglish_UserFrontend/node_modules/

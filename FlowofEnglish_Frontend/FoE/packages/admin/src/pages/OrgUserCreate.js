@@ -191,7 +191,6 @@ const openMenu = (event, user) => {
   setUserAddress(user.userAddress);
   setOrganizationId(user.organization?.organizationId);
   setAnchorEl(event.currentTarget);
-  setOpenUpdateDialog(true); 
 };
 
 const handleMenuClose = () => {

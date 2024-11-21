@@ -1,8 +1,12 @@
 package com.FlowofEnglish.service;
 
+
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +16,30 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
-
+import java.io.IOException;
+import com.itextpdf.io.source.ByteArrayOutputStream;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
 
 
 @Service
 public class ProgramReportServiceImpl implements ProgramReportService {
 	
+	@Autowired
+	private UserRepository userRepository;
+
+	public UserDTO getUserInfo(String userId) {
+	    User user = userRepository.findById(userId)
+	        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	    
+	    UserDTO userDTO = new UserDTO();
+	    userDTO.setUserName(user.getUserName());
+	    userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
+	    return userDTO;
+	}
+
 	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
 
     @Autowired
@@ -290,4 +312,100 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         
         return distribution;
     }
+    
+    @Override
+    public byte[] generateCsvReport(String userId, String programId) {
+        ProgramReportDTO report = generateProgramReport(userId, programId);
+        
+        // Assuming user information is retrieved based on userId
+        UserDTO user = getUserInfo(userId);  // Add this method to fetch user details like name and phone number
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(out), CSVFormat.DEFAULT)) {
+
+            // Header
+            csvPrinter.printRecord("Learner Name", "Learner ID", "Learner PhoneNumber", "Program ID", 
+                                    "Program Name", "Stage Name", "Unit Name", "Subconcept Name", 
+                                   "Completion Status", "Average Score", "Attempt Count");
+
+            // Data - Include user info for each record
+            for (StageReportDTO stageReport : report.getStages()) {
+                for (UnitReportDTO unitReport : stageReport.getUnits()) {
+                    for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                        csvPrinter.printRecord(
+                                user.getUserName(),                
+                                userId,                            
+                                user.getUserPhoneNumber(),             
+                                programId,                         
+                                report.getProgramName(),          
+                                stageReport.getStageName(),        
+                                unitReport.getUnitName(),          
+                                subconceptReport.getSubconceptDesc(),  
+                                subconceptReport.isCompleted() ? "Completed" : "Incomplete",  
+                                subconceptReport.getHighestScore(),  
+                                subconceptReport.getAttemptCount()  
+                        );
+                    }
+                }
+            }
+
+            csvPrinter.flush();
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("Error while generating CSV report", e);
+            throw new RuntimeException("Failed to generate CSV", e);
+        }
+    }
+
+
+
+    @Override
+    public byte[] generatePdfReport(String userId, String programId) {
+        ProgramReportDTO report = generateProgramReport(userId, programId);
+        
+        // Assuming user information is retrieved based on userId
+        UserDTO user = getUserInfo(userId);  // Add this method to fetch user details like name and phone number
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(out);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+
+            // Add title
+            document.add(new Paragraph("Program Report").setBold().setFontSize(18));
+
+            // Program and user details
+            document.add(new Paragraph("Username: " + user.getUserName()));
+            document.add(new Paragraph("User ID: " + userId));
+            document.add(new Paragraph("User Phone Number: " + user.getUserPhoneNumber()));
+            document.add(new Paragraph("Program ID: " + programId));
+            document.add(new Paragraph("Program Name: " + report.getProgramName()));
+            document.add(new Paragraph("Total Stages: " + report.getTotalStages()));
+            document.add(new Paragraph("Completed Stages: " + report.getCompletedStages()));
+            document.add(new Paragraph("Average Score: " + report.getAverageScore()));
+
+            // Add stages, units, and subconcepts
+            for (StageReportDTO stageReport : report.getStages()) {
+                document.add(new Paragraph("Stage: " + stageReport.getStageName()).setBold());
+
+                for (UnitReportDTO unitReport : stageReport.getUnits()) {
+                    document.add(new Paragraph("  Unit: " + unitReport.getUnitName()));
+
+                    for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                        document.add(new Paragraph("    Subconcept: " + subconceptReport.getSubconceptDesc()
+                                + " (Status: " + (subconceptReport.isCompleted() ? "Completed" : "Incomplete") + ")"));
+                    }
+                }
+            }
+
+            document.close();
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("Error while generating PDF report", e);
+            throw new RuntimeException("Failed to generate PDF", e);
+        }
+    }
+
+
+
 }
