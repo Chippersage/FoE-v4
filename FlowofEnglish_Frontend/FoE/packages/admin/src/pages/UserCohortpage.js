@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Card, Typography, Grid } from '@mui/material';
-import { getUserCohortMappings, createUserCohortMapping, updateUserCohortMapping, deleteUserCohortMapping } from '../api';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { getUserCohortMappings, createUserCohortMapping, updateUserCohortMapping, deleteUserCohortMapping } from '../api';
+
 
 const UserCohortPage = () => {
     const [userCohortData, setUserCohortData] = useState([]);
