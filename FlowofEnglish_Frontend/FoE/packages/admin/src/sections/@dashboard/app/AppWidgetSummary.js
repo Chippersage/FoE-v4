@@ -2,6 +2,7 @@
 import PropTypes from 'prop-types';
 import { alpha, styled } from '@mui/material/styles';
 import { Card, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 // components
 import Iconify from '../../../components/iconify';
 
@@ -26,9 +27,10 @@ AppWidgetSummary.propTypes = {
   title: PropTypes.string.isRequired,
   total: PropTypes.number.isRequired,
   sx: PropTypes.object,
+  link: PropTypes.string,
 };
 
-export default function AppWidgetSummary({ title, total, icon, color = 'primary', sx, ...other }) {
+export default function AppWidgetSummary({ title, total, icon, color = 'primary', sx, link, ...other }) {
   return (
     <Card
       sx={{
@@ -53,12 +55,21 @@ export default function AppWidgetSummary({ title, total, icon, color = 'primary'
       >
         <Iconify icon={icon} width={24} height={24} />
       </StyledIcon>
-
       <Typography variant="h3">{total}</Typography>
-
-      <Typography variant="subtitle2" sx={{ opacity: 0.72 }}>
-        {title}
-      </Typography>
+      {link ? (
+        <Typography
+          component={RouterLink}
+          to={link}
+          variant="subtitle2"
+          sx={{ opacity: 0.72, textDecoration: 'none', color: 'inherit' }}
+        >
+          {title}
+        </Typography>
+      ) : (
+        <Typography variant="subtitle2" sx={{ opacity: 0.72 }}>
+          {title}
+        </Typography>
+      )}
     </Card>
   );
 }

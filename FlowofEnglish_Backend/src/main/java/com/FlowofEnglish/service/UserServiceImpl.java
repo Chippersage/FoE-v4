@@ -9,6 +9,7 @@ import com.FlowofEnglish.dto.CohortDTO;
 import com.FlowofEnglish.dto.OrganizationDTO;
 import com.FlowofEnglish.dto.ProgramDTO;
 import com.FlowofEnglish.dto.UserDTO;
+import com.FlowofEnglish.dto.UserGetDTO;
 import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.repository.UserRepository;
 import com.opencsv.CSVReader;
@@ -69,9 +70,9 @@ public class UserServiceImpl implements UserService {
     private final String DEFAULT_PASSWORD = "Welcome123";
     
     @Override
-    public List<UserDTO> getAllUsers() {
+    public List<UserGetDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(this::convertToUserDTO)
                 .collect(Collectors.toList());
     }
     
@@ -81,12 +82,12 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public Optional<UserDTO> getUserById(String userId) {
+    public Optional<UserGetDTO> getUserById(String userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            return Optional.of(convertToDTO(user));
+            return Optional.of(convertToUserDTO(user));
         } else {
             return Optional.empty();
         }
@@ -94,9 +95,9 @@ public class UserServiceImpl implements UserService {
     
     
     @Override
-    public List<UserDTO> getUsersByOrganizationId(String organizationId) {
+    public List<UserGetDTO> getUsersByOrganizationId(String organizationId) {
         return userRepository.findByOrganizationOrganizationId(organizationId).stream()
-                .map(this::convertToDTO)
+                .map(this::convertToUserDTO)
                 .collect(Collectors.toList());
     }
 
@@ -160,11 +161,11 @@ public class UserServiceImpl implements UserService {
         User user = userDTO.getUser();
         String cohortId = userDTO.getCohortId();
         String plainPassword = DEFAULT_PASSWORD;
-        
+
         user.setUserPassword(passwordEncoder.encode(plainPassword));
-        
+
         User savedUser = userRepository.save(user);
-        
+
            // Handle UserCohortMapping creation
         Cohort cohort = cohortRepository.findById(cohortId) 
                 .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
@@ -177,13 +178,12 @@ public class UserServiceImpl implements UserService {
 
         // Save the UserCohortMapping to the repository
         userCohortMappingRepository.save(userCohortMapping);
-        
+
         // If the email is present, send credentials to user
         sendWelcomeEmail(savedUser, plainPassword);
-        
+
         return savedUser;
     }
-
    
     @Override
     public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
@@ -470,5 +470,73 @@ public class UserServiceImpl implements UserService {
         dto.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
         return dto;
     }
+    
+    private UserGetDTO convertToUserDTO(User user) {
+        UserGetDTO dto = new UserGetDTO();
+        dto.setUserId(user.getUserId());
+        dto.setUserAddress(user.getUserAddress());
+        dto.setUserEmail(user.getUserEmail());
+        dto.setUserName(user.getUserName());
+        dto.setUserPhoneNumber(user.getUserPhoneNumber());
+        dto.setUserType(user.getUserType());
+        
+        // Set organization
+        if (user.getOrganization() != null) {
+            dto.setOrganization(convertOrganizationToDTO(user.getOrganization()));
+        }
+
+        // Get all UserCohortMappings for this user
+        List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(user.getUserId());
+        
+        if (!userCohortMappings.isEmpty()) {
+            // Get the active or most recent cohort mapping
+            // You might want to add a status field to UserCohortMapping to track active/inactive
+            UserCohortMapping primaryMapping = userCohortMappings.get(0);
+            
+            // Set primary cohort
+            Cohort primaryCohort = primaryMapping.getCohort();
+            if (primaryCohort != null) {
+                CohortDTO cohortDTO = cohortService.convertToDTO(primaryCohort);
+                dto.setCohort(cohortDTO);
+
+                // Get program for primary cohort
+                Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository
+                    .findByCohortCohortId(primaryCohort.getCohortId());
+                
+                if (cohortProgramOpt.isPresent()) {
+                    ProgramDTO programDTO = programService.convertToDTO(cohortProgramOpt.get().getProgram());
+                    dto.setProgram(programDTO);
+                }
+            }
+
+            // Add all cohorts and their programs
+            List<CohortDTO> allCohorts = new ArrayList<>();
+            Set<ProgramDTO> allPrograms = new HashSet<>();
+
+            
+            for (UserCohortMapping mapping : userCohortMappings) {
+                Cohort cohort = mapping.getCohort();
+                if (cohort != null) {
+                    CohortDTO cohortDTO = cohortService.convertToDTO(cohort);
+                    allCohorts.add(cohortDTO);
+
+                    // Get program for this cohort
+                    Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository
+                        .findByCohortCohortId(cohort.getCohortId());
+                    
+                    if (cohortProgramOpt.isPresent()) {
+                        ProgramDTO programDTO = programService.convertToDTO(cohortProgramOpt.get().getProgram());
+                        allPrograms.add(programDTO);
+                    }
+                }
+            }
+            
+            dto.setAllCohorts(allCohorts);
+            dto.setAllPrograms(new ArrayList<>(allPrograms));
+        }
+
+        return dto;
+    }
+
     
 }

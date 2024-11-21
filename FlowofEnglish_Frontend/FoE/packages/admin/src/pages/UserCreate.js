@@ -191,12 +191,12 @@ const UserCreate = () => {
     return (
        <>
       <Helmet>
-        <title> Users | Chipper Sage </title>
+        <title> Learners | Chipper Sage </title>
       </Helmet>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
           <Typography variant="h4" gutterBottom>
-            Users
+          Learners
           </Typography>
           </Stack>
         <div style={{ padding: '20px' }}>

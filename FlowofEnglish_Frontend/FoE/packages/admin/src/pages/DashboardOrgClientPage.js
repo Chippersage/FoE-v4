@@ -1,280 +1,230 @@
-/*eslint-disable*/
-import React, { useState, useEffect } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import axios from 'axios';
-
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { faker } from '@faker-js/faker';
-// @mui
-import { useTheme } from '@mui/material/styles';
-import {
-  Grid,
-  Container,
-  Typography,
-  Select,
-  MenuItem,
-  Link,
-  Button,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-} from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import {  AppWidgetSummary } from '../sections/@dashboard/app';
 
-import { deleteUserProgramInfo, getOrgCohortUsers } from '../api';
-// sections
-import { AppNewsUpdate, AppWebsiteVisits, AppWidgetSummary } from '../sections/@dashboard/app';
+import { getOrgCohorts, getOrgPrograms, getOrgUsers, getUserSessionMappingsByUserId } from '../api';
 
-// ----------------------------------------------------------------------
 const apiUrl = process.env.REACT_APP_API_URL;
 
 export default function DashboardOrgClientPage() {
   const navigate = useNavigate();
-  const theme = useTheme();
-  const [orgs, setOrgs] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [Programs, setPrograms] = useState([]);
-  const [levels, setLevels] = useState([]);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [userToDeregister, setUserToDeregister] = useState();
-
   const { id } = useParams();
-  const [selectedProgram, setSelectedProgram] = useState(0);
+  const [orgData, setOrgData] = useState({});
+  const [cohorts, setCohorts] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [registeredLearners, setRegisteredLearners] = useState([]);
 
-  const handleProgramChange = (event) => {
-    const ProgramId = event.target.value;
-    setUsers([]);
-    setSelectedProgram(ProgramId);
-    // call any function or update states related to selected Program
-  };
-
-  const handleDeregisterConfirm = (user) => {
-    setIsConfirmOpen(true);
-    setUserToDeregister(user);
-  };
-
-  const handleDeregister = async () => {
-    try {
-      const ci_id = users
-        .filter((user) => user.id === userToDeregister.id)
-        .flatMap((user) => user.user_Program_info)
-        .filter((ci) => ci.id_Program === selectedProgram)[0].id;
-      await deleteUserProgramInfo(ci_id);
-      getProgramLevelUsers(id, selectedProgram, null).then((res) => {
-        setUsers((prev) => res);
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Fetch organization details on component mount
+  // Fetch organization details, cohorts, and users
   useEffect(() => {
     const token = localStorage.getItem('token');
-
     if (!token) {
-      console.error('No token found in localStorage');
+      navigate('/loginorg');
       return;
     }
-    const headers = {
-      Authorization: `${token}`,
-    };
+    const headers = { Authorization: `${token}` };
 
-    axios
-      .get(`${apiUrl}/organizations/${id}`, { headers })
-      // console.log(req.params.id);
-      .then((res) => {
-        // console.log(`id issss ${id}`);
-        // console.log('res isss', res.data);
-        setOrgs(res.data);
-      })
+    // Fetch organization info
+    axios.get(`${apiUrl}/organizations/${id}`, { headers })
+      .then((res) => setOrgData(res.data))
       .catch((err) => {
-        if (err) {
-          localStorage.removeItem('token');
-          navigate('/loginorg');
-        }
+        localStorage.removeItem('token');
+        navigate('/loginorg');
       });
 
-    axios
-      .get(`${apiUrl}/organisations/organisationsx/${id}/programs`, { headers })
-      .then((res) => {
-        setPrograms(res.data);
-        setSelectedProgram(res.data.length > 0 ? res.data[0].id : 0);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [id]);
+    // Fetch cohorts and users for the organization
+    getOrgCohorts(id).then(setCohorts).catch(() => setCohorts([]));
+    getOrgUsers(id).then((fetchedUsers) => {
+      setUsers(fetchedUsers || []);
 
-  useEffect(() => {
-    axios
-      .get(`${apiUrl}/levels/Programlevels/${selectedProgram}`)
-      .then((res) => {
-        setLevels(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
+      // Fetch session mappings for each user
+      const fetchMappings = fetchedUsers.map(async (user) => {
+      //  console.log('Fetching session mappings for user:', user.userId);
+        const sessionMappings = await getUserSessionMappingsByUserId(user.userId);
+        console.log(`Session Mappings for user ${user.userId}:`, sessionMappings);
+        const lastSession = sessionMappings?.[0];
+        return {
+          ...user,
+          cohortName: user.cohort?.cohortName || 'N/A',
+          sessionStartTimestamp: lastSession?.sessionStartTimestamp 
+          ? new Date(lastSession.sessionStartTimestamp).toISOString() 
+          : null
+        };
       });
 
-      getOrgCohortUsers(id, selectedProgram, null)
-      .then((res) => {
-        setUsers((prev) => res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [selectedProgram]);
-
-  const chartDataPoints = (level) => {
-    const dataMap = new Map();
-    users
-      .flatMap((user) =>
-        user.user_Program_info.filter((ci) => ci.id_Program === selectedProgram && ci.current_level === level.id)
-      )
-      .map((ci) => ci.cohort.cohort)
-      .forEach((c) => {
-        const exists = dataMap.get(c);
-        if (!exists) {
-          dataMap.set(c, 1);
-        } else {
-          dataMap.set(c, exists + 1);
-        }
-      });
-    return dataMap;
-  };
-  const linkTo = `/org-dashboard/${id}/users`;
+      Promise.all(fetchMappings).then(setRegisteredLearners).catch(console.error);
+    }).catch(() => setUsers([]));
+    getOrgPrograms(id).then(setPrograms).catch(() => setPrograms([]));
+  }, [id, navigate]);
 
   return (
     <>
       <Helmet>
-        <title> Dashboard | Chipper Sage </title>
+        <title> Dashboard | Organization</title>
       </Helmet>
 
       <Container maxWidth="xl">
-        <Grid container justifyContent="space-between">
-          <Grid item xs={12} sm={6} md={4}>
-            <Typography variant="h4" sx={{ mb: 5 }}>
-              Welcome back, {orgs.organisation_name}!
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <Box display="flex" justifyContent="right" mr={1}>
-              <Button component={RouterLink} to={linkTo} variant="outlined" size="large" color="primary">
-                <Typography variant="" color="">
-                  All Users
-                </Typography>
-              </Button>
-            </Box>
-          </Grid>
+        {/* Welcome message */}
+        <Typography variant="h4" sx={{ mb: 5 }}>
+          Welcome back, {orgData.organizationName}!
+        </Typography>
 
-          <Grid item xs={12} sm={6} md={4}>
-            <Select
-              theme={theme}
-              value={selectedProgram}
-              style={{ width: '100%' }}
-              onChange={handleProgramChange}
-              label="Select Program"
-            >
-              {Programs.map((Program) => (
-                <MenuItem key={Program.id} value={Program.id}>
-                  {Program.Program_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </Grid>
-        </Grid>
+        <Grid container spacing={3}>
 
-        <Grid container spacing={4}>
-          {levels.length === 0 && (
-            <Typography variant="h5" sx={{ ml: 5, mt: 5 }}>
-              No levels found for this Program.
-            </Typography>
-          )}
-          {levels.map((level) => (
-            <Grid item xs={12} sm={6} md={4} key={level.id}>
-              <AppWidgetSummary
-                title={`${level.level} Users`}
-                // color="success"
-                total={
-                  users.filter((user) => user.user_Program_info.filter((ci) => ci.current_level === level.id).length > 0)
-                    .length || 0
-                }
-                icon={'ant-design:user-outlined'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-
-        <Grid container spacing={4} mt={0}>
-          <Grid item xs={12} md={12} lg={12}>
-            <AppNewsUpdate
-              title="Registered Users"
-              list={users.map((user, index) => ({
-                id: user.id,
-                title: user.name,
-                description: user.phone_no,
-                image: `/assets/images/covers/cover_1.jpg`,
-                postedAt: user.user_Program_info.filter((ci) => ci.id_Program === selectedProgram)[0].created_at,
-              }))}
-              onDelete={handleDeregisterConfirm}
+          {/* Learners Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <AppWidgetSummary
+              title="Learners"
+              total={users ? users.length : 0}
+              icon={'ant-design:user-outlined'}
             />
           </Grid>
-        </Grid>
 
-        <Grid container spacing={4} mt={1}>
-          {levels.map((level) => (
-            <Grid item xs={12} md={6} lg={4} key={level.id}>
-              <AppWebsiteVisits
-                title={level.level}
-                subheader="Cohort performance"
-                chartLabels={
-                  Array.from(chartDataPoints(level).keys()).length > 0
-                    ? Array.from(chartDataPoints(level).keys())
-                    : ['No Cohort found']
-                }
-                chartData={[
-                  {
-                    name: 'Users',
-                    type: 'bar',
-                    fill: 'solid',
-                    data: Array.from(chartDataPoints(level).values()),
-                  },
-                ]}
-              />
+          {/* Cohorts Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <AppWidgetSummary
+              title="Cohorts"
+              total={cohorts ? cohorts.length : 0}
+              color="info"
+              icon={'ant-design:whats-app-outlined'}
+            />
             </Grid>
-          ))}
-        </Grid>
-      </Container>
-      <Dialog
-        open={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{'De-register User?'}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to de-register the user {userToDeregister?.title}?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              handleDeregister();
-              setIsConfirmOpen(false);
-            }}
-            autoFocus
-            sx={{ color: 'error.main' }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+            {/* Programs Card */}
+           <Grid item xs={12} sm={6} md={3}>
+            <AppWidgetSummary 
+            title="Programs" 
+            total={programs ? programs.length : 0}
+            color="error" 
+            icon={'ant-design:flag-outlined'}
+             />
+          </Grid>
+          </Grid>
+<Grid container spacing={3}>
+{/* Registered Learners Table */}
+<Grid item xs={12}>
+  <Paper sx={{ p: 2 }}>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Registered Learners
+    </Typography>
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell><strong>Learner ID</strong></TableCell>
+            <TableCell><strong>Learner Name</strong></TableCell>
+            <TableCell><strong>Cohort Name</strong></TableCell>
+            <TableCell><strong>Last Activity</strong></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+        {registeredLearners && registeredLearners.length > 0 ? (
+          registeredLearners.map((user) => (
+            <TableRow key={user.userId}>
+              <TableCell>{user.userId}</TableCell>
+              <TableCell>{user.userName}</TableCell>
+              <TableCell>{user.cohortName}</TableCell>
+              <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={4} align="center">
+              No learners registered yet.
+            </TableCell>
+          </TableRow>
+        )}
+        
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </Paper>
+</Grid>
+</Grid>
+</Container>
+</>
+);
 }
-/* eslint-enable */
+
+
+
+
+
+
+
+
+          //    View All Buttons 
+
+          //  <Grid item xs={12} md={6} lg={4}>
+          //   <Button
+          //     fullWidth
+          //     component={RouterLink}
+          //     to={`/org-dashboards/${id}/org-Create-Users`}
+          //     variant="outlined"
+          //     color="primary"
+          //     size="large"
+          //     sx={{ mb: 2 }}
+          //   >
+          //     View All Learners
+          //   </Button>
+          //   <Button
+          //     fullWidth
+          //     component={RouterLink}
+          //     to={`/org-dashboards/${id}/orgdashc`}
+          //     variant="outlined"
+          //     color="primary"
+          //     size="large"
+          //   >
+          //     View All Cohorts
+          //   </Button>
+          //   </Grid> 
+          
+   
+          // <Grid item xs={12} sm={6} md={4}>
+          //   <Card>
+          //     <CardHeader title="Learners" />
+          //     <CardContent>
+          //       <Typography variant="h6">Total Learners: {users.length}</Typography>
+          //       <Box display="flex" justifyContent="flex-end">
+          //         <Button component={RouterLink} to={`/org-dashboards/${id}/org-Create-Users`} variant="outlined" size="large" color="primary">
+          //           View All Learners
+          //         </Button>
+          //       </Box>
+          //     </CardContent>
+          //   </Card>
+          // </Grid>
+          
+          // <Grid item xs={12} sm={6} md={4}>
+          //   <Card>
+          //     <CardHeader title="Cohorts" />
+          //     <CardContent>
+          //       <Typography variant="h6">Total Cohorts: {cohorts.length}</Typography>
+          //       <Box display="flex" justifyContent="flex-end">
+          //         <Button component={RouterLink} to={`/org-dashboards/${id}/orgdashc`} variant="outlined" size="large" color="primary">
+          //           View All Cohorts
+          //         </Button>
+          //         </Box>
+          //     </CardContent>
+          //   </Card>
+          // </Grid>
+          
+          // <Grid item xs={12}>
+          //   <Card>
+          //     <CardHeader title="Registered Learners" />
+          //     <CardContent>
+          //       {users.length > 0 ? (
+          //         users.map((user) => (
+          //           <Typography key={user.userId}>
+          //             {user.userName} - {user.userPhoneNumber}
+          //           </Typography>
+          //         ))
+          //       ) : (
+          //         <Typography>No registered Learners available</Typography>
+          //       )}
+          //     </CardContent>
+          //   </Card>
+          // </Grid> 
+          
+        

@@ -105,6 +105,7 @@ export default function DashboardClientPage() {
               total={users.length}
               color="info"
               icon={'ant-design:user-outlined'}
+              link={`/org-dashboard/${organizationId}/users`}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={6}>
@@ -113,6 +114,7 @@ export default function DashboardClientPage() {
               total={cohorts.length}
               color="warning"
               icon={'ant-design:team-outlined'}
+              link={`/org-dashboard/${organizationId}/cohorts`}
             />
           </Grid>
         </Grid>
