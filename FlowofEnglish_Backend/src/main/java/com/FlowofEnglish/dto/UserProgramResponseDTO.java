@@ -3,6 +3,8 @@ package com.FlowofEnglish.dto;
 public class UserProgramResponseDTO {
 	 private String userId;
 	    private ProgramDTO program;
+	    
+	 // Getters and Setters
 		public String getUserId() {
 			return userId;
 		}
@@ -16,6 +18,6 @@ public class UserProgramResponseDTO {
 			this.program = program;
 		}
 
-	    // Getters and Setters
+	    
 	    
 }

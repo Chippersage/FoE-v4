@@ -30,20 +30,11 @@ public class ProgramReportServiceImpl implements ProgramReportService {
 	@Autowired
 	private UserRepository userRepository;
 
-	public UserDTO getUserInfo(String userId) {
-	    User user = userRepository.findById(userId)
-	        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-	    
-	    UserDTO userDTO = new UserDTO();
-	    userDTO.setUserName(user.getUserName());
-	    userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
-	    return userDTO;
-	}
-
-	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
-
     @Autowired
     private ProgramRepository programRepository;
+    
+    @Autowired
+    private CohortRepository cohortRepository;
     
     @Autowired
     private StageRepository stageRepository;
@@ -58,7 +49,22 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
     
     @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Autowired
     private UserAttemptsRepository userAttemptsRepository;
+    
+    public UserDTO getUserInfo(String userId) {
+	    User user = userRepository.findById(userId)
+	        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	    
+	    UserDTO userDTO = new UserDTO();
+	    userDTO.setUserName(user.getUserName());
+	    userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
+	    return userDTO;
+	}
+
+	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
 
     
     @Override
@@ -404,6 +410,110 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             log.error("Error while generating PDF report", e);
             throw new RuntimeException("Failed to generate PDF", e);
         }
+    }
+
+    @Override
+    public CohortProgressDTO getCohortProgress(String programId, String cohortId) {
+        // Fetch the program
+        Program program = programRepository.findById(programId)
+            .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+        
+        // Fetch the cohort
+        Cohort cohort = cohortRepository.findById(cohortId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cohort not found"));
+        
+        // Fetch all users in the cohort
+        List<UserCohortMapping> userMappings = userCohortMappingRepository.findByCohortCohortId(cohortId);
+        List<User> users = userMappings.stream()
+            .map(UserCohortMapping::getUser)
+            .collect(Collectors.toList());
+        
+        // Prepare progress data for each user
+        List<UserProgressDTO> userProgressList = new ArrayList<>();
+        for (User user : users) {
+            UserProgressDTO userProgress = new UserProgressDTO();
+            userProgress.setUserId(user.getUserId());
+            userProgress.setUserName(user.getUserName());
+            
+            // Fetch stages for the program
+            List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
+            int totalStages = stages.size();
+            int completedStages = 0;
+            int totalUnits = 0;
+            int completedUnits = 0;
+            int totalSubconcepts = 0;
+            int completedSubconcepts = 0;
+            
+            // Process each stage
+            boolean previousStageCompleted = true;
+            for (Stage stage : stages) {
+                List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
+                totalUnits += units.size();
+                
+                // Process units within stage
+                boolean stageCompleted = true;
+                boolean previousUnitCompleted = true;
+                
+                for (Unit unit : units) {
+                    // Get all subconcepts for the unit
+                    List<ProgramConceptsMapping> subconcepts = 
+                        programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
+                    totalSubconcepts += subconcepts.size();
+                    
+                    // Get completed subconcepts for this user and unit
+                    List<UserSubConcept> completedSubconceptsList = userSubConceptRepository
+                        .findByUser_UserIdAndUnit_UnitId(user.getUserId(), unit.getUnitId());
+                    completedSubconcepts += completedSubconceptsList.size();
+                    
+                    // Check if unit is completed (all subconcepts completed)
+                    boolean unitCompleted = previousUnitCompleted && 
+                        completedSubconceptsList.size() == subconcepts.size();
+                    
+                    if (unitCompleted) {
+                        completedUnits++;
+                    }
+                    
+                    // Update completion tracking for next unit
+                    previousUnitCompleted = unitCompleted;
+                    if (!unitCompleted) {
+                        stageCompleted = false;
+                    }
+                }
+                
+                // Check if stage is completed (all units completed and previous stage completed)
+                if (stageCompleted && previousStageCompleted) {
+                    completedStages++;
+                }
+                
+                // Update completion tracking for next stage
+                previousStageCompleted = stageCompleted;
+            }
+            
+            // Populate progress statistics
+            userProgress.setTotalStages(totalStages);
+            userProgress.setCompletedStages(completedStages);
+            userProgress.setTotalUnits(totalUnits);
+            userProgress.setCompletedUnits(completedUnits);
+            userProgress.setTotalSubconcepts(totalSubconcepts);
+            userProgress.setCompletedSubconcepts(completedSubconcepts);
+            
+            // Fetch leaderboard score
+            UserCohortMapping mapping = userMappings.stream()
+                .filter(um -> um.getUser().getUserId().equals(user.getUserId()))
+                .findFirst()
+                .orElse(null);
+            userProgress.setLeaderboardScore(mapping != null ? mapping.getLeaderboardScore() : 0);
+            
+            userProgressList.add(userProgress);
+        }
+        
+        // Prepare response DTO
+        CohortProgressDTO cohortProgress = new CohortProgressDTO();
+        cohortProgress.setProgramName(program.getProgramName());
+        cohortProgress.setCohortName(cohort.getCohortName());
+        cohortProgress.setUsers(userProgressList);
+        
+        return cohortProgress;
     }
 
 

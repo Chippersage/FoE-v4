@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 
+import com.FlowofEnglish.dto.CohortProgressDTO;
 import com.FlowofEnglish.dto.ProgramReportDTO;
 import com.FlowofEnglish.service.ProgramReportService;
 
@@ -26,7 +27,14 @@ public class ProgramReportController {
         @PathVariable String programId) {
     return programReportService.generateProgramReport(userId, programId);
   }
-    
+  @GetMapping("/program/{programId}/cohort/{cohortId}/progress")
+  public ResponseEntity<CohortProgressDTO> getCohortProgress(
+      @PathVariable String programId, 
+      @PathVariable String cohortId) {
+      CohortProgressDTO progress = programReportService.getCohortProgress(programId, cohortId);
+      return ResponseEntity.ok(progress);
+  }
+
     @GetMapping("/program/{userId}/{programId}/download")
     public ResponseEntity<?> downloadProgramReport(
             @PathVariable String userId,
