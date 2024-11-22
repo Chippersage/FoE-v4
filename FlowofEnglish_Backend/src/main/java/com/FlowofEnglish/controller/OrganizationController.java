@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.service.OrganizationService;
@@ -41,6 +42,18 @@ public class OrganizationController {
     public ResponseEntity<List<Program>> getOrganizationPrograms(@PathVariable String organizationId) {
         List<Program> programs = organizationService.getProgramsByOrganizationId(organizationId);
         return ResponseEntity.ok(programs);
+    }
+    
+    @GetMapping("/{organizationId}/programs-with-cohorts")
+    public ResponseEntity<Map<Program, List<Cohort>>> getProgramsWithCohorts(@PathVariable String organizationId) {
+        try {
+            Map<Program, List<Cohort>> programCohortsMap = organizationService.getProgramsWithCohorts(organizationId);
+            return ResponseEntity.ok(programCohortsMap);
+        } catch (Exception e) {
+            // Log the exception
+            System.err.println("Error fetching programs with cohorts: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
     // Create a new organization
