@@ -158,7 +158,7 @@ export default function SubConceptsPage() {
               d={getPath()}
               fill="none"
               stroke="#4CAF50"
-              strokeWidth="4"
+              strokeWidth="3"
               className="curve-path"
             />
 
@@ -201,19 +201,20 @@ export default function SubConceptsPage() {
                   onMouseLeave={() => setActiveTooltip(null)}
                 >
                   <g
-                    className={`transition-transform duration-300 ease-out ${
+                    className={`transition-transform duration-300 ease-out  ${
                       animationTrigger ? "scale-100" : "scale-0"
                     }`}
                     style={{ transitionDelay: `${index * 100}ms` }}
                   >
                     <rect
-                      x={point.x - 24}
-                      y={point.y - 24}
+                    className="bg-white"
+                      x={point.x - 20}
+                      y={point.y - 20}
                       width="36"
                       height="36"
                       rx="2"
                       ry="2"
-                      fill={(index === 0 || index === totalSteps - 1)? "#2196F3" : "none"} // This removes the fill color
+                      fill={(index === 0 || index === totalSteps - 1 || subconcept?.completionStatus === 'incomplete')? "#2196F3" : "#fff"} // This removes the fill color
                       stroke={
                         isEnabled
                           ? isCompleted
@@ -225,8 +226,8 @@ export default function SubConceptsPage() {
                     />
 
                     <Icon
-                      x={point.x - 20}
-                      y={point.y - 20}
+                      x={point.x - 15}
+                      y={point.y - 15}
                       width="25"
                       height="25"
                       color="white"
