@@ -89,18 +89,18 @@ const OrgUserCreate = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [userId, setUserId] = useState('');
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
-  const [userType, setUserType] = useState('');
-  const [userPhoneNumber, setUserPhoneNumber] = useState('');
+  const [userId, setUserId] = React.useState('');
+  const [userName, setUserName] = React.useState('');
+  const [userEmail, setUserEmail] = React.useState('');
+  const [userPhoneNumber, setUserPhoneNumber] = React.useState('');
+  const [userAddress, setUserAddress] = React.useState('');
+  const [userType, setUserType] = React.useState('');
   const [userPassword, setUserPassword] = useState('');
-  const [userAddress, setUserAddress] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [organizationId, setOrganizationId] = useState(id);
-  const [cohortId, setCohortId] = useState('');
+  const [organizationId, setOrganizationId] = React.useState(id);
+  const [cohortId, setCohortId] = React.useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-
+  const [isFormValid, setIsFormValid] = React.useState(false);
   
 
   // Notification State
@@ -131,6 +131,17 @@ const OrgUserCreate = () => {
     setLoading(false);
   }
 };
+
+// Validate form fields
+React.useEffect(() => {
+  const isValid =
+    userId.trim() &&
+    userName.trim() &&
+    userType.trim() &&
+    organizationId.trim() &&
+    cohortId.trim();
+  setIsFormValid(isValid);
+}, [userId, userName, userType, organizationId, cohortId]);
 
 const handleCreateUser = async () => {
   const newUser = {
@@ -279,7 +290,9 @@ const confirmDelete = async () => {
     setOpenSnackbar(true);
   };
 
-  
+  const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
+  const isNotFound = !filteredUsers.length && !!filterName;
+
 
   // Render Methods
   const renderActionMenu = () => (
@@ -395,6 +408,22 @@ const confirmDelete = async () => {
                   );
                 })}
             </TableBody>
+            {isNotFound && (
+                  <TableBody>
+                    <TableRow>
+                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                        <Paper sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" paragraph>
+                            Not found
+                          </Typography>
+                          <Typography variant="body2">
+                            No results found for &quot;{filterName}&quot;. Try checking for typos or using complete words.
+                          </Typography>
+                        </Paper>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                )}
           </Table>
         </TableContainer>
       </Scrollbar>
@@ -453,78 +482,21 @@ const confirmDelete = async () => {
         <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
                 <DialogTitle>Create Learner</DialogTitle>
                 <DialogContent>
-                    <TextField
-                    label="User ID *"
-                    fullWidth
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    style={{ marginBottom: '10px' }}
-                    error={!userId}
-                    helperText={!userId && "This field is required"}
-                    />
-                    <TextField
-                    label="User Name *"
-                    fullWidth
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    style={{ marginBottom: '10px' }}
-                    error={!userName}
-                    helperText={!userName && "This field is required"}
-                    />
-                    <TextField
-                      label="User Email"
-                      fullWidth
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      />
-                      <TextField
-                      label="User Phone Number"
-                      fullWidth
-                      value={userPhoneNumber}
-                      onChange={(e) => setUserPhoneNumber(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      />
-                      <TextField
-                      label="User Address"
-                      fullWidth
-                      value={userAddress}
-                      onChange={(e) => setUserAddress(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      />
-                      <TextField
-                      label="User Type *"
-                      fullWidth
-                      value={userType}
-                      onChange={(e) => setUserType(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      error={!userType}
-                      helperText={!userType && "This field is required"}
-                      />
-                      <TextField
-                      label="Organization ID *"
-                      fullWidth
-                      value={organizationId}
-                      onChange={(e) => setOrganizationId(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      error={!organizationId}
-                      helperText={!organizationId && "This field is required"}
-                      />
-                      <TextField
-                      label="Cohort ID *"
-                      fullWidth
-                      value={cohortId}
-                      onChange={(e) => setCohortId(e.target.value)}
-                      style={{ marginBottom: '10px' }}
-                      error={!cohortId}
-                      helperText={!cohortId && "This field is required"}
-                      />
+                    <TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} required/>
+                    <TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} required />
+                    <TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }}  />
+                    <TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }}  />
+                    <TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
+                    <TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
+                      <MenuItem value="Teacher">Teacher</MenuItem>
+                      <MenuItem value="Student">Student</MenuItem>
+                    </TextField>
+                    <TextField label="Organization ID" fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} required />
+                    <TextField label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenCreateDialog(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleCreateUser} color="primary"
-                    disabled={!userId || !userName || !userType || !organizationId || !cohortId}
-                    >Create</Button>
+                    <Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
                 </DialogActions>
             </Dialog>
 
