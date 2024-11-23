@@ -9,3 +9,6 @@ FlowofEnglish_Frontend\FoE\packages\admin\package-lock.json
 FlowofEnglish_Frontend/FoE/node_modules/
 FlowofEnglish_Frontend/FoE/packages/*/node_modules/
 FlowofEnglish_UserFrontend/node_modules/
+FlowofEnglish_UserFrontend/dist/
+FlowofEnglish_UserFrontend/public/Learner-v4/
+FlowofEnglish_UserFrontend/tsconfig.app.tsbuildinfo
