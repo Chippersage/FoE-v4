@@ -6,6 +6,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.FlowofEnglish.model.Cohort;
+import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.repository.CohortProgramRepository;
@@ -17,6 +20,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -216,5 +220,22 @@ public class OrganizationService {
 
     public List<Program> getProgramsByOrganizationId(String organizationId) {
         return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
+    }
+    
+    public Map<Program, List<Cohort>> getProgramsWithCohorts(String organizationId) {
+        List<CohortProgram> cohortPrograms = cohortProgramRepository.findCohortsByOrganizationId(organizationId);
+
+        Map<Program, List<Cohort>> programCohortsMap = new HashMap<>();
+
+        for (CohortProgram cohortProgram : cohortPrograms) {
+            Program program = cohortProgram.getProgram();
+            Cohort cohort = cohortProgram.getCohort();
+
+            programCohortsMap
+                .computeIfAbsent(program, k -> new ArrayList<>())
+                .add(cohort);
+        }
+
+        return programCohortsMap;
     }
 }
