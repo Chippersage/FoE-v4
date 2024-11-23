@@ -54,7 +54,7 @@ const getNavConfig = () => {
   if (userType === 'orgAdmin') {
     return [
       {
-        title: 'Dashboard',
+        title: 'dashboard',
         path: `/org-dashboards/${orgId}/app`,
         icon: icon('ic_analytics'),
       },
