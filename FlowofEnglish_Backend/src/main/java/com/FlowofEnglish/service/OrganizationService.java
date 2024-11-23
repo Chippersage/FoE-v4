@@ -130,25 +130,23 @@ public class OrganizationService {
 
         String plainPassword = organization.getOrgpassword();
         if (plainPassword == null || plainPassword.isEmpty()) {
-            plainPassword = generatePassword();
-            organization.setOrgpassword(plainPassword);
+            plainPassword = generatePassword(); // Generate a new plain password
         }
 
-        String encodedPassword = passwordEncoder.encode(plainPassword);
-        organization.setOrgpassword(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(plainPassword); // Hash the password
+        organization.setOrgpassword(encodedPassword); // Store hashed password
 
         Organization savedOrganization = organizationRepository.save(organization);
         System.out.println("Saved organization: " + savedOrganization);
 
-        sendWelcomeEmail(savedOrganization); // Send the welcome email
+        sendWelcomeEmail(savedOrganization, plainPassword); // Send the plain password in email
 
         return savedOrganization;
     }
 
-    private void sendWelcomeEmail(Organization organization) {
+    private void sendWelcomeEmail(Organization organization, String plainPassword) {
         String adminName = organization.getOrganizationAdminName();
         String adminEmail = organization.getOrganizationAdminEmail();
-        String orgPassword = organization.getOrgpassword();
         String orgAdminUrl = "https://flowofenglish.thechippersage.com/admin"; // Replace with actual URL
         String superAdminEmail = "support@thechippersage.com"; // Replace with actual Super Admin email
 
@@ -164,7 +162,7 @@ public class OrganizationService {
                 "3. Reports. Under Reports, you can view the progress of the learners as they start their learning journey in the assigned program.\n\n" +
                 "To get started, login to your dashboard with the following credentials:\n" +
                 "User ID: " + adminEmail + "\n" +
-                "Password: " + orgPassword + "\n" +
+                "Password: " + plainPassword + "\n" +
                 "Organization Dashboard: " + orgAdminUrl + "\n\n" +
                 "If you have any questions or need assistance, please feel free to reach out to " + superAdminEmail + ".\n\n" +
                 "Best regards,\n" +
