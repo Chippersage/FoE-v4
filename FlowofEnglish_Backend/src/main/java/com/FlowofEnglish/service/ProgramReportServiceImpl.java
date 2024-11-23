@@ -1,8 +1,12 @@
 package com.FlowofEnglish.service;
 
+
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +16,25 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
-
+import java.io.IOException;
+import com.itextpdf.io.source.ByteArrayOutputStream;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
 
 
 @Service
 public class ProgramReportServiceImpl implements ProgramReportService {
 	
-	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
+	@Autowired
+	private UserRepository userRepository;
 
     @Autowired
     private ProgramRepository programRepository;
+    
+    @Autowired
+    private CohortRepository cohortRepository;
     
     @Autowired
     private StageRepository stageRepository;
@@ -36,7 +49,22 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
     
     @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Autowired
     private UserAttemptsRepository userAttemptsRepository;
+    
+    public UserDTO getUserInfo(String userId) {
+	    User user = userRepository.findById(userId)
+	        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	    
+	    UserDTO userDTO = new UserDTO();
+	    userDTO.setUserName(user.getUserName());
+	    userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
+	    return userDTO;
+	}
+
+	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
 
     
     @Override
@@ -290,4 +318,204 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         
         return distribution;
     }
+    
+    @Override
+    public byte[] generateCsvReport(String userId, String programId) {
+        ProgramReportDTO report = generateProgramReport(userId, programId);
+        
+        // Assuming user information is retrieved based on userId
+        UserDTO user = getUserInfo(userId);  // Add this method to fetch user details like name and phone number
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(out), CSVFormat.DEFAULT)) {
+
+            // Header
+            csvPrinter.printRecord("Learner Name", "Learner ID", "Learner PhoneNumber", "Program ID", 
+                                    "Program Name", "Stage Name", "Unit Name", "Subconcept Name", 
+                                   "Completion Status", "Average Score", "Attempt Count");
+
+            // Data - Include user info for each record
+            for (StageReportDTO stageReport : report.getStages()) {
+                for (UnitReportDTO unitReport : stageReport.getUnits()) {
+                    for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                        csvPrinter.printRecord(
+                                user.getUserName(),                
+                                userId,                            
+                                user.getUserPhoneNumber(),             
+                                programId,                         
+                                report.getProgramName(),          
+                                stageReport.getStageName(),        
+                                unitReport.getUnitName(),          
+                                subconceptReport.getSubconceptDesc(),  
+                                subconceptReport.isCompleted() ? "Completed" : "Incomplete",  
+                                subconceptReport.getHighestScore(),  
+                                subconceptReport.getAttemptCount()  
+                        );
+                    }
+                }
+            }
+
+            csvPrinter.flush();
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("Error while generating CSV report", e);
+            throw new RuntimeException("Failed to generate CSV", e);
+        }
+    }
+
+
+
+    @Override
+    public byte[] generatePdfReport(String userId, String programId) {
+        ProgramReportDTO report = generateProgramReport(userId, programId);
+        
+        // Assuming user information is retrieved based on userId
+        UserDTO user = getUserInfo(userId);  // Add this method to fetch user details like name and phone number
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(out);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+
+            // Add title
+            document.add(new Paragraph("Program Report").setBold().setFontSize(18));
+
+            // Program and user details
+            document.add(new Paragraph("Username: " + user.getUserName()));
+            document.add(new Paragraph("User ID: " + userId));
+            document.add(new Paragraph("User Phone Number: " + user.getUserPhoneNumber()));
+            document.add(new Paragraph("Program ID: " + programId));
+            document.add(new Paragraph("Program Name: " + report.getProgramName()));
+            document.add(new Paragraph("Total Stages: " + report.getTotalStages()));
+            document.add(new Paragraph("Completed Stages: " + report.getCompletedStages()));
+            document.add(new Paragraph("Average Score: " + report.getAverageScore()));
+
+            // Add stages, units, and subconcepts
+            for (StageReportDTO stageReport : report.getStages()) {
+                document.add(new Paragraph("Stage: " + stageReport.getStageName()).setBold());
+
+                for (UnitReportDTO unitReport : stageReport.getUnits()) {
+                    document.add(new Paragraph("  Unit: " + unitReport.getUnitName()));
+
+                    for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                        document.add(new Paragraph("    Subconcept: " + subconceptReport.getSubconceptDesc()
+                                + " (Status: " + (subconceptReport.isCompleted() ? "Completed" : "Incomplete") + ")"));
+                    }
+                }
+            }
+
+            document.close();
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("Error while generating PDF report", e);
+            throw new RuntimeException("Failed to generate PDF", e);
+        }
+    }
+
+    @Override
+    public CohortProgressDTO getCohortProgress(String programId, String cohortId) {
+        // Fetch the program
+        Program program = programRepository.findById(programId)
+            .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+        
+        // Fetch the cohort
+        Cohort cohort = cohortRepository.findById(cohortId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cohort not found"));
+        
+        // Fetch all users in the cohort
+        List<UserCohortMapping> userMappings = userCohortMappingRepository.findByCohortCohortId(cohortId);
+        List<User> users = userMappings.stream()
+            .map(UserCohortMapping::getUser)
+            .collect(Collectors.toList());
+        
+        // Prepare progress data for each user
+        List<UserProgressDTO> userProgressList = new ArrayList<>();
+        for (User user : users) {
+            UserProgressDTO userProgress = new UserProgressDTO();
+            userProgress.setUserId(user.getUserId());
+            userProgress.setUserName(user.getUserName());
+            
+            // Fetch stages for the program
+            List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
+            int totalStages = stages.size();
+            int completedStages = 0;
+            int totalUnits = 0;
+            int completedUnits = 0;
+            int totalSubconcepts = 0;
+            int completedSubconcepts = 0;
+            
+            // Process each stage
+            boolean previousStageCompleted = true;
+            for (Stage stage : stages) {
+                List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
+                totalUnits += units.size();
+                
+                // Process units within stage
+                boolean stageCompleted = true;
+                boolean previousUnitCompleted = true;
+                
+                for (Unit unit : units) {
+                    // Get all subconcepts for the unit
+                    List<ProgramConceptsMapping> subconcepts = 
+                        programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
+                    totalSubconcepts += subconcepts.size();
+                    
+                    // Get completed subconcepts for this user and unit
+                    List<UserSubConcept> completedSubconceptsList = userSubConceptRepository
+                        .findByUser_UserIdAndUnit_UnitId(user.getUserId(), unit.getUnitId());
+                    completedSubconcepts += completedSubconceptsList.size();
+                    
+                    // Check if unit is completed (all subconcepts completed)
+                    boolean unitCompleted = previousUnitCompleted && 
+                        completedSubconceptsList.size() == subconcepts.size();
+                    
+                    if (unitCompleted) {
+                        completedUnits++;
+                    }
+                    
+                    // Update completion tracking for next unit
+                    previousUnitCompleted = unitCompleted;
+                    if (!unitCompleted) {
+                        stageCompleted = false;
+                    }
+                }
+                
+                // Check if stage is completed (all units completed and previous stage completed)
+                if (stageCompleted && previousStageCompleted) {
+                    completedStages++;
+                }
+                
+                // Update completion tracking for next stage
+                previousStageCompleted = stageCompleted;
+            }
+            
+            // Populate progress statistics
+            userProgress.setTotalStages(totalStages);
+            userProgress.setCompletedStages(completedStages);
+            userProgress.setTotalUnits(totalUnits);
+            userProgress.setCompletedUnits(completedUnits);
+            userProgress.setTotalSubconcepts(totalSubconcepts);
+            userProgress.setCompletedSubconcepts(completedSubconcepts);
+            
+            // Fetch leaderboard score
+            UserCohortMapping mapping = userMappings.stream()
+                .filter(um -> um.getUser().getUserId().equals(user.getUserId()))
+                .findFirst()
+                .orElse(null);
+            userProgress.setLeaderboardScore(mapping != null ? mapping.getLeaderboardScore() : 0);
+            
+            userProgressList.add(userProgress);
+        }
+        
+        // Prepare response DTO
+        CohortProgressDTO cohortProgress = new CohortProgressDTO();
+        cohortProgress.setProgramName(program.getProgramName());
+        cohortProgress.setCohortName(cohort.getCohortName());
+        cohortProgress.setUsers(userProgressList);
+        
+        return cohortProgress;
+    }
+
+
+
 }
