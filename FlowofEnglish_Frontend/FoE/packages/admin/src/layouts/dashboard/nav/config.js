@@ -33,6 +33,11 @@ const getNavConfig = () => {
         icon: icon('ic_lang'),
       },
       {
+        title: 'Programs',
+        path: `/dashboard/programs`,
+        icon: icon('ic_program'),
+      },
+      {
         title: 'User Report',
         path: '/dashboard/superuserreport',
         icon: icon('ic_lan'),

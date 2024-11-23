@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "CohortProgram")
+@Table(name = "CohortProgram", uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "program_id"}))
 public class CohortProgram {
 
     @Id
