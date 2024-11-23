@@ -288,7 +288,7 @@ export default function UserPage() {
       organizationAdminName: selectedRow.organizationAdminName,
       organizationAdminEmail: selectedRow.organizationAdminEmail,
       organizationAdminPhone: selectedRow.organizationAdminPhone,
-      orgpassword: selectedRow.orgpassword, // Ensure this is handled correctly if needed
+      orgpassword: selectedRow.orgpassword,
       createdAt: selectedRow.createdAt,
       updatedAt: selectedRow.updated_at,
       deletedAt: selectedRow.deleted_at,
@@ -567,6 +567,7 @@ export default function UserPage() {
             error={!!formErrors.organizationName}
             helperText={formErrors.organizationName}
             fullWidth
+            required
             />
             <TextField
             name="organizationAdminName"
@@ -577,6 +578,7 @@ export default function UserPage() {
             error={!!formErrors.organizationAdminName}
             helperText={formErrors.organizationAdminName}
             fullWidth
+            required
             />
             <TextField
             name="organizationAdminPhone"
@@ -585,6 +587,7 @@ export default function UserPage() {
             onChange={handleFormChange}
             variant="outlined"
             fullWidth
+            required
             />
             <TextField
             name="organizationAdminEmail"
@@ -596,6 +599,7 @@ export default function UserPage() {
             helperText={formErrors.organizationAdminEmail}
             fullWidth
             style={{ marginBottom: '1rem' }}
+            required
             />
             <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth>
             {isEditMode ? 'Update Organisation' : 'Add Organisation'}
