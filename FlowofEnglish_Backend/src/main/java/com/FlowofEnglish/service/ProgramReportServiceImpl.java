@@ -510,6 +510,9 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         // Prepare response DTO
         CohortProgressDTO cohortProgress = new CohortProgressDTO();
         cohortProgress.setProgramName(program.getProgramName());
+        cohortProgress.setProgramId(program.getProgramId());
+        cohortProgress.setProgramDesc(program.getProgramDesc());
+        cohortProgress.setCohortId(cohort.getCohortId());
         cohortProgress.setCohortName(cohort.getCohortName());
         cohortProgress.setUsers(userProgressList);
         
