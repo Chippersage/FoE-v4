@@ -348,7 +348,7 @@ export async function deleteUserCohortMapping(userId) {
 export async function getPrograms() {
   try {
     const res = await axios.get(`${apiUrl}/programs`);
-    // console.log(res);
+    console.log(res);
     return res.data;
   } catch (err) {
     console.log(err);
