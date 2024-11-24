@@ -9,7 +9,7 @@ import { getOrgCohorts, getOrgPrograms } from 'src/api';
 const apiUrl = process.env.REACT_APP_API_URL;
 
 const ProgressDashboard = () => {
-  const [programs, setPrograms] = useState([]);
+  const [programsWithCohorts, setProgramsWithCohorts] = useState([]);
   const [cohorts, setCohorts] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState('');
@@ -18,55 +18,57 @@ const ProgressDashboard = () => {
   const [progressData, setProgressData] = useState(null);
   const [userSpecificData, setUserSpecificData] = useState(null);
 
-  const fetchOrgPrograms = async () => {
+  const fetchOrgProgramsWithCohorts = async (orgId) => {
     try {
-      const orgId = localStorage.getItem('orgId');
-      const response = await getOrgPrograms(orgId);
-      console.log('orgProgramsResponse', response);
-      setPrograms(response);
-      setSelectedProgramId(response[0]?.programId); // Default to the first program
+      // const response = await getOrgPrograms(orgId);
+      const response = await axios.get(
+        `${apiUrl}/organizations/${orgId}/programs-with-cohorts`
+      );
+      console.log('orgProgramsWithCohortsResponse', response.data);
+      setProgramsWithCohorts(response.data);
+      setSelectedProgramId(response.data[0]?.programId); // Default to the first program
     } catch (error) {
-      console.error('Error fetching programs:', error);
+      console.error('Error fetching programs with cohorts:', error);
     }
   };
 
-  const fetchOrgCohorts = async () => {
-    try {
-      const orgId = localStorage.getItem('orgId');
-      const response = await getOrgCohorts(orgId);
-      console.log('orgCohortsResponse', response);
-      setCohorts(response);
-      setSelectedCohortId(response[0]?.cohortId); // Default to the first cohort
-    } catch (error) {
-      console.error('Error fetching programs:', error);
-    }
-  };
+  // const fetchOrgCohorts = async () => {
+  //   try {
+  //     const orgId = localStorage.getItem('orgId');
+  //     const response = await getOrgCohorts(orgId);
+  //     console.log('orgCohortsResponse', response);
+  //     setCohorts(response);
+  //     setSelectedCohortId(response[0]?.cohortId); // Default to the first cohort
+  //   } catch (error) {
+  //     console.error('Error fetching programs:', error);
+  //   }
+  // };
 
-  // Fetch programs and cohorts on component mount
+  // Fetch programs with cohorts on component mount
   useEffect(() => {
     const orgId = localStorage.getItem('orgId');
     if (!orgId) {
       console.error('Organization ID not found in local storage.');
       return;
     }else{
-      fetchOrgPrograms();
-      fetchOrgCohorts();
+      fetchOrgProgramsWithCohorts(orgId);
+      // fetchOrgCohorts();
     }
 
   }, []);
 
   // Fetch progress data whenever selected program or cohort changes
-  useEffect(() => {
-    if (selectedProgramId && selectedCohortId) {
-      axios
-        .get(`${apiUrl}/reports/program/${selectedProgramId}/cohort/${selectedCohortId}/progress`)
-        .then((res) => {
-          setProgressData(res.data);
-          setUsers([{ learnerId: 'All users', learnerName: 'All users' }, ...res.data.users]);
-        })
-        .catch((err) => console.error('Error fetching progress data:', err));
-    }
-  }, [selectedProgramId, selectedCohortId]);
+  // useEffect(() => {
+  //   if (selectedProgramId && selectedCohortId) {
+  //     axios
+  //       .get(`${apiUrl}/reports/program/${selectedProgramId}/cohort/${selectedCohortId}/progress`)
+  //       .then((res) => {
+  //         setProgressData(res.data);
+  //         setUsers([{ learnerId: 'All users', learnerName: 'All users' }, ...res.data.users]);
+  //       })
+  //       .catch((err) => console.error('Error fetching progress data:', err));
+  //   }
+  // }, [selectedProgramId, selectedCohortId]);
 
   // Fetch user-specific data when a specific user is selected
   useEffect(() => {
@@ -91,7 +93,7 @@ const ProgressDashboard = () => {
           <FormControl fullWidth>
             <InputLabel>Select Program</InputLabel>
             <Select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}>
-              {programs.map((program) => (
+              {programsWithCohorts.map((program) => (
                 <MenuItem key={program.programId} value={program.programId}>
                   {program.programName}
                 </MenuItem>
