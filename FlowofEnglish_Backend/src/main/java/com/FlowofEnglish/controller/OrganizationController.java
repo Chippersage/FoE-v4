@@ -1,6 +1,6 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.model.Cohort;
+import com.FlowofEnglish.dto.ProgramResponseDTO;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.service.OrganizationService;
@@ -44,17 +44,25 @@ public class OrganizationController {
         return ResponseEntity.ok(programs);
     }
     
+    
     @GetMapping("/{organizationId}/programs-with-cohorts")
-    public ResponseEntity<Map<Program, List<Cohort>>> getProgramsWithCohorts(@PathVariable String organizationId) {
+    public ResponseEntity<Map<String, Object>> getProgramsWithCohortsDTO(@PathVariable String organizationId) {
         try {
-            Map<Program, List<Cohort>> programCohortsMap = organizationService.getProgramsWithCohorts(organizationId);
-            return ResponseEntity.ok(programCohortsMap);
+            List<ProgramResponseDTO> programCohortsDTOList = organizationService.getProgramsWithCohorts(organizationId);
+
+            // Wrap the response in a "programs" key
+            Map<String, Object> response = new HashMap<>();
+            response.put("programs", programCohortsDTOList);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             // Log the exception
-            System.err.println("Error fetching programs with cohorts: " + e.getMessage());
+            System.err.println("Error fetching programs with cohorts DTO: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
     
     // Create a new organization
     @PostMapping("/create")
