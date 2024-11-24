@@ -7,6 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.FlowofEnglish.dto.CohortDTO;
+import com.FlowofEnglish.dto.ProgramResponseDTO;
 import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -220,20 +223,39 @@ public class OrganizationService {
         return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
     }
     
-    public Map<Program, List<Cohort>> getProgramsWithCohorts(String organizationId) {
+    
+    public List<ProgramResponseDTO> getProgramsWithCohorts(String organizationId) {
         List<CohortProgram> cohortPrograms = cohortProgramRepository.findCohortsByOrganizationId(organizationId);
 
-        Map<Program, List<Cohort>> programCohortsMap = new HashMap<>();
+        Map<String, ProgramResponseDTO> programMap = new LinkedHashMap<>();
 
         for (CohortProgram cohortProgram : cohortPrograms) {
+            // Extract program and cohort details
             Program program = cohortProgram.getProgram();
             Cohort cohort = cohortProgram.getCohort();
 
-            programCohortsMap
-                .computeIfAbsent(program, k -> new ArrayList<>())
-                .add(cohort);
+            // Check if the program is already in the map
+            ProgramResponseDTO programResponse = programMap.computeIfAbsent(
+                program.getProgramId(),
+                id -> {
+                    ProgramResponseDTO dto = new ProgramResponseDTO();
+                    dto.setProgramId(program.getProgramId());
+                    dto.setProgramName(program.getProgramName());
+                    dto.setProgramDesc(program.getProgramDesc());
+                    dto.setCohorts(new ArrayList<>());
+                    return dto;
+                }
+            );
+
+            // Add the cohort to the program
+            CohortDTO cohortDTO = new CohortDTO();
+            cohortDTO.setCohortId(cohort.getCohortId());
+            cohortDTO.setCohortName(cohort.getCohortName());
+            programResponse.getCohorts().add(cohortDTO);
         }
 
-        return programCohortsMap;
+        // Convert the map to a list of ProgramResponseDTO
+        return new ArrayList<>(programMap.values());
     }
+
 }
