@@ -89,7 +89,7 @@ const SingleSubconcept = () => {
         <iframe
           id="embeddedContent"
           // src={subconcept.subconceptLink}
-          src={"Learner-v4\Grammar\nouns\stage0\collective-1.html"}
+          src={"/Grammar/nouns/stage0/collective-1.html"}
           title="Embedded Content"
           width="100%"
           height="800px"

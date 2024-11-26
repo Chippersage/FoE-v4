@@ -86,19 +86,21 @@ export default function Stages({ stages }) {
                 {stage.units ? (
                   // @ts-ignore
                   Object.values(stage.units).map((unit, unitIndex) => {
+                    // Determine the next unit
                     // @ts-ignore
-                    // const completionStatus = JSON.parse(localStorage.getItem(`unitCompletionStatus_${user.userId}`))
-                    // const unitCompletionStatus = completionStatus?.[unit.unitId]
-                    // console.log(unitCompletionStatus)
-                    // const indexOfFirstIncompleteUnit = Object.values(stage.units).findIndex(unit => unit.completionStatus === "incomplete")
+                    const nextUnit = Object.values(stage.units)[unitIndex + 1];
+                    // @ts-ignore
+                    const nextUnitId = nextUnit ? nextUnit.unitId : null;
+
                     return (
                       <Link
-                      // @ts-ignore
+                        // @ts-ignore
                         to={
                           // @ts-ignore
-                          (unit.completionStatus !== "disabled" || unitIndex === 0) ?
-                          // @ts-ignore
-                             `/subconcepts/${unit.unitId}`
+                          unit.completionStatus !== "disabled" ||
+                          unitIndex === 0
+                            ? // @ts-ignore
+                              `/subconcepts/${unit.unitId}`
                             : null
                         }
                         state={{
@@ -106,6 +108,7 @@ export default function Stages({ stages }) {
                           currentUnitId: unit.unitId,
                           // @ts-ignore
                           stageId: stage.stageId,
+                          nextUnitId
                         }}
                         key={unitIndex}
                         className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${

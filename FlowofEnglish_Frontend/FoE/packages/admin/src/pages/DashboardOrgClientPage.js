@@ -69,7 +69,7 @@ export default function DashboardOrgClientPage() {
       <Container maxWidth="xl">
         {/* Welcome message */}
         <Typography variant="h4" sx={{ mb: 5 }}>
-          Welcome back, {orgData.organizationName}!
+          Welcome {orgData.organizationName}!
         </Typography>
 
         <Grid container spacing={3}>
