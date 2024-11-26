@@ -1,10 +1,12 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "Cohorts")
@@ -17,12 +19,16 @@ public class Cohort {
     @Column(name = "cohort_name", length = 255, nullable = false)
     private String cohortName;
 
+    
     @Column(name = "cohort_end_date", nullable = true)
-    private LocalDateTime cohortEndDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    private OffsetDateTime cohortEndDate;
 
     @Column(name = "cohort_start_date", nullable = false, updatable = false)
     @CreationTimestamp
-    private LocalDateTime cohortStartDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    private OffsetDateTime cohortStartDate;
+
 
     @Column(name = "uuid", length = 255, nullable = false, unique = true, updatable = false)
     private String uuid;
@@ -37,8 +43,8 @@ public class Cohort {
     }
 
     // Parameterized constructor
-    public Cohort(String cohortId,  String cohortName, LocalDateTime cohortEndDate,
-			LocalDateTime cohortStartDate, String uuid, Organization organization) {
+    public Cohort(String cohortId, String cohortName, OffsetDateTime cohortEndDate, OffsetDateTime cohortStartDate,
+			String uuid, Organization organization) {
 		super();
 		this.cohortId = cohortId;
 		this.cohortName = cohortName;
@@ -47,7 +53,6 @@ public class Cohort {
 		this.uuid = uuid;
 		this.organization = organization;
 	}
-
 
 	public String getCohortId() {
 		return cohortId;
@@ -65,19 +70,19 @@ public class Cohort {
 		this.cohortName = cohortName;
 	}
 
-	public LocalDateTime getCohortEndDate() {
+	public OffsetDateTime getCohortEndDate() {
 		return cohortEndDate;
 	}
 
-	public void setCohortEndDate(LocalDateTime cohortEndDate) {
+	public void setCohortEndDate(OffsetDateTime cohortEndDate) {
 		this.cohortEndDate = cohortEndDate;
 	}
 
-	public LocalDateTime getCohortStartDate() {
+	public OffsetDateTime getCohortStartDate() {
 		return cohortStartDate;
 	}
 
-	public void setCohortStartDate(LocalDateTime cohortStartDate) {
+	public void setCohortStartDate(OffsetDateTime cohortStartDate) {
 		this.cohortStartDate = cohortStartDate;
 	}
 

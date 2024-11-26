@@ -1,9 +1,11 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.exception.CohortNotFoundException;
+import com.FlowofEnglish.exception.CohortValidationException;
 import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.service.CohortService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,18 +36,30 @@ public class CohortController {
     }
 
     @PostMapping("/create")
-    public Cohort createCohort(@RequestBody Cohort cohort) {
-        return cohortService.createCohort(cohort);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Cohort> updateCohort(@PathVariable String id, @RequestBody Cohort cohort) {
+    public ResponseEntity<?> createCohort(@RequestBody Cohort cohort) {
         try {
-            return ResponseEntity.ok(cohortService.updateCohort(id, cohort));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            Cohort createdCohort = cohortService.createCohort(cohort);
+            return ResponseEntity.ok("Cohort created successfully with ID: " + createdCohort.getCohortId());
+        } catch (CohortValidationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
     }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCohort(@PathVariable String id, @RequestBody Cohort cohort) {
+        try {
+            Cohort updatedCohort = cohortService.updateCohort(id, cohort);
+            return ResponseEntity.ok().body("Cohort updated successfully: " + updatedCohort);
+        } catch (CohortValidationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCohort(@PathVariable String id) {

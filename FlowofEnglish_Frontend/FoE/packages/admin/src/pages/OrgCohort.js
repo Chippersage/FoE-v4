@@ -3,6 +3,12 @@ import { filter } from 'lodash';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
+import { format, formatISO } from 'date-fns';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+
+
+
 import {
   Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
   IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -64,10 +70,18 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
+const INITIAL_FORM_STATE = {
+  cohortId: '',
+  cohortName: '',
+  cohortStartDate: '',
+  cohortEndDate: '',
+  organization: { organizationId: '' }
+};
+
 
 function OrgCohort() {
   const { id: organizationId } = useParams();
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
   const [selected, setSelected] = useState([]);
@@ -80,89 +94,125 @@ function OrgCohort() {
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
-  const [formData, setFormData] = useState({
-    cohortId: '',
-    cohortName: '',
-    cohortStartDate: '',
-    cohortEndDate: '',
-    organization: { organizationId },
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [formErrors, setFormErrors] = useState({});
-  
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.cohortName.trim()) errors.cohortName = 'Cohort name is required';
-    if (!formData.cohortId.trim()) errors.cohortId = 'Cohort Id is Required';
-    if (!formData.organizationId.trim()) errors.organizationId = 'OrganizationId is Required';
-    return errors;
-  };
+  const [notification, setNotification] = useState({ open: false, message: '', type: 'success' });
 
+  // Fetch cohorts on component mount
   useEffect(() => {
-    console.log("Organization ID:", organizationId);
-    fetchCohorts();
-  }, []);
+    if (organizationId) {
+      fetchCohorts();
+    }
+  }, [organizationId]);
 
   const fetchCohorts = async () => {
-    console.log("Fetching cohorts for organization ID: ", organizationId);
     try {
       const data = await getOrgCohorts(organizationId);
-      console.log('Fetched cohorts:', data);
       setCohorts(data);
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to fetch cohorts';
-      setErrorMsg(message);
+      showNotification(error.response?.data?.message || 'Failed to fetch cohorts', 'error');
     }
   };
 
-  
+  const showNotification = (message, type = 'success') => {
+    setNotification({ open: true, message, type });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.cohortName.trim()) errors.cohortName = 'Cohort name is required';
+    if (!formData.cohortId.trim()) errors.cohortId = 'Cohort ID is required';
+    if (!formData.cohortStartDate) errors.cohortStartDate = 'Start date is required';
+    return errors;
+  };
+
   const handleFormChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  
+  const handleCreateClick = () => {
+    setIsEditMode(false);
+    setFormData({
+      ...INITIAL_FORM_STATE,
+      organization: { organizationId }
+    });
+    setFormErrors({});
+    setOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
+    
     if (Object.keys(errors).length === 0) {
       try {
+        const payload = {
+          ...formData,
+          cohortStartDate: formData.cohortStartDate ? formatISO(new Date(formData.cohortStartDate)) : null,
+          cohortEndDate: formData.cohortEndDate ? formatISO(new Date(formData.cohortEndDate)) : null,
+          organization: { organizationId }
+        };
+
         if (isEditMode) {
-          await updateCohort(formData.cohortId, formData);
+          await updateCohort(formData.cohortId, payload);
+          showNotification('Cohort updated successfully', 'success');
         } else {
-          await createCohort(formData);
+          await createCohort(payload);
+          showNotification('Cohort created successfully', 'success');
         }
+        
         fetchCohorts();
         handleClose();
       } catch (error) {
-        setErrorMsg('Failed to submit data');
-        console.error("Error creating/updating cohort:", error);
+        const message = error.response?.data?.message || 'Operation failed';
+        const details = error.response?.data?.details || '';
+        showNotification(`${message}: ${details}`, 'error');
       }
     } else {
       setFormErrors(errors);
+      showNotification('Please fix the form errors', 'error');
     }
   };
-
+  
   const handleEdit = (row) => {
     setIsEditMode(true);
     setFormData({
       cohortId: row.cohortId,
       cohortName: row.cohortName,
-      cohortStartDate: row.cohortStartDate,
-      cohortEndDate: row.cohortEndDate,
-      organization: row.organization,
+      cohortStartDate: row.cohortStartDate ? format(new Date(row.cohortStartDate), 'yyyy-MM-dd') : '',
+      cohortEndDate: row.cohortEndDate ? format(new Date(row.cohortEndDate), 'yyyy-MM-dd') : '',
+      organization: { organizationId },
     });
+    setFormErrors({});
     setOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
     try {
-      await deleteCohort(id);
+      await deleteCohort(selectedRow.cohortId);
+      showNotification('Cohort deleted successfully');
       fetchCohorts();
     } catch (error) {
-      console.error("Error deleting cohort:", error);
+      showNotification(error.response?.data?.message || 'Failed to delete cohort', 'error');
     }
+    setIsConfirmOpen(false);
   };
 
+  // Reset form state
+  const handleClose = () => {
+    setOpen(false);
+    setFormData(INITIAL_FORM_STATE);
+    setFormErrors({});
+  };
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       const newSelected = cohorts.map((n) => n.cohortName);
@@ -187,8 +237,7 @@ function OrgCohort() {
     setSelected(newSelected);
   };
 
-  const handleClose = () => setOpen(false);
-
+  
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -218,7 +267,7 @@ function OrgCohort() {
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
-          <Button variant="contained" onClick={() => setOpen(true)} startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button variant="contained" onClick={handleCreateClick} startIcon={<Iconify icon="eva:plus-fill" />}>
             New Cohort
           </Button>
         </Stack>
@@ -257,8 +306,12 @@ function OrgCohort() {
                 </Typography>
               </TableCell>
               <TableCell align="left">{row.cohortId}</TableCell>
-              <TableCell align="left">{cohortStartDate}</TableCell>
-              <TableCell align="left">{cohortEndDate}</TableCell>
+              <TableCell>
+                            {format(new Date(row.cohortStartDate), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            {row.cohortEndDate ? format(new Date(row.cohortEndDate), 'dd/MM/yyyy') : '-'}
+                          </TableCell>
               <TableCell align="right">
                 <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
                   <Iconify icon="eva:more-vertical-fill" />
@@ -335,6 +388,9 @@ function OrgCohort() {
             value={formData.cohortStartDate}
             onChange={handleFormChange}
             fullWidth
+            required
+            error={!!formErrors.cohortStartDate}
+            helperText={formErrors.cohortStartDate}
             InputLabelProps={{ shrink: true }}
           />
           <TextField
@@ -347,17 +403,7 @@ function OrgCohort() {
             fullWidth
             InputLabelProps={{ shrink: true }}
           />
-          <TextField
-            margin="normal"
-            label="OrganizationId"
-            name="organizationId"
-            value={formData.organizationId}
-            onChange={handleFormChange}
-            fullWidth
-            required
-            error={!!formErrors.organizationId}
-            helperText={formErrors.organizationId}
-          />
+          <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} disabled />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="secondary">
@@ -399,6 +445,23 @@ function OrgCohort() {
           </Button>
         </StyledCard>
       </Modal>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={handleCloseNotification}
+      >
+        <MuiAlert
+          onClose={handleCloseNotification}
+          severity={notification.type}
+          elevation={6}
+          variant="filled"
+        >
+          {notification.message}
+        </MuiAlert>
+      </Snackbar>
+
     </>
   );
 }
