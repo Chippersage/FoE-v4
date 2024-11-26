@@ -47,6 +47,7 @@ export default function SubConceptsPage() {
   const location = useLocation();
   const stageId = location.state?.stageId;
   const currentUnitId = location.state?.currentUnitId;
+  const nextUnitId = location.state?.nextUnitId;
   const { unitId } = useParams();
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
@@ -60,6 +61,7 @@ export default function SubConceptsPage() {
   const pathWidth = 1000; // Total width of the SVG
   const pathHeight = 400; // Total height of the SVG
   const rowHeight = pathHeight / 2; // Height of each row
+  
 
   const fetchSubconcepts = async () => {
     try {
@@ -191,7 +193,9 @@ export default function SubConceptsPage() {
                 <Link
                   // @ts-ignore
                   to={
-                    isEnabled && index !== totalSteps - 1 && index !== 0
+                    index === totalSteps - 1 && nextUnitId
+                      ? `/subconcepts/${nextUnitId}`
+                      : isEnabled && index !== totalSteps - 1 && index !== 0
                       ? `/subconcept/${subconcept?.subconceptId}`
                       : null
                   }
@@ -207,14 +211,20 @@ export default function SubConceptsPage() {
                     style={{ transitionDelay: `${index * 100}ms` }}
                   >
                     <rect
-                    className="bg-white"
+                      className="bg-white"
                       x={point.x - 20}
                       y={point.y - 20}
                       width="36"
                       height="36"
                       rx="2"
                       ry="2"
-                      fill={(index === 0 || index === totalSteps - 1 || subconcept?.completionStatus === 'incomplete')? "#2196F3" : "#fff"} // This removes the fill color
+                      fill={
+                        index === 0 ||
+                        index === totalSteps - 1 ||
+                        subconcept?.completionStatus === "incomplete"
+                          ? "#2196F3"
+                          : "#fff"
+                      } // This removes the fill color
                       stroke={
                         isEnabled
                           ? isCompleted
@@ -222,7 +232,7 @@ export default function SubConceptsPage() {
                             : "#2196F3" // Outline color when enabled but not completed
                           : "#9E9E9E" // Outline color when not enabled
                       }
-                      strokeWidth="2" 
+                      strokeWidth="2"
                     />
 
                     <Icon
@@ -273,7 +283,7 @@ export default function SubConceptsPage() {
                         left: "50%",
                         transform: "translateX(-50%)",
                         whiteSpace: "nowrap",
-                        zIndex: 1000
+                        zIndex: 1000,
                       }}
                     >
                       {subconcept
