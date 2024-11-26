@@ -42,7 +42,7 @@ export default function DashboardOrgClientPage() {
 
       // Fetch session mappings for each user
       const fetchMappings = fetchedUsers.map(async (user) => {
-      //  console.log('Fetching session mappings for user:', user.userId);
+        console.log('Fetching session mappings for user:', user.userId);
         const sessionMappings = await getUserSessionMappingsByUserId(user.userId);
         console.log(`Session Mappings for user ${user.userId}:`, sessionMappings);
         const lastSession = sessionMappings?.[0];
@@ -69,7 +69,7 @@ export default function DashboardOrgClientPage() {
       <Container maxWidth="xl">
         {/* Welcome message */}
         <Typography variant="h4" sx={{ mb: 5 }}>
-          Welcome back, {orgData.organizationName}!
+          Welcome, {orgData.organizationName}!
         </Typography>
 
         <Grid container spacing={3}>

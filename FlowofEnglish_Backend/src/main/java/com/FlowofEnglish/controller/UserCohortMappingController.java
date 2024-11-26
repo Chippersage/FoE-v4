@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.UserCohortMappingDTO;
+import com.FlowofEnglish.dto.UserCohortMappingRequest;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +41,12 @@ public class UserCohortMappingController {
 
     // POST (create) a new user-cohort mapping
     @PostMapping("/create")
-    public ResponseEntity<String> createUserCohortMapping(@RequestParam String userId, @RequestParam String cohortId) {
+    public ResponseEntity<String> createUserCohortMapping(@RequestBody UserCohortMappingRequest request) {
         try {
-            userCohortMappingService.createUserCohortMapping(userId, cohortId);
+            userCohortMappingService.createUserCohortMapping(
+                request.getUser().getUserId(), 
+                request.getCohort().getCohortId()
+            );
             return ResponseEntity.ok("User-Cohort mapping created successfully.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

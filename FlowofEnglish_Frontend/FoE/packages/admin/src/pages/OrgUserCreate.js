@@ -24,7 +24,8 @@ import {
   deleteUser,
   deleteUsers,
   getOrgUsers,
-  updateUser
+  updateUser,
+  getOrgCohorts
 } from '../api';
 
 // Constants
