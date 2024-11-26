@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SvgColor from '../../../components/svg-color';
 import { useUser } from '../../../UserContext';
 
-const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
+const icon = (name) => <SvgColor src={`/admin/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
 
 const getNavConfig = () => {
   const navigate = useNavigate(); // Initialize useNavigate hook
@@ -25,12 +25,12 @@ const getNavConfig = () => {
       {
         title: 'Learners',
         path: '/dashboard/Create-Users',
-        icon: icon('ic_lan'),
+        icon: icon('ic_learners'),
       },
       {
         title: 'Report',
         path: '/dashboard/superreport',
-        icon: icon('ic_lang'),
+        icon: icon('ic_report'),
       },
       {
         title: 'Programs',
@@ -45,7 +45,7 @@ const getNavConfig = () => {
       {
         title: 'Setting',
         path: '/dashboard/superpassword',
-        icon: icon('ic_lan'),
+        icon: icon('ic_lock'),
       },
       
     ];
@@ -76,12 +76,12 @@ const getNavConfig = () => {
       {
         title: 'Organisation Report',
         path: `/org-dashboards/${orgId}/orgreport`,
-        icon: icon('ic_lang'),
+        icon: icon('ic_report'),
       },
       {
         title: 'Setting',
         path: `/org-dashboards/${orgId}/appx`,
-        icon: icon('ic_lang'),
+        icon: icon('ic_lock'),
       },
     ];
   }
