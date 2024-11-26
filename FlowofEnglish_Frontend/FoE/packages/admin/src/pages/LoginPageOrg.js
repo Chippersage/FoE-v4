@@ -65,7 +65,7 @@ export default function LoginPageOrg() {
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
               Hi, Welcome Back Organisational Admin
             </Typography>
-            <img src={`${apiUrl}/assets/illustrations/illustration_login.png`} alt="login" />
+            <img src={`/admin/assets/illustrations/illustration_login.png`} alt="login" />
           </StyledSection>
         )}
 
