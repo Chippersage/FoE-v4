@@ -2,6 +2,7 @@ package com.FlowofEnglish.service;
 
 
 import com.FlowofEnglish.dto.CohortDTO;
+import com.FlowofEnglish.exception.CohortValidationException;
 import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.repository.CohortRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,21 +34,34 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     public Cohort createCohort(Cohort cohort) {
+        // Validate cohort end date
+        if (cohort.getCohortEndDate() != null 
+                && cohort.getCohortEndDate().isBefore(cohort.getCohortStartDate())) {
+            throw new CohortValidationException("Cohort end date must be greater than the cohort start date.");
+        }
+
+        // Save cohort
         return cohortRepository.save(cohort);
     }
+
 
     @Override
     public Cohort updateCohort(String cohortId, Cohort updatedCohort) {
         return cohortRepository.findById(cohortId)
                 .map(cohort -> {
+                    if (updatedCohort.getCohortEndDate() != null 
+                            && updatedCohort.getCohortEndDate().isBefore(cohort.getCohortStartDate())) {
+                        throw new CohortValidationException("Cohort end date must be greater than the cohort start date.");
+                    }
                     cohort.setCohortName(updatedCohort.getCohortName());
                     cohort.setCohortEndDate(updatedCohort.getCohortEndDate());
-                    cohort.setCohortStartDate(updatedCohort.getCohortStartDate());
                     cohort.setOrganization(updatedCohort.getOrganization());
                     return cohortRepository.save(cohort);
                 })
-                .orElseThrow(() -> new IllegalArgumentException("Cohort not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
     }
+
+
 
     @Override
     public void deleteCohort(String cohortId) {

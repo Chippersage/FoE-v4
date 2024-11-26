@@ -48,7 +48,6 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/programs/**").permitAll()
                     .requestMatchers("/api/v1/user-cohort-mappings/**").permitAll()
                     .requestMatchers("/api/v1/cohortprogram/**").permitAll()
-                    .requestMatchers("/api/v1/cohortprogram/create").permitAll()
                     .requestMatchers("/api/v1/organizations/**").permitAll()
                     .requestMatchers("/api/v1/cohorts/create").permitAll()
                     .requestMatchers("/api/v1/user-cohort-mappings/create").permitAll()

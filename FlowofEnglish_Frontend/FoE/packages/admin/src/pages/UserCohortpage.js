@@ -462,14 +462,7 @@ const UserCohortPage = () => {
               margin="normal"
               required
             />
-            <TextField
-              label="Leaderboard Score"
-              value={formValues.leaderboardScore || ''}
-              onChange={(e) => setFormValues({ ...formValues, leaderboardScore: e.target.value })}
-              fullWidth
-              margin="normal"
-              required
-            />
+            
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
               {currentRecord ? 'Update' : 'Create'}
             </Button>
