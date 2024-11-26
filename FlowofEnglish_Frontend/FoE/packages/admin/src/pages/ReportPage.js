@@ -1,236 +1,276 @@
-/* eslint-disable */
-/* eslint-disable */
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Container, Card, CardContent, Typography, Grid } from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { useState, useEffect } from 'react';
+import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useParams } from 'react-router-dom';
+import LearnersProgressChart from '../components/LearnersProgressChart'; // LearnersProgressChart Component
+import SingleLearnerProgressChart from '../components/SingleLearnerProgressChart'; // SingleLearnerProgressChart Component
+import { getOrgs } from '../api';
+
 const apiUrl = process.env.REACT_APP_API_URL;
 
-const ReportPage = () => {
-  const [courses, setCourses] = useState([]);
-  const [cohortNames, setCohortNames] = useState([]);
-  const [organisationsCourses, setOrganisationsCourses] = useState([]);
-  const [organisationsCohorts, setOrganisationsCohorts] = useState([]);
-  const [userCourses, setUserCourses] = useState([]);
+const ProgressDashboard = () => {
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [programsWithCohorts, setProgramsWithCohorts] = useState([]);
+  const [cohorts, setCohorts] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedProgramId, setSelectedProgramId] = useState('');
+  const [selectedCohortId, setSelectedCohortId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('All users');
+  const [progressData, setProgressData] = useState(null);
+  const [userSpecificData, setUserSpecificData] = useState(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      console.error('No token found in localStorage');
-      return;
+  // Fetch organizations on mount
+  const fetchOrganizations = async () => {
+    try {
+      const response = await getOrgs()
+      setOrganizations(response);
+      console.log(response)
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
     }
-    const headers = {
-      Authorization: `${token}`,
-    };
-
-    axios
-      .get(`${apiUrl}/report/listcourses`, { headers })
-      .then((response) => {
-        setCourses(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching the courses data:', error);
-      });
-
-    axios
-      .get(`${apiUrl}/report/listcohortnames`, { headers })
-      .then((response) => {
-        setCohortNames(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching the cohort names data:', error);
-      });
-
-    axios
-      .get(`${apiUrl}/report/listorganisationscourses`, { headers })
-      .then((response) => {
-        setOrganisationsCourses(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching the organisations courses data:', error);
-      });
-
-    axios
-      .get(`${apiUrl}/report/listorganisationcohorts`, { headers })
-      .then((response) => {
-        setOrganisationsCohorts(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching the organisations cohorts data:', error);
-      });
-
-    axios
-      .get(`${apiUrl}/report/listusercourses`, { headers })
-      .then((response) => {
-        setUserCourses(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching the user courses data:', error);
-      });
-  }, []);
-
-  const downloadReport = () => {
-    const doc = new jsPDF();
-
-    doc.text('Super Admin Report', 20, 10);
-
-    doc.autoTable({
-      startY: 20,
-      head: [['Courses Names']],
-      body: courses.map((course) => [course]),
-    });
-
-    doc.autoTable({
-      startY: doc.autoTable.previous.finalY + 10,
-      head: [['Cohort Names']],
-      body: cohortNames.map((cohort) => [cohort]),
-    });
-
-    organisationsCourses.forEach((organisation) => {
-      doc.autoTable({
-        startY: doc.autoTable.previous.finalY + 10,
-        head: [[`Organisation: ${organisation.organisation_name} - Courses`]],
-        body: organisation.courses.map((course) => [course]),
-      });
-    });
-
-    organisationsCohorts.forEach((organisation) => {
-      doc.autoTable({
-        startY: doc.autoTable.previous.finalY + 10,
-        head: [[`Organisation: ${organisation.organisation_name} - Cohorts`]],
-        body: organisation.cohorts.map((cohort) => [cohort]),
-      });
-    });
-
-    userCourses.forEach((user) => {
-      doc.autoTable({
-        startY: doc.autoTable.previous.finalY + 10,
-        head: [[`User: ${user.user_name} - ${user.phone_no} - Courses`]],
-        body: user.courses.length > 0 ? user.courses.map((course) => [course]) : [['No courses enrolled']],
-      });
-    });
-
-    doc.save('report.pdf');
   };
 
+  // Fetch programs and cohorts for the selected organization
+  const fetchOrgProgramsWithCohorts = async (orgId) => {
+    try {
+      const response = await axios.get(`${apiUrl}/organizations/${orgId}/programs-with-cohorts`);
+      const programs = response.data.programs;
+      setProgramsWithCohorts(programs);
+
+      const defaultProgram = programs[0];
+      setSelectedProgramId(defaultProgram.programId);
+      setCohorts(defaultProgram.cohorts);
+
+      const defaultCohort = defaultProgram.cohorts[0];
+      setSelectedCohortId(defaultCohort.cohortId);
+
+      fetchUsers(defaultProgram.programId, defaultCohort.cohortId);
+    } catch (error) {
+      console.error('Error fetching programs with cohorts:', error);
+    }
+  };
+
+  // Fetch users for selected program and cohort
+  const fetchUsers = async (programId, cohortId) => {
+    try {
+      const response = await axios.get(`${apiUrl}/reports/program/${programId}/cohort/${cohortId}/progress`);
+      const { users } = response.data;
+      setUsers([{ userId: 'All users', userName: 'All users' }, ...users]);
+      setProgressData(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  // Handle organization selection
+  const handleOrgChange = (orgId) => {
+    setSelectedOrgId(orgId);
+    setProgramsWithCohorts([]);
+    setCohorts([]);
+    setUsers([]);
+    setSelectedProgramId('');
+    setSelectedCohortId('');
+    setSelectedUserId('All users');
+    setProgressData(null);
+    setUserSpecificData(null);
+
+    if (orgId) {
+      fetchOrgProgramsWithCohorts(orgId);
+    }
+  };
+
+  // Handle program selection
+  const handleProgramChange = (programId) => {
+    setSelectedProgramId(programId);
+    const selectedProgram = programsWithCohorts.find((program) => program.programId === programId);
+    const programCohorts = selectedProgram.cohorts;
+    setCohorts(programCohorts);
+
+    const defaultCohort = programCohorts[0];
+    setSelectedCohortId(defaultCohort.cohortId);
+
+    fetchUsers(programId, defaultCohort.cohortId);
+    setSelectedUserId('All users');
+  };
+
+  // Handle cohort selection
+  const handleCohortChange = (cohortId) => {
+    setSelectedCohortId(cohortId);
+    fetchUsers(selectedProgramId, cohortId);
+    setSelectedUserId('All users');
+  };
+
+  // Fetch user-specific data when a user is selected
+  useEffect(() => {
+    if (selectedUserId !== 'All users') {
+      const selectedUser = users.find((user) => user.userId === selectedUserId);
+      if (selectedUser) {
+        setUserSpecificData(selectedUser);
+      }
+    } else {
+      setUserSpecificData(null);
+    }
+  }, [selectedUserId, users]);
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
   return (
-    <Container>
-      <Typography variant="h1" gutterBottom>
-        Report
-      </Typography>
-      <Typography variant="h2" gutterBottom>
-        Super Admin Report
-      </Typography>
-      <Button color="info" variant="contained" endIcon={<DownloadIcon />} onClick={downloadReport}>
-        Download Report
-      </Button>
-      <hr />
-
-      <Card style={{ margin: '20px 0', padding: '10px' }}>
-        <CardContent>
-          <Typography variant="h5" component="div" gutterBottom>
-            Courses Names
-          </Typography>
-          <Grid container spacing={2}>
-            {courses.map((course, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-                <Typography variant="body1">{course}</Typography>
-              </Grid>
+    <Container maxWidth="lg" sx={{ marginTop: 0 }}>
+      {/* Organization Selection */}
+      <Card sx={{ padding: 3, marginBottom: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Select Organization
+        </Typography>
+        <FormControl
+          fullWidth
+          sx={{
+            '& .MuiInputLabel-root': {
+              backgroundColor: 'white', // Add background to prevent overlap
+              padding: '0 4px', // Add some padding for better appearance
+              transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
+            },
+            '& .MuiInputLabel-shrink': {
+              transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
+            },
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                top: 0, // Ensure the outline is aligned properly
+              },
+            },
+          }}
+        >
+          <InputLabel>Select Organization</InputLabel>
+          <Select value={selectedOrgId} onChange={(e) => handleOrgChange(e.target.value)}>
+            {organizations.map((org) => (
+              <MenuItem key={org.organizationId} value={org.organizationId}>
+                {org.organizationName}
+              </MenuItem>
             ))}
-          </Grid>
-        </CardContent>
+          </Select>
+        </FormControl>
       </Card>
 
-      <Card style={{ margin: '20px 0', padding: '10px' }}>
-        <CardContent>
-          <Typography variant="h5" component="div" gutterBottom>
-            Cohort Names
+      {/* Filters Section */}
+      {selectedOrgId && (
+        <Card sx={{ padding: 3, marginBottom: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Filter Reports
           </Typography>
-          <Grid container spacing={2}>
-            {cohortNames.map((cohort, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-                <Typography variant="body1">{cohort}</Typography>
-              </Grid>
-            ))}
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Card style={{ margin: '20px 0', padding: '10px' }}>
-        <CardContent>
-          <Typography variant="h5" component="div" gutterBottom>
-            Organisations and Their Courses
-          </Typography>
-          {organisationsCourses.map((organisation, index) => (
-            <div key={index} style={{ marginBottom: '20px' }}>
-              <Typography variant="h6">{organisation.organisation_name}</Typography>
-              <Grid container spacing={2}>
-                {organisation.courses.map((course, courseIndex) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={courseIndex}>
-                    <Typography variant="body2">{course}</Typography>
-                  </Grid>
+          <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+            <FormControl
+              fullWidth
+              sx={{
+                '& .MuiInputLabel-root': {
+                  backgroundColor: 'white', // Add background to prevent overlap
+                  padding: '0 4px', // Add some padding for better appearance
+                  transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
+                },
+                '& .MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    top: 0, // Ensure the outline is aligned properly
+                  },
+                },
+              }}
+            >
+              <InputLabel>Select Program</InputLabel>
+              <Select
+                value={selectedProgramId}
+                onChange={(e) => handleProgramChange(e.target.value)}
+                disabled={!programsWithCohorts.length}
+              >
+                {programsWithCohorts.map((program) => (
+                  <MenuItem key={program.programId} value={program.programId}>
+                    {program.programName}
+                  </MenuItem>
                 ))}
-              </Grid>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+              </Select>
+            </FormControl>
 
-      <Card style={{ margin: '20px 0', padding: '10px' }}>
-        <CardContent>
-          <Typography variant="h5" component="div" gutterBottom>
-            Organisations and Their Cohorts
-          </Typography>
-          {organisationsCohorts.map((organisation, index) => (
-            <div key={index} style={{ marginBottom: '20px' }}>
-              <Typography variant="h6">{organisation.organisation_name}</Typography>
-              <Grid container spacing={2}>
-                {organisation.cohorts.map((cohort, cohortIndex) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={cohortIndex}>
-                    <Typography variant="body2">{cohort}</Typography>
-                  </Grid>
+            <FormControl
+              fullWidth
+              sx={{
+                '& .MuiInputLabel-root': {
+                  backgroundColor: 'white', // Add background to prevent overlap
+                  padding: '0 4px', // Add some padding for better appearance
+                  transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
+                },
+                '& .MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    top: 0, // Ensure the outline is aligned properly
+                  },
+                },
+              }}
+            >
+              <InputLabel>Select Cohort</InputLabel>
+              <Select
+                value={selectedCohortId}
+                onChange={(e) => handleCohortChange(e.target.value)}
+                disabled={!cohorts.length}
+              >
+                {cohorts.map((cohort) => (
+                  <MenuItem key={cohort.cohortId} value={cohort.cohortId}>
+                    {cohort.cohortName}
+                  </MenuItem>
                 ))}
-              </Grid>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+              </Select>
+            </FormControl>
 
-      <Card style={{ margin: '20px 0', padding: '10px' }}>
-        <CardContent>
-          <Typography variant="h5" component="div" gutterBottom>
-            Users and Their Courses
+            <FormControl
+              fullWidth
+              sx={{
+                '& .MuiInputLabel-root': {
+                  backgroundColor: 'white', // Add background to prevent overlap
+                  padding: '0 4px', // Add some padding for better appearance
+                  transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
+                },
+                '& .MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    top: 0, // Ensure the outline is aligned properly
+                  },
+                },
+              }}
+            >
+              <InputLabel>Select User</InputLabel>
+              <Select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                disabled={!users.length}
+              >
+                {users.map((user) => (
+                  <MenuItem key={user.userId} value={user.userId}>
+                    {user.userName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        </Card>
+      )}
+
+      {/* Charts Section */}
+      {progressData && <LearnersProgressChart data={progressData} selectedUserId={selectedUserId} />}
+      {userSpecificData && (
+        <Card sx={{ marginTop: 3, padding: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            User-Specific Report
           </Typography>
-          {userCourses.map((user, index) => (
-            <div key={index} style={{ marginBottom: '20px' }}>
-              <Typography variant="h6">
-                {user.user_name} - {user.phone_no}
-              </Typography>
-              <Grid container spacing={2}>
-                {user.courses.length > 0 ? (
-                  user.courses.map((course, courseIndex) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={courseIndex}>
-                      <Typography variant="body2">{course}</Typography>
-                    </Grid>
-                  ))
-                ) : (
-                  <Grid item xs={12}>
-                    <Typography variant="body2">No courses enrolled</Typography>
-                  </Grid>
-                )}
-              </Grid>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+          <SingleLearnerProgressChart data={userSpecificData} />
+        </Card>
+      )}
     </Container>
   );
 };
 
-export default ReportPage;
-
-/* eslint-enable */
-/* eslint-enable */
+export default ProgressDashboard;
