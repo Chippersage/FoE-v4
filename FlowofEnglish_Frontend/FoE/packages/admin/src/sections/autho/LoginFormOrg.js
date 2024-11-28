@@ -66,9 +66,9 @@ export default function LoginFormOrg() {
     <>
       <Stack spacing={3}>
         <TextField
-          name="username"
-          id="username"
-          label="Username"
+          name="AdminEmail"
+          id="AdminEmail"
+          label="AdminEmail"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
