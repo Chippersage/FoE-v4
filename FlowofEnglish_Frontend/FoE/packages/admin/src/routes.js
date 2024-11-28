@@ -9,16 +9,12 @@ import AddCtO from './pages/AddCtO';
 import AddCtOc from './pages/AddCtOc';
 import BlogPage from './pages/BlogPage';
 import CohortPage from './pages/CohortPage';
-import ContentPage from './pages/ContentPage';
 import ProgramPage from './pages/ProgramPage';
 import DashboardAppPage from './pages/DashboardAppPage';
 import DashboardClientPage from './pages/DashboardClientPage';
-import LanguagePage from './pages/LanguagePage';
-import LevelPage from './pages/LevelPage';
 import LoginPage from './pages/LoginPage';
 import LoginOrg from './pages/LoginPageOrg';
 import Page404 from './pages/Page404';
-import ProductsPage from './pages/ProductsPage';
 import ReportPage from './pages/ReportPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import UserPage from './pages/UserPage';
@@ -60,12 +56,11 @@ export default function Router() {
 
         { path: 'blog', element: <BlogPage /> },
         { path: 'programs', element: <ProgramPage /> },
-        { path: 'contents/:id', element: <ContentPage /> },
         { path: 'addcto', element: <AddCtO /> },
         { path: 'addctoc/:organisationId', element: <AddCtOc /> },
-        { path: 'languages', element: <LanguagePage /> },
-        { path: 'levels/:id', element: <LevelPage /> },
-        { path: 'products', element: <ProductsPage /> },
+        
+        
+       
       ],
     },
     {
