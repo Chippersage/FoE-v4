@@ -23,7 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -212,7 +214,10 @@ public class UserController {
                     // Store session details in UserSessionMapping table
                     UserSessionMapping userSession = new UserSessionMapping();
                     userSession.setSessionId(sessionId);
-                    userSession.setSessionStartTimestamp(LocalDateTime.now());
+                 // Convert LocalDateTime.now() to OffsetDateTime with the desired offset (e.g., UTC)
+                    OffsetDateTime currentOffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+                    userSession.setSessionStartTimestamp(currentOffsetDateTime);
+                    
                     userSession.setUser(user);
                     userSession.setCohort(userCohortMapping.getCohort());  // Set cohort from UserCohortMapping
                     
@@ -270,7 +275,9 @@ public class UserController {
         Optional<UserSessionMapping> sessionOpt = userSessionMappingService.getUserSessionMappingById(sessionId);
         if (sessionOpt.isPresent()) {
             UserSessionMapping userSession = sessionOpt.get();
-            userSession.setSessionEndTimestamp(LocalDateTime.now());
+         // Convert LocalDateTime.now() to OffsetDateTime with the system's default offset
+            OffsetDateTime currentOffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+            userSession.setSessionEndTimestamp(currentOffsetDateTime);
             userSessionMappingService.updateUserSessionMapping(sessionId, userSession);
         }
 

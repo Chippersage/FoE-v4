@@ -109,10 +109,38 @@ public class Cohort {
 	}
 
 	// Method to ensure UUID and generate cohortId before persisting
-    @PrePersist
-    private void ensureUuid() {
-        if (this.uuid == null) {
-            this.uuid = UUID.randomUUID().toString();
-        }
-       }
+	@PrePersist
+	private void ensureUuidAndCohortId() {
+	    if (this.uuid == null) {
+	        this.uuid = UUID.randomUUID().toString();
+	    }
+	    if (this.cohortId == null && this.cohortName != null && this.organization != null) {
+	        String orgId = organization.getOrganizationId(); // Assuming getOrganizationId() is present in Organization
+	        // Remove spaces from cohortName
+	        String sanitizedCohortName = cohortName.replaceAll("\\s+", "");
+	        String namePrefix = sanitizedCohortName.length() >= 4
+	                ? sanitizedCohortName.substring(0, 4).toUpperCase()
+	                : sanitizedCohortName.toUpperCase();
+	        this.cohortId = namePrefix + "-" + orgId;
+	    }
+	}
+
     }
+
+//@PrePersist
+//private void ensureUuidAndCohortId() {
+//    if (this.uuid == null) {
+//        this.uuid = UUID.randomUUID().toString();
+//    }
+//    if (this.cohortId == null && this.cohortName != null && this.organization != null) {
+//        String orgId = organization.getOrganizationId(); // Assuming getOrganizationId() is present in Organization
+//        // Remove spaces from cohortName
+//        String sanitizedCohortName = cohortName.replaceAll("\\s+", "");
+//        String namePrefix = sanitizedCohortName.length() >= 4
+//                ? sanitizedCohortName.substring(0, 4).toUpperCase()
+//                : sanitizedCohortName.toUpperCase();
+//        // Append a unique timestamp to ensure cohortId is unique
+//        String timestamp = String.valueOf(System.currentTimeMillis());
+//        this.cohortId = namePrefix + "-" + orgId + "-" + timestamp;
+//    }
+//}

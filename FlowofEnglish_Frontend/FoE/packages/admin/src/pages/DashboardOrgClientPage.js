@@ -1,10 +1,9 @@
-import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
 import {  AppWidgetSummary } from '../sections/@dashboard/app';
-
 import { getOrgCohorts, getOrgPrograms, getOrgUsers, getUserSessionMappingsByUserId } from '../api';
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -17,6 +16,8 @@ export default function DashboardOrgClientPage() {
   const [programs, setPrograms] = useState([]);
   const [users, setUsers] = useState([]);
   const [registeredLearners, setRegisteredLearners] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Fetch organization details, cohorts, and users
   useEffect(() => {
@@ -49,8 +50,8 @@ export default function DashboardOrgClientPage() {
         return {
           ...user,
           cohortName: user.cohort?.cohortName || 'N/A',
-          sessionStartTimestamp: lastSession?.sessionStartTimestamp 
-          ? new Date(lastSession.sessionStartTimestamp).toISOString() 
+          sessionStartTimestamp: lastSession?.sessionStartTimestamp
+          ? new Date((lastSession.sessionStartTimestamp)*1000).toISOString()
           : null
         };
       });
@@ -59,6 +60,22 @@ export default function DashboardOrgClientPage() {
     }).catch(() => setUsers([]));
     getOrgPrograms(id).then(setPrograms).catch(() => setPrograms([]));
   }, [id, navigate]);
+
+  // Handle pagination change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page
+  };
+
+  const paginatedLearners = registeredLearners.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
 
   return (
     <>
@@ -72,7 +89,7 @@ export default function DashboardOrgClientPage() {
           Welcome, {orgData.organizationName}!
         </Typography>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={0} justifyContent="space-between" alignItems="center">
 
           {/* Learners Card */}
           <Grid item xs={12} sm={6} md={3}>
@@ -102,7 +119,7 @@ export default function DashboardOrgClientPage() {
              />
           </Grid>
           </Grid>
-<Grid container spacing={3}>
+<Grid container spacing={6}>
 {/* Registered Learners Table */}
 <Grid item xs={12}>
   <Paper sx={{ p: 2 }}>
@@ -120,33 +137,41 @@ export default function DashboardOrgClientPage() {
           </TableRow>
         </TableHead>
         <TableBody>
-        {registeredLearners && registeredLearners.length > 0 ? (
-          registeredLearners.map((user) => (
-            <TableRow key={user.userId}>
-              <TableCell>{user.userId}</TableCell>
-              <TableCell>{user.userName}</TableCell>
-              <TableCell>{user.cohortName}</TableCell>
-              <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
-            </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={4} align="center">
-              No learners registered yet.
-            </TableCell>
-          </TableRow>
-        )}
-        
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </Paper>
-</Grid>
-</Grid>
-</Container>
-</>
-);
-}
+                    {paginatedLearners.length > 0 ? (
+                      paginatedLearners.map((user) => (
+                        <TableRow key={user.userId}>
+                          <TableCell>{user.userId}</TableCell>
+                          <TableCell>{user.userName}</TableCell>
+                          <TableCell>{user.cohortName}</TableCell>
+                          <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          No learners registered yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 20, 25]}
+                component="div"
+                count={registeredLearners.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+    </>
+  )
+};
 
 
 

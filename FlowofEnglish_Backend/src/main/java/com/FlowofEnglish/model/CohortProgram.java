@@ -16,7 +16,7 @@ public class CohortProgram {
     private String uuid;
 
     @ManyToOne
-    @JoinColumn(name = "cohort_id", nullable = false)
+    @JoinColumn(name = "cohort_id", nullable = false, unique = true)
     private Cohort cohort;
 
     
