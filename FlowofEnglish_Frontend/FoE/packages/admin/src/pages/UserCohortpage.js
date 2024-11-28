@@ -1,44 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { CSVLink } from 'react-csv';
 import { filter } from 'lodash';
 
-import {
-  Table,
-  Button,
-  TextField,
-  Checkbox,
-  Modal,
-  Snackbar,
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableSortLabel,
-  CircularProgress,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-  TablePagination,
-  TableContainer,
-  Container,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Typography, Paper, Grid, Card, TableBody, TableCell, TableHead, TableRow,
+  TableSortLabel, CircularProgress, IconButton, Menu, MenuItem, Stack, TablePagination, TableContainer, Container, FormControl, InputLabel,
+  Select, } from '@mui/material';
 
-import { Edit as EditIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+
 // Custom Components
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 
 import {
+  getOrgUsers,
   getCohortMapping,
   createUserCohortMapping,
   updateUserCohortMapping,
@@ -96,15 +75,16 @@ const applySortFilter = (array, comparator, query) => {
 
 const UserCohortPage = () => {
   const { cohortId } = useParams();
+  const location = useLocation();
+  const orgId = location.state?.orgId;
+  const [orgUsers, setOrgUsers] = useState([]);
   const [file, setFile] = useState(null);
   const [response, setResponse] = useState(null);
   const [userCohortData, setUserCohortData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [cohortName, setCohortName] = useState('');
-  const [selectedRow, setSelectedRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
-  const [formValues, setFormValues] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
   const [filterName, setFilterName] = useState('');
@@ -118,14 +98,26 @@ const UserCohortPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [actionAnchorEl, setActionAnchorEl] = useState(null);
-
+  const [formValues, setFormValues] = useState({
+    userId: '',
+    cohortId: '',
+    leaderboardScore: '',
+  });
+  
   useEffect(() => {
     if (cohortId) {
       fetchUserCohortData(cohortId);
     }
   }, [cohortId]);
+
+  const fetchOrgUsers = async () => {
+    try {
+      const users = await getOrgUsers(orgId);
+      setOrgUsers(users);
+    } catch (error) {
+      showSnackbar('Failed to fetch organization users', 'error');
+    }
+  };
 
   const fetchUserCohortData = async (cohortId) => {
     setLoading(true);
@@ -148,17 +140,37 @@ const UserCohortPage = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const resetForm = () => {
+    setFormValues({
+      userId: '',
+      cohortId,
+      leaderboardScore: '',
+    });
+    setCurrentRecord(null);
+  };
+
   const handleCreateOrUpdate = async () => {
     try {
       if (currentRecord) {
-        await updateUserCohortMapping(currentRecord.userCohortId, formValues);
+        if (!formValues.leaderboardScore) {
+          showSnackbar('Leaderboard score is required for updates', 'error');
+          return;
+        }
+        await updateUserCohortMapping(currentRecord.userCohortId, {
+          ...formValues,
+          cohortId,
+        });
         showSnackbar('Record updated successfully');
       } else {
-        await createUserCohortMapping(formValues);
+        await createUserCohortMapping({
+          ...formValues,
+          cohortId,
+        });
         showSnackbar('Record created successfully');
       }
-      fetchUserCohortData(cohortId);
+      fetchUserCohortData();
       setIsModalOpen(false);
+      resetForm();
     } catch (error) {
       showSnackbar('Error saving data', 'error');
     }
@@ -226,8 +238,8 @@ const UserCohortPage = () => {
     setCurrentRecord(record);
     setFormValues({
       userId: record.userId,
-      cohortId: record.cohortId,
-      leaderboardScore: record.leaderboardScore,
+      cohortId,
+      leaderboardScore: record.leaderboardScore || '',
     });
     setIsModalOpen(true);
   };
@@ -279,6 +291,16 @@ const UserCohortPage = () => {
     setUserCohortData(sortedData);
   };
 
+  const handleOpenModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    resetForm();
+    setIsModalOpen(false);
+  };
+
   const openMenu = (event, userCohortId) => {
     setAnchorEl(event.currentTarget);
     setActiveRowId(userCohortId);
@@ -314,8 +336,7 @@ const UserCohortPage = () => {
         <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button
             variant="contained"
-            onClick={() => setIsModalOpen(true)}
-            style={{ marginRight: '10px' }}
+            onClick={handleOpenModal}
             startIcon={<Iconify icon="eva:plus-fill" />}
           >
             Add Learner to Cohort
@@ -368,16 +389,14 @@ const UserCohortPage = () => {
                         <TableCell>{row.userId}</TableCell>
                         <TableCell>{row.leaderboardScore}</TableCell>
                         <TableCell align="right">
-                          <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          {activeRowId === row.userCohortId && (
-                            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-                              <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem>
-                              <MenuItem onClick={() => handleDelete(row.userCohortId)}>Delete</MenuItem>
-                            </Menu>
-                          )}
-                        </TableCell>
+                        <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
+                  <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem>
+                  <MenuItem onClick={() => handleDelete(row.userCohortId)}>Delete</MenuItem>
+                </Menu>
+                            </TableCell>
                       </TableRow>
                     );
                   })}
@@ -424,7 +443,7 @@ const UserCohortPage = () => {
           message={selectedRowsMessage}
         />
       )}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal open={isModalOpen} onClose={handleCloseModal}>
         <Box
           sx={{
             position: 'absolute',
@@ -438,7 +457,7 @@ const UserCohortPage = () => {
           }}
         >
           <Typography variant="h6" gutterBottom>
-            {currentRecord ? 'Update Learner to Cohort' : 'Add Learner to Cohort'}
+            {currentRecord ? 'Update Learner' : 'Add Learner to Cohort'}
           </Typography>
           <form
             onSubmit={(e) => {
@@ -446,23 +465,38 @@ const UserCohortPage = () => {
               handleCreateOrUpdate();
             }}
           >
-            <TextField
-              label="User ID"
-              value={formValues.userId || ''}
-              onChange={(e) => setFormValues({ ...formValues, userId: e.target.value })}
-              fullWidth
-              margin="normal"
-              required
-            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Select User</InputLabel>
+              <Select
+                value={formValues.userId}
+                onChange={(e) => setFormValues({ ...formValues, userId: e.target.value })}
+                required
+                disabled={!!currentRecord}
+              >
+                {orgUsers.map((user) => (
+                  <MenuItem key={user.userId} value={user.userId}>
+                    {user.userName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <TextField
               label="Cohort ID"
-              value={formValues.cohortId || ''}
-              onChange={(e) => setFormValues({ ...formValues, cohortId: e.target.value })}
+              value={cohortId}
               fullWidth
               margin="normal"
-              required
+              disabled
             />
-            
+            <TextField
+              label="Leaderboard Score"
+              value={formValues.leaderboardScore}
+              onChange={(e) => setFormValues({ ...formValues, leaderboardScore: e.target.value })}
+              fullWidth
+              margin="normal"
+              required={!!currentRecord}
+              type="number"
+            />
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
               {currentRecord ? 'Update' : 'Create'}
             </Button>

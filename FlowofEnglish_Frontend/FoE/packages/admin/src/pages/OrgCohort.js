@@ -11,7 +11,7 @@ import MuiAlert from '@mui/material/Alert';
 
 import {
   Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
-  IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
+  IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
   Link} from '@mui/material';
 
 import Iconify from '../components/iconify';
@@ -23,8 +23,8 @@ import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
+  { id: 'cohortId', label: 'Cohort Id', alignRight: false },
   { id: 'cohortName', label: 'Cohort Name', alignRight: false },
-  { id: 'cohortId', label: 'cohortId', alignRight: false },
   { id: 'cohortStartDate', label: 'Start Date', alignRight: false },
   { id: 'cohortEndDate', label: 'End Date', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true }
@@ -97,6 +97,9 @@ function OrgCohort() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [formErrors, setFormErrors] = useState({});
   const [notification, setNotification] = useState({ open: false, message: '', type: 'success' });
+  const [loading, setLoading] = useState(true);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
   // Fetch cohorts on component mount
   useEffect(() => {
@@ -106,11 +109,14 @@ function OrgCohort() {
   }, [organizationId]);
 
   const fetchCohorts = async () => {
+    setLoading(true);
     try {
       const data = await getOrgCohorts(organizationId);
       setCohorts(data);
     } catch (error) {
       showNotification(error.response?.data?.message || 'Failed to fetch cohorts', 'error');
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -122,13 +128,32 @@ function OrgCohort() {
     setNotification({ ...notification, open: false });
   };
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.cohortName.trim()) errors.cohortName = 'Cohort name is required';
-    if (!formData.cohortId.trim()) errors.cohortId = 'Cohort ID is required';
-    if (!formData.cohortStartDate) errors.cohortStartDate = 'Start date is required';
-    return errors;
-  };
+const validateForm = () => {
+const errors = {};
+// Check if cohortName is empty
+if (!formData.cohortName.trim()) {errors.cohortName = 'Cohort name is required';}
+else { const cohortNamePattern = /^[A-Za-z]{4}.*$/;
+if (!cohortNamePattern.test(formData.cohortName)) {
+errors.cohortName = 'The first 4 characters must be letters';
+}
+}
+// Check if cohortStartDate is empty
+if (!formData.cohortStartDate) {
+errors.cohortStartDate = 'Start date is required';
+}
+// Validate end date if provided
+if (formData.cohortEndDate) {
+  if (new Date(formData.cohortEndDate) <= new Date(formData.cohortStartDate)) {
+    errors.cohortEndDate = 'End date must be greater than start date';
+  }
+}
+return errors;
+};
+// Enable Create Button Only When Form is Valid
+const isFormValid = () => {
+  const errors = validateForm();
+  return Object.keys(errors).length === 0;
+};
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -138,17 +163,39 @@ function OrgCohort() {
     }));
   };
 
-  
-  const handleCreateClick = () => {
-    setIsEditMode(false);
+  const handleOpenCreateDialog = () => {
     setFormData({
-      ...INITIAL_FORM_STATE,
-      organization: { organizationId }
+      cohortName: '',
+      cohortStartDate: '',
+      cohortEndDate: '',
+      organization: { organizationId },
     });
     setFormErrors({});
-    setOpen(true);
+    setIsEditMode(false);
+    setIsCreateDialogOpen(true);
+  };
+  
+  const handleOpenUpdateDialog = (row) => {
+    setFormData({
+      cohortId: row.cohortId,
+      cohortName: row.cohortName,
+      cohortStartDate: row.cohortStartDate ? format(new Date(row.cohortStartDate), 'yyyy-MM-dd') : '',
+      cohortEndDate: row.cohortEndDate ? format(new Date(row.cohortEndDate), 'yyyy-MM-dd') : '',
+      organization: { organizationId },
+    });
+    setFormErrors({});
+    setIsEditMode(true);
+    setIsUpdateDialogOpen(true);
   };
 
+// Update handleCloseDialogs function
+const handleCloseDialogs = () => {
+  setIsCreateDialogOpen(false);
+  setIsUpdateDialogOpen(false);
+  setIsEditMode(false);  // Reset edit mode
+  setFormData(INITIAL_FORM_STATE);
+  setFormErrors({});
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -165,9 +212,11 @@ function OrgCohort() {
         if (isEditMode) {
           await updateCohort(formData.cohortId, payload);
           showNotification('Cohort updated successfully', 'success');
+          setIsUpdateDialogOpen(false);
         } else {
           await createCohort(payload);
           showNotification('Cohort created successfully', 'success');
+          setIsCreateDialogOpen(false);
         }
         
         fetchCohorts();
@@ -182,19 +231,7 @@ function OrgCohort() {
       showNotification('Please fix the form errors', 'error');
     }
   };
-  
-  const handleEdit = (row) => {
-    setIsEditMode(true);
-    setFormData({
-      cohortId: row.cohortId,
-      cohortName: row.cohortName,
-      cohortStartDate: row.cohortStartDate ? format(new Date(row.cohortStartDate), 'yyyy-MM-dd') : '',
-      cohortEndDate: row.cohortEndDate ? format(new Date(row.cohortEndDate), 'yyyy-MM-dd') : '',
-      organization: { organizationId },
-    });
-    setFormErrors({});
-    setOpen(true);
-  };
+
 
   const handleDelete = async () => {
     try {
@@ -215,7 +252,7 @@ function OrgCohort() {
   };
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = cohorts.map((n) => n.cohortName);
+      const newSelected = cohorts.map((n) => n.cohortId);
       setSelected(newSelected);
     } else {
       setSelected([]);
@@ -267,7 +304,7 @@ function OrgCohort() {
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
-          <Button variant="contained" onClick={handleCreateClick} startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}>
             New Cohort
           </Button>
         </Stack>
@@ -276,6 +313,15 @@ function OrgCohort() {
           <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={(e) => setFilterName(e.target.value)} />
 
           <Scrollbar>
+          {loading ? (
+    <>
+    <CircularProgress/>
+      <Typography variant="h6" paragraph align="center">
+        Loading cohorts...
+      </Typography>
+    </>
+  ) : (
+    <>
             <TableContainer sx={{ minWidth: 800 }}>
               <Table>
                 <UserListHead
@@ -289,29 +335,29 @@ function OrgCohort() {
                 />
       <TableBody>
         {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-          const { cohortId, cohortName, cohortStartDate, cohortEndDate } = row;
-          const selectedCohort = selected.indexOf(cohortName) !== -1;
+          const { cohortId } = row;
+          const selectedCohort = selected.indexOf(cohortId) !== -1;
 
               return (
-              <TableRow hover key={row.cohortName} tabIndex={-1} role="checkbox" selected={selectedCohort} >
+              <TableRow hover key={row.cohortId} tabIndex={-1} role="checkbox" selected={selectedCohort} >
               <TableCell padding="checkbox">
-                <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortName)} />
+                <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortId)} />
               </TableCell>
               <TableCell component="th" scope="row" padding="none">
                 <Typography variant="subtitle2" noWrap>
                 <Link href ={`/admin/dashboard/user-cohort/${cohortId}`} color = "inherit" underline="hover" >
-                {cohortName}
+                {cohortId}
               </Link>
               
                 </Typography>
               </TableCell>
-              <TableCell align="left">{row.cohortId}</TableCell>
+              <TableCell align="left">{row.cohortName}</TableCell>
               <TableCell>
-                            {format(new Date(row.cohortStartDate), 'dd/MM/yyyy')}
-                          </TableCell>
-                          <TableCell>
-                            {row.cohortEndDate ? format(new Date(row.cohortEndDate), 'dd/MM/yyyy') : '-'}
-                          </TableCell>
+              {format(new Date(row.cohortStartDate), 'dd/MM/yyyy')}
+              </TableCell>
+              <TableCell>
+                {row.cohortEndDate ? format(new Date(row.cohortEndDate), 'dd/MM/yyyy') : '-'}
+              </TableCell>
               <TableCell align="right">
                 <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
                   <Iconify icon="eva:more-vertical-fill" />
@@ -340,6 +386,8 @@ function OrgCohort() {
                 )}
               </Table>
             </TableContainer>
+            </>
+            )}
           </Scrollbar>
 
           <TablePagination
@@ -354,66 +402,123 @@ function OrgCohort() {
         </Card>
       </Container>
 
-      {/* New/Edit Cohort Modal */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{isEditMode ? 'Edit Cohort' : 'Add New Cohort'}</DialogTitle>
-        <DialogContent>
-        <TextField
-            margin="normal"
-            label="CohortId"
-            name="cohortId"
-            value={formData.cohortId}
-            onChange={handleFormChange}
-            fullWidth
-            required
-            error={!!formErrors.cohortId}
-            helperText={formErrors.cohortId}
-          />
-          <TextField
-            margin="normal"
-            label="Cohort Name"
-            name="cohortName"
-            value={formData.cohortName}
-            onChange={handleFormChange}
-            fullWidth
-            required
-            error={!!formErrors.cohortName}
-            helperText={formErrors.cohortName}
-          />
-          <TextField
-            margin="normal"
-            label="Start Date"
-            name="cohortStartDate"
-            type="date"
-            value={formData.cohortStartDate}
-            onChange={handleFormChange}
-            fullWidth
-            required
-            error={!!formErrors.cohortStartDate}
-            helperText={formErrors.cohortStartDate}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            margin="normal"
-            label="End Date"
-            name="cohortEndDate"
-            type="date"
-            value={formData.cohortEndDate}
-            onChange={handleFormChange}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} disabled />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="secondary">
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} color="primary">
-            {isEditMode ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Create Cohort Modal */}
+  <Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs}>
+  <DialogTitle>Create New Cohort</DialogTitle>
+  <DialogContent>
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortName"
+      label="Cohort Name"
+      value={formData.cohortName}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortName}
+      helperText={formErrors.cohortName}
+      required
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortStartDate"
+      label="Start Date"
+      type="date"
+      InputLabelProps={{ shrink: true }}
+      value={formData.cohortStartDate}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortStartDate}
+      helperText={formErrors.cohortStartDate}
+      required
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortEndDate"
+      label="End Date"
+      type="date"
+      InputLabelProps={{ shrink: true }}
+      value={formData.cohortEndDate}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortEndDate}
+      helperText={formErrors.cohortEndDate}
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="organizationId"
+      label="Organization ID"
+      value={formData.organization.organizationId}
+      disabled
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDialogs}>Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained" disabled={!isFormValid()}>Create</Button>
+  </DialogActions>
+</Dialog>
+
+ {/* Update Cohort Modal */}
+<Dialog open={isUpdateDialogOpen} onClose={handleCloseDialogs}>
+  <DialogTitle>Update Cohort</DialogTitle>
+  <DialogContent>
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortId"
+      label="Cohort ID"
+      value={formData.cohortId}
+      disabled
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="organizationId"
+      label="Organization ID"
+      value={formData.organization.organizationId}
+      disabled
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortName"
+      label="Cohort Name"
+      value={formData.cohortName}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortName}
+      helperText={formErrors.cohortName}
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortStartDate"
+      label="Start Date"
+      type="date"
+      InputLabelProps={{ shrink: true }}
+      value={formData.cohortStartDate}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortStartDate}
+      helperText={formErrors.cohortStartDate}
+      disabled
+    />
+    <TextField
+      fullWidth
+      margin="normal"
+      name="cohortEndDate"
+      label="End Date"
+      type="date"
+      InputLabelProps={{ shrink: true }}
+      value={formData.cohortEndDate}
+      onChange={handleFormChange}
+      error={!!formErrors.cohortEndDate}
+      helperText={formErrors.cohortEndDate}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDialogs}>Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained">Update</Button>
+  </DialogActions>
+</Dialog>
+
 
       {/* Action Menu */}
       <Menu
@@ -423,9 +528,9 @@ function OrgCohort() {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={() => { handleEdit(selectedRow); handleCloseActionMenu(); }}>
+        <MenuItem onClick={() => { handleOpenUpdateDialog(selectedRow); handleCloseActionMenu(); }}>
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
-          Edit
+          Update
         </MenuItem>
         <MenuItem onClick={() => { setIsConfirmOpen(true); handleCloseActionMenu(); }}>
           <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
