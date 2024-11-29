@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.UserCohortMappingDTO;
+import com.FlowofEnglish.dto.UserCohortMappingRequest;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,14 +41,18 @@ public class UserCohortMappingController {
 
     // POST (create) a new user-cohort mapping
     @PostMapping("/create")
-    public ResponseEntity<String> createUserCohortMapping(@RequestParam String userId, @RequestParam String cohortId) {
+    public ResponseEntity<UserCohortMapping> createUserCohortMapping(@RequestBody Map<String, String> request) {
+        String userId = request.get("userId");
+        String cohortId = request.get("cohortId");
         try {
-            userCohortMappingService.createUserCohortMapping(userId, cohortId);
-            return ResponseEntity.ok("User-Cohort mapping created successfully.");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            UserCohortMapping createdMapping = userCohortMappingService.createUserCohortMapping(userId, cohortId);
+            return ResponseEntity.ok(createdMapping);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(null);
         }
-    }
+    }    
     
     @PostMapping("/bulkcreate")
     public ResponseEntity<Map<String, List<String>>> importUserCohortMappings(@RequestParam("file") MultipartFile file) {

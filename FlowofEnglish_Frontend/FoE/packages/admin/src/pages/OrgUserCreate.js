@@ -1,16 +1,24 @@
-import React, { useEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
-import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
+import React, { useEffect, useState } from 'react';
 import { CSVLink } from "react-csv";
+import { Helmet } from 'react-helmet-async';
+import ReactPhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/bootstrap.css';
 import { useParams } from 'react-router-dom';
 
+
 // Material UI Imports
-import {
-  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, Menu, MenuItem,
-  IconButton, Link, Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, Tooltip,
-  TableRow, TextField, Typography} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle,
+  IconButton, Link,
+  Menu, MenuItem,
+  Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination,
+  TableRow, TextField,
+  Tooltip,
+  Typography
+} from '@mui/material';
 
 // Custom Components
 import Iconify from '../components/iconify';
@@ -23,6 +31,7 @@ import {
   createUsers,
   deleteUser,
   deleteUsers,
+  getOrgCohorts,
   getOrgUsers,
   updateUser
 } from '../api';
@@ -76,8 +85,13 @@ const OrgUserCreate = () => {
   // State Management
   const { id } = useParams();
   const [users, setUsers] = useState([]);
+  const [cohorts, setCohorts] = useState([]);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
@@ -89,6 +103,7 @@ const OrgUserCreate = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const [userId, setUserId] = React.useState('');
   const [userName, setUserName] = React.useState('');
   const [userEmail, setUserEmail] = React.useState('');
@@ -96,17 +111,12 @@ const OrgUserCreate = () => {
   const [userAddress, setUserAddress] = React.useState('');
   const [userType, setUserType] = React.useState('');
   const [userPassword, setUserPassword] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [organizationId, setOrganizationId] = React.useState(id);
   const [cohortId, setCohortId] = React.useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
   const [isFormValid, setIsFormValid] = React.useState(false);
   
 
-  // Notification State
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-
+  
   useEffect(() => {
     fetchUsers();
   }, [organizationId]);
@@ -143,6 +153,27 @@ React.useEffect(() => {
   setIsFormValid(isValid);
 }, [userId, userName, userType, organizationId, cohortId]);
 
+// Function to validate phone number (optional)
+const validatePhoneNumber = (phone) => {
+  return /^[0-9]{10}$/.test(phone); // Adjust validation as needed
+};
+const handlePhoneNumberChange = (value) => {
+  // Strip out the country code and ensure only the 10-digit number is used
+  const strippedPhone = value.replace(/[^0-9]/g, ''); // Removes all non-numeric characters
+  setUserPhoneNumber(strippedPhone);
+};
+
+const resetFormState = () => {
+  setUserId('');
+  setUserName('');
+  setUserEmail('');
+  setUserPhoneNumber('');
+  setUserAddress('');
+  setUserType('');
+  setCohortId('');
+  setSelectedUserId(null);
+};
+
 const handleCreateUser = async () => {
   const newUser = {
       user: {
@@ -157,16 +188,58 @@ const handleCreateUser = async () => {
       cohortId
   };
   try {
-    await createUser(newUser);
-    setSnackbarMessage('User created successfully');
-    setOpenSnackbar(true);
+    const response = await createUser(newUser);
+      if (response?.success) {
+        showNotification('User created successfully');
+        fetchUsers();
+        resetFormState();
+        setOpenCreateDialog(false);
+      } else {
+        showNotification('Error creating user');
+      }
+    } catch (error) {
+      showNotification('Error creating user');
+    }
+  };
+
+  const handleOpenCreateDialog = () => {
+    resetFormState();
+    setSelectedUserId(null);
+    setOpenCreateDialog(true);
+  };
+
+  const handleCloseCreateDialog = () => {
+    resetFormState(); // Reset form state when closing dialog
+    setSelectedUserId(null);
     setOpenCreateDialog(false);
-    fetchUsers();
-} catch (error) {
-    setSnackbarMessage('Error creating user');
-    setOpenSnackbar(true);
-}
-};
+  };
+// Fetch cohorts when component mounts or organization ID changes
+useEffect(() => {
+  const fetchCohorts = async () => {
+    try {
+      const response = await getOrgCohorts(organizationId);
+      if (response) {
+        setCohorts(response);
+      }
+    } catch (error) {
+      console.error("Error fetching cohorts:", error);
+      showNotification('Error fetching cohorts');
+    }
+  };
+
+  if (organizationId) {
+    fetchCohorts();
+  }
+}, [organizationId]);
+
+
+
+// Use the ID from URL params to set organization ID initially
+useEffect(() => {
+  if (id) {
+    setOrganizationId(id);
+  }
+}, [id]);
 
   const handleUpdateUser = async () => {
     const updatedUser = {
@@ -180,18 +253,41 @@ const handleCreateUser = async () => {
         organization: { organizationId }
     };
     try {
-      await updateUser(selectedUserId, updatedUser);
-      setSnackbarMessage('User updated successfully');
-      setOpenSnackbar(true);
-      setOpenUpdateDialog(false);
-      fetchUsers();
-  } catch (error) {
+      const response = await updateUser(selectedUserId, updatedUser);
+      if (response?.success) {
+        setSnackbarMessage('User updated successfully');
+        fetchUsers();
+        resetFormState();
+        setOpenUpdateDialog(false);
+      } else {
+        setSnackbarMessage('Error updating user');
+      }
+    } catch (error) {
       setSnackbarMessage('Error updating user');
+    } finally {
       setOpenSnackbar(true);
-  }
-};
+    }
+  };
+
+  const handleOpenUpdateDialog = (user) => {
+    setSelectedUserId(user.userId);
+    setUserId(user.userId);
+    setUserName(user.userName);
+    setUserEmail(user.userEmail);
+    setUserPhoneNumber(user.userPhoneNumber);
+    setUserAddress(user.userAddress);
+    setUserType(user.userType);
+    setUserPassword(user.userPassword);
+    setOpenUpdateDialog(true);
+  };
+
+  const handleCloseUpdateDialog = () => {
+    resetFormState();
+    setOpenUpdateDialog(false);
+  };
 
 const openMenu = (event, user) => {
+  resetFormState();
   setSelectedUserId(user.userId);
   setUserId(user.userId);
   setUserName(user.userName);
@@ -289,6 +385,23 @@ const confirmDelete = async () => {
     setSnackbarMessage(message);
     setOpenSnackbar(true);
   };
+
+  const formatUserDataForExport = (users) => {
+    return users.map(user => ({
+      userId: user.userId,
+      userName: user.userName,
+      userPhoneNumber: user.userPhoneNumber || '',
+      userAddress: user.userAddress,
+      userType: user.userType,
+      userEmail: user.userEmail || '',
+      organizationId: user.organization?.organizationId || '',
+      cohortId: user.cohort?.cohortId || '',
+      cohortName: user.cohort?.cohortName || '',
+      programId: user.program?.programId || '',
+      programName: user.program?.programName || '',
+    }));
+  };
+  
 
   const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
   const isNotFound = !filteredUsers.length && !!filterName;
@@ -457,6 +570,17 @@ const confirmDelete = async () => {
             variant="contained"
             onClick={() => setOpenCreateDialog(true)}
             startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Create Learner
           </Button>
@@ -464,12 +588,34 @@ const confirmDelete = async () => {
             variant="contained"
             component="label"
             startIcon={<Iconify icon="eva:upload-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Upload CSV
             <input type="file" hidden onChange={(e) => handleBulkCreate(e.target.files[0])} />
           </Button>
-          <CSVLink data={users} filename="users.csv">
-            <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}>
+          <CSVLink data={formatUserDataForExport(users)} filename="users.csv">
+            <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}>
               Export Learners
             </Button>
           </CSVLink>
@@ -478,46 +624,64 @@ const confirmDelete = async () => {
         {renderTable()}
         {renderActionMenu()}
 
-        {/* Create User Dialog */}
-        <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
-                <DialogTitle>Create Learner</DialogTitle>
-                <DialogContent>
-                    <TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} required/>
-                    <TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} required />
-                    <TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }}  />
-                    <TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }}  />
-                    <TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
-                      <MenuItem value="Teacher">Teacher</MenuItem>
-                      <MenuItem value="Student">Student</MenuItem>
-                    </TextField>
-                    <TextField label="Organization ID" fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} required />
-                    <TextField label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenCreateDialog(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
-                </DialogActions>
-            </Dialog>
+{/* Create User Dialog */}
+<Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
+<DialogTitle>Create Learner</DialogTitle>
+<DialogContent>
+<TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} required/>
+<TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} required />
+<TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }}  />
+{/* <TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }}  /> */}
+{/* Phone Input */}
+<ReactPhoneInput
+        country={'in'}
+        enableSearch
+        value={userPhoneNumber}
+        onChange={(handlePhoneNumberChange) => setUserPhoneNumber(handlePhoneNumberChange)}
+        inputStyle={{ width: '100%' }}
+      />
+      {!validatePhoneNumber(userPhoneNumber) && (
+        <Typography color="error" variant="caption">
+          Please enter a valid phone number.
+        </Typography>)}
+<TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
+<MenuItem value="Teacher">Teacher</MenuItem>
+<MenuItem value="Learner">Student</MenuItem>
+</TextField>
+<TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} required disabled />
+<TextField select label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required >
+{cohorts.map((cohort) => (
+<MenuItem key={cohort.cohortId} value={cohort.cohortId}>
+{cohort.cohortName} ({cohort.cohortId})
+</MenuItem>
+))}
+</TextField>
+</DialogContent>
+<DialogActions>
+<Button onClick={handleCloseCreateDialog} color="primary">Cancel</Button>
+<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
+</DialogActions>
+</Dialog>
 
-        {/* Update User Dialog */}
-      <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
-                <DialogTitle>Update Learner</DialogTitle>
-                <DialogContent>
-                    <TextField label="User ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="User Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} />
-                    <TextField label="Organization ID" fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} />
-                </DialogContent>
-                <DialogActions>
-                <Button onClick={() => setOpenUpdateDialog(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleUpdateUser} color="primary">Update</Button>
-                </DialogActions>
-            </Dialog>
+{/* Update User Dialog */}
+<Dialog open={openUpdateDialog} onClose={handleCloseUpdateDialog}>
+<DialogTitle>Update Learner</DialogTitle>
+<DialogContent>
+<TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
+</DialogContent>
+<DialogActions>
+<Button onClick={handleCloseUpdateDialog}>Cancel</Button>
+<Button onClick={handleUpdateUser} disabled={!userName}>Update</Button>
+</DialogActions>
+</Dialog>
 
         <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
           <StyledCard>

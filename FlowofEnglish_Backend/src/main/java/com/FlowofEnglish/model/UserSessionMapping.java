@@ -1,9 +1,7 @@
 package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,11 +14,11 @@ public class UserSessionMapping {
     private String sessionId;  
 
     @Column(name = "session_end_timestamp", nullable = true)
-    private LocalDateTime sessionEndTimestamp;
+    private OffsetDateTime sessionEndTimestamp;
 
     @Column(name = "session_start_timestamp", nullable = false, updatable = false)
     @CreationTimestamp
-    private LocalDateTime sessionStartTimestamp;
+    private OffsetDateTime sessionStartTimestamp;
     
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
@@ -36,17 +34,20 @@ public class UserSessionMapping {
     // Default constructor
     public UserSessionMapping() {}
 
-    public UserSessionMapping(String sessionId, LocalDateTime sessionEndTimestamp, 
-            LocalDateTime sessionStartTimestamp, String uuid, Cohort cohort, User user) {
-        this.sessionId = sessionId;
-        this.sessionEndTimestamp = sessionEndTimestamp;
-        this.sessionStartTimestamp = sessionStartTimestamp;
-        this.uuid = uuid;
-        this.cohort = cohort;
-        this.user = user;
-    }
+    // Paralized constructor
+    public UserSessionMapping(String sessionId, OffsetDateTime sessionEndTimestamp,
+			OffsetDateTime sessionStartTimestamp, String uuid, Cohort cohort, User user) {
+		super();
+		this.sessionId = sessionId;
+		this.sessionEndTimestamp = sessionEndTimestamp;
+		this.sessionStartTimestamp = sessionStartTimestamp;
+		this.uuid = uuid;
+		this.cohort = cohort;
+		this.user = user;
+	}
 
-    // Getters and Setters
+
+	// Getters and Setters
     public String getSessionId() {
         return sessionId;
     }
@@ -55,23 +56,23 @@ public class UserSessionMapping {
         this.sessionId = sessionId;
     }
 
-    public LocalDateTime getSessionEndTimestamp() {
-        return sessionEndTimestamp;
-    }
+    public OffsetDateTime getSessionEndTimestamp() {
+		return sessionEndTimestamp;
+	}
 
-    public void setSessionEndTimestamp(LocalDateTime sessionEndTimestamp) {
-        this.sessionEndTimestamp = sessionEndTimestamp;
-    }
+	public void setSessionEndTimestamp(OffsetDateTime sessionEndTimestamp) {
+		this.sessionEndTimestamp = sessionEndTimestamp;
+	}
 
-    public LocalDateTime getSessionStartTimestamp() {
-        return sessionStartTimestamp;
-    }
+	public OffsetDateTime getSessionStartTimestamp() {
+		return sessionStartTimestamp;
+	}
 
-    public void setSessionStartTimestamp(LocalDateTime sessionStartTimestamp) {
-        this.sessionStartTimestamp = sessionStartTimestamp;
-    }
+	public void setSessionStartTimestamp(OffsetDateTime sessionStartTimestamp) {
+		this.sessionStartTimestamp = sessionStartTimestamp;
+	}
 
-    public String getUuid() {
+	public String getUuid() {
         return uuid;
     }
 
@@ -107,15 +108,6 @@ public class UserSessionMapping {
             System.out.println("Session ID generated: " + this.sessionId);
         }
     }
-
- // Utility method to get IST timestamps
-    public ZonedDateTime getSessionStartTimestampInIST() {
-        return sessionStartTimestamp != null ? sessionStartTimestamp.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Kolkata")) : null;
-    }
-
-    public ZonedDateTime getSessionEndTimestampInIST() {
-        return sessionEndTimestamp != null ? sessionEndTimestamp.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Kolkata")) : null;
-    }
     
-    
+ 
 }
