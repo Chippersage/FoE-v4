@@ -304,7 +304,18 @@ const handleCloseDialogs = () => {
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
-          <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
+          sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>
             New Cohort
           </Button>
         </Stack>
@@ -345,7 +356,7 @@ const handleCloseDialogs = () => {
               </TableCell>
               <TableCell component="th" scope="row" padding="none">
                 <Typography variant="subtitle2" noWrap>
-                <Link href ={`/admin/dashboard/user-cohort/${cohortId}`} color = "inherit" underline="hover" >
+                <Link href ={`/admin/dashboard/user-cohort/${organizationId}/${cohortId}`} color = "inherit" underline="hover" >
                 {cohortId}
               </Link>
               

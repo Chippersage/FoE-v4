@@ -41,7 +41,7 @@ export default function AccountPopover() {
     // Fetch organization details on component mount
     if (userType === 'orgAdmin' || orgId) {
       getOrg(orgId).then((res) => {
-        console.log(res);
+       // console.log(res);
         setOrgDetails(res);
       });
     }
