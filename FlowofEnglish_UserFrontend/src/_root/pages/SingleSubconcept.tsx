@@ -88,8 +88,8 @@ const SingleSubconcept = () => {
       subconcept?.subconceptType === "passage" ? (
         <iframe
           id="embeddedContent"
-          // src={subconcept.subconceptLink}
-          src={"/Grammar/nouns/stage0/collective-1.html"}
+          src={subconcept.subconceptLink}
+          // src={"/Sentences/readAndRespond/stage0/bird.html"}
           title="Embedded Content"
           width="100%"
           height="800px"
