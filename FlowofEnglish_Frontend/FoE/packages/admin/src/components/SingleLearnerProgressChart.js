@@ -132,7 +132,11 @@ const UserProgressCharts = ({ data }) => {
             </ChartWrapper>
           </Grid>
         </Grid>
+        <Typography variant="body2" color="textSecondary" align="center" sx={{ marginTop: 2 }}>
+          Leaderboard Score: {data.leaderboardScore}
+        </Typography>
       </CardContent>
+      
     </StyledCard>
   );
 };
