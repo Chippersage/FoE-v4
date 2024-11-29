@@ -71,7 +71,7 @@ export default function WelcomeModal(
           <div className="mt-6">
             <button
               onClick={handleClose}
-              className={`w-full bg-[#F67D0A] hover:bg-[#DB5788] text-white font-semibold py-2 px-4 rounded transition-all duration-300 transform ${
+              className={`w-full bg-[#5BC3CD] hover:bg-[#DB5788] text-white font-semibold py-2 px-4 rounded transition-all duration-300 transform ${
                 isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
             >

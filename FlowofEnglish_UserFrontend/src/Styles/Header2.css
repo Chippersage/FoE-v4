@@ -1,22 +1,64 @@
 .header2 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 25px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: bold;
-    color: #464343;
-    margin-top: 25px;
-    margin-left: 15px;
-    background: white;
-    padding: 10px;
-    width: 98%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-    height: 55px;
-    background: rgb(221, 227, 234);
-    position: fixed;
-  }
-  .hellohead {
-    font-weight: bold;
-  }
-  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  color: #464343;
+  background: #64CE80;
+  padding: 10px 20px;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5);
+  height: 55px;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-left,
+.header-center,
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-center {
+  flex: 1;
+  justify-content: center;
+  display: flex;
+}
+
+.header-right {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.home-icon {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.welcome-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #262525;
+}
+
+.program-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #262525;
+  text-align: center;
+}
+
+.logout-icon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
