@@ -81,8 +81,6 @@ const applySortFilter = (array, comparator, query) => {
   return stabilizedThis.map((el) => el[0]);
 };
 
-const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone);
-
 const OrgUserCreate = () => {
   // State Management
   const { id } = useParams();
@@ -392,13 +390,15 @@ const confirmDelete = async () => {
     return users.map(user => ({
       userId: user.userId,
       userName: user.userName,
-      userPhoneNumber: user.userPhoneNumber || '', // Handle cases where phone number might be null/undefined
+      userPhoneNumber: user.userPhoneNumber || '',
       userAddress: user.userAddress,
       userType: user.userType,
-      userEmail: user.userEmail || '', // Handle cases where email might be null/undefined
-      organizationId: user.organization?.organizationId || '', // Safely access organizationId
-      cohortId: user.cohort?.cohortId || '', // Safely access cohortId
-      programId: user.program?.programId || '', // Safely access programId
+      userEmail: user.userEmail || '',
+      organizationId: user.organization?.organizationId || '',
+      cohortId: user.cohort?.cohortId || '',
+      cohortName: user.cohort?.cohortName || '',
+      programId: user.program?.programId || '',
+      programName: user.program?.programName || '',
     }));
   };
   
@@ -570,6 +570,17 @@ const confirmDelete = async () => {
             variant="contained"
             onClick={() => setOpenCreateDialog(true)}
             startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Create Learner
           </Button>
@@ -577,12 +588,34 @@ const confirmDelete = async () => {
             variant="contained"
             component="label"
             startIcon={<Iconify icon="eva:upload-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Upload CSV
             <input type="file" hidden onChange={(e) => handleBulkCreate(e.target.files[0])} />
           </Button>
           <CSVLink data={formatUserDataForExport(users)} filename="users.csv">
-            <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}>
+            <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}>
               Export Learners
             </Button>
           </CSVLink>
