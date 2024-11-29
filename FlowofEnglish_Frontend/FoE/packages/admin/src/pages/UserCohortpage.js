@@ -76,7 +76,8 @@ const applySortFilter = (array, comparator, query) => {
 const UserCohortPage = () => {
   const { cohortId } = useParams();
   const location = useLocation();
-  const orgId = location.state?.orgId;
+  const { organizationId } = useParams();
+  const orgId = organizationId || location.state?.organizationId || 'defaultOrgId';
   const [orgUsers, setOrgUsers] = useState([]);
   const [file, setFile] = useState(null);
   const [response, setResponse] = useState(null);
@@ -105,20 +106,45 @@ const UserCohortPage = () => {
   });
   
   useEffect(() => {
+  //  console.log('Organization ID from useLocation or default:', orgId);
+    if (orgId) {
+      fetchOrgUsers();
+    } else {
+  //    console.warn('Organization ID is not defined. Unable to fetch organization users.');
+    }
+  }, [orgId]);
+  
+  const fetchOrgUsers = async () => {
+    if (!orgId) {
+      showSnackbar('Organization ID is missing', 'error');
+    //  console.error('fetchOrgUsers: Organization ID is undefined or invalid.');
+      return;
+    }
+  
+   // console.log('Fetching organization users for Organization ID:', orgId);
+    try {
+      const users = await getOrgUsers(orgId);
+      if (users) {
+     //   console.log('Fetched Organization Users:', users);
+        setOrgUsers(users);
+      } else {
+    //    console.warn('No users found for Organization ID:', orgId);
+        showSnackbar('No users found for this organization', 'warning');
+      }
+    } catch (error) {
+      console.error('Error fetching organization users:', error);
+      showSnackbar('Failed to fetch organization users', 'error');
+    }
+  };
+  
+  
+  useEffect(() => {
     if (cohortId) {
       fetchUserCohortData(cohortId);
     }
   }, [cohortId]);
 
-  const fetchOrgUsers = async () => {
-    try {
-      const users = await getOrgUsers(orgId);
-      setOrgUsers(users);
-    } catch (error) {
-      showSnackbar('Failed to fetch organization users', 'error');
-    }
-  };
-
+  
   const fetchUserCohortData = async (cohortId) => {
     setLoading(true);
     try {
@@ -323,7 +349,7 @@ const UserCohortPage = () => {
   return (
     <>
       <Helmet>
-        <title> Cohort | Chipper Sage </title>
+        <title> Cohort | ChipperSage </title>
       </Helmet>
 
       <Container>
@@ -480,7 +506,6 @@ const UserCohortPage = () => {
                 ))}
               </Select>
             </FormControl>
-
             <TextField
               label="Cohort ID"
               value={cohortId}
@@ -488,15 +513,7 @@ const UserCohortPage = () => {
               margin="normal"
               disabled
             />
-            <TextField
-              label="Leaderboard Score"
-              value={formValues.leaderboardScore}
-              onChange={(e) => setFormValues({ ...formValues, leaderboardScore: e.target.value })}
-              fullWidth
-              margin="normal"
-              required={!!currentRecord}
-              type="number"
-            />
+            
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
               {currentRecord ? 'Update' : 'Create'}
             </Button>

@@ -43,9 +43,9 @@ export default function DashboardOrgClientPage() {
 
       // Fetch session mappings for each user
       const fetchMappings = fetchedUsers.map(async (user) => {
-        console.log('Fetching session mappings for user:', user.userId);
+      //  console.log('Fetching session mappings for user:', user.userId);
         const sessionMappings = await getUserSessionMappingsByUserId(user.userId);
-        console.log(`Session Mappings for user ${user.userId}:`, sessionMappings);
+      //  console.log(`Session Mappings for user ${user.userId}:`, sessionMappings);
         const lastSession = sessionMappings?.[0];
         return {
           ...user,

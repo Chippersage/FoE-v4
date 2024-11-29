@@ -64,7 +64,7 @@ export default function DashboardClientPage() {
         <Grid container justifyContent="space-between" spacing={4}>
           <Grid item xs={12} sm={6} md={4}>
             <Typography variant="h4" sx={{ mb: 5 }}>
-              Welcome back, {orgDetails.organizationName}!
+              Welcome {orgDetails.organizationName}!
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
