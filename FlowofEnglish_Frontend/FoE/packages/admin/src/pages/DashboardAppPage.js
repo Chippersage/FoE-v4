@@ -84,7 +84,7 @@ export default function DashboardAppPage() {
 
       <Container maxWidth="xl">
         <Typography variant="h4" sx={{ mb: 5 }}>
-          Hi, Welcome back
+          Hi, Welcome
         </Typography>
 
         <Grid container spacing={3}>
@@ -118,7 +118,7 @@ export default function DashboardAppPage() {
             total={programs.length} 
             color="error" 
             icon={'ant-design:flag-outlined'}
-             />
+            />
           </Grid>
 
           <Grid item xs={12} md={6} lg={8}>

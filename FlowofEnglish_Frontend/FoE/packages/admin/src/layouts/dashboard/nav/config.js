@@ -6,7 +6,7 @@ import { useUser } from '../../../UserContext';
 const icon = (name) => <SvgColor src={`/admin/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
 
 const getNavConfig = () => {
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
   const { userType } = useUser();
   const { orgId } = useUser();
 
@@ -74,7 +74,7 @@ const getNavConfig = () => {
           icon: icon('ic_program'),
         },
       {
-        title: 'Organisation Report',
+        title: 'Organisation Reports',
         path: `/org-dashboards/${orgId}/orgreport`,
         icon: icon('ic_report'),
       },

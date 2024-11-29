@@ -260,17 +260,17 @@ export async function getUserCohortMappings() {
 }
 
 export async function getCohortMapping(cohortId) {
-  console.log("Cohort ID received:", cohortId); // Log the received cohortId
+  // console.log("Cohort ID received:", cohortId); // Log the received cohortId
   
   try {
     const response = await axios.get(`${apiUrl}/user-cohort-mappings/cohort/${cohortId}`);
     
-    console.log("Response received for Cohort ID:", cohortId); // Log the response for the given cohortId
-    console.log("Response data:", response.data); // Log the actual response data
+    // console.log("Response received for Cohort ID:", cohortId); // Log the response for the given cohortId
+    // console.log("Response data:", response.data); // Log the actual response data
     
     return response.data;
   } catch (error) {
-    console.error("Error fetching UserCohortMapping:", error); 
+    // console.error("Error fetching UserCohortMapping:", error);
   }
   
   return null; // In case of error, return null
