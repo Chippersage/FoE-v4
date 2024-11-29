@@ -15,12 +15,15 @@ import Camera from "@/components/Camera";
 import Speaker from "@/components/Speaker";
 import Picture from "@/components/Picture";
 import ReadAlongBook from "@/components/ReadAlongBook";
+import Start from "@/components/Start";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Header2 from "@/components/Header2";
 import { useUserContext } from "@/context/AuthContext";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import Finish from "@/components/Finish";
 
 interface Subconcept {
   subconceptId: string;
@@ -61,6 +64,8 @@ export default function SubConceptsPage() {
   const pathWidth = 1000; // Total width of the SVG
   const pathHeight = 400; // Total height of the SVG
   const rowHeight = pathHeight / 2; // Height of each row
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [audioPlaying, setAudioPlaying] = useState(false);
   
 
   const fetchSubconcepts = async () => {
@@ -136,6 +141,14 @@ export default function SubConceptsPage() {
     return { x: point.x, y: point.y };
   };
 
+   const handleFinishClick = () => {
+     setShowConfetti(true); // Trigger confetti animation
+     setAudioPlaying(true); // Play audio
+     setTimeout(() => {
+       setShowConfetti(false); // Hide confetti after 5 seconds
+     }, 5000);
+   };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -148,21 +161,49 @@ export default function SubConceptsPage() {
     <>
       <Header2 />
       <div
-        className="w-full overflow-scroll custom-scrollbar-2 mt-36"
-        style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
+        className="w-full overflow-scroll custom-scrollbar-2"
+        // style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
+        style={{ backgroundImage: `url('/images/index.png')`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}
       >
+        {/* Confetti Animation */}
+        {showConfetti && (
+          <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 bg-black">
+            <DotLottieReact
+              src="/animation.lottie"
+              loop
+              autoplay
+              style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
+            />
+            <div className="absolute bg-white p-6 rounded shadow-lg text-center">
+              <h2 className="text-2xl font-bold text-green-500">
+                Congratulations!
+              </h2>
+              <p>You have unlocked the next unit!</p>
+            </div>
+          </div>
+        )}
+
+        {/* Audio Element */}
+        {audioPlaying && (
+          <audio
+            src="/youaresuperb.mp3"
+            autoPlay
+            onEnded={() => setAudioPlaying(false)}
+          />
+        )}
+
         <svg
-          className="w-full h-auto"
+          className="w-full h-auto mt-10"
           viewBox={`0 0 ${pathWidth} ${pathWidth}`}
           preserveAspectRatio="xMinYMin meet"
         >
-        <path
-              d={getPath()}
-              fill="none"
-              stroke="#4CAF50"
-              strokeWidth="3"
-              className="curve-path"
-            />
+          <path
+            d={getPath()}
+            fill="none"
+            stroke="#4CAF50"
+            strokeWidth="3"
+            className="curve-path"
+          />
 
           {[...Array(totalSteps)].map((_, index) => {
             const point = getPointOnPath(index / (totalSteps - 1));
@@ -175,8 +216,8 @@ export default function SubConceptsPage() {
               ? iconMap[subconcept.subconceptType as keyof typeof iconMap] ||
                 PenTool
               : index === 0
-              ? Play
-              : Flag;
+              ? Start
+              : Finish;
 
             const isCompleted =
               subconcept && subconcept.completionStatus === "yes";
@@ -219,20 +260,26 @@ export default function SubConceptsPage() {
                       rx="2"
                       ry="2"
                       fill={
-                        index === 0 ||
-                        index === totalSteps - 1 ||
-                        subconcept?.completionStatus === "incomplete"
-                          ? "#2196F3"
-                          : "#fff"
+                        // index === 0 ||
+                        // index === totalSteps - 1 ||
+                        index === 0 || index === totalSteps - 1
+                          ? "transparent" // No background for first and last steps
+                          : subconcept?.completionStatus === "incomplete"
+                          ? "#2196F3" // Blue for incomplete steps
+                          : "#fff" // White for completed steps
                       } // This removes the fill color
                       stroke={
-                        isEnabled
+                        (index === 0 || index === totalSteps - 1)
+                        ? "none"
+                        : isEnabled
                           ? isCompleted
                             ? "#4CAF50" // Outline color when completed
                             : "#2196F3" // Outline color when enabled but not completed
                           : "#9E9E9E" // Outline color when not enabled
                       }
                       strokeWidth="2"
+                      // @ts-ignore
+                      onClick={index === totalSteps - 1 && handleFinishClick}
                     />
 
                     <Icon
@@ -270,7 +317,7 @@ export default function SubConceptsPage() {
                 {activeTooltip === index && (
                   <foreignObject
                     x={point.x - 100}
-                    y={point.y - 60}
+                    y={point.y + 20}
                     width="200"
                     height="40"
                   >

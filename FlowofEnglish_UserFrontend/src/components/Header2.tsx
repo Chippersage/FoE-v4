@@ -38,31 +38,40 @@ const Header2 = () => {
   };
 
   return (
-    <div className="page-row header2 mt-20">
-      <img
-        src={"/images/home.png"} 
-        alt="Home"
-        onClick={() => navigate("/")}
-        style={{ width: "28px", height: "28px", cursor: "pointer", marginRight: "10px" }}
-        title="Go to Home"
-      />
-      <h3
-        className="hellohead"
-        style={{ fontSize: "18px", fontWeight: 600, color: "#262525" }}
-      >
-        {user ? `Hello, ${user.userName}` : "Hello, Guest"}
-      </h3>
-      <h3
-        className="hellohead mx-auto"
-        style={{ fontSize: "18px", fontWeight: "bold", color: "#262525" }}
-      >
-        {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
-        {/* Show "Continue as Guest" if user is null */}
-      </h3>
-      <div className="logout-button">
+    <div className="header2 mt-[66px]">
+      <div className="flex items-center justify-start flex-1">
+        <img
+          src={"/icons/User-icons/home-icon.png"}
+          alt="Home"
+          onClick={() => navigate("/")}
+          style={{
+            width: "28px",
+            height: "28px",
+            cursor: "pointer",
+            marginRight: "10px",
+          }}
+          title="Go to Home"
+        />
+        <h3
+          className="hellohead"
+          style={{ fontSize: "18px", fontWeight: 600, color: "#FFFFFF" }}
+        >
+          {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
+        </h3>
+      </div>
+      <div className="flex flex-1">
+        <h3
+          className="hellohead mx-auto "
+          style={{ fontSize: "18px", fontWeight: "bold", color: "#FFFFFF" }}
+        >
+          {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
+          {/* Show "Continue as Guest" if user is null */}
+        </h3>
+      </div>
+      <div className="logout-button flex-1 flex justify-end">
         {user && (
           <img
-            src={"/images/log-out.png"} // Set the source to the logout image
+            src={"/icons/User-icons/exit.png"} // Set the source to the logout image
             alt="Logout"
             className="logout-icon"
             onClick={handleLogout} // Attach the logout handler to the image
