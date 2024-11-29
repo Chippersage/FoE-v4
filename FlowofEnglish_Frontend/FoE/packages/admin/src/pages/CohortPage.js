@@ -212,7 +212,18 @@ function CohortPage() {
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
-          <Button variant="contained" onClick={() => setOpen(true)} startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button variant="contained" onClick={() => setOpen(true)} startIcon={<Iconify icon="eva:plus-fill" />}
+          sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>
             New Cohort
           </Button>
         </Stack>
@@ -254,7 +265,18 @@ function CohortPage() {
               <TableCell align="left">{cohortStartDate}</TableCell>
               <TableCell align="left">{cohortEndDate}</TableCell>
               <TableCell align="right">
-                <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
+                <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}
+                  sx={{
+                    bgcolor: '#5bc3cd', // Default background color
+                    color: 'white', // Text color
+                    fontWeight: 'bold', // Font weight
+                    '&:hover': {
+                      bgcolor: '#DB5788', // Hover background color
+                    },
+                    py: 1.5, // Padding Y
+                    px: 2, // Padding X
+                    borderRadius: '8px', // Border radius
+                  }}>
                   <Iconify icon="eva:more-vertical-fill" />
                 </IconButton>
               </TableCell>

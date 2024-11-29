@@ -6,6 +6,7 @@ import { CSVLink } from "react-csv";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Iconify from '../components/iconify';
 
 import { createUser, createUsers, deleteUser, deleteUsers, getUsers, updateUser } from '../api';
 
@@ -171,6 +172,21 @@ const UserCreate = () => {
         }
     };
 
+    const formatUserDataForExport = (users) => {
+        return users.map(user => ({
+          userId: user.userId,
+          userName: user.userName,
+          userPhoneNumber: user.userPhoneNumber || '', // Handle cases where phone number might be null/undefined
+          userAddress: user.userAddress,
+          userType: user.userType,
+          userEmail: user.userEmail || '', // Handle cases where email might be null/undefined
+          organizationId: user.organization?.organizationId || '', // Safely access organizationId
+          cohortId: user.cohort?.cohortId || '', // Safely access cohortId
+          programId: user.program?.programId || '', // Safely access programId
+        }));
+      };
+      
+
     const openMenu = (event, user) => {
         setSelectedUserId(user.userId);
         setUserId(user.userId);
@@ -207,18 +223,20 @@ const UserCreate = () => {
                 Bulk Delete Users
             </Button>
 
-            <Button variant="contained" color="default" component="label" style={{ marginRight: '10px' }}>
-                Upload CSV
-                <input type="file" hidden onChange={(e) => handleBulkCreate(e.target.files[0])} />
-            </Button>
+            <Button
+            variant="contained"
+            component="label"
+            startIcon={<Iconify icon="eva:upload-fill" />}
+          >
+            Upload CSV
+            <input type="file" hidden onChange={(e) => handleBulkCreate(e.target.files[0])} />
+          </Button>
 
-            <CSVLink
-                data={users}
-                filename="users.csv"
-                className="btn btn-primary"
-            >
-            <Button variant="contained" color="default">Export Users</Button>
-            </CSVLink>
+            <CSVLink data={formatUserDataForExport(users)} filename="users.csv">
+            <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}>
+              Export Learners
+            </Button>
+          </CSVLink>
 
             {loading && <CircularProgress />}
 

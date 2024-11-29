@@ -1,28 +1,22 @@
 /*eslint-disable*/
 import { Navigate, useRoutes } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute'; // Import the ProtectedRoute component
+import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedRouteOrg from './components/ProtectedRouteOrg';
 import DashboardLayout from './layouts/dashboard';
 import DashboardClientLayout from './layouts/dashboard/DashboardClientLayout';
 import SimpleLayout from './layouts/simple';
-import AddCtO from './pages/AddCtO';
 import AddCtOc from './pages/AddCtOc';
 import BlogPage from './pages/BlogPage';
 import CohortPage from './pages/CohortPage';
-import ContentPage from './pages/ContentPage';
 import ProgramPage from './pages/ProgramPage';
 import DashboardAppPage from './pages/DashboardAppPage';
 import DashboardClientPage from './pages/DashboardClientPage';
-import LanguagePage from './pages/LanguagePage';
-import LevelPage from './pages/LevelPage';
 import LoginPage from './pages/LoginPage';
-import LoginOrg from './pages/LoginPageOrg';
+import LoginPageOrg from './pages/LoginPageOrg';
 import Page404 from './pages/Page404';
-import ProductsPage from './pages/ProductsPage';
 import ReportPage from './pages/ReportPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import UserPage from './pages/UserPage';
-import UsersPage from './pages/UsersPage';
 import UserCreate from './pages/UserCreate';
 import UserCohortpage from './pages/UserCohortpage';
 import OrgUserCreate from './pages/OrgUserCreate';
@@ -34,7 +28,6 @@ import UserPassword from './pages/UserPassword';
 import SuperUserReport from './pages/UsersReport';
 import OrgCohort from './pages/OrgCohort';
 import SuperAdminPassword from './pages/superAdminPassword';
-import LoginUser from './pages/LoginPageUser';
 import OrgProgramPage from './pages/OrgProgramPage';
 export default function Router() {
   const routes = useRoutes([
@@ -49,7 +42,7 @@ export default function Router() {
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
         { path: 'user', element: <UserPage /> },
-        { path: 'user-cohort/:cohortId', element: <UserCohortpage /> },
+        { path: 'user-cohort/:organizationId/:cohortId', element: <UserCohortpage /> },
         { path: 'Create-Users', element: <UserCreate /> },
         { path: 'superreport', element: <ReportPage /> },
         { path: 'superuserreport', element: <SuperUserReport /> },
@@ -60,12 +53,9 @@ export default function Router() {
 
         { path: 'blog', element: <BlogPage /> },
         { path: 'programs', element: <ProgramPage /> },
-        { path: 'contents/:id', element: <ContentPage /> },
-        { path: 'addcto', element: <AddCtO /> },
         { path: 'addctoc/:organisationId', element: <AddCtOc /> },
-        { path: 'languages', element: <LanguagePage /> },
-        { path: 'levels/:id', element: <LevelPage /> },
-        { path: 'products', element: <ProductsPage /> },
+        
+        
       ],
     },
     {
@@ -79,7 +69,6 @@ export default function Router() {
         { element: <Navigate to="/org-dashboard/:id/app" />, index: true },
         { path: 'app', element: <DashboardClientPage /> },
         { path: 'cohorts/organization/:organizationId', element: <CohortPage /> },
-        { path: 'users', element: <UsersPage /> },
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         
       ],
@@ -95,7 +84,6 @@ export default function Router() {
         { element: <Navigate to="/org-dashboards/:id/app" />, index: true },
         { path: 'app', element: <DashboardOrgClientPage /> },
         { path: 'appx', element: <UserPassword /> },
-        { path: 'usersx', element: <UsersPage /> },
         { path: 'org-Create-Users', element: <OrgUserCreate /> },
         { path: 'programs', element: <OrgProgramPage />},
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
@@ -105,11 +93,7 @@ export default function Router() {
     },
     {
       path: 'loginorg',
-      element: <LoginOrg />,
-    },
-    {
-      path: 'loginUser',
-      element: <LoginUser />,
+      element: <LoginPageOrg />,
     },
     {
       path: 'login',
@@ -120,7 +104,7 @@ export default function Router() {
       element: <ForgotPassword />,
     },
     {
-      path: 'superadmincreatea',
+      path: 'superadmincreate',
       element: <SuperAdminCreate />,
     },
     {
