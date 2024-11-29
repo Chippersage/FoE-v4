@@ -1,11 +1,9 @@
 /* eslint-disable */
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @mui
-import { Stack, IconButton, InputAdornment, TextField, Checkbox, Alert, Button } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { EyeIcon, EyeOffIcon } from "lucide-react";
+
 // components
-import Iconify from '../../components/iconify';
 import { useUser } from 'src/UserContext';
 // ----------------------------------------------------------------------
 
@@ -18,10 +16,12 @@ export default function LoginFormOrg() {
   const [username, setUsername] = useState('');
   const [orgPassword, setOrgPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setIsSubmitting(true);
+
     try {
       const response = await fetch(`${apiUrl}/organizations/login`, {
         method: 'POST',
@@ -30,18 +30,17 @@ export default function LoginFormOrg() {
         },
         body: JSON.stringify({ organizationAdminEmail: username, orgPassword: orgPassword }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || 'Login failed');
         return;
       }
-  
+
       const orgData = await response.json();
       if (orgData.organizationId) {
-        // Assuming token and userType are not returned in the response anymore
         localStorage.setItem('token', 'dummyToken'); // Set token as needed
-        setUserType('orgAdmin'); // Set userType as needed
+        setUserType('orgAdmin');
         setOrgId(orgData.organizationId);
         navigate(`/org-dashboards/${orgData.organizationId}/app`, { replace: true });
       } else {
@@ -50,67 +49,99 @@ export default function LoginFormOrg() {
     } catch (error) {
       console.error('Error during login:', error);
       setError('Error during login');
+    }finally {
+      setIsSubmitting(false);
     }
   };
-  
 
   const handleSuperadmin = () => {
-    navigate('/login');
-  };
+      navigate('/login');
+    };
+    
 
   const handleForgotPassword = () => {
     navigate('/forgot');
   };
 
   return (
-    <>
-      <Stack spacing={3}>
-        <TextField
-          name="AdminEmail"
-          id="AdminEmail"
-          label="AdminEmail"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+    <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
+      <div className="mb-8 mt-8">
+        <img
+          src="/admin/assets/main-logo.png"
+          alt="flowofenglish Logo"
+          className="h-16"
         />
+      </div>
 
-        <TextField
-          name="orgPassword"
-          label="Password"
-          id="orgPassword"
-          value={orgPassword}
-          onChange={(e) => setOrgPassword(e.target.value)}
-          type={showPassword ? 'text' : 'password'}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                  <Iconify icon={showPassword ? 'eva:eye-fill' : 'eva:eye-off-fill'} />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Stack>
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
+        <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
+          Login to Admin Account
+        </h2>
 
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ my: 2 }}>
-        <Checkbox name="remember" /> Remember me
-      </Stack>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <input
+              type="email"
+              placeholder="Admin Email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+              required
+            />
+          </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={orgPassword}
+              onChange={(e) => setOrgPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <EyeOffIcon className="h-5 w-5 text-gray-500" />
+              ) : (
+                <EyeIcon className="h-5 w-5 text-gray-500" />
+              )}
+            </button>
+          </div>
 
-      <LoadingButton fullWidth size="large" type="submit" variant="contained" onClick={handleSubmit}>
-        Login
-      </LoadingButton>
-      <LoadingButton fullWidth size="large" variant="contained" sx={{ my: 2 }} onClick={handleSuperadmin}>
-        Go to Superadmin Page
-      </LoadingButton>
-      <Button fullWidth size="large" variant="outlined" onClick={handleForgotPassword}>
-        Forgot Password
-      </Button>
-    </>
+          {error && (
+            <p className="text-red-600 text-center text-sm font-medium">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            {isSubmitting ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center space-y-2">
+          <button
+            onClick={handleSuperadmin}
+            className="text-[#5bc3cd] hover:underline block w-full"
+          >
+            Go to SuperAdmin?
+          </button>
+          <button
+            onClick={handleForgotPassword}
+            className="text-[#5bc3cd] hover:underline block w-full"
+          >
+            Forgot Password?
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

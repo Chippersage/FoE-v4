@@ -8,7 +8,10 @@ import { Box } from '@mui/material';
 // ----------------------------------------------------------------------
 
 const Iconify = forwardRef(({ icon, width = 20, sx, ...other }, ref) => (
-  <Box ref={ref} component={Icon} icon={icon} sx={{ width, height: width, ...sx }} {...other} />
+  <Box ref={ref} component={Icon} icon={icon} sx={{ width, height: width,
+    // color: '#5bc3cd', transition: 'color 0.3s ease',
+    // '&:hover': { color: '#DB5788', },
+    ...sx }} {...other} />
 ));
 
 Iconify.propTypes = {
