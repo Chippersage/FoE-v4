@@ -1,10 +1,22 @@
 import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination } from '@mui/material';
 import axios from 'axios';
+import { formatDistanceToNow, format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
 import {  AppWidgetSummary } from '../sections/@dashboard/app';
+
 import { getOrgCohorts, getOrgPrograms, getOrgUsers, getUserSessionMappingsByUserId } from '../api';
+
+
+const formatLastActivity = (timestamp) => {
+  if (!timestamp) return 'N/A';
+
+  const date = new Date(timestamp);
+  const relativeTime = formatDistanceToNow(date, { addSuffix: true });
+  const formattedTime = format(date, 'hh:mm a');
+  return `${relativeTime} at ${formattedTime}`;
+};
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -84,41 +96,53 @@ export default function DashboardOrgClientPage() {
       </Helmet>
 
       <Container maxWidth="xl">
-        {/* Welcome message */}
-        <Typography variant="h4" sx={{ mb: 5 }}>
-          Welcome, {orgData.organizationName}!
-        </Typography>
+      {/* Welcome message */}
+      <Typography variant="h4" sx={{ mb: 5 }}>
+      Welcome, {orgData.organizationName}!
+      </Typography>
 
-        <Grid container spacing={0} justifyContent="space-between" alignItems="center">
+      <Grid container spacing={0} justifyContent="space-between" alignItems="center">
 
-          {/* Learners Card */}
-          <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary
-              title="Learners"
-              total={users ? users.length : 0}
-              icon={'ant-design:user-outlined'}
-            />
-          </Grid>
+      {/* Learners Card */}
+      <Grid item xs={12} sm={6} md={3}>
+      <AppWidgetSummary
+      title="Learners"
+      total={users ? users.length : 0}
+      svgIcon={
+      <img
+      src="/admin/assets/icons/navbar/ic_Learners.svg"
+      alt="Learners Icon"
+      style={{ width: 40, height: 40 }}/>}
+      />
+      </Grid>
 
-          {/* Cohorts Card */}
-          <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary
-              title="Cohorts"
-              total={cohorts ? cohorts.length : 0}
-              color="info"
-              icon={'ant-design:whats-app-outlined'}
-            />
-            </Grid>
-            {/* Programs Card */}
-           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary 
-            title="Programs" 
-            total={programs ? programs.length : 0}
-            color="error" 
-            icon={'ant-design:flag-outlined'}
-             />
-          </Grid>
-          </Grid>
+      {/* Cohorts Card */}
+      <Grid item xs={12} sm={6} md={3}>
+      <AppWidgetSummary
+      title="Cohorts"
+      total={cohorts ? cohorts.length : 0}
+      color="info"
+      svgIcon={
+      <img
+      src="/admin/assets/icons/navbar/cohort.svg"
+      alt="Learners Icon"
+      style={{ width: 40, height: 40 }}/>}
+      />
+      </Grid>
+      {/* Programs Card */}
+      <Grid item xs={12} sm={6} md={3}>
+      <AppWidgetSummary
+      title="Programs"
+      total={programs ? programs.length : 0}
+      color="error"
+      svgIcon={
+      <img
+      src="/admin/assets/icons/navbar/program.svg"
+      alt="Learners Icon"
+      style={{ width: 40, height: 40 }}/>}
+      />
+      </Grid>
+      </Grid>
 <Grid container spacing={6}>
 {/* Registered Learners Table */}
 <Grid item xs={12}>
@@ -143,7 +167,9 @@ export default function DashboardOrgClientPage() {
                           <TableCell>{user.userId}</TableCell>
                           <TableCell>{user.userName}</TableCell>
                           <TableCell>{user.cohortName}</TableCell>
-                          <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
+                          {/* <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell> */}
+                          <TableCell>{formatLastActivity(user.sessionStartTimestamp)}</TableCell>
+
                         </TableRow>
                       ))
                     ) : (

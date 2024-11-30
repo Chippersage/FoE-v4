@@ -464,7 +464,7 @@ const handleCloseDialogs = () => {
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} variant="contained" disabled={!isFormValid()}>Create</Button>
+    <Button onClick={handleSubmit} color="primary" >Create</Button>
   </DialogActions>
 </Dialog>
 
@@ -553,10 +553,30 @@ const handleCloseDialogs = () => {
       <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
         <StyledCard>
           <Typography variant="h6" gutterBottom>Are you sure you want to delete this cohort?</Typography>
-          <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortId)}>
+          <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortId)}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>
             Yes
           </Button>
-          <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}>
+          <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>
             No
           </Button>
         </StyledCard>

@@ -646,8 +646,8 @@ const confirmDelete = async () => {
         </Typography>)}
 <TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
 <TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
-<MenuItem value="Teacher">Teacher</MenuItem>
-<MenuItem value="Learner">Student</MenuItem>
+<MenuItem value="Mentor">Mentor</MenuItem>
+<MenuItem value="Learner">Learner</MenuItem>
 </TextField>
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} required disabled />
 <TextField select label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required >
@@ -668,7 +668,7 @@ const confirmDelete = async () => {
 <Dialog open={openUpdateDialog} onClose={handleCloseUpdateDialog}>
 <DialogTitle>Update Learner</DialogTitle>
 <DialogContent>
-<TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} disabled />
 <TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} />
 <TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }} />
 <TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }} />
