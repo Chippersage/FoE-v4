@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     viewBox="0 0 500 500">
+    <title>Grid Layout Icon</title>
+    <metadata>
+        <rdf:RDF>
+            <cc:Work rdf:about="">
+                <dc:title>Grid Layout Icon</dc:title>
+                <dc:description>An icon showing four rectangles in a grid layout</dc:description>
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+                <cc:license rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+             </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <path d="M50 50 h150 v150 h-150 Z" fill="black"/>
+    <path d="M250 50 h200 v150 h-200 Z" fill="black"/>
+    <path d="M50 250 h200 v200 h-200 Z" fill="black"/>
+    <path d="M300 250 h150 v150 h-150 Z" fill="black"/>
+</svg>
