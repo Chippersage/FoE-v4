@@ -23,6 +23,7 @@ const StyledIcon = styled('div')(({ theme }) => ({
 
 AppWidgetSummary.propTypes = {
   color: PropTypes.string,
+  svgIcon: PropTypes.node,
   icon: PropTypes.string,
   title: PropTypes.string.isRequired,
   total: PropTypes.number.isRequired,
@@ -30,7 +31,7 @@ AppWidgetSummary.propTypes = {
   link: PropTypes.string,
 };
 
-export default function AppWidgetSummary({ title, total, icon, color = 'primary', sx, link, ...other }) {
+export default function AppWidgetSummary({ title, total, svgIcon, icon, color = 'primary', sx, link, ...other }) {
   return (
     <Card
       sx={{
@@ -43,7 +44,7 @@ export default function AppWidgetSummary({ title, total, icon, color = 'primary'
       }}
       {...other}
     >
-      <StyledIcon
+      {/* <StyledIcon
         sx={{
           color: (theme) => theme.palette[color].dark,
           backgroundImage: (theme) =>
@@ -54,7 +55,20 @@ export default function AppWidgetSummary({ title, total, icon, color = 'primary'
         }}
       >
         <Iconify icon={icon} width={24} height={24} />
+      </StyledIcon> */}
+      <StyledIcon
+        sx={{
+          color: (theme) => theme.palette[color].dark,
+          backgroundImage: (theme) =>
+            `linear-gradient(135deg, ${alpha(theme.palette[color].dark, 0)} 0%, ${alpha(
+              theme.palette[color].dark,
+              0.24
+            )} 100%)`,
+        }}
+      >
+        {svgIcon}
       </StyledIcon>
+
       <Typography variant="h3">{total}</Typography>
       {link ? (
         <Typography
