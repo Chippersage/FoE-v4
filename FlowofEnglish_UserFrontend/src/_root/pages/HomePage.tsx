@@ -21,18 +21,47 @@ export const HomePage = () => {
 
     return (
       <>
-        <div className="flex flex-1 custom-scrollbar-2 overflow-scroll">
-          <Header2 />
-          <Dashboard />
-        </div>
+        <div className="relative w-full min-h-full">
+          {/* Background Image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed opacity-80"
+            style={{ backgroundImage: "url('/images/index.png')" }}
+          >
+            {/* Shadow Overlay */}
+            {/* <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/10" /> */}
+          </div>
 
-        {showWelcome && user.userName && user.program.programName && (
-          <WelcomeModal
-            userName={user.userName}
-            programName={user.program.programName}
-            onClose={() => setShowWelcome(false)}
-          />
-        )}
+          {/* Center Image */}
+          <div className="absolute inset-20 flex items-center justify-center">
+            <img
+              src="/images/main_image.png"
+              alt="Center Image"
+              className="w-[20%] h-auto"
+            />
+          </div>
+
+          {/* Flying Bird GIF */}
+          {/* <div className="absolute w-screen z-50 animate-fly">
+            <img
+              src="/images/pajaro.gif"
+              alt="Flying Bird"
+              className="w-32 h-auto"
+            />
+          </div> */}
+
+          <div className="relative z-10 flex flex-1 custom-scrollbar-2 overflow-scroll min-h-screen">
+            <Header2 />
+            <Dashboard />
+          </div>
+
+          {showWelcome && user.userName && user.program.programName && (
+            <WelcomeModal
+              userName={user.userName}
+              programName={user.program.programName}
+              onClose={() => setShowWelcome(false)}
+            />
+          )}
+        </div>
       </>
     );
 }
