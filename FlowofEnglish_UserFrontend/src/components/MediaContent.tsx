@@ -8,7 +8,7 @@ const MediaContent = ({ subconceptData }) => {
   const [isComplete, setIsComplete] = useState(false);
   const contentRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     // @ts-ignore
@@ -29,7 +29,7 @@ const MediaContent = ({ subconceptData }) => {
   }, [showPopup,countdown]);
 
   const handleOpenPopup = () => {
-    setCountdown(10); // Reset countdown if needed
+    setCountdown(3); // Reset countdown if needed
     setShowPopup(true); // Show popup
   };
 

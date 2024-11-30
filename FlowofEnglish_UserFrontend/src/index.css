@@ -34,3 +34,32 @@
     }
 }
 
+/* Animate flying bird */
+@keyframes fly {
+  0% {
+    transform: translate(100%, 0); /* Start at top-right */
+  }
+  25% {
+    transform: translate(50%, 30%); /* Move diagonally down */
+  }
+  50% {
+    transform: translate(0%, 50%); /* At the middle, slightly lower */
+  }
+  75% {
+    transform: translate(-50%, 30%); /* Moving diagonally up */
+  }
+  100% {
+    transform: translate(-150%, 0); /* End at top-left, off-screen */
+  }
+}
+
+.animate-fly {
+  animation: fly 10s ease-in-out infinite; /* Adjust duration as needed */
+  position: absolute;
+  top: 2rem; /* Starting vertical position */
+  right: 0; /* Starting horizontal position */
+}
+
+
+
+
