@@ -29,7 +29,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
     <Card
       className={`w-full max-w-md mx-auto overflow-y-auto ${
         !showMore ? "no-scrollbar" : "custom-scrollbar-2"
-      } h-auto max-h-full`}
+      } max-h-[350px]`}
     >
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
@@ -44,9 +44,9 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
           {displayedLeaderboard.map((entry, index) => (
             <div
               key={entry.userId}
-              className={`flex justify-between items-center py-2 ${
+              className={`flex justify-between items-center py-2 px-2 ${
                 entry.userId === currentUser?.userId
-                  ? "bg-blue-100 rounded-[5px] shadow-lg"
+                  ? "bg-blue-100 rounded-[2px] shadow-lg"
                   : ""
               }`}
             >
@@ -60,9 +60,9 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
                   <div className="font-semibold text-primary">
                     {entry.userName}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  {/* <div className="text-xs text-muted-foreground">
                     {index + 1 === 1 ? "Squirrel" : "Salamander"}
-                  </div>
+                  </div> */}
                 </div>
               </div>
               <div className="text-right">
