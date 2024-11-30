@@ -56,12 +56,12 @@ const getNavConfig = () => {
       {
         title: 'dashboard',
         path: `/org-dashboards/${orgId}/app`,
-        icon: icon('ic_analytics'),
+        icon: icon('dashboard'),
       },
       {
         title: 'Cohorts',
         path: `/org-dashboards/${orgId}/orgdashc`,
-        icon: icon('ic_lang'),
+        icon: icon('cohort'),
       },
       {
         title: 'Learners',
@@ -71,17 +71,17 @@ const getNavConfig = () => {
       {
           title: 'Programs',
           path: `/org-dashboards/${orgId}/programs`,
-          icon: icon('ic_program'),
+          icon: icon('program'),
         },
       {
         title: 'Organisation Reports',
         path: `/org-dashboards/${orgId}/orgreport`,
-        icon: icon('ic_report'),
+        icon: icon('report'),
       },
       {
         title: 'Setting',
         path: `/org-dashboards/${orgId}/appx`,
-        icon: icon('ic_lock'),
+        icon: icon('setting'),
       },
     ];
   }
