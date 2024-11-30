@@ -6,8 +6,8 @@ import {
   // PlayCircle,
   // Headphones,
   PenTool,
-  Play,
-  Flag,
+  // Play,
+  // Flag,
 } from "lucide-react";
 import PenNib from "@/components/PenNib";
 import Book from "@/components/Book";
@@ -66,6 +66,7 @@ export default function SubConceptsPage() {
   const rowHeight = pathHeight / 2; // Height of each row
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
   
 
   const fetchSubconcepts = async () => {
@@ -88,6 +89,7 @@ export default function SubConceptsPage() {
         try {
           const result = await fetchSubconcepts();
           console.log(result);
+          setUnitCompletionStatus(result.unitCompletionStatus)
           const fetchedSubconcepts: SubconceptData = result.subConcepts;
           setSubconcepts(Object.values(fetchedSubconcepts));
         } catch (err) {
@@ -234,7 +236,7 @@ export default function SubConceptsPage() {
                 <Link
                   // @ts-ignore
                   to={
-                    index === totalSteps - 1 && nextUnitId
+                    index === totalSteps - 1 && nextUnitId && unitCompletionStatus === 'yes'
                       ? `/subconcepts/${nextUnitId}`
                       : isEnabled && index !== totalSteps - 1 && index !== 0
                       ? `/subconcept/${subconcept?.subconceptId}`
@@ -244,6 +246,13 @@ export default function SubConceptsPage() {
                   className={`${!isEnabled && "cursor-not-allowed"}`}
                   onMouseEnter={() => setActiveTooltip(index)}
                   onMouseLeave={() => setActiveTooltip(null)}
+                  onClick={() => {
+                    if((index === totalSteps - 1) && (unitCompletionStatus === 'yes')){
+                      setShowConfetti(true)
+                      setAudioPlaying(true)
+                      setTimeout(() => {setShowConfetti(false)},5000)
+                    }
+                  }}
                 >
                   <g
                     className={`transition-transform duration-300 ease-out  ${
@@ -285,8 +294,8 @@ export default function SubConceptsPage() {
                     <Icon
                       x={point.x - 15}
                       y={point.y - 15}
-                      width="25"
-                      height="25"
+                      width="70"
+                      height="70"
                       color="white"
                       className="object-contain"
                     />
