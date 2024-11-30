@@ -57,9 +57,6 @@ const ForgotPassword = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, maxWidth: 400, mx: 'auto' }}>
-      <Typography variant="h5" gutterBottom>
-        Reset Password
-      </Typography>
       
       <TextField
         label="Organization Name"
@@ -114,12 +111,22 @@ const ForgotPassword = () => {
         </>
       )}
 
-      <Button 
-        type="submit" 
-        variant="contained" 
+      <Button
+        type="submit"
+        variant="contained"
         color="primary"
         fullWidth
-        sx={{ mt: 2 }}
+        sx={{
+          bgcolor: '#5bc3cd', // Default background color
+          color: 'white', // Text color
+          fontWeight: 'bold', // Font weight
+          '&:hover': {
+            bgcolor: '#DB5788', // Hover background color
+          },
+          py: 1.5, // Padding Y
+          px: 2, // Padding X
+          borderRadius: '8px', // Border radius
+        }}
       >
         {showOtpField ? 'Reset Password' : 'Send OTP'}
       </Button>

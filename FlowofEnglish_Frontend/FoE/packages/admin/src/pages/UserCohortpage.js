@@ -46,6 +46,13 @@ const StyledCard = styled(Card)({
   },
 });
 
+const StyledSearchBar = styled(TextField)({
+  marginBottom: '20px',
+  '& .MuiInputBase-root': {
+    backgroundColor: '#fff',
+  },
+});
+
 // Helper Functions
 const descendingComparator = (a, b, orderBy) => {
   if (b[orderBy] < a[orderBy]) return -1;
@@ -78,6 +85,7 @@ const UserCohortPage = () => {
   const location = useLocation();
   const { organizationId } = useParams();
   const orgId = organizationId || location.state?.organizationId || 'defaultOrgId';
+  
   const [orgUsers, setOrgUsers] = useState([]);
   const [file, setFile] = useState(null);
   const [response, setResponse] = useState(null);
@@ -273,8 +281,7 @@ const UserCohortPage = () => {
   const handleSearch = (query) => {
     const filteredData = userCohortData.filter(
       (row) =>
-        row.userName.toLowerCase().includes(query.toLowerCase()) ||
-        row.cohortName.toLowerCase().includes(query.toLowerCase())
+        row.userName.toLowerCase().includes(query.toLowerCase())
     );
     setUserCohortData(filteredData);
   };
@@ -364,6 +371,17 @@ const UserCohortPage = () => {
             variant="contained"
             onClick={handleOpenModal}
             startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Add Learner to Cohort
           </Button>
@@ -373,13 +391,35 @@ const UserCohortPage = () => {
             component="label"
             style={{ marginRight: '10px' }}
             startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Upload CSV
             <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
           </Button>
 
           <CSVLink data={userCohortData} filename="users.csv" className="btn btn-primary">
-            <Button variant="contained">Export Users</Button>
+          <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}>Export Learners</Button>
           </CSVLink>
         </Stack>
         <Card>
@@ -403,30 +443,34 @@ const UserCohortPage = () => {
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
-                  {userCohortData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { userId, userName, cohortId, leaderboardScore } = row;
-                    const selectedUser = selected.indexOf(userId) !== -1;
-                    return (
-                      <TableRow hover key={row.userId} tabIndex={-1} role="checkbox" selected={selectedUser}>
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={selected.includes(row.userId)} onChange={() => handleClick(row.userId)} />
-                        </TableCell>
-                        <TableCell>{row.userName}</TableCell>
-                        <TableCell>{row.userId}</TableCell>
-                        <TableCell>{row.leaderboardScore}</TableCell>
-                        <TableCell align="right">
-                        <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
-                  <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem>
-                  <MenuItem onClick={() => handleDelete(row.userCohortId)}>Delete</MenuItem>
-                </Menu>
-                            </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
+          {applySortFilter( userCohortData, getComparator(order, orderBy), filterName ).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          .map((row) => {
+          const { userId } = row;
+          const selectedUser = selected.indexOf(userId) !== -1;
+          return (
+          <TableRow hover key={row.userId} tabIndex={-1} role="checkbox" selected={selectedUser}>
+          <TableCell padding="checkbox">
+          <Checkbox checked={selected.includes(row.userId)} onChange={() => handleClick(row.userId)} />
+          </TableCell>
+          <TableCell>{row.userName}</TableCell>
+          <TableCell>{row.userId}</TableCell>
+          <TableCell>{row.leaderboardScore}</TableCell>
+          <TableCell align="right">
+          <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
+          <MoreVertIcon />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
+          {/* <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem> */}
+          <MenuItem onClick={() => handleDelete(row.userCohortId)}>
+          <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
+          Delete
+          </MenuItem>
+          </Menu>
+          </TableCell>
+          </TableRow>
+          );
+          })}
+          </TableBody>
 
                 {isNotFound && (
                   <TableBody>
@@ -492,14 +536,18 @@ const UserCohortPage = () => {
             }}
           >
             <FormControl fullWidth margin="normal">
-              <InputLabel>Select User</InputLabel>
+              <InputLabel>Select Learner</InputLabel>
               <Select
                 value={formValues.userId}
                 onChange={(e) => setFormValues({ ...formValues, userId: e.target.value })}
                 required
                 disabled={!!currentRecord}
               >
-                {orgUsers.map((user) => (
+                {orgUsers
+                .filter(user => !userCohortData.some(
+                  cohortUser => cohortUser.userId === user.userId
+                ))
+                .map(user => (
                   <MenuItem key={user.userId} value={user.userId}>
                     {user.userName}
                   </MenuItem>
@@ -514,7 +562,9 @@ const UserCohortPage = () => {
               disabled
             />
             
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+            <Button type="submit" variant="contained" color="primary" fullWidth sx={{
+bgcolor: '#5bc3cd', color: 'white', fontWeight: 'bold', '&:hover': { bgcolor: '#DB5788',},
+py: 1.5, px: 2, borderRadius: '8px', mt: 2, }}>
               {currentRecord ? 'Update' : 'Create'}
             </Button>
           </form>
