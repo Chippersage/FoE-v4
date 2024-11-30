@@ -118,7 +118,7 @@ function Dashboard() {
   }, [user]);
   
   return (
-    <div className="w-full flex flex-col md:flex-row mt-44 overflow-scroll no-scrollbar gap-2 px-2">
+    <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2">
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
         <div className="sm:w-[50%]">
@@ -130,23 +130,25 @@ function Dashboard() {
       )}
 
       <div className="w-full sm:w-[50%] flex flex-col">
-        {(userProgress && currentUserLeaderBoardInfo) ? (
-          <div className="flex flex-col mb-10 mx-auto w-full max-w-md px-6 py-2 bg-white gap-1">
+        {userProgress && currentUserLeaderBoardInfo ? (
+          <div className="flex flex-col mb-6 mx-auto w-[400px] px-6 py-2 bg-white gap-1 rounded-[3px]">
             <h3 className="text-xl font-semibold">Your Progress</h3>
             <UserProgressBar userProgress={userProgress} />
-            <p className="text-xl font-semibold">
-              {/* @ts-ignore */}
-              Total Points: {currentUserLeaderBoardInfo.leaderboardScore}{" "}
-            </p>
+            <div className='flex justify-between items-center mt-2'>
+              <p className="text-sm font-bold">
+                {/* @ts-ignore */}
+                Total Points: {currentUserLeaderBoardInfo.leaderboardScore}{" "}
+              </p>
+              <img src="/icons/User-icons/trophy.png" alt="trophy" className='h-5 w-5'/>
+            </div>
           </div>
-        ): (
-          <ProgressbarSkeleton/>
-        )
-      }
+        ) : (
+          <ProgressbarSkeleton />
+        )}
 
         {/* @ts-ignore */}
         {leaderBoardInfo ? (
-          <div>
+          <div className=''>
             <Leaderboard
               leaderboard={leaderBoardInfo}
               userId={user?.userId}

@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { useState } from "react";
 
 // @ts-ignore
-export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
+export default function Leaderboard({ cohortId, userId, cohortName, leaderboard }) {
   const [showMore, setShowMore] = useState(false);
 
   // Sort leaderboard by score
@@ -26,16 +26,12 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
   const displayedLeaderboard = showMore ? sortedLeaderboard : top3;
 
   return (
-    <Card
-      className={`w-full max-w-md mx-auto overflow-y-auto ${
-        !showMore ? "no-scrollbar" : "custom-scrollbar-2"
-      } max-h-[350px]`}
-    >
+    <Card className="max-w-[400px] mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-2">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
         <p className="text-muted-foreground">{cohortName}</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto custom-scrollbar-2">
         <div className="space-y-4">
           {/* Display the appropriate number of scorers (top 3 or full leaderboard) */}
           {displayedLeaderboard.length === 0 && (
@@ -44,7 +40,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
           {displayedLeaderboard.map((entry, index) => (
             <div
               key={entry.userId}
-              className={`flex justify-between items-center py-2 px-2 ${
+              className={`flex justify-between items-center py-1 px-1 bg-slate-100 rounded-[5px] ${
                 entry.userId === currentUser?.userId
                   ? "bg-blue-100 rounded-[2px] shadow-lg"
                   : ""
@@ -60,9 +56,6 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
                   <div className="font-semibold text-primary">
                     {entry.userName}
                   </div>
-                  {/* <div className="text-xs text-muted-foreground">
-                    {index + 1 === 1 ? "Squirrel" : "Salamander"}
-                  </div> */}
                 </div>
               </div>
               <div className="text-right">
@@ -75,9 +68,7 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
 
           {/* If current user is not in top 3, display them after top 3 with special effect */}
           {currentUserRank > 3 && currentUser && !showMore && (
-            <div
-              className={`flex justify-between items-center py-2 bg-blue-100 p-2 rounded-xl shadow-xl`}
-            >
+            <div className="flex justify-between items-center py-2 bg-blue-100 p-2 rounded-xl shadow-xl">
               <div className="flex items-center">
                 <Avatar src={avatar_icon} />
                 <div className="ml-2">
@@ -97,26 +88,28 @@ export default function Leaderboard({cohortId,userId,cohortName,leaderboard}) {
               </div>
             </div>
           )}
-
-          {/* Toggle button to show more or less */}
-          {!showMore ? (
-            <Button
-              onClick={() => setShowMore(true)}
-              className={`w-full text-center rounded-[5px] mt-10`}
-              disabled={displayedLeaderboard.length === 0}
-            >
-              Show more
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setShowMore(false)}
-              className="w-full text-center rounded-[5px] mt-10"
-            >
-              Show less
-            </Button>
-          )}
         </div>
       </CardContent>
+
+      {/* Sticky Show More Button */}
+      <div className="sticky bottom-0 bg-white shadow-sm">
+        {!showMore ? (
+          <Button
+            onClick={() => setShowMore(true)}
+            className="w-full text-center rounded-[5px]"
+            disabled={displayedLeaderboard.length === 0}
+          >
+            Show more
+          </Button>
+        ) : (
+          <Button
+            onClick={() => setShowMore(false)}
+            className="w-full text-center rounded-[5px]"
+          >
+            Show less
+          </Button>
+        )}
+      </div>
     </Card>
   );
 }
