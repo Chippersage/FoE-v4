@@ -1,6 +1,7 @@
 import { useState } from "react";
 // @ts-ignore
 export default function UserProgressBar({ userProgress }) {
+  console.log(userProgress)
   const {
     totalStages,
     totalUnits,
@@ -21,8 +22,8 @@ export default function UserProgressBar({ userProgress }) {
     setCursorPosition(cursorX);
   };
 
-  const completionPercentage = subconceptCompletionPercentage;
-
+  const completionPercentage = subconceptCompletionPercentage?.toFixed(1);
+  console.log(completionPercentage)
   return (
     <div
       className="relative w-full max-w-md h-6"
@@ -34,13 +35,12 @@ export default function UserProgressBar({ userProgress }) {
         <div
           className="h-full w-0 bg-green-400 transition-all duration-500 ease-in-out flex items-center justify-center"
           style={{ width: `${completionPercentage}%` }}
-        >
-          {completionPercentage && (
-            <span className="text-sm text-white font-bold">
-              {completionPercentage}%
-            </span>
-          )}
-        </div>
+        ></div>
+        {completionPercentage && (
+          <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs text-white font-semibold">
+            Completed {completionPercentage}%
+          </span>
+        )}  
       </div>
       {isHovered && (
         <div
