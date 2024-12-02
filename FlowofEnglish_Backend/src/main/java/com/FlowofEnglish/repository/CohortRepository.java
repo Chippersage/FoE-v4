@@ -10,4 +10,7 @@ import java.util.List;
 public interface CohortRepository extends JpaRepository<Cohort, String> {
 
     List<Cohort> findByOrganizationOrganizationId(String organizationId);
+    
+ // Custom method to count cohorts by cohort name and organization ID
+    long countByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
 }
