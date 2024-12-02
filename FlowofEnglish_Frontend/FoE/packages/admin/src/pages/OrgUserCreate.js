@@ -5,20 +5,15 @@ import { CSVLink } from "react-csv";
 import { Helmet } from 'react-helmet-async';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/bootstrap.css';
+// import 'react-phone-input-2/lib/style.css';
 import { useParams } from 'react-router-dom';
-
 
 // Material UI Imports
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
-  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle,
-  IconButton, Link,
-  Menu, MenuItem,
-  Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination,
-  TableRow, TextField,
-  Tooltip,
-  Typography
-} from '@mui/material';
+  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Link,
+  Menu, MenuItem, Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField,
+  Tooltip, Typography } from '@mui/material';
 
 // Custom Components
 import Iconify from '../components/iconify';
@@ -108,14 +103,13 @@ const OrgUserCreate = () => {
   const [userName, setUserName] = React.useState('');
   const [userEmail, setUserEmail] = React.useState('');
   const [userPhoneNumber, setUserPhoneNumber] = React.useState('');
+  const [countryCode, setCountryCode] = useState(''); 
   const [userAddress, setUserAddress] = React.useState('');
   const [userType, setUserType] = React.useState('');
   const [userPassword, setUserPassword] = useState('');
   const [organizationId, setOrganizationId] = React.useState(id);
   const [cohortId, setCohortId] = React.useState('');
   const [isFormValid, setIsFormValid] = React.useState(false);
-  
-
   
   useEffect(() => {
     fetchUsers();
@@ -131,7 +125,6 @@ const OrgUserCreate = () => {
         ...user,
         allCohorts: user.allCohorts || [],
       }));
-
       setUsers(usersWithCohorts);
     }
   } catch (error) {
@@ -153,14 +146,24 @@ React.useEffect(() => {
   setIsFormValid(isValid);
 }, [userId, userName, userType, organizationId, cohortId]);
 
-// Function to validate phone number (optional)
-const validatePhoneNumber = (phone) => {
-  return /^[0-9]{10}$/.test(phone); // Adjust validation as needed
-};
-const handlePhoneNumberChange = (value) => {
-  // Strip out the country code and ensure only the 10-digit number is used
-  const strippedPhone = value.replace(/[^0-9]/g, ''); // Removes all non-numeric characters
+// Validate Phone Number (10 digits without country code)
+const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone); 
+
+// Validate Email
+const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
+
+// Handle Phone Number Change
+const handlePhoneNumberChange = (value, data) => {
+  const rawPhone = value.replace(/[^0-9]/g, ''); // Remove all non-numeric characters
+  const strippedPhone = rawPhone.slice(data.dialCode.length); // Remove the country code
+  setCountryCode(data.dialCode); 
   setUserPhoneNumber(strippedPhone);
+};
+
+// Handle Email Change
+const handleEmailChange = (e) => {
+  const { value } = e.target;
+  setUserEmail(value);
 };
 
 const resetFormState = () => {
@@ -175,6 +178,17 @@ const resetFormState = () => {
 };
 
 const handleCreateUser = async () => {
+  if (!validatePhoneNumber(userPhoneNumber)) {
+    setSnackbarMessage('Invalid phone number. Please enter a 10-digit number.');
+    setOpenSnackbar(true);
+    return;
+  }
+
+  // if (!validateEmail(userEmail)) {
+  //   setSnackbarMessage('Invalid email address. Please enter a valid email.');
+  //   setOpenSnackbar(true);
+  //   return;
+  // }
   const newUser = {
       user: {
           userId,
@@ -242,6 +256,17 @@ useEffect(() => {
 }, [id]);
 
   const handleUpdateUser = async () => {
+    if (!validatePhoneNumber(userPhoneNumber)) {
+      setSnackbarMessage('Invalid phone number. Please enter a 10-digit number.');
+      setOpenSnackbar(true);
+      return;
+    }
+  
+    // if (!validateEmail(userEmail)) {
+    //   setSnackbarMessage('Invalid email address. Please enter a valid email.');
+    //   setOpenSnackbar(true);
+    //   return;
+    // }
     const updatedUser = {
         userId: selectedUserId,
         userName,
@@ -493,9 +518,10 @@ const confirmDelete = async () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Link href={`/admin/dashboard/user-cohort/${row.userId}`} color="inherit" underline="hover">
+                        {/* <Link href={`/admin/dashboard/user-cohort/${row.userId}`} color="inherit" underline="hover">
                           {row.userName}
-                        </Link>
+                        </Link> */}
+                        {row.userName}
                       </TableCell>
                       <TableCell>{row.userId}</TableCell>
                       <TableCell>
@@ -555,7 +581,7 @@ const confirmDelete = async () => {
   return (
     <>
       <Helmet>
-        <title>Learners | Chipper Sage</title>
+        <title>Learners | ChipperSage</title>
       </Helmet>
 
       <Container>
@@ -636,8 +662,8 @@ const confirmDelete = async () => {
 <ReactPhoneInput
         country={'in'}
         enableSearch
-        value={userPhoneNumber}
-        onChange={(handlePhoneNumberChange) => setUserPhoneNumber(handlePhoneNumberChange)}
+        value={`${countryCode}${userPhoneNumber}`}
+        onChange={(handlePhoneNumberChange)}
         inputStyle={{ width: '100%' }}
       />
       {!validatePhoneNumber(userPhoneNumber) && (
@@ -693,12 +719,34 @@ const confirmDelete = async () => {
                 variant="contained"
                 color="error"
                 onClick={() => handleDeleteUser(selectedRow.userId)}
+                sx={{
+                  bgcolor: '#5bc3cd', // Default background color
+                  color: 'white', // Text color
+                  fontWeight: 'bold', // Font weight
+                  '&:hover': {
+                    bgcolor: '#DB5788', // Hover background color
+                  },
+                  py: 1.5, // Padding Y
+                  px: 2, // Padding X
+                  borderRadius: '8px', // Border radius
+                }}
               >
                 Delete
               </Button>
               <Button
                 variant="contained"
                 onClick={() => setIsConfirmOpen(false)}
+                sx={{
+                  bgcolor: '#5bc3cd', // Default background color
+                  color: 'white', // Text color
+                  fontWeight: 'bold', // Font weight
+                  '&:hover': {
+                    bgcolor: '#DB5788', // Hover background color
+                  },
+                  py: 1.5, // Padding Y
+                  px: 2, // Padding X
+                  borderRadius: '8px', // Border radius
+                }}
               >
                 Cancel
               </Button>

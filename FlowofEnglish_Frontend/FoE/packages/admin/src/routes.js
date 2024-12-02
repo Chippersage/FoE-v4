@@ -68,7 +68,7 @@ export default function Router() {
       children: [
         { element: <Navigate to="/org-dashboard/:id/app" />, index: true },
         { path: 'app', element: <DashboardClientPage /> },
-        { path: 'cohorts/organization/:organizationId', element: <CohortPage /> },
+        { path: 'cohorts/organization/:organizationId', element: <OrgCohort /> },
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         
       ],

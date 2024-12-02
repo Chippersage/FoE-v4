@@ -91,7 +91,6 @@ function OrgCohort() {
   const [cohorts, setCohorts] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
@@ -552,7 +551,8 @@ const handleCloseDialogs = () => {
       {/* Confirm Delete Modal */}
       <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
         <StyledCard>
-          <Typography variant="h6" gutterBottom>Are you sure you want to delete this cohort?</Typography>
+          <Typography variant="h6" gutterBottom>Are you sure you want to delete this Cohort?</Typography>
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortId)}sx={{
             bgcolor: '#5bc3cd', // Default background color
             color: 'white', // Text color
@@ -564,9 +564,10 @@ const handleCloseDialogs = () => {
             px: 2, // Padding X
             borderRadius: '8px', // Border radius
           }}>
-            Yes
+            Delete
           </Button>
-          <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}sx={{
+          <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}
+          sx={{
             bgcolor: '#5bc3cd', // Default background color
             color: 'white', // Text color
             fontWeight: 'bold', // Font weight
@@ -579,6 +580,7 @@ const handleCloseDialogs = () => {
           }}>
             No
           </Button>
+          </Stack>
         </StyledCard>
       </Modal>
 
