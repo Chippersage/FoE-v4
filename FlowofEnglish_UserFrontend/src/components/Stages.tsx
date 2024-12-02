@@ -40,14 +40,15 @@ export default function Stages({ stages }) {
 
 
   return (
-    <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 space-y-4 overflow-y-auto bg-white bg-opacity-50 no-scrollbar">
+    <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 space-y-4 overflow-y-auto bg-white bg-opacity-50 no-scrollbar rounded-[3px]">
       <h3 className="text-xl font-semibold">Your Learning Path</h3>
       {stagesArray.length > 0 ? (
         stagesArray.map((stage, index) => (
           <>
             <Card
               key={index}
-              className={`rounded-lg bg-gradient-to-b from-[#CAF2BC] to-white`}
+              className={`rounded-[2px] bg-gradient-to-b from-[#CAF2BC] to-white`}
+
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -86,7 +87,8 @@ export default function Stages({ stages }) {
                     className={`w-full transition-all duration-300 ease-in-out h-9 ${
                       // @ts-ignore
                       stage.stageEnabled
-                        ? stage.stageCompletionStatus === "yes"
+                        ? // @ts-ignore
+                          stage.stageCompletionStatus === "yes"
                           ? "bg-green-500 text-white hover:bg-[#DB5788]" // Green to Pink
                           : "bg-[#5bc3cd] text-white hover:bg-[#DB5788]" // Blue to Pink
                         : "bg-[#5bc3cd] text-white hover:bg-[#5bc3cd] cursor-not-allowed" // Disabled
@@ -105,14 +107,18 @@ export default function Stages({ stages }) {
                     <div className="flex items-center justify-center space-x-2">
                       {/* Text based on conditions */}
                       <span>
+                        {/* @ts-ignore */}
                         {stage.stageEnabled
-                          ? stage.stageCompletionStatus === "yes"
+                          ? // @ts-ignore
+                            stage.stageCompletionStatus === "yes"
                             ? "Well Done!"
                             : "Let's Go"
                           : "Not Yet..."}
                       </span>
                       {/* Icon based on conditions */}
+                      {/* @ts-ignore */}
                       {stage.stageEnabled ? (
+                        // @ts-ignore
                         stage.stageCompletionStatus === "yes" ? (
                           <img
                             src="/icons/User-icons/medal.png" // Replace with the path to your badge icon
@@ -191,14 +197,19 @@ export default function Stages({ stages }) {
                             />
                           )}
 
-                          <Book
-                            className={`h-6 w-6 ${
-                              // @ts-ignore
-                              stage.stageEnabled
-                                ? "text-gray-900"
-                                : "text-gray-400"
-                            }`}
-                          />
+                          {/* Icon */}
+                          <div className="flex-shrink-0">
+                            <Book
+                              className={`h-4 w-4 ${
+                                // @ts-ignore
+                                stage.stageEnabled
+                                  ? "text-gray-900"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                          </div>
+
+                          {/* Text */}
                           <span
                             className={`text-sm ${
                               // @ts-ignore
