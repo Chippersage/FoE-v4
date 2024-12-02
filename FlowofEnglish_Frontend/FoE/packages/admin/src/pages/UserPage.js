@@ -4,35 +4,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from "react-csv";
 import { filter } from 'lodash';
+import ReactPhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { format } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 // @mui
-import {
-  Avatar,
-  Button,
-  Card,
-  Checkbox,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
-  Link,
-  MenuItem,
-  Modal,
-  Paper,
-  Popover,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TablePagination,
-  TableRow,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Button, Card, Checkbox, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Link, MenuItem, Modal,
+  Paper, Popover, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField, Typography } from '@mui/material';
 
 // components
 import Iconify from '../components/iconify';
@@ -40,14 +18,17 @@ import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
-import { createOrg, deleteOrg, deleteOrgs, exportUsers, getOrgs, updateOrg } from '../api';
+import { createOrg, deleteOrg, deleteOrgs, getOrgUsers, getOrgs, updateOrg } from '../api';
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'organizationName', label: 'Name', alignRight: false },
+  { id: 'organizationId', label: 'Org ID', alignRight: false },
+  { id: 'organizationName', label: 'Org Name', alignRight: false },
+  { id: 'organizationAdminName', label: 'Org Admin Name', alignRight: false },
+  { id: 'organizationAdminPhone', label: 'Admin Phone', alignRight: false },
   { id: 'createdAt', label: 'Joined Date', alignRight: false },
-  { id: '' },
+  { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
 // ----------------------------------------------------------------------
@@ -86,7 +67,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user.organisation_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_organization) => _organization.organizationName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -114,7 +95,7 @@ export default function UserPage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const initialFormData = {
-    organizationId: '',  
+    organizationId: '',
     organizationName: '',
     organizationAdminName: '',
     organizationAdminEmail: '',
@@ -125,6 +106,21 @@ export default function UserPage() {
     deletedAt: '',
   };
   
+  const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone); // Validate only 10 digits without country code
+  const validateEmail = (email) => /\S+@\S+\.\S+/.test(email); // Validate proper email format
+  const [countryCode, setCountryCode] = useState(''); // For storing country code
+  const handlePhoneChange = (value, data) => {
+    const rawPhone = value.replace(/[^0-9]/g, ''); // Extract numeric part
+    const strippedPhone = rawPhone.slice(data.dialCode.length); // Remove country code
+    setCountryCode(data.dialCode); // Save country code
+    setFormData((prev) => ({ ...prev, organizationAdminPhone: strippedPhone }));
+  };
+
+  const handleEmailChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => ({ ...prev, organizationAdminEmail: value }));
+  };
+
   const [formData, setFormData] = useState(initialFormData);
 
   const [formErrors, setFormErrors] = useState({});
@@ -134,13 +130,16 @@ export default function UserPage() {
   const validateForm = () => {
     const errors = {};
     if (!formData.organizationAdminName.trim()) {
-      errors.organizationAdminName = 'Organization AdminName is required';  
+      errors.organizationAdminName = 'Organization AdminName is required';
     }
     if (!formData.organizationName.trim()) {
       errors.organizationName = 'Organization name is required';
     }
     if (!formData.organizationAdminEmail.trim()) {
       errors.organizationAdminEmail = 'Admin email is required';
+    }
+    if (!formData.organizationAdminPhone.trim()) {
+      errors.organizationAdminPhone = 'Admin PhoneNumber is required';
     }
     // Additional validations if needed
     return errors;
@@ -255,28 +254,53 @@ export default function UserPage() {
     }
   };
 
+  // Utility function to parse date array into a valid Date object
+const parseDateArray = (dateArray) => {
+  if (!dateArray || !Array.isArray(dateArray)) return null;
+
+  const [year, month, day, hour, minute, second, millisecond] = dateArray;
+  return new Date(year, month - 1, day, hour, minute, second, millisecond / 1000); // Adjust month and milliseconds
+};
+
   const handleExport = async () => {
     try {
       handleCloseMenu();
-      const orgId = selectedRow?.organizationId; 
+      const orgId = selectedRow?.organizationId;
       if (!orgId) {
         console.error("No organization selected. Please select an organization to export.");
         return;
       }
-      console.log("Organization ID:", orgId);
-      const data = await exportUsers(orgId);
+  
+      console.log("Fetching users for Organization ID:", orgId);
+      const data = await getOrgUsers(orgId);
   
       if (data && Array.isArray(data)) {
-        setCsvData(data);
+        const formattedData = formatUserDataForExport(data); // Format the user data
+        setCsvData(formattedData); // Set the formatted data for export
         setIsDataReady(true);
       } else {
-        console.error("Export response error:", data);
+        console.error("Error fetching users for export:", data);
       }
     } catch (error) {
       console.error("Error in handleExport:", error);
     }
   };
   
+  const formatUserDataForExport = (users) => {
+    return users.map((user) => ({
+      userId: user.userId || '',
+      userName: user.userName || '',
+      userPhoneNumber: user.userPhoneNumber || '',
+      userAddress: user.userAddress || '',
+      userType: user.userType || '',
+      userEmail: user.userEmail || '',
+      organizationId: user.organization?.organizationId || '',
+      cohortId: user.cohort?.cohortId || '',
+      cohortName: user.cohort?.cohortName || '',
+      programId: user.program?.programId || '',
+      programName: user.program?.programName || '',
+    }));
+  };
   
   const handleEdit = () => {
     handleCloseMenu();
@@ -321,27 +345,44 @@ export default function UserPage() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = orgs.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
+      // Select all rows
+    const newSelected = orgs.map((org) => org.organizationId);
     setSelected(newSelected);
-  };
+  } else {
+    // Deselect all rows
+    setSelected([]);
+  }
+};
+
+const handleClick = (event, organizationId) => {
+  const selectedIndex = selected.indexOf(organizationId);
+  let newSelected = [];
+
+  if (selectedIndex === -1) {
+    // Add the row to the selection
+    newSelected = newSelected.concat(selected, organizationId);
+  } else if (selectedIndex === 0) {
+    // Remove the first selected row
+    newSelected = newSelected.concat(selected.slice(1));
+  } else if (selectedIndex === selected.length - 1) {
+    // Remove the last selected row
+    newSelected = newSelected.concat(selected.slice(0, -1));
+  } else if (selectedIndex > 0) {
+    // Remove a middle row
+    newSelected = newSelected.concat(
+      selected.slice(0, selectedIndex),
+      selected.slice(selectedIndex + 1)
+    );
+  }
+
+  setSelected(newSelected);
+};
+
+// Helper function to check if a row is selected
+const isRowSelected = (organizationId) => selected.indexOf(organizationId) !== -1;
+
+// Helper function to check if all rows are selected
+const isAllSelected = selected.length === orgs.length;
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -372,10 +413,21 @@ export default function UserPage() {
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Organisations
+            Organizations
           </Typography>
-          <Button variant="contained" onClick={handleOpen} startIcon={<Iconify icon="eva:plus-fill" />}>
-            New Organisation
+          <Button variant="contained" onClick={handleOpen} startIcon={<Iconify icon="eva:plus-fill" />}
+          sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>
+            New Organization
           </Button>
         </Stack>
 
@@ -387,100 +439,103 @@ export default function UserPage() {
             deleteOrgs={deleteOrgs}
           />
 
-          <Scrollbar>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <UserListHead
-                  order={order}
-                  orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={orgs.length}
-                  numSelected={selected.length}
-                  onRequestSort={handleRequestSort}
-                  onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-                  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { organizationId, organizationName, createdAt, avatarUrl } = row;
-                    const selectedUser = selected.indexOf(organizationName) !== -1;
+        <Scrollbar>
+        <TableContainer sx={{ minWidth: 800 }}>
+        <Table>
+        <UserListHead
+        order={order}
+        orderBy={orderBy}
+        headLabel={TABLE_HEAD}
+        rowCount={orgs.length}
+        numSelected={selected.length}
+        onRequestSort={handleRequestSort}
+        onSelectAllClick={handleSelectAllClick}
+        />
+        <TableBody>
+        {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+        const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt } = row;
+        const isRowChecked = isRowSelected(organizationId);
 
-                    return (
-                      <TableRow hover key={organizationId} tabIndex={-1} role="checkbox" selected={selectedUser}>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={selectedUser}
-                            onChange={(event) => handleClick(event, organizationName)}
-                          />
-                        </TableCell>
+        return (
+        <TableRow hover key={organizationId} tabIndex={-1} role="checkbox" selected={isRowChecked}>
+        <TableCell padding="checkbox">
+        <Checkbox
+        checked={isRowChecked}
+        onChange={(event) => handleClick(event, organizationId)}
+        />
+        </TableCell>
 
-                        <TableCell component="th" scope="row" padding="none">
-                          <Stack direction="row" alignItems="center" spacing={2}>
-                            <Avatar alt={organizationName} src={avatarUrl} />
-                            <Typography variant="subtitle2" noWrap>
-                              <Link href={`/admin/org-dashboard/${organizationId}/app`} color="inherit" underline="hover">
-                                {organizationName}
-                              </Link>
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell align="left">{createdAt}</TableCell>
+        <TableCell component="th" scope="row" padding="none">
+        <Stack direction="row" alignItems="center" spacing={2}>
+        <Typography variant="subtitle2" noWrap>
+        <Link href={`/admin/org-dashboard/${organizationId}/app`} color="inherit" underline="hover">
+        {organizationId}
+        </Link>
+        </Typography>
+        </Stack>
+        </TableCell>
+        <TableCell align="left">{organizationName}</TableCell>
+        <TableCell align="left">{organizationAdminName}</TableCell>
+        <TableCell align="left">{organizationAdminPhone}</TableCell>
+        <TableCell align="left">
+        {createdAt ? format(parseDateArray(createdAt), 'dd/MM/yyyy') : 'N/A'}
+        </TableCell>
+        <TableCell align="right">
+        <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
+        <Iconify icon={'eva:more-vertical-fill'} />
+        </IconButton>
+        </TableCell>
+        </TableRow>
+        );
+        })}
+        {emptyRows > 0 && (
+        <TableRow style={{ height: 53 * emptyRows }}>
+        <TableCell colSpan={6} />
+        </TableRow>
+        )}
+        </TableBody>
 
-                        <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
-                            <Iconify icon={'eva:more-vertical-fill'} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {emptyRows > 0 && (
-                    <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
+        {isNotFound && (
+        <TableBody>
+        <TableRow>
+        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+        <Paper
+        sx={{
+        textAlign: 'center',
+        }}
+        >
+        <Typography variant="h6" paragraph>
+        Not found
+        </Typography>
 
-                {isNotFound && (
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <Paper
-                          sx={{
-                            textAlign: 'center',
-                          }}
-                        >
-                          <Typography variant="h6" paragraph>
-                            Not found
-                          </Typography>
-
-                          <Typography variant="body2">
-                            No results found for &nbsp;
-                            <strong>&quot;{filterName}&quot;</strong>.
-                            <br /> Try checking for typos or using complete words.
-                          </Typography>
-                          <>
-                            {successMessage && (
-                              <Typography variant="body1" color="success">
-                                {successMessage}
-                              </Typography>
-                            )}
-                            {errorMessage && (
-                              <Typography variant="body1" color="error">
-                                {errorMessage}
-                              </Typography>
-                            )}
-                            <Container>
-                              {/* Rest of your component */}
-                            </Container>
-                          </>
-                        </Paper>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
+        <Typography variant="body2">
+        No results found for &nbsp;
+        <strong>&quot;{filterName}&quot;</strong>.
+        <br /> Try checking for typos or using complete words.
+        </Typography>
+        <>
+        {successMessage && (
+        <Typography variant="body1" color="success">
+        {successMessage}
+        </Typography>
+        )}
+        {errorMessage && (
+        <Typography variant="body1" color="error">
+        {errorMessage}
+        </Typography>
+        )}
+        <Container>
+        {/* Rest of your component */}
+        </Container>
+        </>
+        </Paper>
+        </TableCell>
+        </TableRow>
+        </TableBody>
+        )}
+        </Table>
+        </TableContainer>
+        </Scrollbar>
 
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
@@ -528,7 +583,6 @@ export default function UserPage() {
           <Iconify icon={'eva:cloud-download-outline'} sx={{ mr: 2 }} />
           Export Users
         </MenuItem>
-        {/* Conditionally render CSVLink after data is fetched */}
       {isDataReady && (
         <CSVLink
           data={csvData}
@@ -555,8 +609,8 @@ export default function UserPage() {
             <Modal open={isOpen} onClose={handleClose}>
             <StyledCard>
             <div>
-            <h2>{isEditMode ? 'Edit Organisation' : 'Add Organisation'}</h2>
-            <form noValidate>
+            <h2>{isEditMode ? 'Edit Organization' : 'Add Organization'}</h2>
+            <form noValidate onSubmit={handleSubmit}>
             {/* New field for organizationId */}
             <TextField
             name="organizationName"
@@ -568,6 +622,7 @@ export default function UserPage() {
             helperText={formErrors.organizationName}
             fullWidth
             required
+            style={{ marginBottom: '10px' }}
             />
             <TextField
             name="organizationAdminName"
@@ -579,16 +634,21 @@ export default function UserPage() {
             helperText={formErrors.organizationAdminName}
             fullWidth
             required
+            style={{ marginBottom: '10px' }}
             />
-            <TextField
-            name="organizationAdminPhone"
-            label="Admin Phone"
-            value={formData.organizationAdminPhone}
-            onChange={handleFormChange}
-            variant="outlined"
-            fullWidth
-            required
-            />
+            <ReactPhoneInput
+        country={'in'}
+        enableSearch
+        value={`${countryCode}${formData.organizationAdminPhone}`}
+        onChange={handlePhoneChange}
+        inputStyle={{ width: '100%' }}
+        style={{ marginBottom: '10px' }}
+      />
+      {formErrors.organizationAdminPhone && (
+        <Typography color="error" variant="caption">
+          {formErrors.organizationAdminPhone}
+        </Typography>
+      )}
             <TextField
             name="organizationAdminEmail"
             label="Admin Email"
@@ -598,11 +658,11 @@ export default function UserPage() {
             error={!!formErrors.organizationAdminEmail}
             helperText={formErrors.organizationAdminEmail}
             fullWidth
-            style={{ marginBottom: '1rem' }}
+            style={{ marginBottom: '10px' }}
             required
             />
             <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth>
-            {isEditMode ? 'Update Organisation' : 'Add Organisation'}
+            {isEditMode ? 'Update Organization' : 'Add Organization'}
             </Button>
             </form>
             </div>
