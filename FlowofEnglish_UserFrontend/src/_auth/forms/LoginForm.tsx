@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [userRole, setUserRole] = useState("student");
+  const [userRole, setUserRole] = useState("Learner");
 
   // Fetch programs from API when the component mounts
     useEffect(() => {
@@ -181,23 +181,23 @@ export default function LoginPage() {
                 <input
                   type="radio"
                   name="userRole"
-                  value="student"
-                  checked={userRole === "student"}
-                  onChange={() => setUserRole("student")}
+                  value="Learner"
+                  checked={userRole === "Learner"}
+                  onChange={() => setUserRole("Learner")}
                   className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
                 />
-                Student
+                Learner
               </label>
               <label className="flex items-center">
                 <input
                   type="radio"
                   name="userRole"
-                  value="teacher"
-                  checked={userRole === "teacher"}
-                  onChange={() => setUserRole("teacher")}
+                  value="Mentor"
+                  checked={userRole === "Mentor"}
+                  onChange={() => setUserRole("Mentor")}
                   className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
                 />
-                Teacher
+                Mentor
               </label>
             </div>
           </div>
