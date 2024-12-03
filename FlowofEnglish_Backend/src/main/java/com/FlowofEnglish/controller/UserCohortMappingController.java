@@ -1,7 +1,6 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.UserCohortMappingDTO;
-import com.FlowofEnglish.dto.UserCohortMappingRequest;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.service.UserCohortMappingService;
 import org.springframework.beans.factory.annotation.Autowired;

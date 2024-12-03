@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 import { useEffect, useState } from 'react';
-
+import { formatDistanceToNow, format } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 // @mui
-import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 // components
 // sections
@@ -22,6 +23,18 @@ export default function DashboardAppPage() {
   const [cohorts, setCohorts] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [registeredLearners, setRegisteredLearners] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+
+  const formatLastActivity = (timestamp) => {
+    if (!timestamp) return 'N/A';
+  
+    const date = new Date(timestamp);
+    const relativeTime = formatDistanceToNow(date, { addSuffix: true });
+    const formattedTime = format(date, 'hh:mm a');
+    return `${relativeTime} at ${formattedTime}`;
+  };
 
   // Fetch organization details on component mount
   useEffect(() => {
@@ -46,7 +59,7 @@ export default function DashboardAppPage() {
           ...user,
           organizationName: user.organization?.organizationName || 'N/A',
           sessionStartTimestamp: lastSession?.sessionStartTimestamp
-            ? new Date(lastSession.sessionStartTimestamp).toISOString()
+            ? new Date((lastSession.sessionStartTimestamp)*1000).toISOString()
             : null,
         };
       });
@@ -75,6 +88,22 @@ export default function DashboardAppPage() {
         console.log(err);
       });
   }, []);
+
+  // Handle pagination change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page
+  };
+
+  const paginatedLearners = registeredLearners.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   // console.log('hello');
   return (
     <>
@@ -89,10 +118,15 @@ export default function DashboardAppPage() {
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary 
-            title="Learners" 
-            total={users.length} 
-            icon={'ant-design:user-outlined'} />
+            <AppWidgetSummary
+            title="Learners"
+            total={users.length}
+            svgIcon={
+              <img
+              src="/admin/assets/icons/navbar/profile.svg"
+              alt="Learners Icon"
+              style={{ width: 40, height: 40 }}/>}
+              />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
@@ -100,7 +134,11 @@ export default function DashboardAppPage() {
               title="Organisations"
               total={orgs.length}
               color="info"
-              icon={'ant-design:bank-outlined'}
+              svgIcon={
+                <img
+                src="/admin/assets/icons/navbar/organization.svg"
+                alt="cohorts Icon"
+                style={{ width: 40, height: 40 }}/>}
             />
           </Grid>
 
@@ -109,19 +147,27 @@ export default function DashboardAppPage() {
               title="Cohorts"
               total={cohorts.length}
               color="warning"
-              icon={'ant-design:whats-app-outlined'}
-            />
+              svgIcon={
+                <img
+                src="/admin/assets/icons/navbar/cohort.svg"
+                alt="cohorts Icon"
+                style={{ width: 40, height: 40 }}/>}
+                />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Programs" 
-            total={programs.length} 
-            color="error" 
-            icon={'ant-design:flag-outlined'}
-            />
+            <AppWidgetSummary title="Programs"
+            total={programs.length}
+            color="error"
+            svgIcon={
+              <img
+              src="/admin/assets/icons/navbar/program.svg"
+              alt="Programs Icon"
+              style={{ width: 40, height: 40 }}/>}
+              />
           </Grid>
 
-          <Grid item xs={12} md={6} lg={8}>
+          {/* <Grid item xs={12} md={6} lg={8}> */}
             <Grid item xs={12}>
   <Paper sx={{ p: 2 }}>
     <Typography variant="h6" sx={{ mb: 2 }}>
@@ -138,21 +184,39 @@ export default function DashboardAppPage() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {registeredLearners.map((user) => (
+        {paginatedLearners.length > 0 ? (
+                      paginatedLearners.map((user) => (
             <TableRow key={user.userId}>
               <TableCell>{user.userId}</TableCell>
               <TableCell>{user.userName}</TableCell>
               <TableCell>{user.organizationName}</TableCell>
-              <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell>
+              {/* <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell> */}
+              <TableCell>{formatLastActivity(user.sessionStartTimestamp)}</TableCell>
             </TableRow>
-          ))}
+          ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} align="center">
+                No learners registered yet.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </TableContainer>
+        <TablePagination
+        rowsPerPageOptions={[5, 10, 20, 25]}
+        component="div"
+        count={registeredLearners.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        />
     </Paper>
     </Grid>
           </Grid>
-        </Grid>
+        {/* </Grid> */}
       </Container>
     </>
   );

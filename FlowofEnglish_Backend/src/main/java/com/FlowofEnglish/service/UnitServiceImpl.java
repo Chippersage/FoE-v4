@@ -6,12 +6,15 @@ import com.FlowofEnglish.dto.UnitResponseDTO;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.model.ProgramConceptsMapping;
 import com.FlowofEnglish.model.Stage;
+import com.FlowofEnglish.model.Subconcept;
 import com.FlowofEnglish.model.Unit;
+import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserSubConcept;
 import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
 import com.FlowofEnglish.repository.ProgramRepository;
 import com.FlowofEnglish.repository.StageRepository;
 import com.FlowofEnglish.repository.UnitRepository;
+import com.FlowofEnglish.repository.UserRepository;
 import com.FlowofEnglish.repository.UserSubConceptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ import com.FlowofEnglish.exception.ResourceNotFoundException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +40,9 @@ public class UnitServiceImpl implements UnitService {
 
     @Autowired
     private UnitRepository unitRepository;
+    
+    @Autowired
+    UserRepository userRepository;
 
     @Autowired
     private StageRepository stageRepository;
@@ -185,6 +192,11 @@ public class UnitServiceImpl implements UnitService {
         Map<String, StageDTO> stageMap = new HashMap<>();
         int totalUnitCount = 0;
         int stagesCount = 0;
+        
+     // Fetch user details to determine visibility
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String userType = user.getUserType();
 
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
@@ -220,10 +232,21 @@ public class UnitServiceImpl implements UnitService {
                     // Fetch user sub concepts for the current unit
                     List<UserSubConcept> userSubConceptsForUnit = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
 
-                    // Fetch the total number of sub concepts associated with the unit
-                    int totalSubConceptCount = getTotalSubConceptCount(unit.getUnitId());
-                    int completedSubConceptCount = userSubConceptsForUnit.size();
-
+                 // Determine accessible mappings
+                    List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
+                    List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
+                        .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
+                        .collect(Collectors.toList());
+                    
+                 // Calculate total and completed subconcept counts based on user type
+                    int totalSubConceptCount = accessibleMappings.size();
+                    long completedSubConceptCount = accessibleMappings.stream()
+                        .map(ProgramConceptsMapping::getSubconcept)
+                        .map(Subconcept::getSubconceptId)
+                        .filter(id -> userSubConceptsForUnit.stream()
+                            .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
+                        .count();
+                    
                     String unitCompletionStatus;
                     
                     if (totalSubConceptCount == 0) {
@@ -239,8 +262,11 @@ public class UnitServiceImpl implements UnitService {
                     	    unitCompletionStatus = completedSubConceptCount > 0 ? "incomplete" : "incomplete"; 
                     	}
                            else  {
-                            Unit previousUnit = units.get(j - 1);
-                            String previousUnitStatus = unitMap.get(String.valueOf(j - 1)).getCompletionStatus();
+//                            Unit previousUnit = units.get(j - 1);
+//                            String previousUnitStatus = unitMap.get(String.valueOf(j - 1)).getCompletionStatus();
+                        	   Unit previousUnit = units.get(j - 1);
+                               UnitResponseDTO previousUnitResp = unitMap.get(String.valueOf(j - 1));
+                               String previousUnitStatus = previousUnitResp != null ? previousUnitResp.getCompletionStatus() : "disabled";
 
                             if ("yes".equals(previousUnitStatus)) {
                                 // Mark this unit as incomplete if the previous unit is completed
@@ -296,13 +322,26 @@ public class UnitServiceImpl implements UnitService {
         return programResponse;
     }
     /**
+     * Helper method to determine if a subconcept is visible to the user based on user type.
+     */
+    private boolean isSubconceptVisibleToUser(String userType, Subconcept subconcept) {
+        // Assuming 'showTo' can have multiple values separated by commas, e.g., "student,teacher"
+        Set<String> visibilitySet = Arrays.stream(subconcept.getShowTo().split(","))
+                                         .map(String::trim)
+                                         .map(String::toLowerCase)
+                                         .collect(Collectors.toSet());
+        return visibilitySet.contains(userType.toLowerCase());
+    }
+
+    /**
      * Helper method to get the total sub concept count for a unit.
+     * (No changes needed here since counting is handled differently now)
      */
     private int getTotalSubConceptCount(String unitId) {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
         return subconcepts.size();
     }
-
+    
     @Override
     public void deleteUnit(String unitId) {
         unitRepository.deleteById(unitId);

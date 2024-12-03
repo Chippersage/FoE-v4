@@ -2,14 +2,19 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.ProgramConceptsMappingResponseDTO;
 import com.FlowofEnglish.dto.SubconceptResponseDTO;
+import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.ProgramConceptsMapping;
+import com.FlowofEnglish.model.Subconcept;
+import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserSubConcept;
 import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
+import com.FlowofEnglish.repository.UserRepository;
 import com.FlowofEnglish.repository.UserSubConceptRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +31,9 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     @Autowired
     private UserSubConceptRepository userSubConceptRepository; 
     
+    @Autowired
+    private UserRepository userRepository;
+    
     @Override
     public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
         return programConceptsMappingRepository.findAll();
@@ -38,7 +46,14 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     
     @Override
     public Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String userId, String unitId) {
-        // Fetch all mappings related to the unitId
+        
+    	// Fetch user details
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        String userType = user.getUserType();
+        
+    	// Fetch all mappings related to the unitId
         List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findByUnit_UnitId(unitId);
 
         if (mappings.isEmpty()) {
@@ -65,11 +80,32 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             .map(us -> us.getSubconcept().getSubconceptId())
             .collect(Collectors.toSet());
 
+     // Determine accessible subconcepts based on user type
+        List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
+            .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
+            .collect(Collectors.toList());
+
+        // Update totalSubConceptCount based on accessible mappings
+        int totalSubConceptCount = accessibleMappings.size();
+
+        // Calculate completedSubConceptCount based on accessible mappings
+        long completedSubConceptCount = accessibleMappings.stream()
+            .map(ProgramConceptsMapping::getSubconcept)
+            .map(Subconcept::getSubconceptId)
+            .filter(completedSubconceptIds::contains)
+            .count();
+        
      // Keep track of the enabled state of subconcepts
         boolean enableNextSubconcept = true; // Initially, the first subconcept is enabled
+        
+        for (ProgramConceptsMapping mapping : accessibleMappings) {
+            Subconcept subconcept = mapping.getSubconcept();
+            
+//         // Check visibility rules based on user type
+//            if ("student".equalsIgnoreCase(userType) && !"student".equalsIgnoreCase(subconcept.getShowTo())) {
+//                continue; // Skip subconcepts not meant for learners
+//            }
 
-        // Populate the sub_concepts based on mappings
-        for (ProgramConceptsMapping mapping : mappings) {
             SubconceptResponseDTO subconceptResponseDTO = new SubconceptResponseDTO();
             subconceptResponseDTO.setSubconceptId(mapping.getSubconcept().getSubconceptId());
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
@@ -100,11 +136,19 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             // Add to the map with an appropriate key (like an index or ID)
             subconcepts.put(String.valueOf(subconcepts.size()), subconceptResponseDTO);
             
-         // Increment the subconcept count
             subconceptCount++;
+//         // Increment the count only for learners when applicable
+//            if ("student".equalsIgnoreCase(userType)) {
+//                subconceptCount++;
+//            }
         }
+//     // Adjust total subconcept count for mentors
+//        if ("teacher".equalsIgnoreCase(userType)) {
+//            subconceptCount = mappings.size();
+//        }
      // Check if all subconcepts are completed to mark the unit as completed
-        boolean allSubconceptsCompleted = completedSubconceptIds.size() == subconceptCount;
+    // boolean allSubconceptsCompleted = completedSubconceptIds.size() == subconceptCount;
+        boolean allSubconceptsCompleted = completedSubConceptCount == totalSubConceptCount;
         System.out.println("Subconcept Count: " + subconceptCount);
         System.out.println("User Subconcepts Completed: " + completedSubconceptIds.size());
 
@@ -116,7 +160,17 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
 
         return Optional.of(responseDTO);
     }
-
+    /**
+     * Helper method to determine if a subconcept is visible to the user based on user type.
+     */
+    private boolean isSubconceptVisibleToUser(String userType, Subconcept subconcept) {
+        // Assuming 'showTo' can have multiple values separated by commas, e.g., "student,teacher"
+        Set<String> visibilitySet = Arrays.stream(subconcept.getShowTo().split(","))
+                                         .map(String::trim)
+                                         .map(String::toLowerCase)
+                                         .collect(Collectors.toSet());
+        return visibilitySet.contains(userType.toLowerCase());
+    }
 
     @Override
     public ProgramConceptsMapping createProgramConceptsMapping(ProgramConceptsMapping programConceptsMapping) {
@@ -140,4 +194,3 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         programConceptsMappingRepository.deleteById(programConceptId);
     }
 }
-
