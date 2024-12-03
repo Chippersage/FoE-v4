@@ -5,6 +5,7 @@ import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserCohortMapping;
+import com.FlowofEnglish.model.UserType;
 import com.FlowofEnglish.dto.CohortDTO;
 import com.FlowofEnglish.dto.OrganizationDTO;
 import com.FlowofEnglish.dto.ProgramDTO;
@@ -162,6 +163,13 @@ public class UserServiceImpl implements UserService {
         String cohortId = userDTO.getCohortId();
         String plainPassword = DEFAULT_PASSWORD;
 
+     // Validate userType
+        try {
+            UserType.fromString(user.getUserType()); // Throws exception if invalid
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid userType: " + user.getUserType() + ". Allowed values are 'learner' or 'mentor'.");
+        }
+        
         user.setUserPassword(passwordEncoder.encode(plainPassword));
 
         User savedUser = userRepository.save(user);
@@ -189,7 +197,7 @@ public class UserServiceImpl implements UserService {
     public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
         List<User> usersToCreate = new ArrayList<>();
         List<UserCohortMapping> userCohortMappingsToCreate = new ArrayList<>();
-        Set<String> userIdSet = new HashSet<>();
+        Map<String, User> createdUsers = new HashMap<>();
         String[] headerRow;
         String[] line;
 
@@ -217,27 +225,26 @@ public class UserServiceImpl implements UserService {
 
             while ((line = csvReader.readNext()) != null) {
             	String userId = line[columnIndexMap.get("userid")];
+            	String cohortId = line[columnIndexMap.get("cohortid")];
 
                 
-             // Check if userId already exists in the Same CSV batch
-                if (userIdSet.contains(userId)) {
-                    errorMessages.add("Duplicate userId " + userId + " found in CSV. This user will not be created.");
-                    continue;
-
-                }
-                userIdSet.add(userId); 
-
-                // Check if userId already exists in the database
-                if (userRepository.existsById(userId)) {
-                    errorMessages.add("UserID: " + userId + " already exists in the database. Skipping.");
-                    continue; 
-                }
-
-                try {
-                    User user = new User();
+            	// Check if userId exists in the same batch or database
+                User user = createdUsers.get(userId);
+                if (user == null) {
+                    if (userRepository.existsById(userId)) {
+                        user = userRepository.findById(userId).orElse(null);
+                    } else {
+                        try {
+                    user = new User();
                     user.setUserId(userId);
                     user.setUserName(line[columnIndexMap.get("username")]);
-                    user.setUserType(line[columnIndexMap.get("usertype")]);
+                 // Validate userType
+                    String userType = line[columnIndexMap.get("usertype")].toLowerCase();
+                    if (!userType.equals("learner") && !userType.equals("mentor")) {
+                        errorMessages.add("Invalid userType for UserID " + userId + ": " + userType + ". Allowed values are 'learner' or 'mentor'.");
+                        continue;
+                    }
+                    user.setUserType(userType);
                     user.setUuid(UUID.randomUUID().toString());
                     user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
@@ -254,11 +261,17 @@ public class UserServiceImpl implements UserService {
                     
                 // Add user to the list for bulk saving
                 usersToCreate.add(user);
-                
-             // Handle UserCohortMapping
-                String cohortId = line[columnIndexMap.get("cohortid")];
-                Cohort cohort = cohortRepository.findById(cohortId)
-                        .orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
+                createdUsers.put(userId, user);
+            } catch (Exception ex) {
+                errorMessages.add("Error creating UserID " + userId + ": " + ex.getMessage());
+                continue;
+            }
+        }
+    }
+
+                try {
+                    Cohort cohort = cohortRepository.findById(cohortId)
+                    		.orElseThrow(() -> new IllegalArgumentException("Cohort not found with ID: " + cohortId));
 
              // Check for existing UserCohortMapping before creating a new one
                 if (userCohortMappingRepository.existsByUser_UserIdAndCohort_CohortId(userId, cohortId)) {
@@ -276,9 +289,8 @@ public class UserServiceImpl implements UserService {
 
                 // Add to the list of mappings to be saved later
                 userCohortMappingsToCreate.add(userCohortMapping);
-            }catch (IllegalArgumentException ex) {
-                errorMessages.add("Error for UserID " + userId + ": " + ex.getMessage());
-                continue;
+            }catch (Exception ex) {
+                errorMessages.add("Error mapping UserID " + userId + " to CohortID " + cohortId + ": " + ex.getMessage());
             }
         }
 
