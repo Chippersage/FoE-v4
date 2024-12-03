@@ -110,7 +110,7 @@ export default function DashboardOrgClientPage() {
       total={users ? users.length : 0}
       svgIcon={
       <img
-      src="/admin/assets/icons/navbar/ic_Learners.svg"
+      src="/admin/assets/icons/navbar/profile.svg"
       alt="Learners Icon"
       style={{ width: 40, height: 40 }}/>}
       />
@@ -125,7 +125,7 @@ export default function DashboardOrgClientPage() {
       svgIcon={
       <img
       src="/admin/assets/icons/navbar/cohort.svg"
-      alt="Learners Icon"
+      alt="cohorts Icon"
       style={{ width: 40, height: 40 }}/>}
       />
       </Grid>
@@ -138,7 +138,7 @@ export default function DashboardOrgClientPage() {
       svgIcon={
       <img
       src="/admin/assets/icons/navbar/program.svg"
-      alt="Learners Icon"
+      alt="Programs Icon"
       style={{ width: 40, height: 40 }}/>}
       />
       </Grid>
