@@ -158,7 +158,7 @@ export default function Stages({ stages }) {
                         unitIndex + 1
                       ];
                       // @ts-ignore
-                      const nextUnitId = nextUnit ? nextUnit.unitId : null;
+                      nextUnit ? localStorage.setItem("nextUnitId", nextUnit.unitId) : localStorage.setItem("nextUnitId", "");
 
                       return (
                         <Link
@@ -171,13 +171,10 @@ export default function Stages({ stages }) {
                                 `/subconcepts/${unit.unitId}`
                               : null
                           }
-                          state={{
-                            // @ts-ignore
-                            currentUnitId: unit.unitId,
-                            // @ts-ignore
-                            stageId: stage.stageId,
-                            nextUnitId,
-                          }}
+                          // state={{
+                          //   // @ts-ignore
+                          //   nextUnitId,
+                          // }}
                           key={unitIndex}
                           className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${
                             // @ts-ignore
