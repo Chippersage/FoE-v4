@@ -19,7 +19,7 @@ import Start from "@/components/Start";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 import Header2 from "@/components/Header2";
 import { useUserContext } from "@/context/AuthContext";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
@@ -47,10 +47,13 @@ const iconMap = {
 };
 
 export default function SubConceptsPage() {
-  const location = useLocation();
-  const stageId = location.state?.stageId;
-  const currentUnitId = location.state?.currentUnitId;
-  const nextUnitId = location.state?.nextUnitId;
+  // const location = useLocation();
+  // const stageId = location.state?.stageId;
+  const [stageId, setStageId] = useState("");
+  // const currentUnitId = location.state?.currentUnitId;
+  const [currentUnitId, setCurrentUnitId] = useState("");
+  // const nextUnitId = location.state?.nextUnitId;
+  const nextUnitId = localStorage.getItem("nextUnitId");
   const { unitId } = useParams();
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
@@ -90,6 +93,8 @@ export default function SubConceptsPage() {
           const result = await fetchSubconcepts();
           console.log(result);
           setUnitCompletionStatus(result.unitCompletionStatus)
+          setStageId(result.stageId)
+          setCurrentUnitId(result.unitId)
           const fetchedSubconcepts: SubconceptData = result.subConcepts;
           setSubconcepts(Object.values(fetchedSubconcepts));
         } catch (err) {
@@ -195,16 +200,17 @@ export default function SubConceptsPage() {
         )}
 
         <svg
-          className="w-full h-auto mt-10"
+          className="w-full h-auto mt-28"
           viewBox={`0 0 ${pathWidth} ${pathWidth}`}
           preserveAspectRatio="xMinYMin meet"
         >
           <path
             d={getPath()}
             fill="none"
-            stroke="#4CAF50"
-            strokeWidth="3"
+            stroke="white"
+            strokeWidth="5"
             className="curve-path"
+            strokeDasharray={"20,5"}
           />
 
           {[...Array(totalSteps)].map((_, index) => {
@@ -236,7 +242,9 @@ export default function SubConceptsPage() {
                 <Link
                   // @ts-ignore
                   to={
-                    index === totalSteps - 1 && nextUnitId && unitCompletionStatus === 'yes'
+                    index === totalSteps - 1 &&
+                    nextUnitId &&
+                    unitCompletionStatus === "yes"
                       ? `/subconcepts/${nextUnitId}`
                       : isEnabled && index !== totalSteps - 1 && index !== 0
                       ? `/subconcept/${subconcept?.subconceptId}`
@@ -247,11 +255,16 @@ export default function SubConceptsPage() {
                   onMouseEnter={() => setActiveTooltip(index)}
                   onMouseLeave={() => setActiveTooltip(null)}
                   onClick={() => {
-                    if((index === totalSteps - 1) && (unitCompletionStatus === 'yes')){
-                      setShowConfetti(true)
-                      setAudioPlaying(true)
-                      setTimeout(() => {setShowConfetti(false)},5000)
-                    }
+                    if (
+                      index === totalSteps - 1 &&
+                      unitCompletionStatus === "yes"
+                    ) {
+                      setShowConfetti(true);
+                      setAudioPlaying(true);
+                      setTimeout(() => {
+                        setShowConfetti(false);
+                      }, 5000);
+                    } else return;
                   }}
                 >
                   <g
@@ -278,9 +291,9 @@ export default function SubConceptsPage() {
                           : "#fff" // White for completed steps
                       } // This removes the fill color
                       stroke={
-                        (index === 0 || index === totalSteps - 1)
-                        ? "none"
-                        : isEnabled
+                        index === 0 || index === totalSteps - 1
+                          ? "none"
+                          : isEnabled
                           ? isCompleted
                             ? "#4CAF50" // Outline color when completed
                             : "#2196F3" // Outline color when enabled but not completed
@@ -292,13 +305,26 @@ export default function SubConceptsPage() {
                     />
 
                     <Icon
-                      x={point.x - 15}
-                      y={point.y - 15}
+                      x={
+                        index === 0
+                          ? point.x - 64
+                          : index === totalSteps - 1
+                          ? point.x - 30
+                          : point.x - 15
+                      }
+                      y={
+                        index === 0
+                          ? point.y - 45
+                          : index === totalSteps - 1
+                          ? point.y - 50
+                          : point.y - 15
+                      }
                       width="70"
                       height="70"
                       color="white"
                       className="object-contain"
                     />
+
                     {isCompleted && (
                       <g
                         className={`transition-transform duration-300 ease-out ${

@@ -45,39 +45,37 @@ const Header2 = () => {
           alt="Home"
           onClick={() => navigate("/")}
           style={{
-            width: "28px",
-            height: "28px",
+            width: "25px",
+            height: "25px",
             cursor: "pointer",
-            marginRight: "10px",
+            marginRight: "5px",
           }}
           title="Go to Home"
         />
-        <h3
-          className="hellohead"
-          style={{ fontSize: "18px", fontWeight: 600, color: "#FFFFFF" }}
-        >
+        <h3 className="hellohead text-white">
           {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
         </h3>
       </div>
       <div className="flex flex-1">
-        <h3
-          className="hellohead mx-auto "
-          style={{ fontSize: "18px", fontWeight: "bold", color: "#FFFFFF" }}
-        >
+        <h3 className="hellohead mx-auto text-white">
           {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
           {/* Show "Continue as Guest" if user is null */}
         </h3>
       </div>
       <div className="logout-button flex-1 flex justify-end">
         {user && (
-          <img
-            src={"/icons/User-icons/exit.png"} // Set the source to the logout image
-            alt="Logout"
-            className="logout-icon"
-            onClick={handleLogout} // Attach the logout handler to the image
-            style={{ width: "30px", height: "30px", cursor: "pointer" }} // Set size and make clickable
-            title="Logout"
-          />
+          <span onClick={handleLogout} className="text-white cursor-pointer">
+            Logout
+          </span>
+
+          // <img
+          //   src={"/icons/User-icons/exit.png"} // Set the source to the logout image
+          //   alt="Logout"
+          //   className="logout-icon"
+          //   onClick={handleLogout} // Attach the logout handler to the image
+          //   style={{ width: "30px", height: "30px", cursor: "pointer" }} // Set size and make clickable
+          //   title="Logout"
+          // />
         )}
       </div>
     </div>
