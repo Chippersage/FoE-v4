@@ -15,37 +15,42 @@ const getNavConfig = () => {
       {
         title: 'dashboard',
         path: '/dashboard/app',
-        icon: icon('ic_analytics'),
+        icon: icon('dashboard'),
       },
       {
-        title: 'Organisations',
+        title: 'Organizations',
         path: '/dashboard/user',
-        icon: icon('ic_user'),
+        icon: icon('organization'),
       },
       {
         title: 'Learners',
         path: '/dashboard/Create-Users',
-        icon: icon('ic_learners'),
+        icon: icon('profile'),
       },
       {
         title: 'Report',
         path: '/dashboard/superreport',
-        icon: icon('ic_report'),
+        icon: icon('report'),
       },
       {
         title: 'Programs',
         path: `/dashboard/programs`,
-        icon: icon('ic_program'),
+        icon: icon('program'),
       },
       {
-        title: 'User Report',
-        path: '/dashboard/superuserreport',
-        icon: icon('ic_lan'),
+        title: 'Prg2Coh',
+        path: `/dashboard/program-to-cohort`,
+        icon: icon('Pro2Coh'),
       },
+      // {
+      //   title: 'User Report',
+      //   path: '/dashboard/superuserreport',
+      //   icon: icon('report'),
+      // },
       {
         title: 'Setting',
         path: '/dashboard/superpassword',
-        icon: icon('ic_lock'),
+        icon: icon('setting'),
       },
       
     ];
@@ -66,7 +71,7 @@ const getNavConfig = () => {
       {
         title: 'Learners',
         path: `/org-dashboards/${orgId}/org-Create-Users`,
-        icon: icon('ic_Learners'),
+        icon: icon('profile'),
       },
       {
           title: 'Programs',

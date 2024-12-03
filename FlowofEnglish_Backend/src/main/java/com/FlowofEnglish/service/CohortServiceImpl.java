@@ -40,6 +40,18 @@ public class CohortServiceImpl implements CohortService {
             throw new CohortValidationException("Cohort end date must be greater than the cohort start date.");
         }
 
+        // Generate cohort ID
+        if (cohort.getCohortId() == null && cohort.getCohortName() != null && cohort.getOrganization() != null) {
+            String orgId = cohort.getOrganization().getOrganizationId();
+            String sanitizedCohortName = cohort.getCohortName().replaceAll("\\s+", "");
+            String namePrefix = sanitizedCohortName.length() >= 4
+                    ? sanitizedCohortName.substring(0, 4).toUpperCase()
+                    : sanitizedCohortName.toUpperCase();
+
+            long cohortCount = cohortRepository.countByCohortNameAndOrganizationOrganizationId(sanitizedCohortName, orgId);
+            cohort.setCohortId(namePrefix + "-" + orgId + "-" + (cohortCount + 1));
+        }
+
         // Save cohort
         return cohortRepository.save(cohort);
     }
