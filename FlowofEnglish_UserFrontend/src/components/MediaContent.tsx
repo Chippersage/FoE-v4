@@ -124,14 +124,24 @@ const MediaContent = ({ subconceptData }) => {
     switch (subconceptType) {
       case "audio":
         return (
-          <audio ref={contentRef} controls>
+          <audio
+            ref={contentRef}
+            controls
+            controlsList="nodownload" // Restrict download
+            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+          >
             <source src={subconceptLink} type="audio/mp3" />
             Your browser does not support the audio element.
           </audio>
         );
       case "video":
         return (
-          <video ref={contentRef} controls>
+          <video
+            ref={contentRef}
+            controls
+            controlsList="nodownload" // Restrict download
+            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+          >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
           </video>
@@ -146,12 +156,13 @@ const MediaContent = ({ subconceptData }) => {
               borderRadius: "10px",
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
             }}
+            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
           />
         );
       case "pdf":
         return (
           <iframe
-            src={subconceptLink}
+            src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
             width="100%"
             height="500px"
             title="PDF Document"
@@ -159,14 +170,14 @@ const MediaContent = ({ subconceptData }) => {
               borderRadius: "10px",
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
             }}
+            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
           />
         );
       default:
-        return (
-          <p>Something went wrong!</p>
-        );
+        return <p>Something went wrong!</p>;
     }
   };
+
 
   return (
     <>
@@ -284,7 +295,7 @@ const styles = {
     width: "100%",
   },
   heading: {
-    marginTop: "80px",
+    marginTop: "66px",
     fontSize: "2.2em",
     color: "#2C3E50",
     fontWeight: "bold",
