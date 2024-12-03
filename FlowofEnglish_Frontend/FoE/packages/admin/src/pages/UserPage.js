@@ -23,11 +23,11 @@ import { createOrg, deleteOrg, deleteOrgs, getOrgUsers, getOrgs, updateOrg } fro
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'organizationId', label: 'Org ID', alignRight: false },
-  { id: 'organizationName', label: 'Org Name', alignRight: false },
-  { id: 'organizationAdminName', label: 'Org Admin Name', alignRight: false },
-  { id: 'organizationAdminPhone', label: 'Admin Phone', alignRight: false },
-  { id: 'createdAt', label: 'Joined Date', alignRight: false },
+  { id: 'organizationId', label: 'ID', alignRight: false },
+  { id: 'organizationName', label: 'Name', alignRight: false },
+  { id: 'organizationAdminName', label: 'Admin Name', alignRight: false },
+  { id: 'organizationAdminPhone', label: 'Phone', alignRight: false },
+  { id: 'createdAt', label: 'Date Joined', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
@@ -181,7 +181,7 @@ export default function UserPage() {
     if (Object.keys(errors).length === 0) {
       if (isEditMode) {
         try {
-          await updateOrg(formData.id, {
+          await updateOrg(formData.organizationId, {
             organizationId: formData.organizationId,
             organizationName: formData.organizationName,
             organizationAdminName: formData.organizationAdminName,
@@ -231,7 +231,7 @@ export default function UserPage() {
   const handleDelete = async () => {
     try {
       const { id } = selectedRow;
-      await deleteOrg(id);
+      await deleteOrg(organizationId);
       getOrgs().then((res) => {
         // console.log(res);
         setOrgs(res);
