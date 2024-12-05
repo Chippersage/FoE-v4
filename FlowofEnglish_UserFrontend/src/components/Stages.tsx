@@ -26,7 +26,7 @@ export default function Stages({ stages }) {
 
   // Ensure that stages is not null or undefined before converting it to an array
   const stagesArray = stages ? Object.values(stages) : [];
-  console.log(stagesArray)
+  // console.log(stagesArray)
 
   // @ts-ignore
   const toggleExpand = (index) => {
@@ -41,7 +41,7 @@ export default function Stages({ stages }) {
 
   return (
     <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 space-y-4 overflow-y-auto bg-white bg-opacity-50 no-scrollbar rounded-[3px]">
-      <h3 className="text-xl font-semibold">Your Learning Path</h3>
+      <h3 className="text-xl font-semibold font-openSans">Your Learning Path</h3>
       {stagesArray.length > 0 ? (
         stagesArray.map((stage, index) => (
           <>
@@ -73,7 +73,7 @@ export default function Stages({ stages }) {
               </CardHeader>
               <CardContent className="relative pb-16">
                 <p
-                  className={`text-sm mb-4 ${
+                  className={`text-sm mb-4 font-openSans font-semibold ${
                     // @ts-ignore
                     stage.stageEnabled ? "text-gray-600" : "text-gray-400"
                   }`}
@@ -154,12 +154,8 @@ export default function Stages({ stages }) {
                     // @ts-ignore
                     Object.values(stage.units).map((unit, unitIndex) => {
                       // @ts-ignore
-                      const nextUnit = Object.values(stage.units)[
-                        unitIndex + 1
-                      ];
+                      
                       // @ts-ignore
-                      nextUnit ? localStorage.setItem("nextUnitId", nextUnit.unitId) : localStorage.setItem("nextUnitId", "");
-
                       return (
                         <Link
                           // @ts-ignore
@@ -171,38 +167,44 @@ export default function Stages({ stages }) {
                                 `/subconcepts/${unit.unitId}`
                               : null
                           }
-                          // state={{
-                          //   // @ts-ignore
-                          //   nextUnitId,
-                          // }}
                           key={unitIndex}
-                          className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-md transition-all duration-200 ease-in-out ${
+                          className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-[3px] transition-all duration-200 ease-in-out ${
+                            unit.completionStatus === "incomplete" &&
+                            "bg-[#5BC3CD]"
+                          }
+                          ${unit.completionStatus === 'disabled' && 'hover:cursor-not-allowed'}
+                          ${
                             // @ts-ignore
-                            hoveredUnit === unit.unitId
-                              ? "bg-black bg-opacity-30"
+                            (hoveredUnit === unit.unitId &&
+                            unit.completionStatus !== "disabled")
+                              ? "bg-[#DB5788]"
                               : ""
                           }`}
                           // @ts-ignore
                           onMouseEnter={() => setHoveredUnit(unit.unitId)}
                           onMouseLeave={() => setHoveredUnit(null)}
+                          onClick={() => {
+                            localStorage.setItem(
+                              "allUnitsOfCurrentStage",
+                              JSON.stringify(Object.values(stage.units))
+                            );
+                            localStorage.setItem("currentUnit", unit.unitName); // Example for a second value
+                          }}
                         >
                           {/* @ts-ignore */}
                           {unit.completionStatus === "yes" && (
                             <CircleCheck
-                              className="absolute top-0 left-0 text-green-500 "
+                              className="absolute top-0 left-0 text-green-500"
                               size={16}
                             />
                           )}
 
                           {/* Icon */}
                           <div className="flex-shrink-0">
-                            <Book
-                              className={`h-4 w-4 ${
-                                // @ts-ignore
-                                stage.stageEnabled
-                                  ? "text-gray-900"
-                                  : "text-gray-400"
-                              }`}
+                            <img
+                              src="/icons/User-icons/unit.png"
+                              alt="unit"
+                              className="w-5 h-5"
                             />
                           </div>
 
@@ -213,12 +215,15 @@ export default function Stages({ stages }) {
                               stage.stageEnabled
                                 ? "text-gray-900"
                                 : "text-gray-400"
-                            } ${
+                            } 
+                            ${
                               // @ts-ignore
-                              hoveredUnit === unit.unitId
+                              (hoveredUnit === unit.unitId &&
+                            unit.completionStatus !== "disabled")
                                 ? "opacity-100 translate-x-1 font-semibold"
                                 : ""
-                            }`}
+                            }
+                            `}
                           >
                             {/* @ts-ignore */}
                             {unit.unitName}

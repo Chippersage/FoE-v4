@@ -68,17 +68,22 @@ const ErrorOverlay = ({ countdown = 3, onClose }) => {
 };
 
 const SingleSubconcept = () => {
-  console.log("rendered")
+  console.log("rendered");
   const { user } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSubmit, setShowSubmit] = useState(false); // State to control Submit button visibility
   const [showGoBack, setShowGoBack] = useState(false); // State to control Submit button visibility
   const [successOverlay, setSuccessOverlay] = useState(false);
   const [errorOverlay, setErrorOverlay] = useState(false);
-
+  const [onFrameLoad, setOnFrameLoad] = useState(false);
   const sessionId = localStorage.getItem("authToken");
   const subconcept = location.state?.subconcept;
+  const [showIframe, setShowIframe] = useState(
+    !["video", "audio", "pdf", "image"].includes(subconcept?.subconceptType)
+  );
+const [showSubmit, setShowSubmit] = useState(
+  subconcept?.subconceptType?.startsWith('passage')
+);
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
 
@@ -105,16 +110,16 @@ const SingleSubconcept = () => {
     const handleMessage = (event: MessageEvent) => {
       // Check if the message comes from the expected iframe
       // if (event.origin === new URL(subconcept?.subconceptLink || "").origin) {
-        if (event.data === "enableSubmit") {
-          setShowSubmit(true); // Show the Submit button
-        } else if (event.data === "disableSubmit") {
-          setShowSubmit(false);
-        } else if (event.data?.type === "scoreData") {
-          // Handle score data from iframe
-          handlePostScore(event.data.payload); // Process score data
-        } else if (event.data === "confirmSubmission") {
-          setSuccessOverlay(true); // Show success overlay upon confirmation
-        }
+      if (event.data === "enableSubmit") {
+        setShowSubmit(true); // Show the Submit button
+      } else if (event.data === "disableSubmit") {
+        setShowSubmit(false);
+      } else if (event.data?.type === "scoreData") {
+        // Handle score data from iframe
+        handlePostScore(event.data.payload); // Process score data
+      } else if (event.data === "confirmSubmission") {
+        setSuccessOverlay(true); // Show success overlay upon confirmation
+      }
       // }
     };
 
@@ -167,36 +172,35 @@ const SingleSubconcept = () => {
 
     console.log("Final Payload for POST request:", finalPayload);
 
-    
-  fetch(`${userData.API_BASE_URL}/user-attempts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(finalPayload),
-  })
-    .then((response) => {
-      if (response.ok) {
-        console.log("submitted and postSuccess message sent")
-        // Notify the iframe about the successful request
-        const iframe = document.getElementById(
-          "embeddedContent"
-        ) as HTMLIFrameElement;
-        if (iframe && iframe.tagName === "IFRAME") {
-          iframe.contentWindow?.postMessage("postSuccess", "*");
+    fetch(`${userData.API_BASE_URL}/user-attempts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(finalPayload),
+    })
+      .then((response) => {
+        if (response.ok) {
+          console.log("submitted and postSuccess message sent");
+          // Notify the iframe about the successful request
+          const iframe = document.getElementById(
+            "embeddedContent"
+          ) as HTMLIFrameElement;
+          if (iframe && iframe.tagName === "IFRAME") {
+            iframe.contentWindow?.postMessage("postSuccess", "*");
+          }
+        } else {
+          setErrorOverlay(true); // Show error overlay on failure
         }
-      } else {
-        setErrorOverlay(true); // Show error overlay on failure
-      }
-      return response.json();
-    })
-    .then((data) => {
-      console.log("Score submitted successfully:", data);
-    })
-    .catch((error) => {
-      console.error("Error submitting score:", error);
-      setErrorOverlay(true);
-    });
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Score submitted successfully:", data);
+      })
+      .catch((error) => {
+        console.error("Error submitting score:", error);
+        setErrorOverlay(true);
+      });
   };
 
   const handleGoBack = () => {
@@ -214,16 +218,20 @@ const SingleSubconcept = () => {
       <div className="flex flex-col md:flex-row w-full">
         {/* Iframe Container */}
         <div className="flex-1 p-1">
-          {subconcept?.subconceptType === "html" ||
-          subconcept?.subconceptType === "passage" ? (
+          {showIframe ? (
             <iframe
               id="embeddedContent"
-              src={subconcept.subconceptLink}
-              // src={"/Sentences/readAndRespond/stage0/bird.html"}
-              // src={"/Learner-v4/Passages/African-Elephants-Passage.html"}
+              // src={subconcept.subconceptLink}
+              src={"/Sentences/readAndRespond/stage0/bird.html"}
+              // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               title="Embedded Content"
-              className="w-full h-[800px] mt-[65px] p-2 bg-pink-400 rounded-xl"
-              onLoad={() => setShowGoBack(true)}
+              className={`w-full h-[800px] mt-[65px] p-2 ${
+                onFrameLoad && "bg-pink-400"
+              } rounded-xl`}
+              onLoad={() => {
+                setShowGoBack(true);
+                setOnFrameLoad(true);
+              }}
             />
           ) : (
             <MediaContent subconceptData={subconcept} />
@@ -231,9 +239,8 @@ const SingleSubconcept = () => {
         </div>
 
         {/* Buttons Container */}
-        {(subconcept?.subconceptType === "html" ||
-          subconcept?.subconceptType === "passage") && (
-          <div className="sticky bg-black h-[865px] bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-end p-1 md:mr-0 gap-4 w-auto md:w-[150px] ">
+        {showIframe && (
+          <div className="sticky bg-black h-[865px] bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-end p-1 md:mr-0 gap-4 ,d:w-16 w-auto md:w-[150px] ">
             {/* Go Back Button */}
             {showGoBack && (
               <button
