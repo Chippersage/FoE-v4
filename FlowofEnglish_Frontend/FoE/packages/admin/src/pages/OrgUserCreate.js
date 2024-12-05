@@ -5,13 +5,12 @@ import { CSVLink } from "react-csv";
 import { Helmet } from 'react-helmet-async';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/bootstrap.css';
-// import 'react-phone-input-2/lib/style.css';
 import { useParams } from 'react-router-dom';
 
 // Material UI Imports
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
-  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Link,
+  Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Link, Box,
   Menu, MenuItem, Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField,
   Tooltip, Typography } from '@mui/material';
 
@@ -19,7 +18,6 @@ import {
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
-
 // API Functions
 import {
   createUser,
@@ -98,12 +96,24 @@ const OrgUserCreate = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [bulkCreateResponse, setBulkCreateResponse] = useState({
+    summary: {
+      createdUserCount: 0,
+      createdUserCohortMappingCount: 0,
+      warningCount: 0,
+      errorCount: 0,
+    },
+    warnings: [],
+    errors: [],
+  });
+  
+
 
   const [userId, setUserId] = React.useState('');
   const [userName, setUserName] = React.useState('');
   const [userEmail, setUserEmail] = React.useState('');
   const [userPhoneNumber, setUserPhoneNumber] = React.useState('');
-  const [countryCode, setCountryCode] = useState(''); 
+  const [countryCode, setCountryCode] = useState('');
   const [userAddress, setUserAddress] = React.useState('');
   const [userType, setUserType] = React.useState('');
   const [userPassword, setUserPassword] = useState('');
@@ -147,11 +157,13 @@ React.useEffect(() => {
 }, [userId, userName, userType, organizationId, cohortId]);
 
 // Validate Phone Number (10 digits without country code)
-const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone); 
+const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone);
 
 // Validate Email
-const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
-
+const validateEmail = (email) => {
+  // Allow null or empty values, or validate proper email format
+  return !email || /\S+@\S+\.\S+/.test(email);
+};
 // Handle Phone Number Change
 const handlePhoneNumberChange = (value, data) => {
   const rawPhone = value.replace(/[^0-9]/g, ''); // Remove all non-numeric characters
@@ -178,22 +190,24 @@ const resetFormState = () => {
 };
 
 const handleCreateUser = async () => {
+  // Validate phone number
   if (!validatePhoneNumber(userPhoneNumber)) {
     setSnackbarMessage('Invalid phone number. Please enter a 10-digit number.');
     setOpenSnackbar(true);
     return;
   }
 
-  // if (!validateEmail(userEmail)) {
-  //   setSnackbarMessage('Invalid email address. Please enter a valid email.');
-  //   setOpenSnackbar(true);
-  //   return;
-  // }
+  // Validate email if provided
+  if (userEmail && !validateEmail(userEmail)) {
+    setSnackbarMessage('Invalid email address. Please enter a valid email or leave it blank.');
+    setOpenSnackbar(true);
+    return;
+  }
   const newUser = {
       user: {
           userId,
           userName,
-          userEmail,
+          userEmail: userEmail || null, // Allow null value if email is not provided
           userType,
           userPhoneNumber,
           userAddress,
@@ -203,16 +217,17 @@ const handleCreateUser = async () => {
   };
   try {
     const response = await createUser(newUser);
-      if (response?.success) {
+      if (response.success) {
         showNotification('User created successfully');
         fetchUsers();
         resetFormState();
         setOpenCreateDialog(false);
       } else {
-        showNotification('Error creating user');
+        showNotification(`Error creating user: ${response.error || 'Unknown error'}`);
       }
     } catch (error) {
-      showNotification('Error creating user');
+      showNotification('Error creating user. Please try again later.');
+      console.error(error);
     }
   };
 
@@ -256,17 +271,6 @@ useEffect(() => {
 }, [id]);
 
   const handleUpdateUser = async () => {
-    if (!validatePhoneNumber(userPhoneNumber)) {
-      setSnackbarMessage('Invalid phone number. Please enter a 10-digit number.');
-      setOpenSnackbar(true);
-      return;
-    }
-  
-    // if (!validateEmail(userEmail)) {
-    //   setSnackbarMessage('Invalid email address. Please enter a valid email.');
-    //   setOpenSnackbar(true);
-    //   return;
-    // }
     const updatedUser = {
         userId: selectedUserId,
         userName,
@@ -329,39 +333,85 @@ const handleMenuClose = () => {
   setAnchorEl(null);
 };
 
-  const handleBulkCreate = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
+const handleBulkCreate = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
 
-    try {
-        setLoading(true);
-        const response = await createUsers(formData);
+  try {
+    setLoading(true);
+    const response = await createUsers(formData);
 
-        // Success message: Show how many users were created
-        setSnackbarMessage(`${response.createdUsersCount} users created successfully!`);
+    const { createdUserCount, createdUserCohortMappingCount, warningCount, warnings, errorCount, errors } = response;
 
-        // Error message: If there are errors, show them
-        if (response.errors && response.errors.length > 0) {
-            setSnackbarMessage(`${response.errors.length} errors occurred: ${response.errors.join(', ')}`);
-        }
+    // Set summary information
+    const summaryMessage = `
+      ${createdUserCount} users created successfully.
+      ${createdUserCohortMappingCount} user-cohort mappings created.
+      ${warningCount} warnings, ${errorCount} errors.
+    `;
+    setSnackbarMessage(summaryMessage);
+    setOpenSnackbar(true);
 
-        // Optionally show cohort summary if available
-        if (response.cohortSummary && Object.keys(response.cohortSummary).length > 0) {
-            const cohortSummaryMessage = Object.entries(response.cohortSummary)
-                .map(([cohortId, count]) => `Cohort ${cohortId}: ${count} users`)
-                .join(', ');
-            setSnackbarMessage(prevMessage => `${prevMessage} Cohorts Summary: ${cohortSummaryMessage}`);
-        }
-        setOpenSnackbar(true);
-        fetchUsers();
+    // Update the UI state to show response details
+    setBulkCreateResponse({
+      summary: {
+        createdUserCount,
+        createdUserCohortMappingCount,
+        warningCount,
+        errorCount,
+      },
+      warnings: formatWarnings(warnings),
+      errors: formatErrors(errors),
+    });
+    fetchUsers(); // Refresh the user list
+  } catch (error) {
+    console.error('Bulk create failed:', error);
+    setSnackbarMessage('Error bulk creating users');
+    setOpenSnackbar(true);
+  } finally {
+    setLoading(false);
+  }
+};
 
-    } catch (error) {
-        console.error('Bulk create failed:', error);
-        setSnackbarMessage('Error bulk creating users');
-        setOpenSnackbar(true);
-    } finally {
-        setLoading(false);
-    }
+// Format Warnings for Better Readability
+const formatWarnings = (warnings) => {
+  return warnings.map((warning, index) => {
+    return {
+      id: index,
+      message: warning
+    };
+  });
+};
+
+// Format Errors for Better Readability
+const formatErrors = (errors) => {
+  return errors.map((error, index) => {
+    return {
+      id: index,
+      message: error
+    };
+  });
+};
+// DownloadReport after bulk users response
+const downloadReport = () => {
+  const reportContent = `
+    Users Created: ${bulkCreateResponse.summary.createdUserCount}
+    User-Cohort Mappings Created: ${bulkCreateResponse.summary.createdUserCohortMappingCount}
+    Warnings: ${bulkCreateResponse.summary.warningCount}
+    Errors: ${bulkCreateResponse.summary.errorCount}
+    
+    Warnings:
+    ${bulkCreateResponse.warnings.map(w => w.message).join("\n")}
+    
+    Errors:
+    ${bulkCreateResponse.errors.map(e => e.message).join("\n")}
+  `;
+
+  const blob = new Blob([reportContent], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'user_creation_report.txt';
+  link.click();
 };
 
   const handleDeleteUser = async (id) => {
@@ -649,6 +699,57 @@ const confirmDelete = async () => {
 
         {renderTable()}
         {renderActionMenu()}
+ {/* Show the summary */}
+ {bulkCreateResponse && bulkCreateResponse.summary && (
+  <Box sx={{ mt: 4 }}>
+    <Typography variant="h6">Summary</Typography>
+    <p>{bulkCreateResponse.summary.createdUserCount} users created successfully.</p>
+    <p>{bulkCreateResponse.summary.createdUserCohortMappingCount} user-cohort mappings created.</p>
+    <p>{bulkCreateResponse.summary.warningCount} warnings, {bulkCreateResponse.summary.errorCount} errors.</p>
+  </Box>
+)}
+
+      {/* Warnings */}
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6" color="warning.main">Warnings</Typography>
+        {bulkCreateResponse.warnings && bulkCreateResponse.warnings.length > 0 && (
+      <div>
+        <h4>Warnings</h4>
+        <ul>
+          {bulkCreateResponse.warnings.map((warning) => (
+            <li key={warning.id}>{warning.message}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+      </Box>
+
+      {/* Errors */}
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6" color="error.main">Errors</Typography>
+        {bulkCreateResponse.errors && bulkCreateResponse.errors.length > 0 && (
+      <div>
+        <h4>Errors</h4>
+        <ul>
+          {bulkCreateResponse.errors.map((error) => (
+            <li key={error.id}>{error.message}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+      </Box>
+
+      {/* Optional: Provide a link to download a detailed report */}
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="h6">Download Detailed Report</Typography>
+        <Button
+          variant="contained"
+          startIcon={<Iconify icon="eva:download-fill" />}
+          onClick={downloadReport}
+        >
+          Download Report
+        </Button>
+      </Box>
 
 {/* Create User Dialog */}
 <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
