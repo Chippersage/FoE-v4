@@ -15,6 +15,7 @@ import com.FlowofEnglish.service.UserSessionMappingService;
 import com.opencsv.CSVReader;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,61 +68,55 @@ public class UserController {
     
 
     @PostMapping("/create")
-    public User createUser(@RequestBody UsercreateDTO userDTO) {
-        return userService.createUser(userDTO);
+    public ResponseEntity<Map<String, Object>> createUser(@RequestBody UsercreateDTO userDTO) {
+        try {
+            User createdUser = userService.createUser(userDTO);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("user", createdUser);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "An unexpected error occurred: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
-    
+    // bulk create with csv
     @PostMapping("/bulkcreate/csv")
     public ResponseEntity<Map<String, Object>> bulkCreateUsersFromCsv(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "CSV file is missing."));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "File is empty"));
         }
 
-     // Initialize lists and counters
-        List<String> errorMessages = new ArrayList<>();
-        List<Map<String, String>> createdUsersInfo = new ArrayList<>();
-        int successfulCount = 0;
-        int failedCount = 0;
+        try (InputStream inputStream = file.getInputStream();
+             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+             CSVReader csvReader = new CSVReader(inputStreamReader)) {
 
-        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
-            List<User> createdUsers = userService.parseAndCreateUsersFromCsv(reader, errorMessages);
+            List<String> errorMessages = new ArrayList<>();
+            List<String> warnings = new ArrayList<>();
+         // Call the service method for bulk user creation from CSV
+            Map<String, Object> result = userService.parseAndCreateUsersFromCsv(csvReader, errorMessages, warnings);
 
-            // Process successfully created users
-            for (User user : createdUsers) {
-                try {
-                    String cohortId = userService.getCohortIdByUserId(user.getUserId());
-                    createdUsersInfo.add(Map.of(
-                            "userId", user.getUserId(),
-                            "cohortId", cohortId // Add cohortId to the response
-                    ));
-                    successfulCount++; // Increment successful user count
-                } catch (Exception e) {
-                    failedCount++; // Increment failed count if any error occurs for this user
-                    errorMessages.add("Error processing user: " + user.getUserId() + " - " + e.getMessage());
-                }
-            }
-
-            // Prepare the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", successfulCount + " users created successfully.");
-            response.put("successfulCount", successfulCount);
-            response.put("failedCount", failedCount);
-            response.put("createdUsers", createdUsersInfo); // List of successfully created users
-            
-            // Include errors if any
-            if (!errorMessages.isEmpty()) {
-                response.put("errors", errorMessages); // Include error messages in response
-            }
-
-            return ResponseEntity.ok(response);
-
+            // Preparing the response with details from the service
+            return ResponseEntity.ok(Map.of(
+                    "createdUserCount", result.get("createdUserCount"),
+                    "createdUserCohortMappingCount", result.get("createdUserCohortMappingCount"),
+                    "errorCount", result.get("errorCount"),
+                    "warningCount", result.get("warningCount"),
+                    "errors", errorMessages,
+                    "warnings", warnings
+            ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(Map.of("message", "Error processing CSV file: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
-
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {

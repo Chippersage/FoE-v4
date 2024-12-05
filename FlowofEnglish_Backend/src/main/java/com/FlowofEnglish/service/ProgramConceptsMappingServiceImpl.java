@@ -62,8 +62,13 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
 
         // Build the response DTO
         ProgramConceptsMappingResponseDTO responseDTO = new ProgramConceptsMappingResponseDTO();
+        // Fetch and set programName, unitName, and stageName
         responseDTO.setProgramId(mappings.get(0).getProgram().getProgramId());
+        responseDTO.setProgramName(mappings.get(0).getProgram().getProgramName());
         responseDTO.setUnitId(unitId);
+        responseDTO.setUnitName(mappings.get(0).getUnit().getUnitName());
+        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
+        responseDTO.setStageName(mappings.get(0).getStage().getStageName());
 
         // Set stageId (assuming all mappings belong to the same stage)
         responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
