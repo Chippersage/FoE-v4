@@ -160,10 +160,11 @@ export async function createUser(data) {
     const res = await axios.post(`${apiUrl}/users/create`, data);
     return res.data;
   } catch (err) {
-    console.log(err);
+    console.error("Error creating user:", err);
+    return { success: false, error: err.message };
   }
-  return null;
 }
+
 
 
 export async function createUsers(data) {

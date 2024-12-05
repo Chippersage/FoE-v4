@@ -7,6 +7,7 @@ import com.FlowofEnglish.model.User;
 import com.opencsv.CSVReader;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -22,8 +23,9 @@ public interface UserService {
     String deleteUsers(List<String> userIds);
 	UserDTO getUserDetailsWithProgram(String userId);
 	String getCohortIdByUserId(String userId);
-	
-	List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
+	List<String> getCohortsByUserId(String userId);
+	//List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
+	Map<String, Object> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages, List<String> warnings);
     boolean verifyPassword(String plainPassword, String encodedPassword);
 	boolean resetPassword(String userId, String newPassword);
     
