@@ -1,5 +1,7 @@
 package com.FlowofEnglish.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,10 +21,23 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, String programName, String programId, String cohortName, String orgAdminEmail, String orgName) { 
-        String subject = "Welcome to " + programName + "!";
+    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
+    		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName) { 
+    	
+        String subject = "Welcome to Your Learning Journey!";
+        
+     // Building the list of programs and cohorts dynamically
+        StringBuilder programCohortDetails = new StringBuilder();
+        for (int i = 0; i < programNames.size(); i++) {
+            programCohortDetails.append("Program Name: ").append(programNames.get(i)).append("\n");
+            if (i < cohortNames.size()) {
+                programCohortDetails.append("Cohort Name: ").append(cohortNames.get(i)).append("\n\n");
+            }
+        }
+        
         String body = "Dear " + userName + ",\n\n"
-                + "We are delighted to welcome you to the " + programName + " (Program ID: " + programId + "). You are now part of an exciting learning journey, and we are committed to supporting you every step of the way.\n\n"
+                + "We are excited to welcome you to the following programs and cohorts as part of your learning journey:\n\n"
+                + programCohortDetails
                 + "To get started, please find your login credentials below:\n\n"
                 + "User ID: " + userId + "\n"
                 + "Password: " + plainPassword + "\n\n"
@@ -30,9 +45,8 @@ public class EmailService {
                 + "https://flowofenglish.thechippersage.com\n\n"
                 + "If you have any questions or need assistance, please feel free to reach out to your organization administrator:\n"
                 + "Administrator Email: " + orgAdminEmail + "\n"
-                + "Organization Name: " + orgName + "\n"
-                + "Cohort Name: " + cohortName + "\n\n"
-                + "We are thrilled to have you onboard and look forward to your achievements in this program. Let’s get started and make the most of this learning experience together!\n\n"
+                + "Organization Name: " + orgName + "\n\n"
+                + "We are thrilled to have you onboard and look forward to your achievements in these programs. Let’s get started and make the most of this learning experience together!\n\n"
                 + "Best regards,\n"
                 + "Team Chippersage\n";
 

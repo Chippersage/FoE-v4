@@ -186,20 +186,34 @@ public class UserServiceImpl implements UserService {
 
         // Save the UserCohortMapping to the repository
         userCohortMappingRepository.save(userCohortMapping);
+        
+     // Fetch program details from CohortProgram
+        List<String> programNames = new ArrayList<>();
+        List<String> cohortNames = new ArrayList<>();
+        cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
+                .ifPresent(cohortProgram -> {
+                    programNames.add(cohortProgram.getProgram().getProgramName());
+                    cohortNames.add(cohort.getCohortName());
+                });
 
-        // If the email is present, send credentials to user
-        sendWelcomeEmail(savedUser, plainPassword);
+     // If the email is present, send credentials to the user
+        if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+            sendWelcomeEmail(savedUser, plainPassword, programNames, cohortNames);
+        }
 
         return savedUser;
     }
    
     @Override
-    public List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages) {
+    public Map<String, Object> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages, List<String> warnings) {
         List<User> usersToCreate = new ArrayList<>();
         List<UserCohortMapping> userCohortMappingsToCreate = new ArrayList<>();
         Map<String, User> createdUsers = new HashMap<>();
+        Set<String> userIdSet = new HashSet<>();
         String[] headerRow;
         String[] line;
+        int userCreatedCount = 0;
+        int userCohortMappingCreatedCount = 0;
 
         try {
             // Read header row to map columns dynamically
@@ -219,7 +233,7 @@ public class UserServiceImpl implements UserService {
             for (String col : requiredColumns) {
                 if (!columnIndexMap.containsKey(col.toLowerCase())) {
                     errorMessages.add("Missing required column: " + col);
-                    return usersToCreate;  // Exit early due to missing headers
+                    return Map.of("createdUserCount", userCreatedCount, "createdUserCohortMappingCount", userCohortMappingCreatedCount, "errorCount", errorMessages.size(), "warningCount", warnings.size());
                 }
             }
 
@@ -227,14 +241,24 @@ public class UserServiceImpl implements UserService {
             	String userId = line[columnIndexMap.get("userid")];
             	String cohortId = line[columnIndexMap.get("cohortid")];
 
+            	// Check if userId exists in the same batch
+                if (userIdSet.contains(userId)) {
+                    errorMessages.add("Duplicate userId " + userId + " found in CSV. This user will not be created.");
+                    continue; // Skip processing this line
+                }
+                userIdSet.add(userId);
+
+                // Check if userId already exists in the database
+                if (userRepository.existsById(userId)) {
+                    errorMessages.add("UserID: " + userId + " already exists in the database. Skipping.");
+                    continue; // Skip processing this line
+                }
                 
+            	
             	// Check if userId exists in the same batch or database
+            	try {
                 User user = createdUsers.get(userId);
-                if (user == null) {
-                    if (userRepository.existsById(userId)) {
-                        user = userRepository.findById(userId).orElse(null);
-                    } else {
-                        try {
+                if (user == null)  {
                     user = new User();
                     user.setUserId(userId);
                     user.setUserName(line[columnIndexMap.get("username")]);
@@ -248,8 +272,20 @@ public class UserServiceImpl implements UserService {
                     user.setUuid(UUID.randomUUID().toString());
                     user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
-                    user.setUserEmail(columnIndexMap.containsKey("useremail") ? line[columnIndexMap.get("useremail")] : null);
-                    user.setUserPhoneNumber(columnIndexMap.containsKey("userphonenumber") ? line[columnIndexMap.get("userphonenumber")] : null);
+                    String userEmail = columnIndexMap.containsKey("useremail") ? line[columnIndexMap.get("useremail")] : null;
+                 // Validate only non-empty emails
+                    if (userEmail != null && !userEmail.isEmpty() && !isValidEmail(userEmail)) {
+                    	warnings.add("Invalid email for UserID " + userId + ": " + userEmail);
+                        userEmail = null; // Reset invalid email to null
+                    }
+                    user.setUserEmail(userEmail);
+
+                    String userPhone = columnIndexMap.containsKey("userphonenumber") ? line[columnIndexMap.get("userphonenumber")] : null;
+                    if (userPhone != null && !isValidPhoneNumber(userPhone)) {
+                    	warnings.add("Invalid phone number for UserID " + userId + ": " + userPhone);
+                        userPhone = null; // Reset invalid phone number to null
+                    }
+                    user.setUserPhoneNumber(userPhone);
                     user.setUserAddress(columnIndexMap.containsKey("useraddress") ? line[columnIndexMap.get("useraddress")] : null);
 
                 
@@ -262,12 +298,13 @@ public class UserServiceImpl implements UserService {
                 // Add user to the list for bulk saving
                 usersToCreate.add(user);
                 createdUsers.put(userId, user);
+                userCreatedCount++;
+                }
             } catch (Exception ex) {
                 errorMessages.add("Error creating UserID " + userId + ": " + ex.getMessage());
                 continue;
             }
-        }
-    }
+    
 
                 try {
                     Cohort cohort = cohortRepository.findById(cohortId)
@@ -280,7 +317,7 @@ public class UserServiceImpl implements UserService {
                 }
                 
                 // Create the UserCohortMapping
-                
+                User user = createdUsers.get(userId);
                 UserCohortMapping userCohortMapping = new UserCohortMapping();
                 userCohortMapping.setUser(user);
                 userCohortMapping.setCohort(cohort);
@@ -289,6 +326,7 @@ public class UserServiceImpl implements UserService {
 
                 // Add to the list of mappings to be saved later
                 userCohortMappingsToCreate.add(userCohortMapping);
+                userCohortMappingCreatedCount++;
             }catch (Exception ex) {
                 errorMessages.add("Error mapping UserID " + userId + " to CohortID " + cohortId + ": " + ex.getMessage());
             }
@@ -301,47 +339,70 @@ public class UserServiceImpl implements UserService {
             userCohortMappingRepository.saveAll(userCohortMappingsToCreate);
 
          
-            // Send welcome email for each new user
+         // Send welcome email for each new user
             for (User savedUser : savedUsers) {
                 if (savedUser.getUserEmail() != null && !savedUser.getUserEmail().isEmpty()) {
-                    sendWelcomeEmail(savedUser, DEFAULT_PASSWORD);
+                    // Collect all assigned cohorts and programs for the user
+                    List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(savedUser.getUserId());
+                    List<String> programNames = new ArrayList<>();
+                    List<String> cohortNames = new ArrayList<>();
+                    
+                    for (UserCohortMapping mapping : userCohortMappings) {
+                        Cohort cohort = mapping.getCohort();
+                        cohortNames.add(cohort.getCohortName());
+
+                        // Fetch program details from CohortProgram
+                        cohortProgramRepository.findByCohortCohortId(cohort.getCohortId()).ifPresent(cohortProgram -> 
+                            programNames.add(cohortProgram.getProgram().getProgramName())
+                        );
+                    }
+
+                    sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
                 }
             }
-
+            return Map.of(
+                    "createdUserCount", userCreatedCount,
+                    "createdUserCohortMappingCount", userCohortMappingCreatedCount,
+                    "errorCount", errorMessages.size(),
+                    "warningCount", warnings.size(),
+                    "errors", errorMessages,
+                    "warnings", warnings
+            );
         } catch (Exception e) {
             throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
         }
-
-        return usersToCreate; 
     }
 
     // Helper function to send welcome email
-    private void sendWelcomeEmail(User user, String plainPassword) {
-        try {
-            UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserId(user.getUserId())
-                    .orElseThrow(() -> new IllegalArgumentException("Cohort not found for userId: " + user.getUserId()));
-
-            Cohort cohort = userCohortMapping.getCohort();
-            CohortProgram cohortProgram = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
-                    .orElseThrow(() -> new IllegalArgumentException("Program not found for cohortId: " + cohort.getCohortId()));
-
+    private void sendWelcomeEmail(User user, String plainPassword, List<String> programNames, List<String> cohortNames) {
+    	try {
             Organization organization = user.getOrganization();
             emailService.sendUserCreationEmail(
                     user.getUserEmail(),
                     user.getUserName(),
                     user.getUserId(),
                     plainPassword,
-                    cohortProgram.getProgram().getProgramName(),
-                    cohortProgram.getProgram().getProgramId(),
-                    cohort.getCohortName(),
+                    programNames,
+                    cohortNames,
                     organization.getOrganizationAdminEmail(),
                     organization.getOrganizationName()
             );
         } catch (Exception e) {
             System.err.println("Failed to send welcome email for user: " + user.getUserId() + ", error: " + e.getMessage());
         }
-    }  
-              
+    }
+           
+    private boolean isValidEmail(String email) {
+    	// Return true for null or empty strings
+        if (email == null || email.isEmpty()) {
+            return true; // No error for empty emails
+        }
+        return email != null && email.matches("^(?!.*\\.\\.)[\\w._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        return phoneNumber != null && phoneNumber.matches("^[6-9]\\d{9}$");
+    }
 
     @Override
     public String getCohortIdByUserId(String userId) {
@@ -350,6 +411,17 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Cohort not found for userId: " + userId));
     }
     
+    @Override
+    public List<String> getCohortsByUserId(String userId) {
+        List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(userId);
+        if (userCohortMappings.isEmpty()) {
+            throw new IllegalArgumentException("No cohorts found for userId: " + userId);
+        }
+        return userCohortMappings.stream()
+                .map(mapping -> mapping.getCohort().getCohortId())
+                .collect(Collectors.toList());
+    }
+
     
     @Override
     public User updateUser(String userId, User updatedUser) {
@@ -416,6 +488,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    
 
     @Override
     public boolean resetPassword(String userId, String newPassword) {
