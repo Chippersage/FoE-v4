@@ -9,6 +9,7 @@ import LeaderboardSkeleton from './skeletons/LeaderboardSkeleton';
 import UserProgressBar from './UserProgressBar';
 // @ts-ignore
 import ProgressbarSkeleton from './skeletons/ProgressBarSkeleton';
+import KidFriendlyModal from './CongratulatoryModal';
 
 function Dashboard() {
 
@@ -22,7 +23,10 @@ function Dashboard() {
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   const [userProgress, setUserProgress] = useState({});
-  
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [celebratedStageName, setCelebratedStageName] = useState("");
+  const [completedStagesCount, setCompletedStagesCount] = useState(null);
+
   const getProgramInfoByProgramId = async () => {
      if (user && user.userId && user.program && user.program.programId) {
        const programId = encodeURIComponent(user.program.programId);
@@ -34,7 +38,7 @@ function Dashboard() {
 
          return response.data;
        } catch (error) {
-         console.log('Error fetching program info:', error); // Log any error during fetching
+        //  console.log('Error fetching program info:', error); // Log any error during fetching
          throw error;
        }
      }
@@ -48,18 +52,21 @@ function Dashboard() {
       );
       return response.data;
     } catch (error) {
-      console.log('Error fetching leaderboard info:', error); // Log any error during fetching
+      // console.log('Error fetching leaderboard info:', error); // Log any error during fetching
       throw error;
     }
   
   };
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
     useEffect(() => {
       if (user?.cohort?.cohortId) {
         const fetchAndSetLeaderBoardInfo = async () => {
           try {
             const result = await getLeaderBoardInfo();
-            console.log(result);
+            // console.log(result);
             setLeaderBoardInfo(result);
             setCurrentUserLeaderBoardInfo (result.find(
               // @ts-ignore
@@ -85,7 +92,7 @@ function Dashboard() {
           `${API_BASE_URL}/reports/program/${user?.userId}/${user?.program?.programId}`
         )
         setUserProgress(res.data)
-        console.log(res.data);
+        // console.log(res.data);
       } catch (error) {
         console.error('Error fetching user progress:', error);
       }
@@ -99,11 +106,12 @@ function Dashboard() {
   
   useEffect(() => {
     if(user){
-      console.log(user)
+      // console.log(user)
       const fetchAndSetProgramInfo = async () => {
         try {
           const result = await getProgramInfoByProgramId();
           setProgramInfo(result);
+          // console.log(result)
         } catch (err) {
           // @ts-ignore
           setError(err.message);
@@ -116,9 +124,60 @@ function Dashboard() {
     }
     
   }, [user]);
+
+  useEffect(() => {
+    if (programInfo && programInfo.stages) {
+      // Find the last completed stage
+      const stages = Object.values(programInfo.stages)
+      // console.log(stages)
+      const completedStages = stages?.filter(
+        (stage) => stage.stageCompletionStatus === "yes"
+      );
+      setCompletedStagesCount(completedStages.length);
+      const lastCompletedStage = completedStages[completedStages.length - 1];
+      
+
+      if (lastCompletedStage) {
+        const storedStage = localStorage.getItem("lastCompletedStage");
+
+        // Show confetti and audio if this stage hasn't been celebrated yet
+        if (!storedStage || (storedStage.stageId !== lastCompletedStage.stageId)) {
+          setCelebratedStageName(lastCompletedStage.stageName);
+          openModal()
+
+          // Store the current stage as the last celebrated stage
+          localStorage.setItem(
+            "lastCompletedStage",
+            lastCompletedStage
+          );
+        }
+      }
+    }
+  }, [programInfo]);
   
   return (
     <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2">
+      {/* Confetti Animation */}
+      {/* {showConfetti && (
+        <> */}
+      <KidFriendlyModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        stageName={celebratedStageName}
+      />
+
+      {/* Audio Element */}
+      {isModalOpen && (
+        <audio
+          src="/youaresuperb.mp3"
+          autoPlay
+
+          // onEnded={() => setShowConfetti(false)}
+        />
+      )}
+
+      {/* </>
+      )} */}
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
         <div className="sm:w-[50%]">
@@ -132,14 +191,27 @@ function Dashboard() {
       <div className="w-full sm:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
           <div className="flex flex-col mb-6 mx-auto w-[400px] px-6 py-2 bg-white gap-1 rounded-[3px]">
-            <h3 className="text-xl font-semibold">Your Progress</h3>
+            <h3 className="text-xl font-semibold font-openSans">
+              Your Progress
+            </h3>
             <UserProgressBar userProgress={userProgress} />
-            <div className='flex justify-between items-center mt-2'>
-              <p className="text-sm font-bold">
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-sm font-bold font-openSans">
                 {/* @ts-ignore */}
                 Total Points: {currentUserLeaderBoardInfo.leaderboardScore}{" "}
               </p>
-              <img src="/icons/User-icons/trophy.png" alt="trophy" className='h-5 w-5'/>
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: completedStagesCount }).map(
+                  (_, index) => (
+                    <img
+                      key={index}
+                      src="/icons/User-icons/trophy.png"
+                      alt="trophy"
+                      className="h-5 w-5"
+                    />
+                  )
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -148,7 +220,7 @@ function Dashboard() {
 
         {/* @ts-ignore */}
         {leaderBoardInfo ? (
-          <div className=''>
+          <div className="">
             <Leaderboard
               leaderboard={leaderBoardInfo}
               userId={user?.userId}
