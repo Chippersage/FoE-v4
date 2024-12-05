@@ -4,8 +4,11 @@ import java.util.Map;
 
 public class ProgramConceptsMappingResponseDTO {
     private String programId;
-    private String unitId;  
-    private String stageId; 
+    private String programName;
+    private String unitId;
+    private String unitName;
+    private String stageId;
+    private String stageName;
     private Map<String, SubconceptResponseDTO> subConcepts; 
     private String unitCompletionStatus; 
     private int subconceptCount;
@@ -36,7 +39,32 @@ public class ProgramConceptsMappingResponseDTO {
         this.stageId = stageId;
     }
 
-    public Map<String, SubconceptResponseDTO> getSubConcepts() {
+    
+    public String getProgramName() {
+		return programName;
+	}
+
+	public void setProgramName(String programName) {
+		this.programName = programName;
+	}
+
+	public String getUnitName() {
+		return unitName;
+	}
+
+	public void setUnitName(String unitName) {
+		this.unitName = unitName;
+	}
+
+	public String getStageName() {
+		return stageName;
+	}
+
+	public void setStageName(String stageName) {
+		this.stageName = stageName;
+	}
+
+	public Map<String, SubconceptResponseDTO> getSubConcepts() {
         return subConcepts;
     }
 
