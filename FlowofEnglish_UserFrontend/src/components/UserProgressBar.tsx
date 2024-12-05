@@ -1,7 +1,7 @@
 import { useState } from "react";
 // @ts-ignore
 export default function UserProgressBar({ userProgress }) {
-  console.log(userProgress)
+  // console.log(userProgress)
   const {
     totalStages,
     totalUnits,
@@ -23,7 +23,7 @@ export default function UserProgressBar({ userProgress }) {
   };
 
   const completionPercentage = subconceptCompletionPercentage?.toFixed(1);
-  console.log(completionPercentage)
+  // console.log(completionPercentage)
   return (
     <div
       className="relative w-full max-w-md h-6"
