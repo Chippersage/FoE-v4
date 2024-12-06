@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/bootstrap.css';
 import { useParams } from 'react-router-dom';
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 // Material UI Imports
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -31,8 +32,8 @@ import {
 
 // Constants
 const TABLE_HEAD = [
+  { id: 'learner Id', label: 'Learner Id', alignRight: false },
   { id: 'learnerName', label: 'Learner Name', alignRight: false },
-  { id: 'learnerId', label: 'LearnerId', alignRight: false },
   { id: 'cohortId', label: 'CohortIds', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true }
 ];
@@ -46,6 +47,18 @@ const StyledCard = styled(Card)({
     marginTop: '10px',
   },
 });
+
+// Button Styles
+const buttonStyles = {
+  bgcolor: '#5bc3cd',
+  color: 'white',
+  fontWeight: 'bold',
+  '&:hover': { bgcolor: '#DB5788' },
+  py: 1.5,
+  px: 2,
+  borderRadius: '8px',
+};
+
 
 // Helper Functions
 const descendingComparator = (a, b, orderBy) => {
@@ -88,7 +101,7 @@ const OrgUserCreate = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('cohortName');
+  const [orderBy, setOrderBy] = useState('userName');
   const [filterName, setFilterName] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState([]);
@@ -96,6 +109,7 @@ const OrgUserCreate = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
   const [bulkCreateResponse, setBulkCreateResponse] = useState({
     summary: {
       createdUserCount: 0,
@@ -107,8 +121,6 @@ const OrgUserCreate = () => {
     errors: [],
   });
   
-
-
   const [userId, setUserId] = React.useState('');
   const [userName, setUserName] = React.useState('');
   const [userEmail, setUserEmail] = React.useState('');
@@ -120,7 +132,8 @@ const OrgUserCreate = () => {
   const [organizationId, setOrganizationId] = React.useState(id);
   const [cohortId, setCohortId] = React.useState('');
   const [isFormValid, setIsFormValid] = React.useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, [organizationId]);
@@ -271,6 +284,19 @@ useEffect(() => {
 }, [id]);
 
   const handleUpdateUser = async () => {
+// Validate phone number
+if (userPhoneNumber && !validatePhoneNumber(userPhoneNumber)) {
+  setSnackbarMessage('Invalid phone number. Please enter a 10-digit number.');
+  setOpenSnackbar(true);
+  return;
+}
+
+// Validate email if it's provided (only if it's updated)
+if (userEmail && !validateEmail(userEmail)) {
+  setSnackbarMessage('Invalid email address. Please enter a valid email or leave it blank.');
+  setOpenSnackbar(true);
+  return;
+}
     const updatedUser = {
         userId: selectedUserId,
         userName,
@@ -283,21 +309,23 @@ useEffect(() => {
     };
     try {
       const response = await updateUser(selectedUserId, updatedUser);
-      if (response?.success) {
+      if (response && response.success) {
         setSnackbarMessage('User updated successfully');
         fetchUsers();
         resetFormState();
         setOpenUpdateDialog(false);
       } else {
-        setSnackbarMessage('Error updating user');
+        setSnackbarMessage(response?.message || 'Error updating user');
       }
     } catch (error) {
-      setSnackbarMessage('Error updating user');
+      console.error('Error in handleUpdateUser:', error);
+      setSnackbarMessage('Error updating user. Please try again.');
     } finally {
       setOpenSnackbar(true);
     }
   };
 
+  // Open Update Dialog and pre-fill user data
   const handleOpenUpdateDialog = (user) => {
     setSelectedUserId(user.userId);
     setUserId(user.userId);
@@ -334,11 +362,17 @@ const handleMenuClose = () => {
 };
 
 const handleBulkCreate = async (file) => {
+  if (!file.name.endsWith('.csv')) {
+    alert('Invalid file type. Please upload a CSV file.');
+    return;
+}
+
   const formData = new FormData();
   formData.append("file", file);
 
   try {
     setLoading(true);
+    setIsFileUploaded(false); // Reset upload status before processing
     const response = await createUsers(formData);
 
     const { createdUserCount, createdUserCohortMappingCount, warningCount, warnings, errorCount, errors } = response;
@@ -363,6 +397,7 @@ const handleBulkCreate = async (file) => {
       warnings: formatWarnings(warnings),
       errors: formatErrors(errors),
     });
+    setIsFileUploaded(true); // Mark file upload as successful
     fetchUsers(); // Refresh the user list
   } catch (error) {
     console.error('Bulk create failed:', error);
@@ -532,7 +567,7 @@ const confirmDelete = async () => {
               }}
               onSelectAllClick={(event) => {
                 if (event.target.checked) {
-                  setSelected(users.map(n => n.userName));
+                  setSelected(users.map(n => n.userId));
                 } else {
                   setSelected([]);
                 }
@@ -542,7 +577,7 @@ const confirmDelete = async () => {
               {applySortFilter(users, getComparator(order, orderBy), filterName)
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => {
-                  const selectedUser = selected.indexOf(row.userName) !== -1;
+                  const selectedUser = selected.indexOf(row.userId) !== -1;
                   const cohortIds = row.allCohorts?.map(cohort => cohort.cohortId).join(', ') || 'No Cohorts';
                   return (
                     <TableRow
@@ -556,12 +591,12 @@ const confirmDelete = async () => {
                         <Checkbox
                           checked={selectedUser}
                           onChange={() => {
-                            const selectedIndex = selected.indexOf(row.userName);
+                            const selectedIndex = selected.indexOf(row.userId);
                             let newSelected = [];
                             if (selectedIndex === -1) {
-                              newSelected = [...selected, row.userName];
+                              newSelected = [...selected, row.userId];
                             } else {
-                              newSelected = selected.filter(name => name !== row.userName);
+                              newSelected = selected.filter(name => name !== row.userId);
                             }
                             setSelected(newSelected);
                           }}
@@ -569,11 +604,11 @@ const confirmDelete = async () => {
                       </TableCell>
                       <TableCell>
                         {/* <Link href={`/admin/dashboard/user-cohort/${row.userId}`} color="inherit" underline="hover">
-                          {row.userName}
+                          {row.userId}
                         </Link> */}
-                        {row.userName}
+                        {row.userId}
                       </TableCell>
-                      <TableCell>{row.userId}</TableCell>
+                      <TableCell>{row.userName}</TableCell>
                       <TableCell>
                         <Tooltip title={cohortIds} placement="top">
                           <Typography
@@ -589,7 +624,9 @@ const confirmDelete = async () => {
                         </Tooltip>
                       </TableCell>
                       <TableCell align="right">
-                        <IconButton onClick={(event) => handleOpenActionMenu(event, row)}>
+                        <IconButton 
+                        aria-label="Open action menu"
+                        onClick={(event) => handleOpenActionMenu(event, row)}>
                           <MoreVertIcon />
                         </IconButton>
                       </TableCell>
@@ -699,57 +736,62 @@ const confirmDelete = async () => {
 
         {renderTable()}
         {renderActionMenu()}
+
  {/* Show the summary */}
- {bulkCreateResponse && bulkCreateResponse.summary && (
+{isFileUploaded && bulkCreateResponse && bulkCreateResponse.summary && (
   <Box sx={{ mt: 4 }}>
     <Typography variant="h6">Summary</Typography>
     <p>{bulkCreateResponse.summary.createdUserCount} users created successfully.</p>
     <p>{bulkCreateResponse.summary.createdUserCohortMappingCount} user-cohort mappings created.</p>
-    <p>{bulkCreateResponse.summary.warningCount} warnings, {bulkCreateResponse.summary.errorCount} errors.</p>
-  </Box>
-)}
+    <p>{bulkCreateResponse.summary.warningCount} warnings.</p>
+    <p> {bulkCreateResponse.summary.errorCount} errors.</p>
 
-      {/* Warnings */}
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" color="warning.main">Warnings</Typography>
-        {bulkCreateResponse.warnings && bulkCreateResponse.warnings.length > 0 && (
-      <div>
-        <h4>Warnings</h4>
+    {/* Warnings */}
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h6" color="warning.main">Warnings</Typography>
+      {bulkCreateResponse.warnings.length > 0 && (
         <ul>
           {bulkCreateResponse.warnings.map((warning) => (
             <li key={warning.id}>{warning.message}</li>
           ))}
         </ul>
-      </div>
-    )}
-      </Box>
+      )}
+    </Box>
 
-      {/* Errors */}
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" color="error.main">Errors</Typography>
-        {bulkCreateResponse.errors && bulkCreateResponse.errors.length > 0 && (
-      <div>
-        <h4>Errors</h4>
+    {/* Errors */}
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h6" color="error.main">Errors</Typography>
+      {bulkCreateResponse.errors.length > 0 && (
         <ul>
           {bulkCreateResponse.errors.map((error) => (
             <li key={error.id}>{error.message}</li>
           ))}
         </ul>
-      </div>
-    )}
-      </Box>
+      )}
+    </Box>
 
-      {/* Optional: Provide a link to download a detailed report */}
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6">Download Detailed Report</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Iconify icon="eva:download-fill" />}
-          onClick={downloadReport}
-        >
-          Download Report
-        </Button>
-      </Box>
+    {/* Download Report Button */}
+    <Box sx={{ mt: 2 }}>
+      <Button
+        variant="contained"
+        startIcon={<Iconify icon="eva:download-fill" />}
+        onClick={downloadReport}
+        sx={{
+          bgcolor: '#5bc3cd', // Default background color
+          color: 'white', // Text color
+          fontWeight: 'bold', // Font weight
+          '&:hover': {
+            bgcolor: '#DB5788', // Hover background color
+          },
+          py: 1.5, // Padding Y
+          px: 2, // Padding X
+          borderRadius: '8px', // Border radius
+        }}>
+        Download Report
+      </Button>
+    </Box>
+  </Box>
+)}
 
 {/* Create User Dialog */}
 <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
@@ -766,6 +808,7 @@ const confirmDelete = async () => {
         value={`${countryCode}${userPhoneNumber}`}
         onChange={(handlePhoneNumberChange)}
         inputStyle={{ width: '100%' }}
+        style={{ marginBottom: '10px' }}
       />
       {!validatePhoneNumber(userPhoneNumber) && (
         <Typography color="error" variant="caption">
@@ -800,8 +843,38 @@ const confirmDelete = async () => {
 <TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }} />
 <TextField label="Learner Phone Number" fullWidth value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value)} style={{ marginBottom: '10px' }} />
 <TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
-<TextField label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} />
-<TextField label="Learner Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }}>
+<MenuItem value="Mentor">Mentor</MenuItem>
+<MenuItem value="Learner">Learner</MenuItem>
+</TextField>
+{/* <TextField label="Learner Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} /> */}
+<div style={{ position: 'relative', marginBottom: '10px' }}>
+  <TextField
+    label="Learner Password"
+    fullWidth
+    value={userPassword}
+    onChange={(e) => setUserPassword(e.target.value)}
+    type={showPassword ? "text" : "password"}
+  />
+  <button
+    type="button"
+    style={{
+      position: 'absolute',
+      right: '10px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '0',
+    }}
+    onClick={() => setShowPassword(!showPassword)}
+    aria-label={showPassword ? "Hide password" : "Show password"}
+  >
+    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+  </button>
+</div>
+
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
 </DialogContent>
 <DialogActions>
