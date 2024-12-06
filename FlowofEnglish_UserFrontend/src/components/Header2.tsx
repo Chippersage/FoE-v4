@@ -52,19 +52,19 @@ const Header2 = () => {
           }}
           title="Go to Home"
         />
-        <h3 className="hellohead text-white">
+        <h3 className="hellohead text-white font-openSans">
           {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
         </h3>
       </div>
       <div className="flex flex-1">
-        <h3 className="hellohead mx-auto text-white">
+        <h3 className="hellohead mx-auto text-white font-openSans">
           {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
           {/* Show "Continue as Guest" if user is null */}
         </h3>
       </div>
       <div className="logout-button flex-1 flex justify-end">
         {user && (
-          <span onClick={handleLogout} className="text-white cursor-pointer">
+          <span onClick={handleLogout} className="text-white cursor-pointer font-openSans">
             Logout
           </span>
 

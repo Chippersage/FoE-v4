@@ -26,10 +26,10 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
   const displayedLeaderboard = showMore ? sortedLeaderboard : top3;
 
   return (
-    <Card className="max-w-[400px] mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-2">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
-        <p className="text-muted-foreground">{cohortName}</p>
+    <Card className="max-w-[400px] mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-1">
+      <CardHeader className="text-center p-0 m-1">
+        <CardTitle className="text-2xl font-bold font-openSans">Leaderboard</CardTitle>
+        <p className="text-muted-foreground font-garamond">{cohortName}</p>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto custom-scrollbar-2">
         <div className="space-y-4">
@@ -40,10 +40,10 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
           {displayedLeaderboard.map((entry, index) => (
             <div
               key={entry.userId}
-              className={`flex justify-between items-center py-1 px-1 bg-slate-100 rounded-[5px] ${
+              className={`flex justify-between items-center py-1 px-1 rounded-[5px] ${
                 entry.userId === currentUser?.userId
                   ? "bg-blue-100 rounded-[2px] shadow-lg"
-                  : ""
+                  : "bg-gray-100"
               }`}
             >
               <div className="flex items-center">
