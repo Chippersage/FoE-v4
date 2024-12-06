@@ -28,7 +28,7 @@ export default function DashboardAppPage() {
 
 
   const formatLastActivity = (timestamp) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return 'Learner not logged in';
   
     const date = new Date(timestamp);
     const relativeTime = formatDistanceToNow(date, { addSuffix: true });
