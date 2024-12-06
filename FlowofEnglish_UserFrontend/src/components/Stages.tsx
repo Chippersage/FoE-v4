@@ -172,11 +172,14 @@ export default function Stages({ stages }) {
                             unit.completionStatus === "incomplete" &&
                             "bg-[#5BC3CD]"
                           }
-                          ${unit.completionStatus === 'disabled' && 'hover:cursor-not-allowed'}
+                          ${
+                            unit.completionStatus === "disabled" &&
+                            "hover:cursor-not-allowed"
+                          }
                           ${
                             // @ts-ignore
-                            (hoveredUnit === unit.unitId &&
-                            unit.completionStatus !== "disabled")
+                            hoveredUnit === unit.unitId &&
+                            unit.completionStatus !== "disabled"
                               ? "bg-[#DB5788]"
                               : ""
                           }`}
@@ -194,15 +197,25 @@ export default function Stages({ stages }) {
                           {/* @ts-ignore */}
                           {unit.completionStatus === "yes" && (
                             <CircleCheck
-                              className="absolute top-0 left-0 text-green-500"
+                              className={`absolute top-0 left-0 ${
+                                hoveredUnit === unit.unitId &&
+                                unit.completionStatus !== "disabled"
+                                  ? "text-white"
+                                  : "text-green-500"
+                              }`}
                               size={16}
                             />
                           )}
 
                           {/* Icon */}
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 transition-all duration-100">
                             <img
-                              src="/icons/User-icons/unit.png"
+                              src={
+                                hoveredUnit === unit.unitId &&
+                                unit.completionStatus !== "disabled"
+                                  ? "/icons/User-icons/unit.svg"
+                                  : "icons/User-icons/unit.png"
+                              }
                               alt="unit"
                               className="w-5 h-5"
                             />
@@ -210,7 +223,7 @@ export default function Stages({ stages }) {
 
                           {/* Text */}
                           <span
-                            className={`text-sm ${
+                            className={`text-sm truncate ${
                               // @ts-ignore
                               stage.stageEnabled
                                 ? "text-gray-900"
@@ -218,9 +231,9 @@ export default function Stages({ stages }) {
                             } 
                             ${
                               // @ts-ignore
-                              (hoveredUnit === unit.unitId &&
-                            unit.completionStatus !== "disabled")
-                                ? "opacity-100 translate-x-1 font-semibold"
+                              hoveredUnit === unit.unitId &&
+                              unit.completionStatus !== "disabled"
+                                ? "opacity-100 transition-all duration-100 ease-in-out font-semibold text-white"
                                 : ""
                             }
                             `}
