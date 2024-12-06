@@ -407,7 +407,7 @@ const isAllSelected = selected.length === orgs.length;
   return (
     <>
       <Helmet>
-        <title> Organisation | Chippersage </title>
+        <title> Organisation | ChipperSage </title>
       </Helmet>
 
       <Container>
@@ -661,7 +661,18 @@ const isAllSelected = selected.length === orgs.length;
             style={{ marginBottom: '10px' }}
             required
             />
-            <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth>
+            <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth
+             sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}>
             {isEditMode ? 'Update Organization' : 'Add Organization'}
             </Button>
             </form>

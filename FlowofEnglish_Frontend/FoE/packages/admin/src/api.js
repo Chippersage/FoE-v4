@@ -221,9 +221,9 @@ export async function updateUser(id, data) {
     const res = await axios.put(`${apiUrl}/users/${id}`, data);
     return res.data;
   } catch (err) {
-    console.log(err);
+    console.log('Error in updateUser:', err);
+    return { success: false, message: 'Server error occurred during update' }; 
   }
-  return null;
 }
 
 export async function getOrgUsers(organizationId) {
