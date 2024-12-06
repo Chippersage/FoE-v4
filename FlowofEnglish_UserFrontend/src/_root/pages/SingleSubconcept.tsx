@@ -13,6 +13,7 @@ const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
       const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
       return () => clearInterval(interval);
     } else {
+      console.log("redirecting...")
       onRedirect();
     }
   }, [timer, onRedirect]);
@@ -204,30 +205,29 @@ const [showSubmit, setShowSubmit] = useState(
   };
 
   const handleGoBack = () => {
-    navigate(-1); // Navigate to the previous page
+    navigate(`/subconcepts/${currentUnitId}`); // Navigate to the previous page
   };
 
   return (
     <>
       {successOverlay && (
-        <SuccessOverlay countdown={3} onRedirect={() => navigate(-1)} />
+        <SuccessOverlay countdown={3} onRedirect={() => navigate(`/subconcepts/${currentUnitId}`)} />
       )}
       {errorOverlay && (
         <ErrorOverlay countdown={3} onClose={() => setErrorOverlay(false)} />
       )}
       <div className="flex flex-col md:flex-row w-full">
         {/* Iframe Container */}
-        <div className="flex-1 p-1">
+        {/* md:border-r-2 md:border-r-slate-300 */}
+        <div className="flex-1 m-[2px]">
           {showIframe ? (
             <iframe
               id="embeddedContent"
-              // src={subconcept.subconceptLink}
-              src={"/Sentences/readAndRespond/stage0/bird.html"}
+              src={subconcept.subconceptLink}
+              // src={"/Sentences/readAndRespond/stage3/airPressure.html"}
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               title="Embedded Content"
-              className={`w-full h-[800px] mt-[65px] p-2 ${
-                onFrameLoad && "bg-pink-400"
-              } rounded-xl`}
+              className={`w-full h-[800px] mt-[65px] ${onFrameLoad && ""}`}
               onLoad={() => {
                 setShowGoBack(true);
                 setOnFrameLoad(true);
@@ -237,15 +237,16 @@ const [showSubmit, setShowSubmit] = useState(
             <MediaContent subconceptData={subconcept} />
           )}
         </div>
+        {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
 
         {/* Buttons Container */}
         {showIframe && (
-          <div className="sticky bg-black h-[865px] bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-end p-1 md:mr-0 gap-4 ,d:w-16 w-auto md:w-[150px] ">
+          <div className="sticky border-t-2 border-t-white bg-[#D5DEE7] h-[865px] bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-end p-1 md:mr-0 gap-4 ,d:w-16 w-auto md:w-[150px] ">
             {/* Go Back Button */}
             {showGoBack && (
               <button
                 onClick={handleGoBack}
-                className="bg-[#64CE80] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-sm font-['system-ui'] rounded-full flex flex-col items-center justify-center hover:bg-green-600 md:relative md:top-48 z-[99] gap-1"
+                className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-xs font-['system-ui'] rounded-full flex flex-col items-center justify-center md:relative md:top-48 z-[99] gap-1"
               >
                 <img
                   src="/icons/User-icons/back-white.png"
@@ -260,7 +261,7 @@ const [showSubmit, setShowSubmit] = useState(
             {showSubmit && (
               <button
                 onClick={handleSubmit}
-                className="bg-[#64CE80] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-xs font-['system-ui'] rounded-full flex flex-col items-center justify-center hover:bg-green-600 md:relative md:top-48 z-[99] gap-1"
+                className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-xs font-['system-ui'] rounded-full flex flex-col items-center justify-center md:relative md:top-48 z-[99] gap-1"
               >
                 <img
                   src="/icons/User-icons/send.png"
