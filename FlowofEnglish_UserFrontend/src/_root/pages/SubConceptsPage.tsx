@@ -16,6 +16,7 @@ import Speaker from "@/components/Speaker";
 import Picture from "@/components/Picture";
 import ReadAlongBook from "@/components/ReadAlongBook";
 import Start from "@/components/Start";
+import QnA from "@/components/QnA";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -24,6 +25,12 @@ import Header2 from "@/components/Header2";
 import { useUserContext } from "@/context/AuthContext";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import Finish from "@/components/Finish";
+import FIB from "@/components/FIB";
+import JumbledWords from "@/components/JumbledWords";
+import Grammar from "@/components/Grammar";
+import Read from "@/components/Read";
+import Spelling from "@/components/Spelling";
+import Comprehension from "@/components/Comprehension";
 
 interface Subconcept {
   subconceptId: string;
@@ -38,12 +45,22 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  html: PenNib,
+  // html: PenNib,
   pdf: Book,
   video: Camera,
   audio: Speaker,
   image: Picture,
-  passage: ReadAlongBook,
+  qna: QnA,
+  fib: FIB,
+
+  grammar: Grammar,
+
+  passage_read: Read,
+  passage_jw: JumbledWords,
+  passage_fib: FIB,
+  passage_spelling: Spelling,
+  passage_vocab: Spelling,
+  passage_comprehension: Comprehension,
 };
 
 export default function SubConceptsPage() {
@@ -53,8 +70,8 @@ export default function SubConceptsPage() {
   // const currentUnitId = location.state?.currentUnitId;
   const [currentUnitId, setCurrentUnitId] = useState("");
   // const nextUnitId = location.state?.nextUnitId;
-  const nextUnitId = localStorage.getItem("nextUnitId");
   const { unitId } = useParams();
+  const [nextUnitId, setNextUnitId] = useState(null);
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   const [started, setStarted] = useState(true);
@@ -70,8 +87,9 @@ export default function SubConceptsPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
-  
 
+  const currentUnit = localStorage.getItem("currentUnit") 
+  
   const fetchSubconcepts = async () => {
     try {
       const response = await axios.get(
@@ -88,7 +106,7 @@ export default function SubConceptsPage() {
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
       if (user.userId && unitId) {
-        console.log(user);
+        // console.log(user);
         try {
           const result = await fetchSubconcepts();
           console.log(result);
@@ -121,6 +139,30 @@ export default function SubConceptsPage() {
   useEffect(() => {
     setAnimationTrigger(true);
   }, []); // Empty dependency array to trigger on initial render
+
+  useEffect(() => {
+    if (!unitId) return;
+
+    // Retrieve all units and parse as an array
+    const allUnitsString = localStorage.getItem("allUnitsOfCurrentStage");
+    const allUnits: { unitId: string }[] = allUnitsString
+      ? JSON.parse(allUnitsString)
+      : [];
+    console.log(allUnits)
+    // Find the current unit index
+    const currentIndex = allUnits.findIndex((unit) => {
+      console.log(unit)
+      return unit.unitId == unitId;
+    });
+    console.log(currentIndex)
+    // Find the next unit
+    if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
+      const nextUnit = allUnits[currentIndex + 1];
+      setNextUnitId(nextUnit?.unitId || null);
+    } else {
+      setNextUnitId(null); // No next unit
+    }
+  }, [unitId]);
 
   const getPath = () => {
 
@@ -168,9 +210,12 @@ export default function SubConceptsPage() {
     <>
       <Header2 />
       <div
-        className="w-full overflow-scroll custom-scrollbar-2"
-        // style={{ backgroundImage: `url('/images/scurve-bg.jpg')` }}
-        style={{ backgroundImage: `url('/images/index.png')`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}
+        className=" w-full h-screen overflow-y-auto"
+        style={{
+          backgroundImage: `url('/images/index.png')`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "cover",
+        }}
       >
         {/* Confetti Animation */}
         {showConfetti && (
@@ -199,197 +244,194 @@ export default function SubConceptsPage() {
           />
         )}
 
-        <svg
-          className="w-full h-auto mt-28"
-          viewBox={`0 0 ${pathWidth} ${pathWidth}`}
-          preserveAspectRatio="xMinYMin meet"
-        >
-          <path
-            d={getPath()}
-            fill="none"
-            stroke="white"
-            strokeWidth="5"
-            className="curve-path"
-            strokeDasharray={"20,5"}
-          />
+        {/* Current Unit Title */}
+        <div className="absolute top-[22%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-2xl font-semibold text-white bg-[#E26291] p-1 rounded-[2px] max-w-max">
+          {currentUnit || "Loading Unit..."}
+        </div>
 
-          {[...Array(totalSteps)].map((_, index) => {
-            const point = getPointOnPath(index / (totalSteps - 1));
-            const subconcept =
-              index > 0 && index < totalSteps - 1
-                ? subconcepts[index - 1]
-                : null;
-
-            const Icon = subconcept
-              ? iconMap[subconcept.subconceptType as keyof typeof iconMap] ||
-                PenTool
-              : index === 0
-              ? Start
-              : Finish;
-
-            const isCompleted =
-              subconcept && subconcept.completionStatus === "yes";
-            const isEnabled =
-              started &&
-              (index === 0 ||
-                (index === totalSteps - 1 &&
-                  subconcepts.every((s) => s.completionStatus === "yes")) ||
-                (subconcept?.completionStatus !== "disabled" &&
-                  index !== totalSteps - 1));
-
-            return (
-              <g key={index}>
-                <Link
-                  // @ts-ignore
-                  to={
-                    index === totalSteps - 1 &&
-                    nextUnitId &&
-                    unitCompletionStatus === "yes"
-                      ? `/subconcepts/${nextUnitId}`
-                      : isEnabled && index !== totalSteps - 1 && index !== 0
-                      ? `/subconcept/${subconcept?.subconceptId}`
-                      : null
-                  }
-                  state={{ subconcept, stageId, currentUnitId }}
-                  className={`${!isEnabled && "cursor-not-allowed"}`}
-                  onMouseEnter={() => setActiveTooltip(index)}
-                  onMouseLeave={() => setActiveTooltip(null)}
-                  onClick={() => {
-                    if (
-                      index === totalSteps - 1 &&
-                      unitCompletionStatus === "yes"
-                    ) {
-                      setShowConfetti(true);
-                      setAudioPlaying(true);
-                      setTimeout(() => {
-                        setShowConfetti(false);
-                      }, 5000);
-                    } else return;
-                  }}
-                >
-                  <g
-                    className={`transition-transform duration-300 ease-out  ${
-                      animationTrigger ? "scale-100" : "scale-0"
-                    }`}
-                    style={{ transitionDelay: `${index * 100}ms` }}
-                  >
-                    <rect
-                      className="bg-white"
-                      x={point.x - 20}
-                      y={point.y - 20}
-                      width="36"
-                      height="36"
-                      rx="2"
-                      ry="2"
-                      fill={
-                        // index === 0 ||
-                        // index === totalSteps - 1 ||
-                        index === 0 || index === totalSteps - 1
-                          ? "transparent" // No background for first and last steps
-                          : subconcept?.completionStatus === "incomplete"
-                          ? "#2196F3" // Blue for incomplete steps
-                          : "#fff" // White for completed steps
-                      } // This removes the fill color
-                      stroke={
-                        index === 0 || index === totalSteps - 1
-                          ? "none"
-                          : isEnabled
-                          ? isCompleted
-                            ? "#4CAF50" // Outline color when completed
-                            : "#2196F3" // Outline color when enabled but not completed
-                          : "#9E9E9E" // Outline color when not enabled
-                      }
-                      strokeWidth="2"
-                      // @ts-ignore
-                      onClick={index === totalSteps - 1 && handleFinishClick}
-                    />
-
-                    <Icon
-                      x={
-                        index === 0
-                          ? point.x - 64
-                          : index === totalSteps - 1
-                          ? point.x - 30
-                          : point.x - 15
-                      }
-                      y={
-                        index === 0
-                          ? point.y - 45
-                          : index === totalSteps - 1
-                          ? point.y - 50
-                          : point.y - 15
-                      }
-                      width="70"
-                      height="70"
-                      color="white"
-                      className="object-contain"
-                    />
-
-                    {isCompleted && (
-                      <g
-                        className={`transition-transform duration-300 ease-out ${
-                          animationTrigger ? "scale-100" : "scale-0"
-                        }`}
-                        style={{ transitionDelay: `${index * 100 + 300}ms` }}
-                      >
-                        <circle
-                          cx={point.x + 12}
-                          cy={point.y - 12}
-                          r="8"
-                          fill="#4CAF50"
-                        />
-                        <CheckCircle2
-                          x={point.x + 8}
-                          y={point.y - 16}
-                          width="8"
-                          height="8"
-                          color="white"
-                        />
-                      </g>
-                    )}
-                  </g>
-                </Link>
-                {activeTooltip === index && (
-                  <foreignObject
-                    x={point.x - 100}
-                    y={point.y + 20}
-                    width="200"
-                    height="40"
-                  >
-                    <div
-                      className={`${
-                        isEnabled ? "bg-[#22C55E]" : "bg-slate-400"
-                      } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
-                      style={{
-                        position: "absolute",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        whiteSpace: "nowrap",
-                        zIndex: 1000,
-                      }}
-                    >
-                      {subconcept
-                        ? subconcept.subconceptDesc
-                        : index === 0
-                        ? "Start"
-                        : "Finish"}
-                    </div>
-                  </foreignObject>
-                )}
-              </g>
-            );
-          })}
-        </svg>
-
-        {!started && (
-          <button
-            className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-blue-500 text-white px-4 py-2 rounded-full transition-transform duration-200 hover:scale-110 active:scale-90"
-            onClick={() => setStarted(true)}
+        {/* Scrollable SVG Container */}
+        <div className="w-full h-full mt-36">
+          <svg
+            className="w-full h-auto"
+            viewBox={`0 0 ${pathWidth} ${pathWidth/1.5}`}
+            preserveAspectRatio="xMinYMin meet"
           >
-            Start
-          </button>
-        )}
+            <path
+              d={getPath()}
+              fill="none"
+              stroke="white"
+              strokeWidth="5"
+              className="curve-path"
+              strokeDasharray={"20,5"}
+            />
+            {[...Array(totalSteps)].map((_, index) => {
+              const point = getPointOnPath(index / (totalSteps - 1));
+              const subconcept =
+                index > 0 && index < totalSteps - 1
+                  ? subconcepts[index - 1]
+                  : null;
+
+              const Icon = subconcept
+                ? iconMap[subconcept.subconceptType as keyof typeof iconMap] 
+                : index === 0
+                ? Start
+                : Finish;
+
+              const isCompleted =
+                subconcept && subconcept.completionStatus === "yes";
+              const isEnabled =
+                started &&
+                (index === 0 ||
+                  (index === totalSteps - 1 &&
+                    subconcepts.every((s) => s.completionStatus === "yes")) ||
+                  (subconcept?.completionStatus !== "disabled" &&
+                    index !== totalSteps - 1));
+
+              return (
+                <g key={index}>
+                  <Link
+                    to={
+                      index === totalSteps - 1 &&
+                      nextUnitId &&
+                      unitCompletionStatus === "yes"
+                        ? `/subconcepts/${nextUnitId}`
+                        : isEnabled && index !== totalSteps - 1 && index !== 0
+                        ? `/subconcept/${subconcept?.subconceptId}`
+                        : null
+                    }
+                    state={{ subconcept, stageId, currentUnitId }}
+                    className={`${!isEnabled && "cursor-not-allowed"}`}
+                    onMouseEnter={() => setActiveTooltip(index)}
+                    onMouseLeave={() => setActiveTooltip(null)}
+                    onClick={() => {
+                      if (
+                        index === totalSteps - 1 &&
+                        unitCompletionStatus === "yes"
+                      ) {
+                        setShowConfetti(true);
+                        setAudioPlaying(true);
+                        setTimeout(() => {
+                          setShowConfetti(false);
+                        }, 5000);
+                      } else return;
+                    }}
+                  >
+                    <g
+                      className={`transition-transform duration-300 ease-out  ${
+                        animationTrigger ? "scale-100" : "scale-0"
+                      }`}
+                      style={{ transitionDelay: `${index * 100}ms` }}
+                    >
+                      <rect
+                        x={point.x - 20}
+                        y={point.y - 20}
+                        width="36"
+                        height="36"
+                        rx="2"
+                        ry="2"
+                        fill={
+                          index === 0 || index === totalSteps - 1
+                            ? "transparent"
+                            : subconcept?.completionStatus === "incomplete"
+                            ? "#2196F3"
+                            : "#fff"
+                        }
+                        stroke={
+                          index === 0 || index === totalSteps - 1
+                            ? "none"
+                            : isEnabled
+                            ? isCompleted
+                              ? "#4CAF50"
+                              : "#2196F3"
+                            : "#9E9E9E"
+                        }
+                        strokeWidth="2"
+                        onClick={
+                          index === totalSteps - 1
+                            ? handleFinishClick
+                            : undefined
+                        }
+                      />
+
+                      <Icon
+                        x={
+                          index === 0
+                            ? point.x - 64
+                            : index === totalSteps - 1
+                            ? point.x - 30
+                            : point.x - 17
+                        }
+                        y={
+                          index === 0
+                            ? point.y - 45
+                            : index === totalSteps - 1
+                            ? point.y - 50
+                            : point.y - 15
+                        }
+                        width={(index === 0 || index === totalSteps - 1) ? "70" : "30"}
+                        height={(index === 0 || index === totalSteps - 1) ? "70" : "30"}
+                        color="white"
+                        className="object-contain"
+                      />
+
+                      {isCompleted && (
+                        <g
+                          className={`transition-transform duration-300 ease-out ${
+                            animationTrigger ? "scale-100" : "scale-0"
+                          }`}
+                          style={{ transitionDelay: `${index * 100 + 300}ms` }}
+                        >
+                          <circle
+                            cx={point.x + 12}
+                            cy={point.y - 12}
+                            r="8"
+                            fill="#4CAF50"
+                          />
+                          <CheckCircle2
+                            x={point.x + 8}
+                            y={point.y - 16}
+                            width="8"
+                            height="8"
+                            color="white"
+                          />
+                        </g>
+                      )}
+                    </g>
+                  </Link>
+                  {activeTooltip === index && (
+                    <foreignObject
+                      x={point.x - 100}
+                      y={point.y + 20}
+                      width="200"
+                      height="40"
+                    >
+                      <div
+                        className={`${
+                          isEnabled ? "bg-[#22C55E]" : "bg-slate-400"
+                        } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
+                        style={{
+                          position: "absolute",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          whiteSpace: "nowrap",
+                          zIndex: 1000,
+                        }}
+                      >
+                        {subconcept
+                          ? subconcept.subconceptDesc
+                          : index === 0
+                          ? "Start"
+                          : "Finish"}
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
       </div>
     </>
   );
+
 }
