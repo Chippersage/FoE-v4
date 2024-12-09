@@ -3,8 +3,11 @@ package com.FlowofEnglish.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.FlowofEnglish.model.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,6 +30,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + ex.getMessage());
+    }
+    
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        return new ResponseEntity<>(
+            new ErrorResponse("Invalid date format", e.getMessage()), 
+            HttpStatus.BAD_REQUEST
+        );
     }
     // You can also add more exception handlers here if needed
 }
