@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Table(name = "UserAttempts")
 public class UserAttempts {
@@ -15,6 +17,7 @@ public class UserAttempts {
     private Long userAttemptId;
 
     @Column(name = "user_attempt_end_timestamp")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime userAttemptEndTimestamp;
 
     @Column(name = "user_attempt_flag", columnDefinition = "BIT", nullable = false)
@@ -24,6 +27,7 @@ public class UserAttempts {
     private int userAttemptScore;
 
     @Column(name = "user_attempt_start_timestamp", nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime userAttemptStartTimestamp;
 
     @ManyToOne

@@ -28,19 +28,19 @@ const getNavConfig = () => {
         icon: icon('profile'),
       },
       {
-        title: 'Report',
-        path: '/dashboard/superreport',
-        icon: icon('report'),
-      },
-      {
         title: 'Programs',
         path: `/dashboard/programs`,
         icon: icon('program'),
       },
       {
-        title: 'Prg2Coh',
+        title: 'Program-Cohort',
         path: `/dashboard/program-to-cohort`,
         icon: icon('Pro2Coh'),
+      },
+      {
+        title: 'Report',
+        path: '/dashboard/superreport',
+        icon: icon('report'),
       },
       // {
       //   title: 'User Report',

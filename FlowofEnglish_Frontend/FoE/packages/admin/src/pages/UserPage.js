@@ -1,13 +1,14 @@
 /* eslint-disable */
 import { styled } from '@mui/material/styles';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from "react-csv";
 import { filter } from 'lodash';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 // @mui
 import { Button, Card, Checkbox, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Link, MenuItem, Modal,
   Paper, Popover, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField, Typography } from '@mui/material';
@@ -74,58 +75,46 @@ function applySortFilter(array, comparator, query) {
 
 export default function UserPage() {
   const [open, setOpen] = useState(null);
-
   const [page, setPage] = useState(0);
-
   const [order, setOrder] = useState('asc');
-
   const [selected, setSelected] = useState([]);
-
   const [orderBy, setOrderBy] = useState('name');
-
   const [filterName, setFilterName] = useState('');
-
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
   const [orgs, setOrgs] = useState([]);
   const [csvData, setCsvData] = useState([]);
   const [isDataReady, setIsDataReady] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const navigate = useNavigate();
+  // Update the initial form data structure
   const initialFormData = {
     organizationId: '',
     organizationName: '',
     organizationAdminName: '',
     organizationAdminEmail: '',
     organizationAdminPhone: '',
-    orgpassword: '',
+    orgPassword: '',
     createdAt: '',
     updatedAt: '',
-    deletedAt: '',
+    deletedAt: ''
   };
+  const [formData, setFormData] = useState(initialFormData);
+  const [showOrgPassword, setShowOrgPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   
-  const validatePhoneNumber = (phone) => /^[0-9]{10}$/.test(phone); // Validate only 10 digits without country code
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email); // Validate proper email format
-  const [countryCode, setCountryCode] = useState(''); // For storing country code
-  const handlePhoneChange = (value, data) => {
-    const rawPhone = value.replace(/[^0-9]/g, ''); // Extract numeric part
-    const strippedPhone = rawPhone.slice(data.dialCode.length); // Remove country code
-    setCountryCode(data.dialCode); // Save country code
-    setFormData((prev) => ({ ...prev, organizationAdminPhone: strippedPhone }));
-  };
+  const [countryCode, setCountryCode] = useState('91'); // For storing country code
+  const csvLinkRef = useRef(null);
 
   const handleEmailChange = (e) => {
     const { value } = e.target;
     setFormData((prev) => ({ ...prev, organizationAdminEmail: value }));
   };
-
-  const [formData, setFormData] = useState(initialFormData);
-
-  const [formErrors, setFormErrors] = useState({});
-
-  const navigate = useNavigate();
 
   const validateForm = () => {
     const errors = {};
@@ -134,112 +123,211 @@ export default function UserPage() {
     }
     if (!formData.organizationName.trim()) {
       errors.organizationName = 'Organization name is required';
+    } else if (formData.organizationName.length < 6) {
+      errors.organizationName = 'Organization name must be at least 6 characters';
     }
-    if (!formData.organizationAdminEmail.trim()) {
-      errors.organizationAdminEmail = 'Admin email is required';
+    if (!formData.organizationAdminEmail) {
+      errors.organizationAdminEmail = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.organizationAdminEmail)) {
+      errors.organizationAdminEmail = 'Please enter a valid email address';
     }
-    if (!formData.organizationAdminPhone.trim()) {
-      errors.organizationAdminPhone = 'Admin PhoneNumber is required';
+    // Phone validation
+    if (!formData.organizationAdminPhone) {
+      errors.organizationAdminPhone = 'Phone number is required';
+    } else if (!/^[0-9]{10}$/.test(formData.organizationAdminPhone)) {
+      errors.organizationAdminPhone = 'Phone number must be 10 digits';
     }
     // Additional validations if needed
     return errors;
   };
   
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleOpen = () => {
-    setIsOpen(true);
-    setIsEditMode(false);
-    setSelectedRow(null);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setSuccessMessage("");
-    setErrorMessage("");
-  };
-
-  const initializeForm = () => {
+  // Reset form to initial state
+  const resetForm = () => {
     setFormData(initialFormData);
     setFormErrors({});
+    setCountryCode('91');
   };
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-    const errors = validateForm();
-    setFormErrors((prev) => errors);
+  // Enhanced Create Dialog handlers
+  const openCreateDialog = () => {
+    resetForm(); // Reset to initial state when opening create dialog
+    setIsCreateDialogOpen(true);
   };
 
+  const closeCreateDialog = () => {
+    resetForm(); // Reset form when closing
+    setIsCreateDialogOpen(false);
+  };
+
+  // Open Update Dialog
+  const openUpdateDialog = (organization) => {
+    console.log('Organization to update:', organization); // Debugging
+    if (!organization) return;
+
+    const formatDateTime = (dateString) => {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return date.toISOString();
+    };
   
-  const handleSubmit = async (e) => {
+    const phoneWithCode = organization.organizationAdminPhone || '';
+    const countryCode = phoneWithCode.substring(0, 2); // Assuming country code is 2 digits
+    const organizationAdminPhone = phoneWithCode.substring(2);
+
+    setFormData({
+      organizationId: organization.organizationId || '',
+      organizationName: organization.organizationName || '',
+      organizationAdminName: organization.organizationAdminName || '',
+      organizationAdminEmail: organization.organizationAdminEmail || '',
+      organizationAdminPhone: organization.organizationAdminPhone || '',
+      orgPassword: organization.orgPassword || '',
+      createdAt: formatDateTime(organization.createdAt),
+      updatedAt: formatDateTime(organization.updatedAt),
+      deletedAt: formatDateTime(organization.deletedAt)
+    });
+
+    setCountryCode(countryCode || '91'); // Default to '91' for India
+  setSelectedOrganization(organization);
+  setIsUpdateDialogOpen(true);
+};
+
+  const closeUpdateDialog = () => {
+    resetForm();
+    setSelectedOrganization(null);
+    setIsUpdateDialogOpen(false);
+  };
+  
+
+  // Enhanced form change handler with validation
+  const handleFormChange = (event) => {
+  const { name, value } = event.target;
+  let formattedValue = value;
+
+  // Convert datetime-local to ISO format
+  if (['createdAt', 'updatedAt', 'deletedAt'].includes(name) && value) {
+    formattedValue = new Date(value).toISOString();
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: formattedValue,
+  }));
+    // Clear specific error when field is being edited
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Enhanced phone change handler
+  const handlePhoneChange = (value, data) => {
+    const rawPhone = value.replace(/[^0-9]/g, '');
+    const strippedPhone = rawPhone.slice(data.dialCode.length);
+    setCountryCode(data.dialCode);
+    setFormData(prev => ({
+      ...prev,
+      organizationAdminPhone: strippedPhone
+    }));
+    
+    // Clear phone error when being edited
+    if (formErrors.organizationAdminPhone) {
+      setFormErrors(prev => ({
+        ...prev,
+        organizationAdminPhone: ''
+      }));
+    }
+  };
+
+  // Enhanced submit handlers with validation
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
+  
     if (Object.keys(errors).length === 0) {
-      if (isEditMode) {
-        try {
-          await updateOrg(formData.organizationId, {
-            organizationId: formData.organizationId,
-            organizationName: formData.organizationName,
-            organizationAdminName: formData.organizationAdminName,
-            organizationAdminEmail: formData.organizationAdminEmail,
-            organizationAdminPhone: formData.organizationAdminPhone,
-            orgpassword: formData.orgpassword,
-          });
-          handleClose();
-          setSuccessMessage("Organization updated successfully");
-          getOrgs().then((res) => {
-            setOrgs(res);
-            initializeForm();
-          });
-        } catch (error) {
-          console.error(error);
+      setLoading(true);
+      try {
+        const response = await createOrg(JSON.stringify(formData));
+        setLoading(false);
+        if (response.status === 201) {
+          setOrgs(await getOrgs());
+          closeCreateDialog();
+          setSuccessMessage('Organization created successfully!');
+          setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
+        } else if (response.status === 400) {
+          setFormErrors(prev => ({
+            ...prev,
+            organizationAdminEmail: response.data.message || 'Email already exists',
+          }));
         }
-      } else {
-        try {
-          const response = await createOrg({
-            organizationId: formData.organizationId,
-            organizationName: formData.organizationName,
-            organizationAdminName: formData.organizationAdminName,
-            organizationAdminEmail: formData.organizationAdminEmail,
-            organizationAdminPhone: formData.organizationAdminPhone,
-            orgpassword: formData.orgpassword,
-          });
-          if (response.status === 200) {
-            setSuccessMessage("Organization created successfully");
-          } else if (response.status === 409) {
-            setErrorMessage("Email already exists");
-          }
-          handleClose();
-          getOrgs().then((res) => {
-            setOrgs(res);
-            initializeForm();
-          });
-        } catch (error) {
-          console.error(error);
-          setErrorMessage("An error occurred while creating the organization");
-        }
+      } catch (error) {
+        console.error('Error creating organization:', error);
+        setLoading(false);
+        setErrorMessage('Failed to create organization. Please try again.');
+        setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
       }
     } else {
       setFormErrors(errors);
     }
   };
+  
 
-  const handleDelete = async () => {
+const handleUpdateSubmit = async (e) => {
+  e.preventDefault();
+  const errors = validateForm();
+  
+  if (Object.keys(errors).length === 0) {
     try {
-      const { id } = selectedRow;
-      await deleteOrg(organizationId);
-      getOrgs().then((res) => {
-        // console.log(res);
-        setOrgs(res);
-      });
+      const response = await updateOrg(formData.organizationId, formData);
+      if (response.status === 200) {  // Check for successful update response (status 200)
+        setOrgs(await getOrgs());    // Reload the organization list
+        closeUpdateDialog();         // Close the update dialog
+        setSuccessMessage('Organization updated successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
+      } else if (response.status === 400) {  // Handle error response (e.g., organization not found)
+        setErrorMessage('Failed to update organization. Organization not found.');
+        setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Error updating organization:', error);
+      setErrorMessage('Failed to update organization. Please try again.');
+      setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
     }
-  };
+  } else {
+    setFormErrors(errors);
+  }
+};
+
+
+const handleDelete = async () => {
+  try {
+    const { organizationId } = selectedRow;
+    const response = await deleteOrg(organizationId);
+
+    if (response) {
+      // Reload the organization list after successful deletion
+      const orgs = await getOrgs();
+      setOrgs(orgs);
+
+      // Show success message
+      setSuccessMessage('Organization deleted successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
+
+      // Close the delete dialog
+      closeDeleteDialog();
+    } else {
+      // Handle failure (if no response is returned or deletion failed)
+      setErrorMessage('Failed to delete organization. Please try again.');
+      setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+    }
+  } catch (error) {
+    console.error('Error deleting organization:', error);
+    setErrorMessage('Failed to delete organization. Please try again.');
+    setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+  }
+};
+
 
   const handleSelectedDelete = async () => {
     try {
@@ -253,14 +341,6 @@ export default function UserPage() {
       console.error(error);
     }
   };
-
-  // Utility function to parse date array into a valid Date object
-const parseDateArray = (dateArray) => {
-  if (!dateArray || !Array.isArray(dateArray)) return null;
-
-  const [year, month, day, hour, minute, second, millisecond] = dateArray;
-  return new Date(year, month - 1, day, hour, minute, second, millisecond / 1000); // Adjust month and milliseconds
-};
 
   const handleExport = async () => {
     try {
@@ -276,6 +356,8 @@ const parseDateArray = (dateArray) => {
   
       if (data && Array.isArray(data)) {
         const formattedData = formatUserDataForExport(data); // Format the user data
+        const csvContent = convertToCSV(formattedData); // Convert to CSV
+        downloadCSV(csvContent, `users_${orgId}.csv`);
         setCsvData(formattedData); // Set the formatted data for export
         setIsDataReady(true);
       } else {
@@ -285,7 +367,24 @@ const parseDateArray = (dateArray) => {
       console.error("Error in handleExport:", error);
     }
   };
-  
+  // Convert JSON data to CSV
+const convertToCSV = (data) => {
+  const headers = Object.keys(data[0]).join(",") + "\n";
+  const rows = data.map(row => Object.values(row).join(",")).join("\n");
+  return headers + rows;
+};
+// Trigger CSV download
+const downloadCSV = (csvContent, fileName) => {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const formatUserDataForExport = (users) => {
     return users.map((user) => ({
       userId: user.userId || '',
@@ -301,24 +400,6 @@ const parseDateArray = (dateArray) => {
       programName: user.program?.programName || '',
     }));
   };
-  
-  const handleEdit = () => {
-    handleCloseMenu();
-    setIsEditMode(true);
-    setIsOpen(true);
-    setFormData({
-      id: selectedRow.id,
-      organizationName: selectedRow.organizationName,
-      organizationAdminName: selectedRow.organizationAdminName,
-      organizationAdminEmail: selectedRow.organizationAdminEmail,
-      organizationAdminPhone: selectedRow.organizationAdminPhone,
-      orgpassword: selectedRow.orgpassword,
-      createdAt: selectedRow.createdAt,
-      updatedAt: selectedRow.updated_at,
-      deletedAt: selectedRow.deleted_at,
-    });
-  };
-  
 
   useEffect(() => {
     // Fetch organization details on component mount
@@ -407,7 +488,7 @@ const isAllSelected = selected.length === orgs.length;
   return (
     <>
       <Helmet>
-        <title> Organisation | ChipperSage </title>
+        <title> Organization | ChipperSage </title>
       </Helmet>
 
       <Container>
@@ -415,7 +496,7 @@ const isAllSelected = selected.length === orgs.length;
           <Typography variant="h4" gutterBottom>
             Organizations
           </Typography>
-          <Button variant="contained" onClick={handleOpen} startIcon={<Iconify icon="eva:plus-fill" />}
+          <Button variant="contained" onClick={openCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
             bgcolor: '#5bc3cd', // Default background color
             color: 'white', // Text color
@@ -478,8 +559,10 @@ const isAllSelected = selected.length === orgs.length;
         <TableCell align="left">{organizationAdminName}</TableCell>
         <TableCell align="left">{organizationAdminPhone}</TableCell>
         <TableCell align="left">
-        {createdAt ? format(parseDateArray(createdAt), 'dd/MM/yyyy') : 'N/A'}
-        </TableCell>
+    {createdAt
+        ? format(parseISO(createdAt), 'dd/MM/yyyy HH:mm:ss')
+        : 'N/A'}
+</TableCell>
         <TableCell align="right">
         <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
         <Iconify icon={'eva:more-vertical-fill'} />
@@ -567,9 +650,9 @@ const isAllSelected = selected.length === orgs.length;
           },
         }}
       >
-        <MenuItem onClick={handleEdit}>
+        <MenuItem onClick={() => openUpdateDialog(selectedRow)}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
+          Update
         </MenuItem>
         <MenuItem
   onClick={() => {
@@ -579,14 +662,15 @@ const isAllSelected = selected.length === orgs.length;
           <Iconify icon={'eva:people-outline'} sx={{ mr: 2 }} />
           Cohorts
         </MenuItem>
-        <MenuItem onClick={handleExport}>
+        <MenuItem onClick={() => handleExport(selectedRow)}>
           <Iconify icon={'eva:cloud-download-outline'} sx={{ mr: 2 }} />
           Export Users
         </MenuItem>
       {isDataReady && (
         <CSVLink
+        ref={csvLinkRef}
           data={csvData}
-          filename={`users_${selectedRow.organizationName}.csv`} // Unique filename based on organization ID
+          filename={`users_${selectedRow.organizationId}.csv`} // Unique filename based on organization ID
           onClick={() => setIsDataReady(false)} // Reset after download
           style={{ display: 'none' }} // Hide the link in the UI
         >
@@ -594,91 +678,299 @@ const isAllSelected = selected.length === orgs.length;
         </CSVLink>
       )}
 
-        <MenuItem
-          sx={{ color: 'error.main' }}
-          onClick={() => {
-            setIsConfirmOpen(true);
-            handleCloseMenu();
-          }}
-        >
-          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-          Delete
-        </MenuItem>
+<MenuItem
+sx={{ color: 'error.main' }} onClick={() => {setIsConfirmOpen(true); handleCloseMenu();}}>
+<Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
+Delete
+</MenuItem>
       </Popover>
 
-            <Modal open={isOpen} onClose={handleClose}>
-            <StyledCard>
-            <div>
-            <h2>{isEditMode ? 'Edit Organization' : 'Add Organization'}</h2>
-            <form noValidate onSubmit={handleSubmit}>
-            {/* New field for organizationId */}
-            <TextField
-            name="organizationName"
-            label="Organization Name"
-            value={formData.organizationName}
-            onChange={handleFormChange}
-            variant="outlined"
-            error={!!formErrors.organizationName}
-            helperText={formErrors.organizationName}
-            fullWidth
-            required
-            style={{ marginBottom: '10px' }}
-            />
-            <TextField
-            name="organizationAdminName"
-            label="Admin Name"
-            value={formData.organizationAdminName}
-            onChange={handleFormChange}
-            variant="outlined"
-            error={!!formErrors.organizationAdminName}
-            helperText={formErrors.organizationAdminName}
-            fullWidth
-            required
-            style={{ marginBottom: '10px' }}
-            />
-            <ReactPhoneInput
-        country={'in'}
-        enableSearch
-        value={`${countryCode}${formData.organizationAdminPhone}`}
-        onChange={handlePhoneChange}
-        inputStyle={{ width: '100%' }}
-        style={{ marginBottom: '10px' }}
-      />
-      {formErrors.organizationAdminPhone && (
-        <Typography color="error" variant="caption">
-          {formErrors.organizationAdminPhone}
-        </Typography>
-      )}
-            <TextField
-            name="organizationAdminEmail"
-            label="Admin Email"
-            value={formData.organizationAdminEmail}
-            onChange={handleFormChange}
-            variant="outlined"
-            error={!!formErrors.organizationAdminEmail}
-            helperText={formErrors.organizationAdminEmail}
-            fullWidth
-            style={{ marginBottom: '10px' }}
-            required
-            />
-            <Button variant="contained" color="primary" onClick={handleSubmit} fullWidth
-             sx={{
-              bgcolor: '#5bc3cd', // Default background color
-              color: 'white', // Text color
-              fontWeight: 'bold', // Font weight
-              '&:hover': {
-                bgcolor: '#DB5788', // Hover background color
-              },
-              py: 1.5, // Padding Y
-              px: 2, // Padding X
-              borderRadius: '8px', // Border radius
-            }}>
-            {isEditMode ? 'Update Organization' : 'Add Organization'}
-            </Button>
-            </form>
-            </div>
-            </StyledCard>
-            </Modal>
+{/* Create Organizations Dialog */}
+{isCreateDialogOpen && (
+<Dialog open={isCreateDialogOpen} onClose={closeCreateDialog}
+PaperProps={{ sx: { width: '100%', maxWidth: 'sm', // Reduces overall dialog width
+'& .MuiDialogContent-root': {pt: 2 }}// Adds space after title
+}}
+>
+<DialogTitle>Create New Organization</DialogTitle>
+<DialogContent sx={{ pt: 4 }}>
+  {/* Display Spinner when loading */}
+  {loading && (
+    <div className="spinner" style={{ textAlign: 'center', marginBottom: '1rem' }}>
+      Creating Organization...
+    </div>
+  )}
+  
+  {/* Hide form when loading */}
+  {!loading && (
+<div className="flex flex-col gap-6 pt-2">
+<TextField name="organizationName" label="Organization Name" value={formData.organizationName} onChange={handleFormChange} variant="outlined"
+error={!!formErrors.organizationName}
+helperText={formErrors.organizationName}
+fullWidth
+required
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
+/>
+<TextField
+name="organizationAdminName"
+label="Admin Name"
+value={formData.organizationAdminName}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.organizationAdminName}
+helperText={formErrors.organizationAdminName}
+fullWidth
+required
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
+/>
+<div className="flex flex-col">
+<ReactPhoneInput
+country={'in'}
+enableSearch
+value={`${countryCode}${formData.organizationAdminPhone}`}
+onChange={handlePhoneChange}
+inputStyle={{ width: '100%', height: '45px' }}
+/>
+{formErrors.organizationAdminPhone && (
+<Typography color="error" variant="caption" sx={{ mt: 0.5 }}>
+{formErrors.organizationAdminPhone}
+</Typography>
+)}
+</div>
+<TextField
+name="organizationAdminEmail"
+label="Admin Email"
+value={formData.organizationAdminEmail}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.organizationAdminEmail}
+helperText={formErrors.organizationAdminEmail}
+fullWidth
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
+required
+/>
+</div>
+)}
+</DialogContent>
+<DialogActions sx={{ p: 2.5 }}>
+{!loading && (
+    <>
+<Button onClick={closeCreateDialog} sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1, // Padding Y
+            px: 1.5, // Padding X
+            borderRadius: '6px', // Border radius
+            fontSize: '0.875rem',
+            minWidth: '80px',
+          }}>Cancel</Button>
+<Button onClick={handleCreateSubmit} sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1, // Padding Y
+            px: 1.5, // Padding X
+            borderRadius: '6px', // Border radius
+            fontSize: '0.875rem',
+            minWidth: '80px',
+          }} type="submit" variant="contained" >Create</Button>
+          </>
+  )}
+</DialogActions>
+</Dialog>
+)}
+
+{/* Update Organizations Dialog */}
+{isUpdateDialogOpen && (
+<Dialog open={isUpdateDialogOpen} onClose={closeUpdateDialog}>
+<DialogTitle>Update Organization</DialogTitle>
+<DialogContent>
+<TextField
+name="organizationId"
+label="Organization ID"
+value={formData.organizationId}
+onChange={handleFormChange}
+variant="outlined"
+style={{ marginBottom: '10px' }}
+fullWidth
+required
+disabled
+/>
+<TextField
+name="organizationName"
+label="Organization Name"
+value={formData.organizationName}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.organizationName}
+helperText={formErrors.organizationName}
+fullWidth
+required
+style={{ marginBottom: '10px' }}
+/>
+<TextField
+name="organizationAdminName"
+label="Admin Name"
+value={formData.organizationAdminName}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.organizationAdminName}
+helperText={formErrors.organizationAdminName}
+fullWidth
+required
+style={{ marginBottom: '10px' }}
+/>
+<ReactPhoneInput
+country={'in'}
+enableSearch
+value={`${countryCode}${formData.organizationAdminPhone}`}
+onChange={handlePhoneChange}
+inputStyle={{ width: '100%' }}
+style={{ marginBottom: '10px' }}
+/>
+{formErrors.organizationAdminPhone && (
+<Typography color="error" variant="caption">
+{formErrors.organizationAdminPhone}
+</Typography>
+)}
+<TextField
+name="organizationAdminEmail"
+label="Admin Email"
+value={formData.organizationAdminEmail}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.organizationAdminEmail}
+helperText={formErrors.organizationAdminEmail}
+fullWidth
+style={{ marginBottom: '10px' }}
+required
+/>
+<div style={{ position: 'relative', marginBottom: '10px' }}>
+  <TextField
+    name="orgPassword"
+    label="Password"
+    value={formData.orgPassword}
+    onChange={handleFormChange}
+    variant="outlined"
+    error={!!formErrors.orgPassword}
+    helperText={formErrors.orgPassword}
+    fullWidth
+    required
+    type={showOrgPassword ? "text" : "password"}
+  />
+  <button
+    type="button"
+    style={{
+      position: 'absolute',
+      right: '10px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '0',
+    }}
+    onClick={() => setShowOrgPassword(!showOrgPassword)}
+    aria-label={showOrgPassword ? "Hide password" : "Show password"}
+  >
+    {showOrgPassword ? <EyeOffIcon /> : <EyeIcon />}
+  </button>
+</div>
+<TextField
+name="create at"
+label="Create at"
+type="date"
+InputLabelProps={{ shrink: true }}
+value={formData.createdAt ? formData.createdAt.slice(0, 19) : ''}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.createdAt}
+helperText={formErrors.createdAt}
+fullWidth
+required
+style={{ marginBottom: '10px' }}
+/>
+<TextField
+name="updatedAt"
+label="Updated At"
+type="date"
+InputLabelProps={{ shrink: true }}
+value={formData.updatedAt ? formData.updatedAt.slice(0, 19) : ''}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.updatedAt}
+helperText={formErrors.updatedAt}
+fullWidth
+required
+style={{ marginBottom: '10px' }}
+/>
+<TextField
+name="deleted At"
+label="Deleted At"
+type="date"
+InputLabelProps={{ shrink: true }}
+value={formData.deletedAt ? formData.deletedAt.slice(0, 19) : ''}
+onChange={handleFormChange}
+variant="outlined"
+error={!!formErrors.deletedAt}
+helperText={formErrors.deletedAt}
+fullWidth
+required
+style={{ marginBottom: '10px' }}
+/>
+
+</DialogContent>
+<DialogActions>
+<Button onClick={closeUpdateDialog}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1, // Padding Y
+            px: 1.5, // Padding X
+            borderRadius: '6px', // Border radius
+            fontSize: '0.875rem',
+            minWidth: '80px',
+          }}>Cancel</Button>
+<Button onClick={handleUpdateSubmit} sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}type="submit" variant="contained" >Update</Button>
+</DialogActions>
+</Dialog>
+)}
+
 
       <Dialog
         open={isConfirmOpen}
@@ -689,18 +981,38 @@ const isAllSelected = selected.length === orgs.length;
         <DialogTitle id="alert-dialog-title">{'Delete Organization?'}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete the organization {selectedRow?.organizationName}?
+            Are you sure you want to delete the organization {selectedRow?.organizationId}?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={() => setIsConfirmOpen(false)}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}>Cancel</Button>
           <Button
             onClick={() => {
               handleDelete();
               setIsConfirmOpen(false);
             }}
             autoFocus
-            sx={{ color: 'error.main' }}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
           >
             Delete
           </Button>
