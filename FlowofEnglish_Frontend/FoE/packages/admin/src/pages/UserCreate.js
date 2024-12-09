@@ -843,12 +843,7 @@ const resetFormState = () => {
         </TextField>
 {/* <TextField label="Learner Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} /> */}
 <div style={{ position: 'relative', marginBottom: '10px' }}>
-  <TextField
-    label="Learner Password"
-    fullWidth
-    value={userPassword}
-    onChange={(e) => setUserPassword(e.target.value)}
-    type={showPassword ? "text" : "password"}
+  <TextField label="Learner Password" fullWidth  value={userPassword}  onChange={(e) => setUserPassword(e.target.value)}  type={showPassword ? "text" : "password"}
   />
   <button
     type="button"
@@ -868,7 +863,6 @@ const resetFormState = () => {
     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
   </button>
 </div>
-
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
 </DialogContent>
 <DialogActions>

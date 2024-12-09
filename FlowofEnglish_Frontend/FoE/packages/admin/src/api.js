@@ -44,12 +44,13 @@ export const createOrg = async (data) => {
         'Content-Type': 'application/json',
       },
     });
-    return response.data;
+    return response;  // Ensure the response is returned, not just the data
   } catch (error) {
     console.error('Error creating organization:', error);
-    return null;
+    return null;  // Return null in case of error
   }
 };
+
 
 // Update an existing organization
 export const updateOrg = async (organizationId, data) => {
@@ -61,24 +62,24 @@ export const updateOrg = async (organizationId, data) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error updating organization:', error);
-    return null;
+    return { status: 400, message: 'Error updating organization' };
   }
 };
-
 
 // Delete an organization by ID
 export const deleteOrg = async (organizationId) => {
   try {
     const response = await axios.delete(`${apiUrl}/organizations/${organizationId}`);
-    return response.data;
+    return response;  // Return the full response so we can check for success/failure
   } catch (error) {
     console.error('Error deleting organization:', error);
-    return null;
+    return null;  // Return null in case of an error
   }
 };
+
 
 // Delete multiple organizations (if supported by your API)
 export const deleteOrgs = async (organizationIds) => {

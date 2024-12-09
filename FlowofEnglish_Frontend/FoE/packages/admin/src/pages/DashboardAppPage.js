@@ -59,7 +59,7 @@ export default function DashboardAppPage() {
           ...user,
           organizationName: user.organization?.organizationName || 'N/A',
           sessionStartTimestamp: lastSession?.sessionStartTimestamp
-            ? new Date((lastSession.sessionStartTimestamp)*1000).toISOString()
+            ? new Date((lastSession.sessionStartTimestamp)).toISOString()
             : null,
         };
       });
