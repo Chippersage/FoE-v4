@@ -63,7 +63,7 @@ export default function DashboardOrgClientPage() {
           ...user,
           cohortName: user.cohort?.cohortName || 'N/A',
           sessionStartTimestamp: lastSession?.sessionStartTimestamp
-          ? new Date((lastSession.sessionStartTimestamp)*1000).toISOString()
+          ? new Date((lastSession.sessionStartTimestamp)).toISOString()
           : null
         };
       });
