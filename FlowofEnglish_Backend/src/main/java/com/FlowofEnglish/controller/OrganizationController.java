@@ -1,10 +1,15 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.ProgramResponseDTO;
+import com.FlowofEnglish.model.ErrorResponse;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
 import com.FlowofEnglish.service.OrganizationService;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.security.access.prepost.PreAuthorize;
@@ -66,37 +71,44 @@ public class OrganizationController {
     
     // Create a new organization
     @PostMapping("/create")
-    public ResponseEntity<Organization> createOrganization(@RequestBody Organization organization) {
-        Organization createdOrganization = organizationService.createOrganization(organization);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrganization);
+    public ResponseEntity<?> createOrganization(@RequestBody Organization organization) {
+        try {
+            Organization createdOrganization = organizationService.createOrganization(organization);
+            return new ResponseEntity<>(createdOrganization, HttpStatus.CREATED);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(new ErrorResponse("Email already exists", e.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Failed to create organization", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     // Update an existing organization
     @PutMapping("/{organizationId}")
-    public ResponseEntity<Organization> updateOrganization(
-            @PathVariable String organizationId,
-            @RequestBody Organization organization) {
-        Organization updatedOrganization = organizationService.getOrganizationById(organizationId);
-
-        if (updatedOrganization == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public ResponseEntity<?> updateOrganization(@PathVariable String organizationId, @RequestBody Organization organization) {
+        try {
+            Organization updatedOrganization = organizationService.updateOrganization(organizationId, organization);
+            return new ResponseEntity<>(updatedOrganization, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(new ErrorResponse("Organization not found", e.getMessage()), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Failed to update organization", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        // Update organization details and save
-        updatedOrganization.setOrganizationName(organization.getOrganizationName());
-        updatedOrganization.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
-        // Add any other fields you want to update
-        Organization savedOrganization = organizationService.saveOrganization(updatedOrganization);
-
-        return ResponseEntity.ok(savedOrganization);
     }
 
     // Delete an organization by ID
     @DeleteMapping("/{organizationId}")
-    public ResponseEntity<Void> deleteOrganization(@PathVariable String organizationId) {
-        organizationService.deleteOrganization(organizationId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteOrganization(@PathVariable String organizationId) {
+        try {
+            organizationService.deleteOrganization(organizationId);
+            return ResponseEntity.noContent().build();  // Successful deletion, no content to return
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(new ErrorResponse("Organization not found", e.getMessage()), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Failed to delete organization", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     // Delete multiple organizations
     @DeleteMapping
@@ -122,7 +134,7 @@ public class OrganizationController {
         }
 
         //if (organization != null && organization.getOrgpassword().equals(password)) {
-        	if (organization != null && organizationService.verifyPassword(password, organization.getOrgpassword())) {
+        	if (organization != null && organizationService.verifyPassword(password, organization.getOrgPassword())) {
             // Login successful
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Login successful");

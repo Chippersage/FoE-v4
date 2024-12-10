@@ -2,8 +2,10 @@ package com.FlowofEnglish.service;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +22,7 @@ import jakarta.persistence.EntityNotFoundException;
 
 import jakarta.transaction.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,7 +110,7 @@ public class OrganizationService {
 
         // OTP is valid; update password
         String encodedPassword = passwordEncoder.encode(newPassword);
-        organization.setOrgpassword(encodedPassword);
+        organization.setOrgPassword(encodedPassword);
 
         organizationRepository.save(organization); // Save updated password
         sendNewPasswordEmail(email, newPassword); // Notify user of the updated password
@@ -131,13 +133,13 @@ public class OrganizationService {
     public Organization saveOrganization(Organization organization) {
         System.out.println("Attempting to save organization: " + organization);
 
-        String plainPassword = organization.getOrgpassword();
+        String plainPassword = organization.getOrgPassword();
         if (plainPassword == null || plainPassword.isEmpty()) {
             plainPassword = generatePassword(); // Generate a new plain password
         }
 
         String encodedPassword = passwordEncoder.encode(plainPassword); // Hash the password
-        organization.setOrgpassword(encodedPassword); // Store hashed password
+        organization.setOrgPassword(encodedPassword); // Store hashed password
 
         Organization savedOrganization = organizationRepository.save(organization);
         System.out.println("Saved organization: " + savedOrganization);
@@ -147,6 +149,7 @@ public class OrganizationService {
         return savedOrganization;
     }
 
+    @Async
     private void sendWelcomeEmail(Organization organization, String plainPassword) {
         String adminName = organization.getOrganizationAdminName();
         String adminEmail = organization.getOrganizationAdminEmail();
@@ -199,15 +202,63 @@ public class OrganizationService {
         }
     }
 
-    // Delete an organization by ID
+
+ // Delete an organization by ID
     public void deleteOrganization(String organizationId) {
-        Organization organization = organizationRepository.findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization not found"));
-        organization.setDeletedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+        Organization organization = organizationRepository.findById(organizationId)
+            .orElseThrow(() -> new EntityNotFoundException("Organization not found"));
+        organization.setDeletedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata")));
         organizationRepository.save(organization);
     }
-    // Create a new organization
+
+    
+ // Create a new organization
     public Organization createOrganization(Organization organization) {
-        return saveOrganization(organization);
+        // Check if the email is already taken
+        if (organizationRepository.existsByOrganizationAdminEmail(organization.getOrganizationAdminEmail())) {
+            throw new DataIntegrityViolationException("The email address is already in use. Please use a different email.");
+        }
+
+        // Generate organizationId before saving the organization
+        organization.setOrganizationId(generateUniqueOrganizationId(organization.getOrganizationName()));
+        
+     // Generate plain password and hash it
+        String plainPassword = RandomStringUtil.generateRandomAlphanumeric(6);
+        String hashedPassword = passwordEncoder.encode(plainPassword);
+        organization.setOrgPassword(hashedPassword);
+
+        // Save organization
+        Organization savedOrganization = organizationRepository.save(organization);
+
+        // Send plain password via email
+        sendWelcomeEmail(savedOrganization, plainPassword);
+
+        return savedOrganization;
+    }
+
+    // Method to generate a unique organizationId
+    private String generateUniqueOrganizationId(String organizationName) {
+        if (organizationName == null || organizationName.isEmpty()) {
+            throw new IllegalArgumentException("Organization name cannot be null or empty.");
+        }
+
+        // Remove spaces and get the first 4 characters
+        String nameWithoutSpaces = organizationName.replaceAll("\\s+", "");
+        String baseOrgId = nameWithoutSpaces.length() >= 4
+                ? nameWithoutSpaces.substring(0, 4).toUpperCase()
+                : String.format("%-4s", nameWithoutSpaces).replace(' ', 'X').toUpperCase();
+
+        // Check if the organizationId already exists
+        String organizationId = baseOrgId;
+        int counter = 1;
+
+        // Keep appending the counter until the organizationId is unique
+        while (organizationRepository.existsById(organizationId)) {
+            organizationId = baseOrgId + counter;
+            counter++;
+        }
+
+        return organizationId;
     }
 
     // Create multiple organizations
@@ -215,13 +266,40 @@ public class OrganizationService {
         return organizationRepository.saveAll(organizations);
     }
     
+    
+ // Update an existing organization
+    public Organization updateOrganization(String organizationId, Organization organization) {
+        Organization existingOrganization = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new EntityNotFoundException("Organization not found with id: " + organizationId));
+
+        // Update fields other than organizationId
+        existingOrganization.setOrganizationName(organization.getOrganizationName());
+        existingOrganization.setOrganizationAdminName(organization.getOrganizationAdminName());
+        existingOrganization.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
+        existingOrganization.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
+        existingOrganization.setOrgPassword(organization.getOrgPassword()); // You can hash the password if it's updated
+        existingOrganization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))); // Update the updatedAt timestamp
+
+        // If 'deletedAt' is not null, mark as deleted (soft delete)
+        if (organization.getDeletedAt() != null) {
+            existingOrganization.setDeletedAt(organization.getDeletedAt());
+        }
+
+        // Save and return the updated organization
+        return organizationRepository.save(existingOrganization);
+    }
+
+    
     public boolean verifyPassword(String plainPassword, String encodedPassword) {
         return passwordEncoder.matches(plainPassword, encodedPassword);
     }
 
+    
+    
     public List<Program> getProgramsByOrganizationId(String organizationId) {
         return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
     }
+    
     
     
     public List<ProgramResponseDTO> getProgramsWithCohorts(String organizationId) {

@@ -281,7 +281,7 @@ public class UserServiceImpl implements UserService {
                     user.setUserEmail(userEmail);
 
                     String userPhone = columnIndexMap.containsKey("userphonenumber") ? line[columnIndexMap.get("userphonenumber")] : null;
-                    if (userPhone != null && !isValidPhoneNumber(userPhone)) {
+                    if (userPhone != null && !userPhone.isEmpty() && !isValidPhoneNumber(userPhone)) {
                     	warnings.add("Invalid phone number for UserID " + userId + ": " + userPhone);
                         userPhone = null; // Reset invalid phone number to null
                     }
@@ -395,12 +395,15 @@ public class UserServiceImpl implements UserService {
     private boolean isValidEmail(String email) {
     	// Return true for null or empty strings
         if (email == null || email.isEmpty()) {
-            return true; // No error for empty emails
+            return true; // No error for empty email
         }
         return email != null && email.matches("^(?!.*\\.\\.)[\\w._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
+    	if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return true; // No error for empty phoneNumber
+        }
         return phoneNumber != null && phoneNumber.matches("^[6-9]\\d{9}$");
     }
 
@@ -427,11 +430,17 @@ public class UserServiceImpl implements UserService {
     public User updateUser(String userId, User updatedUser) {
         return userRepository.findById(userId)
                 .map(user -> {
+                	// Validate userType
+                	String userType = updatedUser.getUserType();
+                    if (!"Mentor".equals(userType) && !"Learner".equals(userType)) {
+                        throw new IllegalArgumentException("Invalid userType. Only 'Mentor' or 'Learner' are allowed.");
+                    }
+                    
                     user.setUserAddress(updatedUser.getUserAddress());
                     user.setUserEmail(updatedUser.getUserEmail());
                     user.setUserName(updatedUser.getUserName());
                     user.setUserPhoneNumber(updatedUser.getUserPhoneNumber());
-                    user.setUserType(updatedUser.getUserType());
+                    user.setUserType(userType);
                  // Check if the password is being updated
                     if (updatedUser.getUserPassword() != null && !updatedUser.getUserPassword().isEmpty()) {
                         user.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword()));

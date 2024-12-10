@@ -58,6 +58,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-session-mappings/**").permitAll()
                     .requestMatchers("/api/v1/userSubConceptsCompletion/**").permitAll()
                     .requestMatchers("/api/v1/programconceptsmappings/**").permitAll()
+                    .requestMatchers("/api/v1/subscriptions/**").permitAll()
                     .requestMatchers("/api/v1/reports/**").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
