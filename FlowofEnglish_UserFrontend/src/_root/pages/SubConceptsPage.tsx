@@ -5,16 +5,16 @@ import {
   // Mic,
   // PlayCircle,
   // Headphones,
-  PenTool,
+  // PenTool,
   // Play,
   // Flag,
 } from "lucide-react";
-import PenNib from "@/components/PenNib";
+// import PenNib from "@/components/PenNib";
 import Book from "@/components/Book";
 import Camera from "@/components/Camera";
 import Speaker from "@/components/Speaker";
 import Picture from "@/components/Picture";
-import ReadAlongBook from "@/components/ReadAlongBook";
+// import ReadAlongBook from "@/components/ReadAlongBook";
 import Start from "@/components/Start";
 import QnA from "@/components/QnA";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
@@ -74,7 +74,7 @@ export default function SubConceptsPage() {
   const [nextUnitId, setNextUnitId] = useState(null);
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
-  const [started, setStarted] = useState(true);
+  // const [started, setStarted] = useState(true);
   const [totalSteps, setTotalSteps] = useState(2);
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -130,11 +130,11 @@ export default function SubConceptsPage() {
     setTotalSteps(subconcepts.length + 2); // Including start and end
   }, [subconcepts]);
 
-  useEffect(() => {
-    if (started) {
-      setAnimationTrigger(true);
-    }
-  }, [started]);
+  // useEffect(() => {
+  //   if (started) {
+  //     setAnimationTrigger(true);
+  //   }
+  // }, [started]);
 
   useEffect(() => {
     setAnimationTrigger(true);
@@ -158,6 +158,7 @@ export default function SubConceptsPage() {
     // Find the next unit
     if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
       const nextUnit = allUnits[currentIndex + 1];
+      // @ts-ignore
       setNextUnitId(nextUnit?.unitId || null);
     } else {
       setNextUnitId(null); // No next unit
@@ -280,7 +281,8 @@ export default function SubConceptsPage() {
               const isCompleted =
                 subconcept && subconcept.completionStatus === "yes";
               const isEnabled =
-                started &&
+              // @ts-ignore
+                // started &&
                 (index === 0 ||
                   (index === totalSteps - 1 &&
                     subconcepts.every((s) => s.completionStatus === "yes")) ||
@@ -290,6 +292,7 @@ export default function SubConceptsPage() {
               return (
                 <g key={index}>
                   <Link
+                  // @ts-ignore
                     to={
                       index === totalSteps - 1 &&
                       nextUnitId &&
