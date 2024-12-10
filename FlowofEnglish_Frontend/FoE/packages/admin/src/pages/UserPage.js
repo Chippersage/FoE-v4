@@ -480,7 +480,8 @@ const isAllSelected = selected.length === orgs.length;
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orgs.length) : 0;
-  const filteredUsers = applySortFilter(orgs, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(orgs, getComparator(order, orderBy), filterName)
+  .sort((a, b) => (a.deletedAt && !b.deletedAt ? 1 : !a.deletedAt && b.deletedAt ? -1 : 0));
   const isNotFound = !filteredUsers.length && !!filterName;
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -492,10 +493,14 @@ const isAllSelected = selected.length === orgs.length;
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
           <Typography variant="h4" gutterBottom>
             Organizations
           </Typography>
+          </Stack>
+
+          <div style={{ padding: '20px' }}>
+          <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button variant="contained" onClick={openCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
             bgcolor: '#5bc3cd', // Default background color
@@ -507,6 +512,7 @@ const isAllSelected = selected.length === orgs.length;
             py: 1.5, // Padding Y
             px: 2, // Padding X
             borderRadius: '8px', // Border radius
+            alignSelf: 'flex-start',
           }}>
             New Organization
           </Button>
@@ -532,11 +538,12 @@ const isAllSelected = selected.length === orgs.length;
         onRequestSort={handleRequestSort}
         onSelectAllClick={handleSelectAllClick}
         />
-        <TableBody>
+        {/* <TableBody>
         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-        const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt } = row;
-        const isRowChecked = isRowSelected(organizationId);
-
+          const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt, deletedAt } = row;
+          const isRowChecked = isRowSelected(organizationId);
+      
+          const isDeleted = !!deletedAt; // Check if the organization is deleted
         return (
         <TableRow hover key={organizationId} tabIndex={-1} role="checkbox" selected={isRowChecked}>
         <TableCell padding="checkbox">
@@ -576,7 +583,78 @@ const isAllSelected = selected.length === orgs.length;
         <TableCell colSpan={6} />
         </TableRow>
         )}
-        </TableBody>
+        </TableBody> */}
+<TableBody>
+  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+    const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt, deletedAt } = row;
+    const isRowChecked = isRowSelected(organizationId);
+
+    const isDeleted = !!deletedAt; // Check if the organization is deleted
+
+    return (
+      <TableRow
+        hover={!isDeleted} // Disable hover effect if deleted
+        key={organizationId}
+        tabIndex={-1}
+        role="checkbox"
+        selected={isRowChecked}
+        style={{
+          backgroundColor: isDeleted ? '#f5f5f5' : 'inherit', // Gray background for deleted rows
+          pointerEvents: isDeleted ? 'none' : 'auto', // Disable interactions
+          opacity: isDeleted ? 0.5 : 1, // Dim deleted rows
+        }}
+      >
+        <TableCell padding="checkbox">
+          <Checkbox
+            checked={isRowChecked}
+            onChange={(event) => handleClick(event, organizationId)}
+            disabled={isDeleted} // Disable checkbox if deleted
+          />
+        </TableCell>
+
+        <TableCell component="th" scope="row" padding="none">
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Typography variant="subtitle2" noWrap>
+              {isDeleted ? (
+                <span>{organizationId}</span> // Display plain text for deleted organizations
+              ) : (
+                <Link
+                  href={`/admin/org-dashboard/${organizationId}/app`}
+                  color="inherit"
+                  underline="hover"
+                >
+                  {organizationId}
+                </Link>
+              )}
+            </Typography>
+          </Stack>
+        </TableCell>
+        <TableCell align="left">{organizationName}</TableCell>
+        <TableCell align="left">{organizationAdminName}</TableCell>
+        <TableCell align="left">{organizationAdminPhone}</TableCell>
+        <TableCell align="left">
+          {createdAt ? format(parseISO(createdAt), 'dd/MM/yyyy HH:mm:ss') : 'N/A'}
+        </TableCell>
+        <TableCell align="right">
+          {!isDeleted && (
+            <IconButton
+              size="large"
+              color="inherit"
+              onClick={(event) => handleOpenMenu(event, row)}
+            >
+              <Iconify icon={'eva:more-vertical-fill'} />
+            </IconButton>
+          )}
+        </TableCell>
+      </TableRow>
+    );
+  })}
+  {emptyRows > 0 && (
+    <TableRow style={{ height: 53 * emptyRows }}>
+      <TableCell colSpan={6} />
+    </TableRow>
+  )}
+</TableBody>
 
         {isNotFound && (
         <TableBody>
@@ -630,6 +708,7 @@ const isAllSelected = selected.length === orgs.length;
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+        </div>
       </Container>
 
       <Popover
@@ -899,8 +978,8 @@ required
   </button>
 </div>
 <TextField
-name="create at"
-label="Create at"
+name="created at"
+label="Created At"
 type="date"
 InputLabelProps={{ shrink: true }}
 value={formData.createdAt ? formData.createdAt.slice(0, 19) : ''}
@@ -963,9 +1042,11 @@ style={{ marginBottom: '10px' }}
             '&:hover': {
               bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
+            py: 1, // Padding Y
+            px: 1.5, // Padding X
+            borderRadius: '6px', // Border radius
+            fontSize: '0.875rem',
+            minWidth: '80px',
           }}type="submit" variant="contained" >Update</Button>
 </DialogActions>
 </Dialog>
