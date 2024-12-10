@@ -15,18 +15,28 @@ const StyledRoot = styled(Toolbar)(({ theme }) => ({
 }));
 
 const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
-  width: 240,
+  width: 180,
+  height: 36,
+  [theme.breakpoints.down('sm')]: {
+    width: 150, // Adjust for small screens
+  },
   transition: theme.transitions.create(['box-shadow', 'width'], {
     easing: theme.transitions.easing.easeInOut,
     duration: theme.transitions.duration.shorter,
   }),
   '&.Mui-focused': {
-    width: 320,
+    width: 240,
+    [theme.breakpoints.down('sm')]: {
+      width: 200, // Adjust focused width for small screens
+    },
     boxShadow: theme.customShadows.z8,
   },
   '& fieldset': {
     borderWidth: `1px !important`,
     borderColor: `${alpha(theme.palette.grey[500], 0.32)} !important`,
+  },
+  '& input': {
+    padding: theme.spacing(1, 2),
   },
 }));
 
