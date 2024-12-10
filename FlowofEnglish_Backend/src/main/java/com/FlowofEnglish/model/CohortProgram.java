@@ -33,7 +33,6 @@ public class CohortProgram {
 		this.cohortProgramId = cohortProgramId;
 		this.uuid = uuid;
 		this.cohort = cohort;
-		
 		this.program = program;
 	}
 
@@ -61,8 +60,6 @@ public class CohortProgram {
 		this.cohort = cohort;
 	}
 
-	
-
 	public Program getProgram() {
 		return program;
 	}
@@ -70,8 +67,6 @@ public class CohortProgram {
 	public void setProgram(Program program) {
 		this.program = program;
 	}
-
-	
 
 	@Override
 	public String toString() {
