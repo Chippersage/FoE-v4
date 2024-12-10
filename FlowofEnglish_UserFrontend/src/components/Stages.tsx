@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircleCheck } from "lucide-react";
 import { ChevronDown } from "lucide-react";
-import { Book } from "lucide-react";
+// import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
 // Define a type for the stage object
 // interface Stage {
@@ -169,16 +169,19 @@ export default function Stages({ stages }) {
                           }
                           key={unitIndex}
                           className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-[3px] transition-all duration-200 ease-in-out ${
+                            // @ts-ignore
                             unit.completionStatus === "incomplete" &&
                             "bg-[#5BC3CD]"
                           }
                           ${
+                            // @ts-ignore
                             unit.completionStatus === "disabled" &&
                             "hover:cursor-not-allowed"
                           }
                           ${
                             // @ts-ignore
                             hoveredUnit === unit.unitId &&
+                            // @ts-ignore
                             unit.completionStatus !== "disabled"
                               ? "bg-[#DB5788]"
                               : ""
@@ -189,8 +192,10 @@ export default function Stages({ stages }) {
                           onClick={() => {
                             localStorage.setItem(
                               "allUnitsOfCurrentStage",
+                              // @ts-ignore
                               JSON.stringify(Object.values(stage.units))
                             );
+                            // @ts-ignore
                             localStorage.setItem("currentUnit", unit.unitName); // Example for a second value
                           }}
                         >
@@ -198,7 +203,9 @@ export default function Stages({ stages }) {
                           {unit.completionStatus === "yes" && (
                             <CircleCheck
                               className={`absolute top-0 left-0 ${
+                                // @ts-ignore
                                 hoveredUnit === unit.unitId &&
+                                // @ts-ignore
                                 unit.completionStatus !== "disabled"
                                   ? "text-white"
                                   : "text-green-500"
@@ -211,7 +218,9 @@ export default function Stages({ stages }) {
                           <div className="flex-shrink-0 transition-all duration-100">
                             <img
                               src={
+                                // @ts-ignore
                                 hoveredUnit === unit.unitId &&
+                                // @ts-ignore
                                 unit.completionStatus !== "disabled"
                                   ? "/icons/User-icons/unit.svg"
                                   : "icons/User-icons/unit.png"
@@ -232,6 +241,7 @@ export default function Stages({ stages }) {
                             ${
                               // @ts-ignore
                               hoveredUnit === unit.unitId &&
+                              // @ts-ignore
                               unit.completionStatus !== "disabled"
                                 ? "opacity-100 transition-all duration-100 ease-in-out font-semibold text-white"
                                 : ""
