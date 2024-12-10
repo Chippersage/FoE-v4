@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 import MediaContent from "@/components/MediaContent";
 
+// @ts-ignore
 const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
 
   console.log("triggered")
@@ -37,7 +38,7 @@ const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
     </div>
   );
 };
-
+// @ts-ignore
 const ErrorOverlay = ({ countdown = 3, onClose }) => {
   const [visible, setVisible] = useState(true);
 
@@ -79,11 +80,13 @@ const SingleSubconcept = () => {
   const [onFrameLoad, setOnFrameLoad] = useState(false);
   const sessionId = localStorage.getItem("authToken");
   const subconcept = location.state?.subconcept;
+  // @ts-ignore
   const [showIframe, setShowIframe] = useState(
     !["video", "audio", "pdf", "image"].includes(subconcept?.subconceptType)
   );
 const [showSubmit, setShowSubmit] = useState(
   subconcept?.subconceptType?.startsWith('passage')
+  // true
 );
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
@@ -211,7 +214,10 @@ const [showSubmit, setShowSubmit] = useState(
   return (
     <>
       {successOverlay && (
-        <SuccessOverlay countdown={3} onRedirect={() => navigate(`/subconcepts/${currentUnitId}`)} />
+        <SuccessOverlay
+          countdown={3}
+          onRedirect={() => navigate(`/subconcepts/${currentUnitId}`)}
+        />
       )}
       {errorOverlay && (
         <ErrorOverlay countdown={3} onClose={() => setErrorOverlay(false)} />
@@ -226,6 +232,7 @@ const [showSubmit, setShowSubmit] = useState(
               src={subconcept.subconceptLink}
               // src={"/Sentences/readAndRespond/stage3/airPressure.html"}
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
+              // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
               title="Embedded Content"
               className={`w-full h-[800px] mt-[65px] ${onFrameLoad && ""}`}
               onLoad={() => {
