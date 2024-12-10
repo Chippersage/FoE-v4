@@ -31,7 +31,7 @@ export default function UserProgressBar({ userProgress }) {
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
     >
-      <div className="w-full h-full bg-pink-300 rounded-none overflow-hidden">
+      <div className="w-full h-full bg-[#DB5788] rounded-none overflow-hidden">
         <div
           className="h-full w-0 bg-green-400 transition-all duration-500 ease-in-out flex items-center justify-center"
           style={{ width: `${completionPercentage}%` }}
@@ -40,7 +40,7 @@ export default function UserProgressBar({ userProgress }) {
           <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs text-white font-semibold">
             Completed {completionPercentage}%
           </span>
-        )}  
+        )}
       </div>
       {isHovered && (
         <div
