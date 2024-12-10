@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name = "UserSessionMapping")
 public class UserSessionMapping {
@@ -14,9 +16,11 @@ public class UserSessionMapping {
     private String sessionId;  
 
     @Column(name = "session_end_timestamp", nullable = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime sessionEndTimestamp;
 
     @Column(name = "session_start_timestamp", nullable = false, updatable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     @CreationTimestamp
     private OffsetDateTime sessionStartTimestamp;
     

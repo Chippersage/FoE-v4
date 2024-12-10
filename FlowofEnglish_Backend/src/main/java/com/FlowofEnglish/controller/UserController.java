@@ -119,13 +119,20 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
+    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable String id, @RequestBody User user) {
+        Map<String, Object> response = new HashMap<>();
         try {
-            return ResponseEntity.ok(userService.updateUser(id, user));
+            User updatedUser = userService.updateUser(id, user);
+            response.put("success", true);
+            response.put("data", updatedUser);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            response.put("success", false);
+            response.put("message", "User not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable("id") String userId) {

@@ -1,12 +1,12 @@
 package com.FlowofEnglish.model;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.FlowofEnglish.util.RandomStringUtil;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,22 +32,25 @@ public class Organization {
     @Column(name = "organization_admin_email", nullable = false, length = 100)
     private String organizationAdminEmail;
 
-    @Column(name = "organization_admin_phone", length = 15)
+    @Column(name = "organization_admin_phone", length = 15, nullable = false)
     private String organizationAdminPhone;
 
     @Column(name = "org_password", nullable = false)
-    private String orgpassword;
+    private String orgPassword;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    private OffsetDateTime deletedAt;
 
     @Column(name = "uuid", unique = true, nullable = false, updatable = false)
     private String uuid;
@@ -58,14 +61,14 @@ public class Organization {
 
     // Parameterized constructor
     public Organization(String organizationId, String organizationName, String organizationAdminName,
-                        String organizationAdminEmail, String organizationAdminPhone, String orgpassword,
-                        LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt, String uuid) {
+                        String organizationAdminEmail, String organizationAdminPhone, String orgPassword,
+                        OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime deletedAt, String uuid) {
         this.organizationId = organizationId;
         this.organizationName = organizationName;
         this.organizationAdminName = organizationAdminName;
         this.organizationAdminEmail = organizationAdminEmail;
         this.organizationAdminPhone = organizationAdminPhone;
-        this.orgpassword = orgpassword;
+        this.orgPassword = orgPassword;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
@@ -114,39 +117,39 @@ public class Organization {
         this.organizationAdminPhone = organizationAdminPhone;
     }
 
-    public String getOrgpassword() {
-        return orgpassword;
+    public String getOrgPassword() {
+        return orgPassword;
     }
 
-    public void setOrgpassword(String orgpassword) {
-        this.orgpassword = orgpassword;
+    public void setOrgPassword(String orgPassword) {
+        this.orgPassword = orgPassword;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
-    }
+    public OffsetDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+	public void setCreatedAt(OffsetDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime();
-    }
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+	public void setUpdatedAt(OffsetDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 
-    public LocalDateTime getDeletedAt() {
-        return deletedAt != null ? deletedAt.atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime() : null;
-    }
+	public OffsetDateTime getDeletedAt() {
+		return deletedAt;
+	}
 
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
+	public void setDeletedAt(OffsetDateTime deletedAt) {
+		this.deletedAt = deletedAt;
+	}
 
-    public String getUuid() {
+	public String getUuid() {
         return uuid;
     }
 
@@ -158,25 +161,27 @@ public class Organization {
     public String toString() {
         return "Organization [organizationId=" + organizationId + ", organizationName=" + organizationName
                 + ", organizationAdminName=" + organizationAdminName + ", organizationAdminEmail="
-                + organizationAdminEmail + ", organizationAdminPhone=" + organizationAdminPhone + ", orgpassword="
-                + orgpassword + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", deletedAt=" + deletedAt
+                + organizationAdminEmail + ", organizationAdminPhone=" + organizationAdminPhone + ", orgPassword="
+                + orgPassword + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", deletedAt=" + deletedAt
                 + ", uuid=" + uuid + "]";
     }
 
      // Method to ensure UUID and generate organizationId before persisting
     @PrePersist
-    private void ensureUuid() {
+    private void ensureUuidAndIds() {
         if (this.uuid == null) {
             this.uuid = UUID.randomUUID().toString();
         }
 
-        // Generate organizationId based on organizationName
+     // Generate organizationId based on organizationName
         if (this.organizationId == null || this.organizationId.isEmpty()) {
             if (this.organizationName != null && !this.organizationName.isEmpty()) {
+                // Remove spaces from the organizationName
+                String nameWithoutSpaces = this.organizationName.replaceAll("\\s+", "");
                 // Take the first 4 characters of organizationName, if available
-                this.organizationId = this.organizationName.length() >= 4
-                        ? this.organizationName.substring(0, 4).toUpperCase() // Convert to uppercase for consistency
-                        : String.format("%-4s", this.organizationName).replace(' ', 'X').toUpperCase(); // Pad if less than 4 chars
+                this.organizationId = nameWithoutSpaces.length() >= 4
+                        ? nameWithoutSpaces.substring(0, 4).toUpperCase() // Convert to uppercase for consistency
+                        : String.format("%-4s", nameWithoutSpaces).replace(' ', 'X').toUpperCase(); // Pad if less than 4 chars
             } else {
                 // Fallback to random ID if organizationName is null or empty
                 this.organizationId = RandomStringUtil.generateRandomAlphabetic(4).toUpperCase();

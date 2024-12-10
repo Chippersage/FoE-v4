@@ -10,7 +10,7 @@ import { getOrgCohorts, getOrgPrograms, getOrgUsers, getUserSessionMappingsByUse
 
 
 const formatLastActivity = (timestamp) => {
-  if (!timestamp) return 'N/A';
+  if (!timestamp) return 'Learner not logged in';
 
   const date = new Date(timestamp);
   const relativeTime = formatDistanceToNow(date, { addSuffix: true });
@@ -63,7 +63,7 @@ export default function DashboardOrgClientPage() {
           ...user,
           cohortName: user.cohort?.cohortName || 'N/A',
           sessionStartTimestamp: lastSession?.sessionStartTimestamp
-          ? new Date((lastSession.sessionStartTimestamp)*1000).toISOString()
+          ? new Date((lastSession.sessionStartTimestamp)).toISOString()
           : null
         };
       });

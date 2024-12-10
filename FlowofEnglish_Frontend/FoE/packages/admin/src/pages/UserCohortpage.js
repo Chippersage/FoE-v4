@@ -28,8 +28,8 @@ import {
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'learnerName', label: 'Learner Name', alignRight: false },
   { id: 'learnerId', label: 'Learner Id', alignRight: false },
+  { id: 'learnerName', label: 'Learner Name', alignRight: false },
   { id: 'leaderboardScore', label: 'Leaderboard Score', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true },
 ];
@@ -90,7 +90,6 @@ const UserCohortPage = () => {
   const [file, setFile] = useState(null);
   const [response, setResponse] = useState(null);
   const [userCohortData, setUserCohortData] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [cohortName, setCohortName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
@@ -99,14 +98,11 @@ const UserCohortPage = () => {
   const [filterName, setFilterName] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRowId, setActiveRowId] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
-  const [selectedRowsMessage, setSelectedRowsMessage] = useState('');
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('cohortId');
   const [selected, setSelected] = useState([]);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
-  const [open, setOpen] = useState(null);
   const [formValues, setFormValues] = useState({
     userId: '',
     cohortId: '',
@@ -202,28 +198,29 @@ const UserCohortPage = () => {
         });
         showSnackbar('Record created successfully');
       }
-      fetchUserCohortData();
-      setIsModalOpen(false);
-      resetForm();
-    } catch (error) {
-      showSnackbar('Error saving data', 'error');
-    }
-  };
+      // Refresh the cohort data after creating or updating a record
+    fetchUserCohortData(cohortId);
+    setIsModalOpen(false);
+    resetForm();
+  } catch (error) {
+    showSnackbar('Error saving data', 'error');
+  }
+};
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = userCohortData.map((n) => n.userName);
+      const newSelected = userCohortData.map((n) => n.userId);
       setSelected(newSelected);
     } else {
       setSelected([]);
     }
   };
 
-  const handleClick = (userName) => {
-    const selectedIndex = selected.indexOf(userName);
+  const handleClick = (userId) => {
+    const selectedIndex = selected.indexOf(userId);
     let newSelected = [];
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, userName);
+      newSelected = newSelected.concat(selected, userId);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -234,7 +231,6 @@ const UserCohortPage = () => {
     setSelected(newSelected);
   };
 
-  const handleClose = () => setOpen(false);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -276,52 +272,6 @@ const UserCohortPage = () => {
       leaderboardScore: record.leaderboardScore || '',
     });
     setIsModalOpen(true);
-  };
-
-  const handleSearch = (query) => {
-    const filteredData = userCohortData.filter(
-      (row) =>
-        row.userName.toLowerCase().includes(query.toLowerCase())
-    );
-    setUserCohortData(filteredData);
-  };
-
-  const handleSelectRow = (userCohortId) => {
-    const updatedSelectedRows = selectedRows.includes(userCohortId)
-      ? selectedRows.filter((id) => id !== userCohortId)
-      : [...selectedRows, userCohortId];
-
-    setSelectedRows(updatedSelectedRows);
-
-    // Set the selected rows message
-    if (updatedSelectedRows.length === 1) {
-      const user = userCohortData.find((item) => item.userCohortId === userCohortId);
-      setSelectedRowsMessage(`You have selected: ${user.userName}`);
-    } else if (updatedSelectedRows.length > 1) {
-      setSelectedRowsMessage(`You have selected ${updatedSelectedRows.length} users.`);
-    } else {
-      setSelectedRowsMessage(''); // Reset message when no rows are selected
-    }
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = userCohortData.map((item) => item.userCohortId);
-      setSelectedRows(allIds);
-      setSelectedRowsMessage(`You have selected ${allIds.length} users.`);
-    } else {
-      setSelectedRows([]);
-      setSelectedRowsMessage('');
-    }
-  };
-
-  const handleSort = (property) => {
-    const isAscending = sortConfig.key === property && sortConfig.direction === 'asc';
-    setSortConfig({ key: property, direction: isAscending ? 'desc' : 'asc' });
-    const sortedData = [...userCohortData].sort((a, b) =>
-      isAscending ? (a[property] > b[property] ? -1 : 1) : a[property] < b[property] ? -1 : 1
-    );
-    setUserCohortData(sortedData);
   };
 
   const handleOpenModal = () => {
@@ -452,8 +402,8 @@ const UserCohortPage = () => {
           <TableCell padding="checkbox">
           <Checkbox checked={selected.includes(row.userId)} onChange={() => handleClick(row.userId)} />
           </TableCell>
-          <TableCell>{row.userName}</TableCell>
           <TableCell>{row.userId}</TableCell>
+          <TableCell>{row.userName}</TableCell>
           <TableCell>{row.leaderboardScore}</TableCell>
           <TableCell align="right">
           <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
@@ -500,19 +450,16 @@ const UserCohortPage = () => {
             page={page}
             onPageChange={(event, newPage) => setPage(newPage)}
             onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
+            // Add this to ensure selected items are reset when pagination changes
+  onChangeRowsPerPage={(event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to the first page
+  }}
           />
         </Card>
       </Container>
 
-      {/* Selected Rows Message */}
-      {selectedRowsMessage && (
-        <Snackbar
-          open={selectedRowsMessage !== ''}
-          autoHideDuration={3000}
-          onClose={handleCloseSnackbar}
-          message={selectedRowsMessage}
-        />
-      )}
+      
       <Modal open={isModalOpen} onClose={handleCloseModal}>
         <Box
           sx={{
