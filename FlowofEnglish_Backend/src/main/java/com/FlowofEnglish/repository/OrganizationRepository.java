@@ -10,5 +10,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
     // Custom query to find Organization by admin email
     Organization findByOrganizationAdminEmail(String email);
     Organization findByOrganizationNameAndOrganizationAdminEmail(String organizationName, String email);
+    boolean existsByOrganizationAdminEmail(String email);
     
 }
