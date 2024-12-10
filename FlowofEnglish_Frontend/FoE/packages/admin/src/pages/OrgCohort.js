@@ -299,10 +299,14 @@ const handleCloseDialogs = () => {
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
+          </Stack>
+
+          <div style={{ padding: '20px' }}>
+          <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
             bgcolor: '#5bc3cd', // Default background color
@@ -410,9 +414,10 @@ const handleCloseDialogs = () => {
             onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
           />
         </Card>
+        </div>
       </Container>
 
-      {/* Create Cohort Modal */}
+  {/* Create Cohort Modal */}
   <Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs}>
   <DialogTitle>Create New Cohort</DialogTitle>
   <DialogContent>
