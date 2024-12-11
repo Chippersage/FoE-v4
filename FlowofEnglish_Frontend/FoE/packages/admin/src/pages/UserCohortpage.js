@@ -340,7 +340,7 @@ const UserCohortPage = () => {
             variant="contained"
             component="label"
             style={{ marginRight: '10px' }}
-            startIcon={<Iconify icon="eva:plus-fill" />}
+            startIcon={<Iconify icon="eva:upload-fill" />}
             sx={{
               bgcolor: '#5bc3cd', // Default background color
               color: 'white', // Text color
