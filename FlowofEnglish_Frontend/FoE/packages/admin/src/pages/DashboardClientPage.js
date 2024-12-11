@@ -99,7 +99,7 @@ export default function DashboardClientPage() {
         </Grid>
 
         <Grid container spacing={4} mt={3}>
-          <Grid item xs={12} md={6} lg={6}>
+          {/* <Grid item xs={12} md={6} lg={6}>
             <AppWidgetSummary
               title="Total Users"
               total={users.length}
@@ -107,8 +107,35 @@ export default function DashboardClientPage() {
               icon={'ant-design:user-outlined'}
               link={`/org-dashboard/${organizationId}/users`}
             />
-          </Grid>
-          <Grid item xs={12} md={6} lg={6}>
+          </Grid> */}
+          {/* Learners Card */}
+      <Grid item xs={12} md={6} lg={6}>
+      <AppWidgetSummary
+      title="Learners"
+      total={users ? users.length : 0}
+      svgIcon={
+      <img
+      src="/admin/assets/icons/navbar/profile.svg"
+      alt="Learners Icon"
+      style={{ width: 40, height: 40 }}/>}
+      />
+      </Grid>
+
+      {/* Cohorts Card */}
+      <Grid item xs={12} md={6} lg={6}>
+      <AppWidgetSummary
+      title="Cohorts"
+      total={cohorts ? cohorts.length : 0}
+      color="info"
+      svgIcon={
+      <img
+      src="/admin/assets/icons/navbar/cohort.svg"
+      alt="cohorts Icon"
+      style={{ width: 40, height: 40 }}/>}
+      />
+      </Grid>
+
+      {/* <Grid item xs={12} md={6} lg={6}>
             <AppWidgetSummary
               title="Total Cohorts"
               total={cohorts.length}
@@ -116,7 +143,9 @@ export default function DashboardClientPage() {
               icon={'ant-design:team-outlined'}
               link={`/org-dashboard/${organizationId}/cohorts`}
             />
-          </Grid>
+          </Grid> */}
+
+
         </Grid>
       </Container>
     </>
