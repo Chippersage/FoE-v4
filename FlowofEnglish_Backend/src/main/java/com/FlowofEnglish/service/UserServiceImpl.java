@@ -243,14 +243,14 @@ public class UserServiceImpl implements UserService {
 
             	// Check if userId exists in the same batch
                 if (userIdSet.contains(userId)) {
-                    errorMessages.add("Duplicate userId " + userId + " found in CSV. This user will not be created.");
+                	warnings.add("Duplicate userId " + userId + " found in CSV. This user will not be created.");
                     continue; // Skip processing this line
                 }
                 userIdSet.add(userId);
 
                 // Check if userId already exists in the database
                 if (userRepository.existsById(userId)) {
-                    errorMessages.add("UserID: " + userId + " already exists in the database. Skipping.");
+                	warnings.add("UserID: " + userId + " already exists in the database. Skipping.");
                     continue; // Skip processing this line
                 }
                 

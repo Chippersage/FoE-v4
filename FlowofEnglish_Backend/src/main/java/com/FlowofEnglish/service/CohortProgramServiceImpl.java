@@ -22,11 +22,17 @@ public class CohortProgramServiceImpl implements CohortProgramService {
 
     @Override
     public Optional<CohortProgram> getCohortProgram(Long cohortProgramId) {
+    	
         return cohortProgramRepository.findById(cohortProgramId);
     }
 
     @Override
     public CohortProgram createCohortProgram(CohortProgram cohortProgram) {
+    	// Check if cohort already has a program assigned
+        Optional<CohortProgram> existingCohortProgram = cohortProgramRepository.findByCohortCohortId(cohortProgram.getCohort().getCohortId());
+        if (existingCohortProgram.isPresent()) {
+            throw new IllegalArgumentException("The cohort is already assigned to a program.");
+        }
         return cohortProgramRepository.save(cohortProgram);
     }
 
