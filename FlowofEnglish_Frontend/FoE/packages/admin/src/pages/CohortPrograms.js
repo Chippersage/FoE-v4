@@ -1,6 +1,6 @@
 import { styled } from '@mui/material/styles';
 import { filter } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import Snackbar from '@mui/material/Snackbar';
@@ -74,7 +74,6 @@ function CohortPrograms() {
   const [selectedOrg, setSelectedOrg] = useState(''); // Selected organization
   const [programs, setPrograms] = useState([]); // Store programs for selected organization
   const [cohorts, setCohorts] = useState([]); 
-
   const [loading, setLoading] = useState(true);
   const [filterName, setFilterName] = useState('');
   const [order, setOrder] = useState('asc');
@@ -85,18 +84,18 @@ function CohortPrograms() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ cohortId: '', programId: '' });
+  const [formData, setFormData] = useState({ organizationId: '', cohortId: '', programId: '' });
   const [formErrors, setFormErrors] = useState({});
   const [notification, setNotification] = useState({ open: false, message: '', type: '' });
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
 // Fetch data
-  async function fetchData() {
+const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getCohortPrograms();
-      console.log ("program", data);
+    //  console.log ("program", data);
       if (!Array.isArray(data)) {
         console.error("API did not return an array.");
       }
@@ -113,16 +112,60 @@ function CohortPrograms() {
     } finally {
       setLoading(false);
     }
-  }
-  
+  }, []);
+
+  const fetchOrgsData = useCallback(async () => {
+    try {
+      const orgData = await getOrgs();
+      setOrgs(orgData);
+    } catch (error) {
+      showNotification('Failed to load organizations.', 'error');
+    }
+  }, []);
+
+  const fetchOrgDetails = useCallback(async (orgId) => {
+    if (!orgId) return;
+    setLoading(true);
+    try {
+      const [programsData, cohortsData] = await Promise.all([
+        getOrgProgramSubscriptions(orgId),
+        getOrgCohorts(orgId)
+      ]);
+      // Extract program data from subscriptions
+    const formattedPrograms = (programsData || []).map(item => ({
+      programId: item.program?.programId || '',
+      programName: item.program?.programName || ''
+    }));
+      setPrograms(formattedPrograms);
+      setCohorts(cohortsData || []);
+    } catch (error) {
+      showNotification('Error fetching organization details.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Effects
   useEffect(() => {
-    console.log("Cohorts State Updated: ", cohorts);
-  }, [cohorts]);
-  
-  // Fetch data on mount
+    fetchData();
+    fetchOrgsData();
+  }, [fetchData, fetchOrgsData]);
+
+  useEffect(() => {
+    if (selectedOrg) {
+      fetchOrgDetails(selectedOrg);
+    }
+  }, [selectedOrg, fetchOrgDetails]);
+
+// Fetch data when the component mounts
 useEffect(() => {
   fetchData();
 }, []);
+
+  useEffect(() => {
+  //  console.log("Cohorts State Updated: ", cohorts);
+  }, [cohorts]);
+  
 
 // Handlers
 const handleRequestSort = (event, property) => {
@@ -141,18 +184,60 @@ const handleSelectAllClick = (event) => {
 
 const handleClick = (cohortId) => {
   const selectedIndex = selected.indexOf(cohortId);
-  const newSelected = [...selected];
+  let newSelected = [];
+
   if (selectedIndex === -1) {
-    newSelected.push(cohortId);
-  } else {
-    newSelected.splice(selectedIndex, 1);
+    newSelected = newSelected.concat(selected, cohortId);
+  } else if (selectedIndex === 0) {
+    newSelected = newSelected.concat(selected.slice(1));
+  } else if (selectedIndex === selected.length - 1) {
+    newSelected = newSelected.concat(selected.slice(0, -1));
+  } else if (selectedIndex > 0) {
+    newSelected = newSelected.concat(
+      selected.slice(0, selectedIndex),
+      selected.slice(selectedIndex + 1)
+    );
   }
   setSelected(newSelected);
 };
 
+const handleSubmit = async () => {
+  const errors = {};
+  if (!formData.cohortId) errors.cohortId = 'Cohort is required';
+  if (!formData.programId) errors.programId = 'Program is required';
+  setFormErrors(errors);
+
+  if (Object.keys(errors).length === 0) {
+    try {
+      showNotification('Waiting for backend response...', 'info');
+      const payload = {
+        cohort: { cohortId: formData.cohortId },
+        program: { programId: formData.programId }
+      };
+      const response = await createCohortProgram(payload);
+      if (response) {
+        showNotification('Cohort program created successfully!', 'success');
+        setIsCreateDialogOpen(false);
+        fetchData();
+      } else {
+        showNotification('Failed to create cohort program.', 'error');
+      }
+    } catch (error) {
+      if (error.response?.status === 400) {
+        showNotification(error.response.data, 'error');
+      } else {
+        showNotification('Failed to create cohort program.', 'error');
+      }
+    }
+  }
+};
+
 const handleOpenCreateDialog = () => {
-  setFormData({ cohortId: '', programId: '' });
+  setFormData({ organizationId: '', cohortId: '', programId: '' });
   setFormErrors({});
+  setSelectedOrg(''); // Reset selected organization
+  setPrograms([]); // Clear programs
+  setCohorts([]); // Clear cohorts
   setIsCreateDialogOpen(true);
 };
 
@@ -170,27 +255,64 @@ const handleFormChange = (event) => {
   setFormData({ ...formData, [name]: value });
 };
 
-const handleSubmit = async () => {
-  const errors = {};
-  if (!formData.cohortId) errors.cohortId = 'Cohort ID is required';
-  if (!formData.programId) errors.programId = 'Program ID is required';
-  setFormErrors(errors);
+// // Fetch organizations
+// useEffect(() => {
+//   async function fetchOrgs() {
+//     try {
+//       const orgData = await getOrgs();
+//       setOrgs(orgData); // Assuming orgData is an array of organizations
+//     } catch (error) {
+//       console.error('Error fetching organizations:', error);
+//     }
+//   }
+//   fetchOrgs();
+// }, []);
 
-  if (Object.keys(errors).length === 0) {
-    const payload = {
-      cohort: { cohortId: formData.cohortId },
-      program: { programId: formData.programId },
-    };
-    try {
-      await createCohortProgram(payload);
-      showNotification('Cohort program created successfully!', 'success');
-      setIsCreateDialogOpen(false);
-      fetchData();
-    } catch (error) {
-      showNotification('Failed to create cohort program.', 'error');
-    }
-  }
-};
+// // Fetch programs and cohorts when organization is selected
+// useEffect(() => {
+  
+//     async function fetchDetails() {
+//       setLoading(true);
+//       try {
+//         const [programsData, cohortsData] = await Promise.all([
+//           getOrgProgramSubscriptions(selectedOrg),
+//           getOrgCohorts(selectedOrg),
+//         ]);
+//         setPrograms(programsData || []);
+//         setCohorts(cohortsData || []);
+//       } catch (error) {
+//         showNotification('Error fetching programs or cohorts.', 'error');
+//       } finally {
+//         setLoading(false);
+//       }
+//     }
+  
+//   if (selectedOrg) {
+//   fetchDetails();
+//   }
+// }, [selectedOrg]);
+
+// const handleSubmit = async () => {
+//   const errors = {};
+//   if (!formData.cohortId) errors.cohortId = 'Cohort ID is required';
+//   if (!formData.programId) errors.programId = 'Program ID is required';
+//   setFormErrors(errors);
+
+//   if (Object.keys(errors).length === 0) {
+//     const payload = {
+//       cohort: { cohortId: formData.cohortId },
+//       program: { programId: formData.programId },
+//     };
+//     try {
+//       await createCohortProgram(payload);
+//       showNotification('Cohort program created successfully!', 'success');
+//       setIsCreateDialogOpen(false);
+//       fetchData();
+//     } catch (error) {
+//       showNotification('Failed to create cohort program.', 'error');
+//     }
+//   }
+// };
 
 const handleDelete = async (cohortProgramId) => {
   try {
@@ -217,20 +339,22 @@ const showNotification = (message, type) => {
 
 const filteredCohorts = applySortFilter(cohorts, getComparator(order, orderBy), filterName);
 const isNotFound = !filteredCohorts.length && !!filterName;
+
 return (
     <>
       <Helmet>
-        <title> CohortPrograms | Chippersage </title>
+        <title> Program-Cohort Mapping | Chippersage </title>
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+       {/* <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}> */}
+       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
-          CohortPrograms
+          Program-Cohort Mapping
           </Typography>
           </Stack>
 
-          <div style={{ padding: '20px' }}>
+          {/* <div style={{ padding: '20px' }}> */}
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
@@ -244,11 +368,11 @@ return (
             px: 2, // Padding X
             borderRadius: '8px', // Border radius
           }}>
-            New CohortPrograms
+            New Program-Cohort Mapping
           </Button>
         </Stack>
 
-        <Card>
+        <Card >
           <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={(e) => setFilterName(e.target.value)} />
 
           <Scrollbar>
@@ -256,7 +380,7 @@ return (
     <>
     <CircularProgress/>
       <Typography variant="h6" paragraph align="center">
-        Loading CohortPrograms...
+        Loading ProgramCohorts...
       </Typography>
     </>
   ) : (
@@ -330,35 +454,74 @@ return (
             onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
           />
         </Card>
-        </div>
+        {/* </div> */}
       </Container>
 
 {/* Create Cohort Modal */}
-<Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs}>
-  <DialogTitle>Create New Program-Cohort</DialogTitle>
+<Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs} fullWidth>
+  <DialogTitle>Create Program-Cohort Mapping</DialogTitle>
   <DialogContent>
+      <Stack spacing={3}>
+        {/* Organization Dropdown */}
+        <TextField
+          select
+          fullWidth
+          label="Select Organization"
+          value={formData.organizationId}
+          onChange={(e) => {
+            const orgId = e.target.value;
+            setSelectedOrg(orgId);
+            setFormData({ ...formData, organizationId: orgId, cohortId: '', programId: '' });
+          }}
+          helperText={formErrors.organizationId}
+          error={!!formErrors.organizationId}
+        >
+          {orgs.map((org) => (
+            <MenuItem key={org.organizationId} value={org.organizationId}>
+              {org.organizationName}
+            </MenuItem>
+          ))}
+        </TextField>
+
     <TextField
+      select
       fullWidth
       margin="normal"
-      name="cohortId"
-      label="Cohort Id"
+      label="Select Cohort"
       value={formData.cohortId}
-      onChange={handleFormChange}
+    //  onChange={handleFormChange}
+      onChange={(e) => setFormData({ ...formData, cohortId: e.target.value })}
+      disabled={!selectedOrg || cohorts.length === 0}
       error={!!formErrors.cohortId}
       helperText={formErrors.cohortId}
       required
-    />
+      >
+      {cohorts.map((cohort) => (
+        <MenuItem key={cohort.cohortId} value={cohort.cohortId}>
+          {cohort.cohortName}
+        </MenuItem>
+      ))}
+    </TextField>
+    
     <TextField
       fullWidth
-      margin="normal"
-      name="programId"
-      label="Program ID"
+      select
+      label="Select Program"
       value={formData.programId}
-      onChange={handleFormChange}
+      // onChange={handleFormChange}
+      onChange={(e) => setFormData({ ...formData, programId: e.target.value })}
+      disabled={!selectedOrg || programs.length === 0}
       error={!!formErrors.programId}
       helperText={formErrors.programId}
       required
-    />
+    >
+      {programs.map((program) => (
+            <MenuItem key={program.programId} value={program.programId}>
+              {program.programName}
+            </MenuItem>
+          ))}
+        </TextField>
+    </Stack>
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}>Cancel</Button>
@@ -462,7 +625,6 @@ return (
           {notification.message}
         </MuiAlert>
       </Snackbar>
-
     </>
   );
 }

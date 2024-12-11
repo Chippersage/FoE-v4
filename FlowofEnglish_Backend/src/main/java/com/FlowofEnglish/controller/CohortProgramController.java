@@ -28,8 +28,13 @@ public class CohortProgramController {
     }
 
     @PostMapping("/create")
-    public CohortProgram createCohortProgram(@RequestBody CohortProgram cohortProgram) {
-        return cohortProgramService.createCohortProgram(cohortProgram);
+    public ResponseEntity<?> createCohortProgram(@RequestBody CohortProgram cohortProgram) {
+        try {
+            CohortProgram createdCohortProgram = cohortProgramService.createCohortProgram(cohortProgram);
+            return ResponseEntity.ok(createdCohortProgram);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{cohortProgramId}")

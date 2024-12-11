@@ -104,7 +104,7 @@ export default function DashboardOrgClientPage() {
       <Grid container spacing={0} justifyContent="space-between" alignItems="center">
 
       {/* Learners Card */}
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={3} lg={3.5}>
       <AppWidgetSummary
       title="Learners"
       total={users ? users.length : 0}
@@ -116,8 +116,9 @@ export default function DashboardOrgClientPage() {
       />
       </Grid>
 
+
       {/* Cohorts Card */}
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item  xs={12} sm={6} md={3} lg={3.5}>
       <AppWidgetSummary
       title="Cohorts"
       total={cohorts ? cohorts.length : 0}
@@ -130,7 +131,7 @@ export default function DashboardOrgClientPage() {
       />
       </Grid>
       {/* Programs Card */}
-      <Grid item xs={12} sm={6} md={3}>
+      <Grid item xs={12} sm={6} md={3} lg={3.5}>
       <AppWidgetSummary
       title="Programs"
       total={programs ? programs.length : 0}
