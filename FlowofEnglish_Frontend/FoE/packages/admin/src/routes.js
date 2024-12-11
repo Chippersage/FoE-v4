@@ -9,6 +9,7 @@ import AddCtOc from './pages/AddCtOc';
 import BlogPage from './pages/BlogPage';
 import CohortPage from './pages/CohortPage';
 import ProgramPage from './pages/ProgramPage';
+import CohortPrograms from './pages/CohortPrograms';
 import DashboardAppPage from './pages/DashboardAppPage';
 import DashboardClientPage from './pages/DashboardClientPage';
 import LoginPage from './pages/LoginPage';
@@ -42,8 +43,10 @@ export default function Router() {
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
         { path: 'user', element: <UserPage /> },
-        { path: 'user-cohort/:organizationId/:cohortId', element: <UserCohortpage /> },
         { path: 'Create-Users', element: <UserCreate /> },
+        { path: 'programs', element: <ProgramPage /> },
+        { path: 'program-to-cohort', element: <CohortPrograms />},
+        { path: 'user-cohort/:organizationId/:cohortId', element: <UserCohortpage /> },
         { path: 'superreport', element: <ReportPage /> },
         { path: 'superuserreport', element: <SuperUserReport /> },
         { path: 'superpassword', element: <SuperAdminPassword /> },
@@ -52,7 +55,6 @@ export default function Router() {
 
 
         { path: 'blog', element: <BlogPage /> },
-        { path: 'programs', element: <ProgramPage /> },
         { path: 'addctoc/:organisationId', element: <AddCtOc /> },
         
         
