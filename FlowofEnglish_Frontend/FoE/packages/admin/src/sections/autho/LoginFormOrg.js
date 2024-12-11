@@ -132,7 +132,7 @@ export default function LoginFormOrg() {
             onClick={handleSuperadmin}
             className="text-[#5bc3cd] hover:underline block w-full"
           >
-            Go to SuperAdmin?
+            Go to SuperAdmin
           </button>
           <button
             onClick={handleForgotPassword}
