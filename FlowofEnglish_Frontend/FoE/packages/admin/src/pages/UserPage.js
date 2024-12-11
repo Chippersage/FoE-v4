@@ -493,13 +493,13 @@ const isAllSelected = selected.length === orgs.length;
       </Helmet>
 
       <Container>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
             Organizations
           </Typography>
           </Stack>
 
-          <div style={{ padding: '20px' }}>
+          {/* <div style={{ padding: '20px' }}> */}
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button variant="contained" onClick={openCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
@@ -708,7 +708,7 @@ const isAllSelected = selected.length === orgs.length;
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
-        </div>
+        {/* </div> */}
       </Container>
 
       <Popover
