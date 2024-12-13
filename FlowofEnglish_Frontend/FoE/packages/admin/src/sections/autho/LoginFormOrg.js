@@ -5,6 +5,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 // components
 import { useUser } from 'src/UserContext';
+import ReminderPopup from './ReminderPopup';
 // ----------------------------------------------------------------------
 
 export default function LoginFormOrg() {
@@ -17,6 +18,8 @@ export default function LoginFormOrg() {
   const [orgPassword, setOrgPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cohortReminders, setCohortReminders] = useState([]);
+  const [showReminders, setShowReminders] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,6 +45,8 @@ export default function LoginFormOrg() {
         localStorage.setItem('token', 'dummyToken'); // Set token as needed
         setUserType('orgAdmin');
         setOrgId(orgData.organizationId);
+        setCohortReminders(orgData.cohortReminders || []);
+        setShowReminders(true); // Show reminder popup when login is successful
         navigate(`/org-dashboards/${orgData.organizationId}/app`, { replace: true });
       } else {
         setError('Invalid email or password');
@@ -63,7 +68,19 @@ export default function LoginFormOrg() {
     navigate('/forgot');
   };
 
+  const handlePopupClose = () => {
+    setShowReminders(false);
+    setCohortReminders([]);
+  };
+
   return (
+    <>
+      {showReminders && (
+        <ReminderPopup
+          reminders={cohortReminders}
+          onClose={handlePopupClose}
+        />
+      )}
     <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
       <div className="mb-8 mt-8">
         <img
@@ -143,5 +160,6 @@ export default function LoginFormOrg() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -837,8 +837,32 @@ const confirmDelete = async () => {
 </TextField>
 </DialogContent>
 <DialogActions>
-<Button onClick={handleCloseCreateDialog} color="primary">Cancel</Button>
-<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
+<Button onClick={handleCloseCreateDialog} color="primary"
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+}}
+>Cancel</Button>
+<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+}}
+>Create</Button>
 </DialogActions>
 </Dialog>
 
@@ -886,8 +910,32 @@ const confirmDelete = async () => {
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
 </DialogContent>
 <DialogActions>
-<Button onClick={handleCloseUpdateDialog}>Cancel</Button>
-<Button onClick={handleUpdateUser} disabled={!userName}>Update</Button>
+<Button onClick={handleCloseUpdateDialog}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px',
+}}
+>Cancel</Button>
+<Button onClick={handleUpdateUser} disabled={!userName}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px',
+}}
+>Update</Button>
 </DialogActions>
 </Dialog>
 
@@ -908,9 +956,9 @@ const confirmDelete = async () => {
                   '&:hover': {
                     bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
+                  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
                 }}
               >
                 Delete
@@ -925,9 +973,9 @@ const confirmDelete = async () => {
                   '&:hover': {
                     bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
+                  py: 0.5, // Padding Y
+                  px: 1, // Padding X
+                  borderRadius: '4px',
                 }}
               >
                 Cancel
