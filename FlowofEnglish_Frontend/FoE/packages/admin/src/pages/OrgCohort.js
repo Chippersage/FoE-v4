@@ -467,8 +467,30 @@ const handleCloseDialogs = () => {
     />
   </DialogContent>
   <DialogActions>
-    <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} color="primary" >Create</Button>
+    <Button onClick={handleCloseDialogs}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
+          }}>Cancel</Button>
+    <Button onClick={handleSubmit} color="primary"
+      sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+      bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+      px: 1, // Padding X
+      borderRadius: '4px', // Border radius
+      }}
+          >Create</Button>
   </DialogActions>
 </Dialog>
 
@@ -529,8 +551,31 @@ const handleCloseDialogs = () => {
     />
   </DialogContent>
   <DialogActions>
-    <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} variant="contained">Update</Button>
+    <Button onClick={handleCloseDialogs}
+    autoFocus
+    sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+        bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+    }} type="submit" variant="contained">Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained"
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+            }}>Update</Button>
   </DialogActions>
 </Dialog>
 
@@ -565,9 +610,9 @@ const handleCloseDialogs = () => {
             '&:hover': {
               bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px',// Border radius
           }}>
             Delete
           </Button>
@@ -579,11 +624,11 @@ const handleCloseDialogs = () => {
             '&:hover': {
               bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
           }}>
-            No
+           Cancel
           </Button>
           </Stack>
         </StyledCard>

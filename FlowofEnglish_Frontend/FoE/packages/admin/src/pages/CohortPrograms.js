@@ -524,8 +524,32 @@ return (
     </Stack>
   </DialogContent>
   <DialogActions>
-    <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} color="primary" >Create</Button>
+    <Button onClick={handleCloseDialogs}
+    sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+      bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+      px: 1, // Padding X
+      borderRadius: '4px', // Border radius
+      }}
+    >Cancel</Button>
+    <Button onClick={handleSubmit} color="primary" 
+    sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+      bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+      px: 1, // Padding X
+      borderRadius: '4px', // Border radius
+      }}
+    >Create</Button>
   </DialogActions>
 </Dialog>
 
@@ -577,20 +601,21 @@ return (
       {/* Confirm Delete Modal */}
       <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
         <StyledCard>
-          <Typography variant="h6" gutterBottom>Are you sure you want to delete this CohortProgram?</Typography>
+          <Typography variant="h6" gutterBottom>Are you sure you want to delete this Program-Cohort Mapping?</Typography>
           <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortProgramId)}sx={{
+          <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortProgramId)}
+          sx={{
             bgcolor: '#5bc3cd', // Default background color
             color: 'white', // Text color
             fontWeight: 'bold', // Font weight
             '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
+            bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-          }}>
-            Delete
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
+            }}
+          >  Delete
           </Button>
           <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}
           sx={{
@@ -598,13 +623,13 @@ return (
             color: 'white', // Text color
             fontWeight: 'bold', // Font weight
             '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
+            bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-          }}>
-            No
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
+            }}
+          >Cancel
           </Button>
           </Stack>
         </StyledCard>

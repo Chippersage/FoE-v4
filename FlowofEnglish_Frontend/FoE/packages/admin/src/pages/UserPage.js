@@ -849,32 +849,32 @@ required
 <DialogActions sx={{ p: 2.5 }}>
 {!loading && (
     <>
-<Button onClick={closeCreateDialog} sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1, // Padding Y
-            px: 1.5, // Padding X
-            borderRadius: '6px', // Border radius
-            fontSize: '0.875rem',
-            minWidth: '80px',
-          }}>Cancel</Button>
-<Button onClick={handleCreateSubmit} sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1, // Padding Y
-            px: 1.5, // Padding X
-            borderRadius: '6px', // Border radius
-            fontSize: '0.875rem',
-            minWidth: '80px',
-          }} type="submit" variant="contained" >Create</Button>
+<Button onClick={closeCreateDialog}
+ sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+    >Cancel</Button>
+<Button onClick={handleCreateSubmit}
+  sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+          >Create</Button>
           </>
   )}
 </DialogActions>
@@ -1022,32 +1022,32 @@ style={{ marginBottom: '10px' }}
 
 </DialogContent>
 <DialogActions>
-<Button onClick={closeUpdateDialog}sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1, // Padding Y
-            px: 1.5, // Padding X
-            borderRadius: '6px', // Border radius
-            fontSize: '0.875rem',
-            minWidth: '80px',
-          }}>Cancel</Button>
-<Button onClick={handleUpdateSubmit} sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1, // Padding Y
-            px: 1.5, // Padding X
-            borderRadius: '6px', // Border radius
-            fontSize: '0.875rem',
-            minWidth: '80px',
-          }}type="submit" variant="contained" >Update</Button>
+<Button onClick={closeUpdateDialog}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+          >Cancel</Button>
+<Button onClick={handleUpdateSubmit}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+          >Update</Button>
 </DialogActions>
 </Dialog>
 )}
@@ -1066,36 +1066,32 @@ style={{ marginBottom: '10px' }}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}sx={{
+          <Button onClick={() => setIsConfirmOpen(false)}
+          sx={{
             bgcolor: '#5bc3cd', // Default background color
             color: 'white', // Text color
             fontWeight: 'bold', // Font weight
             '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
+            bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-          }}>Cancel</Button>
-          <Button
-            onClick={() => {
-              handleDelete();
-              setIsConfirmOpen(false);
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
             }}
-            autoFocus
+          >Cancel</Button>
+    <Button onClick={() => { handleDelete();  setIsConfirmOpen(false); }}
             sx={{
               bgcolor: '#5bc3cd', // Default background color
               color: 'white', // Text color
               fontWeight: 'bold', // Font weight
               '&:hover': {
-                bgcolor: '#DB5788', // Hover background color
+              bgcolor: '#DB5788', // Hover background color
               },
-              py: 1.5, // Padding Y
-              px: 2, // Padding X
-              borderRadius: '8px', // Border radius
-            }}
-          >
-            Delete
+              py: 0.5, // Padding Y
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+              }}
+          > Delete
           </Button>
         </DialogActions>
       </Dialog>

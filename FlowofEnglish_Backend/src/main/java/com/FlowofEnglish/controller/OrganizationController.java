@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.ProgramResponseDTO;
+import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.ErrorResponse;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
@@ -15,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 //import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +144,28 @@ public class OrganizationController {
             response.put("message", "Login successful");
             response.put("organizationId", organization.getOrganizationId());
             response.put("organizationName", organization.getOrganizationName());
+            
+         // Fetch cohorts and check for reminders
+            List<Cohort> cohorts = organizationService.getCohortsByOrganizationId(organization.getOrganizationId());
+            OffsetDateTime today = OffsetDateTime.now(ZoneOffset.UTC);
+            List<String> cohortReminders = new ArrayList<>();
+
+            for (Cohort cohort : cohorts) {
+                if (cohort.getCohortEndDate() != null) {
+                    long daysUntilEnd = today.until(cohort.getCohortEndDate(), java.time.temporal.ChronoUnit.DAYS);
+                    if (daysUntilEnd > 0 && daysUntilEnd <= 15) {
+                        cohortReminders.add("Cohort '" + cohort.getCohortName() + "' ends in " + daysUntilEnd + " day(s).");
+                    } else if (daysUntilEnd == 0) {
+                        cohortReminders.add("Cohort '" + cohort.getCohortName() + "' ends today.");
+                    }
+                }
+            }
+
+            if (!cohortReminders.isEmpty()) {
+                response.put("cohortReminders", cohortReminders);
+            }
+
+            
             return ResponseEntity.ok(response);
         } else {
             // Invalid credentials
