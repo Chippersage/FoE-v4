@@ -31,7 +31,7 @@ const TABLE_HEAD = [
   { id: 'learnerId', label: 'Learner Id', alignRight: false },
   { id: 'learnerName', label: 'Learner Name', alignRight: false },
   { id: 'leaderboardScore', label: 'Leaderboard Score', alignRight: false },
-  { id: 'actions', label: 'Actions', alignRight: true },
+  // { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
 // -----------------------------------------------------------------------
@@ -251,28 +251,28 @@ const UserCohortPage = () => {
     setResponse(response);
   };
 
-  const handleDelete = async (userCohortId) => {
-    if (window.confirm('Are you sure you want to delete this record?')) {
-      try {
-        await deleteUserCohortMapping(userCohortId);
-        showSnackbar('Record deleted successfully');
-        fetchUserCohortData();
-      } catch (error) {
-        showSnackbar('Error deleting data', 'error');
-      }
-    }
-  };
+  // const handleDelete = async (userCohortId) => {
+  //   if (window.confirm('Are you sure you want to delete this record?')) {
+  //     try {
+  //       await deleteUserCohortMapping(userCohortId);
+  //       showSnackbar('Record deleted successfully');
+  //       fetchUserCohortData();
+  //     } catch (error) {
+  //       showSnackbar('Error deleting data', 'error');
+  //     }
+  //   }
+  // };
 
-  const handleEdit = (record) => {
-    console.log(record);
-    setCurrentRecord(record);
-    setFormValues({
-      userId: record.userId,
-      cohortId,
-      leaderboardScore: record.leaderboardScore || '',
-    });
-    setIsModalOpen(true);
-  };
+  // const handleEdit = (record) => {
+  //   console.log(record);
+  //   setCurrentRecord(record);
+  //   setFormValues({
+  //     userId: record.userId,
+  //     cohortId,
+  //     leaderboardScore: record.leaderboardScore || '',
+  //   });
+  //   setIsModalOpen(true);
+  // };
 
   const handleOpenModal = () => {
     resetForm();
@@ -405,18 +405,18 @@ const UserCohortPage = () => {
           <TableCell>{row.userId}</TableCell>
           <TableCell>{row.userName}</TableCell>
           <TableCell>{row.leaderboardScore}</TableCell>
-          <TableCell align="right">
+          {/* <TableCell align="right">
           <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
           <MoreVertIcon />
           </IconButton>
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
-          {/* <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem> */}
+          <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem> 
           <MenuItem onClick={() => handleDelete(row.userCohortId)}>
           <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
           Delete
           </MenuItem>
           </Menu>
-          </TableCell>
+          </TableCell>  */}
           </TableRow>
           );
           })}

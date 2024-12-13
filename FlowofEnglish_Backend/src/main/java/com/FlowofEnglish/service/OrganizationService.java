@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +16,12 @@ import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
+import com.FlowofEnglish.model.User;
+import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.repository.CohortProgramRepository;
+import com.FlowofEnglish.repository.CohortRepository;
 import com.FlowofEnglish.repository.OrganizationRepository;
+import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import com.FlowofEnglish.util.RandomStringUtil;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -24,6 +29,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,7 +53,11 @@ public class OrganizationService {
     @Autowired
     private JavaMailSender mailSender;
     
-    
+    @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+
+    @Autowired
+    private CohortRepository cohortRepository;
 
     // Temporary store for OTPs (in a real-world app, use a more secure solution like Redis)
     private Map<String, String> otpStorage = new HashMap<>();
@@ -300,6 +310,10 @@ public class OrganizationService {
         return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
     }
     
+    public List<Cohort> getCohortsByOrganizationId(String organizationId) {
+        return cohortRepository.findByOrganizationOrganizationId(organizationId);
+    }
+
     
     
     public List<ProgramResponseDTO> getProgramsWithCohorts(String organizationId) {
@@ -336,4 +350,90 @@ public class OrganizationService {
         return new ArrayList<>(programMap.values());
     }
 
+    
+    public long calculateDaysToEnd(OffsetDateTime cohortEndDate) {
+        OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"));
+        return ChronoUnit.DAYS.between(now, cohortEndDate);
+    }
+
+    public Map<String, Object> getCohortDetailsWithDaysToEnd(String cohortId) {
+        Cohort cohort = cohortRepository.findById(cohortId)
+                .orElseThrow(() -> new RuntimeException("Cohort not found"));
+        long daysToEnd = calculateDaysToEnd(cohort.getCohortEndDate());
+        Map<String, Object> details = new HashMap<>();
+        details.put("cohort", cohort);
+        details.put("daysToEnd", daysToEnd);
+        return details;
+    }
+
+
+    /**
+     * Notify users and organizations about the cohort end date.
+     */
+    @Scheduled(cron = "0 0 8 * * ?") // Run daily at 8 AM
+    public void notifyCohortEndDates() {
+        OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+
+        List<Cohort> cohorts = cohortRepository.findAll();
+
+        for (Cohort cohort : cohorts) {
+            if (cohort.getCohortEndDate() != null) {
+                long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+
+                if (daysToEnd == 15 || daysToEnd == 5) {
+                    notifyOrganizationAdmin(cohort);
+                    notifyUsersInCohort(cohort);
+                }
+            }
+        }
+    }
+
+    private void notifyOrganizationAdmin(Cohort cohort) {
+        Organization organization = cohort.getOrganization();
+        if (organization != null) {
+        	OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+            long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+        	
+            String adminEmail = organization.getOrganizationAdminEmail();
+            String subject = "Cohort End Date Reminder";
+            String message = "Dear " + organization.getOrganizationAdminName() + ",\n\n" +
+                             "This is a reminder that the cohort \"" + cohort.getCohortName() + 
+                             "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
+                             "Please ensure all related tasks are completed before this date.\n\n" +
+                             "Best regards,\nFlow of English Team";
+
+            sendEmail(adminEmail, subject, message);
+        }
+    }
+
+    private void notifyUsersInCohort(Cohort cohort) {
+    	OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+        long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+        
+        List<UserCohortMapping> userMappings = userCohortMappingRepository.findByCohort(cohort);
+
+        for (UserCohortMapping mapping : userMappings) {
+            User user = mapping.getUser();
+            if (user != null) {
+                String userEmail = user.getUserEmail(); // Assuming User entity has an email field.
+                String subject = "Cohort End Date Reminder";
+                String message = "Dear " + user.getUserName() + ",\n\n" +
+                                 "This is a reminder that your cohort \"" + cohort.getCohortName() + 
+                                 "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
+                                 "Please ensure you complete all tasks before this date.\n\n" +
+                                 "Best regards,\nFlow of English Team";
+
+                sendEmail(userEmail, subject, message);
+            }
+        }
+    }
+
+    private void sendEmail(String to, String subject, String message) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(to);
+        mailMessage.setSubject(subject);
+        mailMessage.setText(message);
+        mailSender.send(mailMessage);
+    }
 }
+

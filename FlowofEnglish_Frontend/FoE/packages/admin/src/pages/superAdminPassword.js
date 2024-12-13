@@ -158,7 +158,23 @@ const SuperAdminPasswordUpdateForm = () => {
           />
           {errorMessage && <Typography color="error">{errorMessage}</Typography>}
           {successMessage && <Typography color="primary">{successMessage}</Typography>}
-          <SubmitButton type="submit" fullWidth variant="contained" color="primary">
+          <SubmitButton
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+          }}
+          >
             Update Password
           </SubmitButton>
         </FormStyled>
