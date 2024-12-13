@@ -221,6 +221,19 @@ public class UserController {
                 response.put("userDetails", userDTO); // Include user details (with cohort and program)
                 response.put("sessionId", sessionId); // Add session ID to response
 
+             // Include cohort end-date reminder
+                if (userCohortMapping.getCohort().getCohortEndDate() != null) {
+                    OffsetDateTime cohortEndDate = userCohortMapping.getCohort().getCohortEndDate();
+                    OffsetDateTime today = OffsetDateTime.now(ZoneOffset.UTC);
+
+                    long daysUntilEnd = today.until(cohortEndDate, java.time.temporal.ChronoUnit.DAYS);
+                    if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
+                        response.put("cohortReminder", "Your cohort ends in " + daysUntilEnd + " day(s). Please complete your activities.");
+                    } else if (daysUntilEnd == 0) {
+                        response.put("cohortReminder", "Your cohort ends today. Please complete your activities.  If you need extra time, contact your admin for an extension.");
+                    }
+                }
+                
                 return ResponseEntity.ok(response);
             }else {
                 response.put("error", "User is not enrolled in the selected program.");
