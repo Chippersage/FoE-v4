@@ -6,6 +6,7 @@ import com.FlowofEnglish.dto.UsercreateDTO;
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.model.UserSessionMapping;
+import com.FlowofEnglish.repository.UserRepository;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -38,6 +39,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private UserRepository userRepository;
     
     @Autowired
     private UserSessionMappingService userSessionMappingService;
@@ -168,7 +172,8 @@ public class UserController {
         
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
-        Optional<User> userOpt = userService.findByUserId(userId);
+        
+        Optional<User> userOpt = Optional.ofNullable(userRepository.findByUserId(userId));
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();

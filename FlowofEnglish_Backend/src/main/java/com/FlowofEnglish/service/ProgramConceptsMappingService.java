@@ -12,7 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ProgramConceptsMappingService {
 	Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String userId, String unitId);
+	
     List<ProgramConceptsMapping> getAllProgramConceptsMappings();
+    
     Optional<ProgramConceptsMapping> getProgramConceptsMappingById(Long programConceptId);
     ProgramConceptsMapping createProgramConceptsMapping(ProgramConceptsMapping programConceptsMapping);
     

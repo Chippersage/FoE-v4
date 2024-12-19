@@ -95,17 +95,6 @@ export const deleteOrgs = async (organizationIds) => {
   }
 };
 
-// Cohorts API calls
-
-export async function getCohorts() {
-  try {
-    const res = await axios.get(`${apiUrl}/cohorts`);
-    return res.data;
-  } catch (err) {
-    throw new Error(err.response?.data?.message || 'Error fetching cohorts');
-  }
-}
-
 export async function getOrgCohorts(organizationId) {
   try {
     const res = await axios.get(`${apiUrl}/cohorts/organization/${organizationId}`);
@@ -121,6 +110,78 @@ export async function getOrgProgramSubscriptions(organizationId) {
     return res.data;
   } catch (err) {
     throw new Error(err.response?.data?.message || 'Error fetching organization program subscriptions');
+  }
+}
+// Create a new Program Subscription
+export const createSubscription = async (data) => {
+  try {
+    const response = await axios.post(`${apiUrl}/subscriptions`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return { status: 'success', data: response.data };
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    return { status: 'fail', message: error.response?.data?.message || 'Error creating subscription' };
+  }
+};
+
+// Update an existing Program Subscription
+export const updateSubscription = async (subscriptionId, data) => {
+  try {
+    const response = await axios.put(`${apiUrl}/subscriptions/${subscriptionId}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return { status: 'success', data: response.data };
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    return { status: 'fail', message: error.response?.data?.message || 'Error updating subscription' };
+  }
+};
+
+// Get a Program Subscription by ID
+export const getSubscription = async (subscriptionId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/subscriptions/${subscriptionId}`);
+    return { status: 'success', data: response.data };
+  } catch (error) {
+    console.error('Error fetching subscription:', error);
+    return { status: 'fail', message: error.response?.data?.message || 'Error fetching subscription' };
+  }
+};
+
+// Get all Program Subscriptions
+export const getAllSubscriptions = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/subscriptions`);
+    return { status: 'success', data: response.data };
+  } catch (error) {
+    console.error('Error fetching subscriptions:', error);
+    return { status: 'fail', message: error.response?.data?.message || 'Error fetching subscriptions' };
+  }
+};
+
+// Delete a Program Subscription by ID
+export const deleteSubscription = async (subscriptionId) => {
+  try {
+    const response = await axios.delete(`${apiUrl}/subscriptions/${subscriptionId}`);
+    return { status: 'success', message: 'Subscription deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting subscription:', error);
+    return { status: 'fail', message: error.response?.data?.message || 'Error deleting subscription' };
+  }
+};
+// Cohorts API calls
+
+export async function getCohorts() {
+  try {
+    const res = await axios.get(`${apiUrl}/cohorts`);
+    return res.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.message || 'Error fetching cohorts');
   }
 }
 
