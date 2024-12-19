@@ -1,6 +1,9 @@
 package com.FlowofEnglish.service;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+//import org.hibernate.validator.internal.util.logging.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
@@ -23,10 +26,14 @@ import com.FlowofEnglish.repository.CohortRepository;
 import com.FlowofEnglish.repository.OrganizationRepository;
 import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import com.FlowofEnglish.util.RandomStringUtil;
+
+//import ch.qos.logback.classic.Logger;
+//import ch.qos.logback.classic.Logger;
 import jakarta.persistence.EntityNotFoundException;
 
 import jakarta.transaction.Transactional;
 
+//import java.lang.System.Logger;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -58,6 +65,9 @@ public class OrganizationService {
 
     @Autowired
     private CohortRepository cohortRepository;
+    
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
+
 
     // Temporary store for OTPs (in a real-world app, use a more secure solution like Redis)
     private Map<String, String> otpStorage = new HashMap<>();
@@ -278,27 +288,45 @@ public class OrganizationService {
     
     
  // Update an existing organization
-    public Organization updateOrganization(String organizationId, Organization organization) {
-        Organization existingOrganization = organizationRepository.findById(organizationId)
+ // Update an existing organization
+    public Organization updateOrganization(String organizationId, Organization updatedOrganization) {
+        return organizationRepository.findById(organizationId)
+            .map(existingOrganization -> {
+                // Validate updated fields
+                if (updatedOrganization.getUpdatedAt() != null &&
+                        updatedOrganization.getUpdatedAt().isBefore(existingOrganization.getCreatedAt())) {
+                    throw new IllegalArgumentException("Updated date must be after the organization creation date.");
+                }
+
+                // Update fields other than organizationId
+                existingOrganization.setOrganizationName(updatedOrganization.getOrganizationName());
+                existingOrganization.setOrganizationAdminName(updatedOrganization.getOrganizationAdminName());
+                existingOrganization.setOrganizationAdminEmail(updatedOrganization.getOrganizationAdminEmail());
+                existingOrganization.setOrganizationAdminPhone(updatedOrganization.getOrganizationAdminPhone());
+
+                // Hash and update password if provided
+                if (updatedOrganization.getOrgPassword() != null && !updatedOrganization.getOrgPassword().isEmpty()) {
+                    String hashedPassword = passwordEncoder.encode(updatedOrganization.getOrgPassword());
+                    existingOrganization.setOrgPassword(hashedPassword);
+                }
+
+                // Automatically update the timestamp
+                existingOrganization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+                 // Handle soft delete
+                    if (updatedOrganization.getDeletedAt() != null) {
+                        existingOrganization.setDeletedAt(updatedOrganization.getDeletedAt());
+                    }
+                 // Save updated organization
+                    Organization savedOrganization = organizationRepository.save(existingOrganization);
+
+                    // Log the update operation
+                    log.info("Organization updated: ID={}, UpdatedFields={}", organizationId, updatedOrganization);
+
+                    return savedOrganization;
+                })
                 .orElseThrow(() -> new EntityNotFoundException("Organization not found with id: " + organizationId));
-
-        // Update fields other than organizationId
-        existingOrganization.setOrganizationName(organization.getOrganizationName());
-        existingOrganization.setOrganizationAdminName(organization.getOrganizationAdminName());
-        existingOrganization.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
-        existingOrganization.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
-        existingOrganization.setOrgPassword(organization.getOrgPassword()); // You can hash the password if it's updated
-        existingOrganization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))); // Update the updatedAt timestamp
-
-        // If 'deletedAt' is not null, mark as deleted (soft delete)
-        if (organization.getDeletedAt() != null) {
-            existingOrganization.setDeletedAt(organization.getDeletedAt());
-        }
-
-        // Save and return the updated organization
-        return organizationRepository.save(existingOrganization);
     }
-
     
     public boolean verifyPassword(String plainPassword, String encodedPassword) {
         return passwordEncoder.matches(plainPassword, encodedPassword);

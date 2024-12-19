@@ -6,12 +6,12 @@ import { CSVLink } from "react-csv";
 import { filter } from 'lodash';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { format, parseISO } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 // @mui
 import { Button, Card, Checkbox, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Link, MenuItem, Modal,
-  Paper, Popover, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField, Typography } from '@mui/material';
+  Paper, Popover, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField, Typography, FormControl, InputLabel, Select, } from '@mui/material';
 
 // components
 import Iconify from '../components/iconify';
@@ -19,7 +19,7 @@ import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
-import { createOrg, deleteOrg, deleteOrgs, getOrgUsers, getOrgs, updateOrg } from '../api';
+import { createOrg, deleteOrg, deleteOrgs, getOrgUsers, getOrgs, updateOrg, getPrograms, createSubscription } from '../api';
 
 // ----------------------------------------------------------------------
 
@@ -99,14 +99,19 @@ export default function UserPage() {
     organizationAdminEmail: '',
     organizationAdminPhone: '',
     orgPassword: '',
-    createdAt: '',
-    updatedAt: '',
     deletedAt: ''
   };
   const [formData, setFormData] = useState(initialFormData);
   const [showOrgPassword, setShowOrgPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [organizations, setOrganizations] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [subscriptionForm, setSubscriptionForm] = useState({
+    organizationId: '',
+    programId: '',
+    maxCohorts: '',
+  });
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email); // Validate proper email format
   const [countryCode, setCountryCode] = useState('91'); // For storing country code
   const csvLinkRef = useRef(null);
@@ -116,6 +121,48 @@ export default function UserPage() {
     setFormData((prev) => ({ ...prev, organizationAdminEmail: value }));
   };
 
+  useEffect(() => {
+    // Fetch organizations and programs data
+    const fetchData = async () => {
+      try {
+        const orgsResponse = await getOrgs();
+        const programsResponse = await getPrograms();
+        setOrganizations(orgsResponse.data);
+        setPrograms(programsResponse.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+  
+  const openSubscriptionDialog = () => {
+    setSubscriptionForm({ organizationId: '', programId: '', maxCohorts: '' });
+    setIsSubscriptionDialogOpen(true);
+  };
+
+  const closeSubscriptionDialog = () => {
+    setIsSubscriptionDialogOpen(false);
+  };
+
+  const handleSubscriptionFormChange = (event) => {
+    const { name, value } = event.target;
+    setSubscriptionForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  
+  const handleCreateSubscription = async () => {
+    try {
+      const response = await createSubscription(subscriptionForm); // Replace with actual API call
+      if (response.status === 201) {
+        alert('Subscription created successfully!');
+        closeSubscriptionDialog();
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+    }
+  };
+  
   const validateForm = () => {
     const errors = {};
     if (!formData.organizationAdminName.trim()) {
@@ -163,17 +210,10 @@ export default function UserPage() {
   const openUpdateDialog = (organization) => {
     console.log('Organization to update:', organization); // Debugging
     if (!organization) return;
-
-    const formatDateTime = (dateString) => {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      return date.toISOString();
-    };
   
     const phoneWithCode = organization.organizationAdminPhone || '';
     const countryCode = phoneWithCode.substring(0, 2); // Assuming country code is 2 digits
-    const organizationAdminPhone = phoneWithCode.substring(2);
-
+    
     setFormData({
       organizationId: organization.organizationId || '',
       organizationName: organization.organizationName || '',
@@ -181,10 +221,7 @@ export default function UserPage() {
       organizationAdminEmail: organization.organizationAdminEmail || '',
       organizationAdminPhone: organization.organizationAdminPhone || '',
       orgPassword: organization.orgPassword || '',
-      createdAt: formatDateTime(organization.createdAt),
-      updatedAt: formatDateTime(organization.updatedAt),
-      deletedAt: formatDateTime(organization.deletedAt)
-    });
+  });
 
     setCountryCode(countryCode || '91'); // Default to '91' for India
   setSelectedOrganization(organization);
@@ -200,26 +237,11 @@ export default function UserPage() {
 
   // Enhanced form change handler with validation
   const handleFormChange = (event) => {
-  const { name, value } = event.target;
-  let formattedValue = value;
-
-  // Convert datetime-local to ISO format
-  if (['createdAt', 'updatedAt', 'deletedAt'].includes(name) && value) {
-    formattedValue = new Date(value).toISOString();
-  }
-
-  setFormData((prev) => ({
-    ...prev,
-    [name]: formattedValue,
-  }));
-    // Clear specific error when field is being edited
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  
+  
 
   // Enhanced phone change handler
   const handlePhoneChange = (value, data) => {
@@ -276,10 +298,11 @@ export default function UserPage() {
 const handleUpdateSubmit = async (e) => {
   e.preventDefault();
   const errors = validateForm();
-  
   if (Object.keys(errors).length === 0) {
+    setLoading(true);
     try {
       const response = await updateOrg(formData.organizationId, formData);
+      setLoading(false);
       if (response.status === 200) {  // Check for successful update response (status 200)
         setOrgs(await getOrgs());    // Reload the organization list
         closeUpdateDialog();         // Close the update dialog
@@ -516,6 +539,21 @@ const isAllSelected = selected.length === orgs.length;
           }}>
             New Organization
           </Button>
+          <Button variant="contained" onClick={openSubscriptionDialog} startIcon={<Iconify icon="eva:plus-fill" />}
+          sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 1.5, // Padding Y
+            px: 2, // Padding X
+            borderRadius: '8px', // Border radius
+            alignSelf: 'flex-start',
+          }}>
+            Assign Program-Org
+          </Button>
         </Stack>
 
         <Card>
@@ -538,52 +576,6 @@ const isAllSelected = selected.length === orgs.length;
         onRequestSort={handleRequestSort}
         onSelectAllClick={handleSelectAllClick}
         />
-        {/* <TableBody>
-        {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-          const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt, deletedAt } = row;
-          const isRowChecked = isRowSelected(organizationId);
-      
-          const isDeleted = !!deletedAt; // Check if the organization is deleted
-        return (
-        <TableRow hover key={organizationId} tabIndex={-1} role="checkbox" selected={isRowChecked}>
-        <TableCell padding="checkbox">
-        <Checkbox
-        checked={isRowChecked}
-        onChange={(event) => handleClick(event, organizationId)}
-        />
-        </TableCell>
-
-        <TableCell component="th" scope="row" padding="none">
-        <Stack direction="row" alignItems="center" spacing={2}>
-        <Typography variant="subtitle2" noWrap>
-        <Link href={`/admin/org-dashboard/${organizationId}/app`} color="inherit" underline="hover">
-        {organizationId}
-        </Link>
-        </Typography>
-        </Stack>
-        </TableCell>
-        <TableCell align="left">{organizationName}</TableCell>
-        <TableCell align="left">{organizationAdminName}</TableCell>
-        <TableCell align="left">{organizationAdminPhone}</TableCell>
-        <TableCell align="left">
-    {createdAt
-        ? format(parseISO(createdAt), 'dd/MM/yyyy HH:mm:ss')
-        : 'N/A'}
-</TableCell>
-        <TableCell align="right">
-        <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
-        <Iconify icon={'eva:more-vertical-fill'} />
-        </IconButton>
-        </TableCell>
-        </TableRow>
-        );
-        })}
-        {emptyRows > 0 && (
-        <TableRow style={{ height: 53 * emptyRows }}>
-        <TableCell colSpan={6} />
-        </TableRow>
-        )}
-        </TableBody> */}
 <TableBody>
   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
     const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt, deletedAt } = row;
@@ -633,7 +625,7 @@ const isAllSelected = selected.length === orgs.length;
         <TableCell align="left">{organizationAdminName}</TableCell>
         <TableCell align="left">{organizationAdminPhone}</TableCell>
         <TableCell align="left">
-          {createdAt ? format(parseISO(createdAt), 'dd/MM/yyyy HH:mm:ss') : 'N/A'}
+          {createdAt ? format(new Date(createdAt), 'dd/MM/yyyy') : 'N/A'}
         </TableCell>
         <TableCell align="right">
           {!isDeleted && (
@@ -874,8 +866,8 @@ required
   px: 1, // Padding X
   borderRadius: '4px', // Border radius
   }}
-          >Create</Button>
-          </>
+  >Create</Button>
+  </>
   )}
 </DialogActions>
 </Dialog>
@@ -883,19 +875,29 @@ required
 
 {/* Update Organizations Dialog */}
 {isUpdateDialogOpen && (
-<Dialog open={isUpdateDialogOpen} onClose={closeUpdateDialog}>
+<Dialog open={isUpdateDialogOpen} onClose={closeUpdateDialog}
+PaperProps={{ sx: { width: '100%', maxWidth: 'sm', // Reduces overall dialog width
+  '& .MuiDialogContent-root': {pt: 2 }}// Adds space after title
+  }}
+>
 <DialogTitle>Update Organization</DialogTitle>
-<DialogContent>
+<DialogContent sx={{ pt: 4 }}>
+<div className="flex flex-col gap-6 pt-2">
 <TextField
 name="organizationId"
 label="Organization ID"
 value={formData.organizationId}
 onChange={handleFormChange}
 variant="outlined"
-style={{ marginBottom: '10px' }}
 fullWidth
 required
 disabled
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
 <TextField
 name="organizationName"
@@ -903,11 +905,14 @@ label="Organization Name"
 value={formData.organizationName}
 onChange={handleFormChange}
 variant="outlined"
-error={!!formErrors.organizationName}
-helperText={formErrors.organizationName}
 fullWidth
 required
-style={{ marginBottom: '10px' }}
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
 <TextField
 name="organizationAdminName"
@@ -915,11 +920,14 @@ label="Admin Name"
 value={formData.organizationAdminName}
 onChange={handleFormChange}
 variant="outlined"
-error={!!formErrors.organizationAdminName}
-helperText={formErrors.organizationAdminName}
 fullWidth
 required
-style={{ marginBottom: '10px' }}
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
 <ReactPhoneInput
 country={'in'}
@@ -940,13 +948,18 @@ label="Admin Email"
 value={formData.organizationAdminEmail}
 onChange={handleFormChange}
 variant="outlined"
-error={!!formErrors.organizationAdminEmail}
-helperText={formErrors.organizationAdminEmail}
 fullWidth
 style={{ marginBottom: '10px' }}
 required
+disabled
+size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
-<div style={{ position: 'relative', marginBottom: '10px' }}>
+{/* <div style={{ position: 'relative', marginBottom: '10px' }}>
   <TextField
     name="orgPassword"
     label="Password"
@@ -976,8 +989,9 @@ required
   >
     {showOrgPassword ? <EyeOffIcon /> : <EyeIcon />}
   </button>
-</div>
-<TextField
+</div> */}
+
+{/* <TextField
 name="created at"
 label="Created At"
 type="date"
@@ -985,25 +999,31 @@ InputLabelProps={{ shrink: true }}
 value={formData.createdAt ? formData.createdAt.slice(0, 19) : ''}
 onChange={handleFormChange}
 variant="outlined"
-error={!!formErrors.createdAt}
-helperText={formErrors.createdAt}
 fullWidth
 required
-style={{ marginBottom: '10px' }}
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
 <TextField
 name="updatedAt"
 label="Updated At"
 type="date"
 InputLabelProps={{ shrink: true }}
-value={formData.updatedAt ? formData.updatedAt.slice(0, 19) : ''}
+value={formData.updatedAt }
 onChange={handleFormChange}
 variant="outlined"
-error={!!formErrors.updatedAt}
-helperText={formErrors.updatedAt}
 fullWidth
 required
-style={{ marginBottom: '10px' }}
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
 />
 <TextField
 name="deleted At"
@@ -1017,9 +1037,14 @@ error={!!formErrors.deletedAt}
 helperText={formErrors.deletedAt}
 fullWidth
 required
-style={{ marginBottom: '10px' }}
-/>
-
+size="small" // Reduces the height of text fields
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
+/> */}
+</div>
 </DialogContent>
 <DialogActions>
 <Button onClick={closeUpdateDialog}
@@ -1052,6 +1077,64 @@ sx={{
 </Dialog>
 )}
 
+{/* Create Subscription Dialog */}
+<Dialog open={isSubscriptionDialogOpen} onClose={closeSubscriptionDialog}>
+        <DialogTitle>Create Subscription</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Organization</InputLabel>
+            <Select
+              name="organizationId"
+              value={subscriptionForm.organizationId}
+              onChange={handleSubscriptionFormChange}
+            >
+              {organizations.length > 0 ? (
+          organizations.map((org) => (
+            <MenuItem key={org.organizationId} value={org.organizationId}>
+              {org.organizationName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>No organizations available</MenuItem>
+        )}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Program</InputLabel>
+            <Select
+              name="programId"
+              value={subscriptionForm.programId}
+              onChange={handleSubscriptionFormChange}
+            >
+              {programs.length > 0 ? (
+          programs.map((program) => (
+            <MenuItem key={program.programId} value={program.programId}>
+              {program.programName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>No programs available</MenuItem>
+        )}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Max Cohorts"
+            name="maxCohorts"
+            value={subscriptionForm.maxCohorts}
+            onChange={handleSubscriptionFormChange}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeSubscriptionDialog} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleCreateSubscription} color="primary">
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={isConfirmOpen}

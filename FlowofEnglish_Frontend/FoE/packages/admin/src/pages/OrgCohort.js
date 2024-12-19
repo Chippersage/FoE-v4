@@ -431,6 +431,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortName}
       helperText={formErrors.cohortName}
       required
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -444,6 +450,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortStartDate}
       helperText={formErrors.cohortStartDate}
       required
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -456,6 +468,12 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortEndDate}
       helperText={formErrors.cohortEndDate}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -464,6 +482,12 @@ const handleCloseDialogs = () => {
       label="Organization ID"
       value={formData.organization.organizationId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
   </DialogContent>
   <DialogActions>
@@ -505,6 +529,12 @@ const handleCloseDialogs = () => {
       label="Cohort ID"
       value={formData.cohortId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -513,6 +543,12 @@ const handleCloseDialogs = () => {
       label="Organization ID"
       value={formData.organization.organizationId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -523,6 +559,12 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortName}
       helperText={formErrors.cohortName}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -536,6 +578,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortStartDate}
       helperText={formErrors.cohortStartDate}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -548,6 +596,12 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortEndDate}
       helperText={formErrors.cohortEndDate}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
   </DialogContent>
   <DialogActions>
