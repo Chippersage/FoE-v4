@@ -18,7 +18,7 @@ import Picture from "@/components/Picture";
 import Start from "@/components/Start";
 import QnA from "@/components/QnA";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 // import { useLocation } from "react-router-dom";
 import Header2 from "@/components/Header2";
@@ -31,6 +31,13 @@ import Grammar from "@/components/Grammar";
 import Read from "@/components/Read";
 import Spelling from "@/components/Spelling";
 import Comprehension from "@/components/Comprehension";
+import TrueOrFalse from "@/components/TrueOrFalse";
+import Listen from "@/components/Listen";
+import Match from "@/components/Match";
+import TeacherAssist from "@/components/TeacherAssist";
+import Write from "@/components/Write";
+import KidFriendlyModal from "@/components/CongratulatoryModal";
+
 
 interface Subconcept {
   subconceptId: string;
@@ -52,8 +59,16 @@ const iconMap = {
   image: Picture,
   qna: QnA,
   fib: FIB,
-
   grammar: Grammar,
+  comprehension: Comprehension,
+  trueorfalse: TrueOrFalse,
+  jw: JumbledWords,
+  listen: Listen,
+  speak: Speaker,
+  match: Match,
+  read: Read,
+  teacher_assist: TeacherAssist,
+  write: Write, 
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -87,8 +102,11 @@ export default function SubConceptsPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
-
-  const currentUnit = localStorage.getItem("currentUnit") 
+  const [unitName, setUnitName] = useState("");
+  const [unitDescription, setUnitDescription] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [celebratedStageName, setCelebratedStageName] = useState("");
+  const navigate = useNavigate()
   
   const fetchSubconcepts = async () => {
     try {
@@ -113,6 +131,9 @@ export default function SubConceptsPage() {
           setUnitCompletionStatus(result.unitCompletionStatus)
           setStageId(result.stageId)
           setCurrentUnitId(result.unitId)
+          setUnitName(result.unitName)
+          setUnitDescription(result.unitDesc)
+          setCelebratedStageName(result.stageName)
           const fetchedSubconcepts: SubconceptData = result.subConcepts;
           setSubconcepts(Object.values(fetchedSubconcepts));
         } catch (err) {
@@ -165,6 +186,12 @@ export default function SubConceptsPage() {
     }
   }, [unitId]);
 
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => {
+    setIsModalOpen(false)
+    navigate("/")
+  };
+
   const getPath = () => {
 
     const radius = 50; // Radius of the curves at ends
@@ -210,6 +237,22 @@ export default function SubConceptsPage() {
   return (
     <>
       <Header2 />
+      <KidFriendlyModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        stageName={celebratedStageName}
+        congratsType="stageCompletion"
+      />
+
+      {/* Audio Element */}
+      {isModalOpen && (
+        <audio
+          src="/youaresuperb.mp3"
+          autoPlay
+
+          // onEnded={() => setShowConfetti(false)}
+        />
+      )}
       <div
         className=" w-full h-screen overflow-y-auto"
         style={{
@@ -246,15 +289,21 @@ export default function SubConceptsPage() {
         )}
 
         {/* Current Unit Title */}
-        <div className="absolute top-[22%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-2xl font-semibold text-white bg-[#E26291] p-1 rounded-[2px] max-w-max">
-          {currentUnit || "Loading Unit..."}
+        <div
+          className="absolute top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
+          style={{ maxWidth: "90%" }} // Ensures text doesn't overflow
+        >
+          <div>{unitName || "Loading Unit..."}</div>
+          <div className=" text-xs sm:text-xs md:text-xs  font-normal opacity-80 italic">
+            {unitDescription || "Loading description..."}
+          </div>
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full h-full mt-36">
+        <div className="w-full h-full sm:mt-36 mt-44">
           <svg
             className="w-full h-auto"
-            viewBox={`0 0 ${pathWidth} ${pathWidth/1.5}`}
+            viewBox={`0 0 ${pathWidth} ${pathWidth / 1.5}`}
             preserveAspectRatio="xMinYMin meet"
           >
             <path
@@ -273,7 +322,7 @@ export default function SubConceptsPage() {
                   : null;
 
               const Icon = subconcept
-                ? iconMap[subconcept.subconceptType as keyof typeof iconMap] 
+                ? iconMap[subconcept.subconceptType as keyof typeof iconMap]
                 : index === 0
                 ? Start
                 : Finish;
@@ -281,18 +330,18 @@ export default function SubConceptsPage() {
               const isCompleted =
                 subconcept && subconcept.completionStatus === "yes";
               const isEnabled =
-              // @ts-ignore
+                // @ts-ignore
                 // started &&
-                (index === 0 ||
-                  (index === totalSteps - 1 &&
-                    subconcepts.every((s) => s.completionStatus === "yes")) ||
-                  (subconcept?.completionStatus !== "disabled" &&
-                    index !== totalSteps - 1));
+                index === 0 ||
+                (index === totalSteps - 1 &&
+                  subconcepts.every((s) => s.completionStatus === "yes")) ||
+                (subconcept?.completionStatus !== "disabled" &&
+                  index !== totalSteps - 1);
 
               return (
                 <g key={index}>
                   <Link
-                  // @ts-ignore
+                    // @ts-ignore
                     to={
                       index === totalSteps - 1 &&
                       nextUnitId &&
@@ -309,14 +358,21 @@ export default function SubConceptsPage() {
                     onClick={() => {
                       if (
                         index === totalSteps - 1 &&
-                        unitCompletionStatus === "yes"
+                        unitCompletionStatus === "yes" &&
+                        nextUnitId
                       ) {
                         setShowConfetti(true);
                         setAudioPlaying(true);
                         setTimeout(() => {
                           setShowConfetti(false);
                         }, 5000);
-                      } else return;
+                      } else if (
+                        index === totalSteps - 1 &&
+                        unitCompletionStatus === "yes" &&
+                        !nextUnitId
+                      ) {
+                        openModal();
+                      }
                     }}
                   >
                     <g
@@ -371,8 +427,12 @@ export default function SubConceptsPage() {
                             ? point.y - 50
                             : point.y - 15
                         }
-                        width={(index === 0 || index === totalSteps - 1) ? "70" : "30"}
-                        height={(index === 0 || index === totalSteps - 1) ? "70" : "30"}
+                        width={
+                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                        }
+                        height={
+                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                        }
                         color="white"
                         className="object-contain"
                       />

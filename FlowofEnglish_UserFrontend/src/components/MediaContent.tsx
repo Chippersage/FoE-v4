@@ -161,17 +161,26 @@ const MediaContent = ({ subconceptData }) => {
         );
       case "pdf":
         return (
-          <iframe
-            src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
-            width="100%"
-            height="500px"
-            title="PDF Document"
-            style={{
-              borderRadius: "10px",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-            }}
-            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-          />
+          <div
+            onContextMenu={(e) => e.preventDefault()} // Disable right-click
+            className="iframe-wrapper"
+            style={{ position: "relative" }}
+          >
+            <iframe
+              src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
+              width="100%"
+              height="500px"
+              title="PDF Document"
+              style={{
+                borderRadius: "10px",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                // pointerEvents: "none",
+              }}
+              // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+              // @ts-ignore
+              // controlsList="nodownload" // Restrict download
+            />
+          </div>
         );
       default:
         return <p>Something went wrong!</p>;
