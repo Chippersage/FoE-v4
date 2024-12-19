@@ -16,6 +16,9 @@ public class ProgramConceptsMapping {
 
     @Column(name = "program_concept_desc", length = 5000, nullable = false)
     private String programConceptDesc;
+    
+    @Column(name = "unit_position", nullable = false)
+    private Integer position= 0;  // Default value of 0 if position is not provided
 
     @ManyToOne
     @JoinColumn(name = "unit_id", nullable = false)
@@ -39,82 +42,94 @@ public class ProgramConceptsMapping {
     public ProgramConceptsMapping() {
     }
 
-    public ProgramConceptsMapping(Long programConceptId, String programConceptDesc, Unit unit, Stage stage,
-                                  Program program, Subconcept subconcept, String uuid) {
-        this.programConceptId = programConceptId;
-        this.programConceptDesc = programConceptDesc;
-        this.unit = unit;
-        this.stage = stage;
-        this.program = program;
-        this.subconcept = subconcept;
-        this.uuid = uuid;
-    }
+    public ProgramConceptsMapping(Long programConceptId, String programConceptDesc, Integer position, Unit unit,
+			Stage stage, Program program, Subconcept subconcept, String uuid) {
+		super();
+		this.programConceptId = programConceptId;
+		this.programConceptDesc = programConceptDesc;
+		this.position = position;
+		this.unit = unit;
+		this.stage = stage;
+		this.program = program;
+		this.subconcept = subconcept;
+		this.uuid = uuid;
+	}
 
-    // Getters & Setters
+
+	// Getters & Setters
+    
     public Long getProgramConceptId() {
-        return programConceptId;
-    }
+		return programConceptId;
+	}
 
-    public void setProgramConceptId(Long programConceptId) {
-        this.programConceptId = programConceptId;
-    }
+	public void setProgramConceptId(Long programConceptId) {
+		this.programConceptId = programConceptId;
+	}
 
-    public String getProgramConceptDesc() {
-        return programConceptDesc;
-    }
+	public String getProgramConceptDesc() {
+		return programConceptDesc;
+	}
 
-    public void setProgramConceptDesc(String programConceptDesc) {
-        this.programConceptDesc = programConceptDesc;
-    }
+	public void setProgramConceptDesc(String programConceptDesc) {
+		this.programConceptDesc = programConceptDesc;
+	}
 
-    public Unit getUnit() {
-        return unit;
-    }
+	public Integer getPosition() {
+		return position;
+	}
 
-    public void setUnit(Unit unit) {
-        this.unit = unit;
-    }
+	public void setPosition(Integer position) {
+		this.position = position;
+	}
 
-    public Stage getStage() {
-        return stage;
-    }
+	public Unit getUnit() {
+		return unit;
+	}
 
-    public void setStage(Stage stage) {
-        this.stage = stage;
-    }
+	public void setUnit(Unit unit) {
+		this.unit = unit;
+	}
 
-    public Program getProgram() {
-        return program;
-    }
+	public Stage getStage() {
+		return stage;
+	}
 
-    public void setProgram(Program program) {
-        this.program = program;
-    }
+	public void setStage(Stage stage) {
+		this.stage = stage;
+	}
 
-    public Subconcept getSubconcept() {
-        return subconcept;
-    }
+	public Program getProgram() {
+		return program;
+	}
 
-    public void setSubconcept(Subconcept subconcept) {
-        this.subconcept = subconcept;
-    }
+	public void setProgram(Program program) {
+		this.program = program;
+	}
 
-    public String getUuid() {
-        return uuid;
-    }
+	public Subconcept getSubconcept() {
+		return subconcept;
+	}
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
+	public void setSubconcept(Subconcept subconcept) {
+		this.subconcept = subconcept;
+	}
 
-    @Override
-    public String toString() {
-        return "ProgramConceptsMapping [programConceptId=" + programConceptId + ", programConceptDesc="
-                + programConceptDesc + ", unit=" + unit + ", stage=" + stage + ", program=" + program + ", subconcept="
-                + subconcept + ", uuid=" + uuid + "]";
-    }
+	public String getUuid() {
+		return uuid;
+	}
 
-    // Method to ensure UUID and generate programConceptId before persisting
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
+
+	@Override
+	public String toString() {
+		return "ProgramConceptsMapping [programConceptId=" + programConceptId + ", programConceptDesc="
+				+ programConceptDesc + ", position=" + position + ", unit=" + unit + ", stage=" + stage + ", program="
+				+ program + ", subconcept=" + subconcept + ", uuid=" + uuid + "]";
+	}
+
+	// Method to ensure UUID and generate programConceptId before persisting
     @PrePersist
     private void ensureUuid() {
         if (this.uuid == null) {

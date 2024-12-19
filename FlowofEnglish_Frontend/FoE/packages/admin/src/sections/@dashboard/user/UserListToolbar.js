@@ -8,7 +8,7 @@ import Iconify from '../../../components/iconify';
 // ----------------------------------------------------------------------
 
 const StyledRoot = styled(Toolbar)(({ theme }) => ({
-  height: 96,
+  height: 5,
   display: 'flex',
   justifyContent: 'space-between',
   padding: theme.spacing(0, 1, 0, 3),
@@ -16,7 +16,7 @@ const StyledRoot = styled(Toolbar)(({ theme }) => ({
 
 const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
   width: 180,
-  height: 36,
+  height: 26,
   [theme.breakpoints.down('sm')]: {
     width: 150, // Adjust for small screens
   },
@@ -70,7 +70,7 @@ export default function UserListToolbar({ numSelected, filterName, onFilterName,
           placeholder="Search ..."
           startAdornment={
             <InputAdornment position="start">
-              <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
+              <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 10, height: 10 }} />
             </InputAdornment>
           }
         />

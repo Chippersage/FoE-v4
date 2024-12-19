@@ -299,13 +299,13 @@ const handleCloseDialogs = () => {
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
           </Stack>
 
-          <div style={{ padding: '20px' }}>
+          {/* <div style={{ padding: '20px' }}> */}
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
           sx={{
@@ -414,7 +414,7 @@ const handleCloseDialogs = () => {
             onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
           />
         </Card>
-        </div>
+        {/* </div> */}
       </Container>
 
   {/* Create Cohort Modal */}
@@ -431,6 +431,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortName}
       helperText={formErrors.cohortName}
       required
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -444,6 +450,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortStartDate}
       helperText={formErrors.cohortStartDate}
       required
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -456,6 +468,12 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortEndDate}
       helperText={formErrors.cohortEndDate}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -464,11 +482,39 @@ const handleCloseDialogs = () => {
       label="Organization ID"
       value={formData.organization.organizationId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
   </DialogContent>
   <DialogActions>
-    <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} color="primary" >Create</Button>
+    <Button onClick={handleCloseDialogs}sx={{
+            bgcolor: '#5bc3cd', // Default background color
+            color: 'white', // Text color
+            fontWeight: 'bold', // Font weight
+            '&:hover': {
+              bgcolor: '#DB5788', // Hover background color
+            },
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
+          }}>Cancel</Button>
+    <Button onClick={handleSubmit} color="primary"
+      sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+      bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+      px: 1, // Padding X
+      borderRadius: '4px', // Border radius
+      }}
+          >Create</Button>
   </DialogActions>
 </Dialog>
 
@@ -483,6 +529,12 @@ const handleCloseDialogs = () => {
       label="Cohort ID"
       value={formData.cohortId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -491,6 +543,12 @@ const handleCloseDialogs = () => {
       label="Organization ID"
       value={formData.organization.organizationId}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -501,6 +559,12 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortName}
       helperText={formErrors.cohortName}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -514,6 +578,12 @@ const handleCloseDialogs = () => {
       error={!!formErrors.cohortStartDate}
       helperText={formErrors.cohortStartDate}
       disabled
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
     <TextField
       fullWidth
@@ -526,11 +596,40 @@ const handleCloseDialogs = () => {
       onChange={handleFormChange}
       error={!!formErrors.cohortEndDate}
       helperText={formErrors.cohortEndDate}
+      size="small" // Reduces the height of text fields
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px' // Consistent height for all text fields
+            }
+          }}
     />
   </DialogContent>
   <DialogActions>
-    <Button onClick={handleCloseDialogs}>Cancel</Button>
-    <Button onClick={handleSubmit} variant="contained">Update</Button>
+    <Button onClick={handleCloseDialogs}
+    autoFocus
+    sx={{
+      bgcolor: '#5bc3cd', // Default background color
+      color: 'white', // Text color
+      fontWeight: 'bold', // Font weight
+      '&:hover': {
+        bgcolor: '#DB5788', // Hover background color
+      },
+      py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+    }} type="submit" variant="contained">Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained"
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+            }}>Update</Button>
   </DialogActions>
 </Dialog>
 
@@ -565,9 +664,9 @@ const handleCloseDialogs = () => {
             '&:hover': {
               bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px',// Border radius
           }}>
             Delete
           </Button>
@@ -579,11 +678,11 @@ const handleCloseDialogs = () => {
             '&:hover': {
               bgcolor: '#DB5788', // Hover background color
             },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
+            py: 0.5, // Padding Y
+            px: 1, // Padding X
+            borderRadius: '4px', // Border radius
           }}>
-            No
+           Cancel
           </Button>
           </Stack>
         </StyledCard>
