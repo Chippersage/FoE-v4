@@ -36,7 +36,7 @@ export default {
           "100%": { opacity: "1" },
         },
         slideDown: {
-          "0%": { transform: "translate(-50%, -60%)" },
+          "0%": { transform: "translate(-50%, -50%)" },
           "100%": { transform: "translate(-50%, -50%)" },
         },
       },
