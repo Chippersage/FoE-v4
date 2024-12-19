@@ -1,6 +1,6 @@
 import { styled } from '@mui/material/styles';
 import { filter } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CSVLink } from "react-csv";
 import { Helmet } from 'react-helmet-async';
 import ReactPhoneInput from 'react-phone-input-2';
@@ -133,6 +133,8 @@ const OrgUserCreate = () => {
   const [cohortId, setCohortId] = React.useState('');
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const summaryRef = useRef(null);
+
 
   useEffect(() => {
     fetchUsers();
@@ -361,12 +363,59 @@ const handleMenuClose = () => {
   setAnchorEl(null);
 };
 
+// Create a separate component for the CSV upload response
+const CSVUploadResponse = ({ response, onDownload }) => (
+  <Card className="mt-4 p-6">
+    <Typography variant="h6" className="mb-4">Learners CSV Summary</Typography>
+    <div className="space-y-2">
+      <p>{response.summary.createdUserCount}Learners created successfully.</p>
+      <p>{response.summary.createdUserCohortMappingCount} Learner-cohort mappings created.</p>
+      <p>{response.summary.warningCount} warnings.</p>
+      <p>{response.summary.errorCount} errors.</p>
+
+      {/* Warnings Section */}
+      {response.warnings.length > 0 && (
+        <div className="mt-4">
+          <Typography variant="h6" className="text-yellow-600">Warnings</Typography>
+          <ul className="list-disc pl-6 mt-2">
+            {response.warnings.map((warning) => (
+              <li key={warning.id} className="text-yellow-700">{warning.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Errors Section */}
+      {response.errors.length > 0 && (
+        <div className="mt-4">
+          <Typography variant="h6" className="text-red-600">Errors</Typography>
+          <ul className="list-disc pl-6 mt-2">
+            {response.errors.map((error) => (
+              <li key={error.id} className="text-red-700">{error.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Download Report Button */}
+      <div className="mt-4">
+        <Button
+          variant="contained"
+          startIcon={<Iconify icon="eva:download-fill" />}
+          onClick={onDownload}
+          className="bg-[#5bc3cd] text-white font-bold hover:bg-[#DB5788] py-1.5 px-2 rounded-lg"
+        >
+          Download Report
+        </Button>
+      </div>
+    </div>
+  </Card>
+);
 const handleBulkCreate = async (file) => {
   if (!file.name.endsWith('.csv')) {
     alert('Invalid file type. Please upload a CSV file.');
     return;
 }
-
   const formData = new FormData();
   formData.append("file", file);
 
@@ -388,17 +437,22 @@ const handleBulkCreate = async (file) => {
 
     // Update the UI state to show response details
     setBulkCreateResponse({
-      summary: {
-        createdUserCount,
-        createdUserCohortMappingCount,
-        warningCount,
-        errorCount,
-      },
+      summary: { createdUserCount, createdUserCohortMappingCount, warningCount, errorCount, },
       warnings: formatWarnings(warnings),
       errors: formatErrors(errors),
     });
     setIsFileUploaded(true); // Mark file upload as successful
     fetchUsers(); // Refresh the user list
+
+    // Scroll to response after a short delay to ensure component is rendered
+    setTimeout(() => {
+      if (summaryRef.current) {
+        summaryRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 100);
   } catch (error) {
     console.error('Bulk create failed:', error);
     setSnackbarMessage('Error bulk creating users');
@@ -672,7 +726,7 @@ const confirmDelete = async () => {
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
             Learners
           </Typography>
@@ -735,63 +789,17 @@ const confirmDelete = async () => {
         </Stack>
 
         {renderTable()}
+         {/* CSV Upload Response Section */}
+         {isFileUploaded && bulkCreateResponse && (
+          <div ref={summaryRef}>
+            <CSVUploadResponse 
+              response={bulkCreateResponse} 
+              onDownload={downloadReport}
+            />
+          </div>
+        )}
         {renderActionMenu()}
 
- {/* Show the summary */}
-{isFileUploaded && bulkCreateResponse && bulkCreateResponse.summary && (
-  <Box sx={{ mt: 4 }}>
-    <Typography variant="h6">Summary</Typography>
-    <p>{bulkCreateResponse.summary.createdUserCount} users created successfully.</p>
-    <p>{bulkCreateResponse.summary.createdUserCohortMappingCount} user-cohort mappings created.</p>
-    <p>{bulkCreateResponse.summary.warningCount} warnings.</p>
-    <p> {bulkCreateResponse.summary.errorCount} errors.</p>
-
-    {/* Warnings */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" color="warning.main">Warnings</Typography>
-      {bulkCreateResponse.warnings.length > 0 && (
-        <ul>
-          {bulkCreateResponse.warnings.map((warning) => (
-            <li key={warning.id}>{warning.message}</li>
-          ))}
-        </ul>
-      )}
-    </Box>
-
-    {/* Errors */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" color="error.main">Errors</Typography>
-      {bulkCreateResponse.errors.length > 0 && (
-        <ul>
-          {bulkCreateResponse.errors.map((error) => (
-            <li key={error.id}>{error.message}</li>
-          ))}
-        </ul>
-      )}
-    </Box>
-
-    {/* Download Report Button */}
-    <Box sx={{ mt: 2 }}>
-      <Button
-        variant="contained"
-        startIcon={<Iconify icon="eva:download-fill" />}
-        onClick={downloadReport}
-        sx={{
-          bgcolor: '#5bc3cd', // Default background color
-          color: 'white', // Text color
-          fontWeight: 'bold', // Font weight
-          '&:hover': {
-            bgcolor: '#DB5788', // Hover background color
-          },
-          py: 1.5, // Padding Y
-          px: 2, // Padding X
-          borderRadius: '8px', // Border radius
-        }}>
-        Download Report
-      </Button>
-    </Box>
-  </Box>
-)}
 
 {/* Create User Dialog */}
 <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
@@ -829,8 +837,32 @@ const confirmDelete = async () => {
 </TextField>
 </DialogContent>
 <DialogActions>
-<Button onClick={handleCloseCreateDialog} color="primary">Cancel</Button>
-<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
+<Button onClick={handleCloseCreateDialog} color="primary"
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+}}
+>Cancel</Button>
+<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+}}
+>Create</Button>
 </DialogActions>
 </Dialog>
 
@@ -878,8 +910,32 @@ const confirmDelete = async () => {
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
 </DialogContent>
 <DialogActions>
-<Button onClick={handleCloseUpdateDialog}>Cancel</Button>
-<Button onClick={handleUpdateUser} disabled={!userName}>Update</Button>
+<Button onClick={handleCloseUpdateDialog}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px',
+}}
+>Cancel</Button>
+<Button onClick={handleUpdateUser} disabled={!userName}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+    bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px',
+}}
+>Update</Button>
 </DialogActions>
 </Dialog>
 
@@ -900,9 +956,9 @@ const confirmDelete = async () => {
                   '&:hover': {
                     bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
+                  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
                 }}
               >
                 Delete
@@ -917,9 +973,9 @@ const confirmDelete = async () => {
                   '&:hover': {
                     bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
+                  py: 0.5, // Padding Y
+                  px: 1, // Padding X
+                  borderRadius: '4px',
                 }}
               >
                 Cancel

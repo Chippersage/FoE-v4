@@ -53,7 +53,6 @@ export default function Router() {
         { path: 'superadmincreate', element: <SuperAdminCreate /> },
 
 
-
         { path: 'blog', element: <BlogPage /> },
         { path: 'addctoc/:organisationId', element: <AddCtOc /> },
         
@@ -72,6 +71,7 @@ export default function Router() {
         { path: 'app', element: <DashboardClientPage /> },
         { path: 'cohorts/organization/:organizationId', element: <OrgCohort /> },
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
+        { path: 'users', element: <UserCreate /> },
         
       ],
     },
