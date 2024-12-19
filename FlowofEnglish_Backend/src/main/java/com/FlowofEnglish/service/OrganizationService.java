@@ -1,11 +1,15 @@
 package com.FlowofEnglish.service;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+//import org.hibernate.validator.internal.util.logging.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,15 +19,24 @@ import com.FlowofEnglish.model.Cohort;
 import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.model.Organization;
 import com.FlowofEnglish.model.Program;
+import com.FlowofEnglish.model.User;
+import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.repository.CohortProgramRepository;
+import com.FlowofEnglish.repository.CohortRepository;
 import com.FlowofEnglish.repository.OrganizationRepository;
+import com.FlowofEnglish.repository.UserCohortMappingRepository;
 import com.FlowofEnglish.util.RandomStringUtil;
+
+//import ch.qos.logback.classic.Logger;
+//import ch.qos.logback.classic.Logger;
 import jakarta.persistence.EntityNotFoundException;
 
 import jakarta.transaction.Transactional;
 
+//import java.lang.System.Logger;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,7 +60,14 @@ public class OrganizationService {
     @Autowired
     private JavaMailSender mailSender;
     
+    @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+
+    @Autowired
+    private CohortRepository cohortRepository;
     
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
+
 
     // Temporary store for OTPs (in a real-world app, use a more secure solution like Redis)
     private Map<String, String> otpStorage = new HashMap<>();
@@ -268,27 +288,45 @@ public class OrganizationService {
     
     
  // Update an existing organization
-    public Organization updateOrganization(String organizationId, Organization organization) {
-        Organization existingOrganization = organizationRepository.findById(organizationId)
+ // Update an existing organization
+    public Organization updateOrganization(String organizationId, Organization updatedOrganization) {
+        return organizationRepository.findById(organizationId)
+            .map(existingOrganization -> {
+                // Validate updated fields
+                if (updatedOrganization.getUpdatedAt() != null &&
+                        updatedOrganization.getUpdatedAt().isBefore(existingOrganization.getCreatedAt())) {
+                    throw new IllegalArgumentException("Updated date must be after the organization creation date.");
+                }
+
+                // Update fields other than organizationId
+                existingOrganization.setOrganizationName(updatedOrganization.getOrganizationName());
+                existingOrganization.setOrganizationAdminName(updatedOrganization.getOrganizationAdminName());
+                existingOrganization.setOrganizationAdminEmail(updatedOrganization.getOrganizationAdminEmail());
+                existingOrganization.setOrganizationAdminPhone(updatedOrganization.getOrganizationAdminPhone());
+
+                // Hash and update password if provided
+                if (updatedOrganization.getOrgPassword() != null && !updatedOrganization.getOrgPassword().isEmpty()) {
+                    String hashedPassword = passwordEncoder.encode(updatedOrganization.getOrgPassword());
+                    existingOrganization.setOrgPassword(hashedPassword);
+                }
+
+                // Automatically update the timestamp
+                existingOrganization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+                 // Handle soft delete
+                    if (updatedOrganization.getDeletedAt() != null) {
+                        existingOrganization.setDeletedAt(updatedOrganization.getDeletedAt());
+                    }
+                 // Save updated organization
+                    Organization savedOrganization = organizationRepository.save(existingOrganization);
+
+                    // Log the update operation
+                    log.info("Organization updated: ID={}, UpdatedFields={}", organizationId, updatedOrganization);
+
+                    return savedOrganization;
+                })
                 .orElseThrow(() -> new EntityNotFoundException("Organization not found with id: " + organizationId));
-
-        // Update fields other than organizationId
-        existingOrganization.setOrganizationName(organization.getOrganizationName());
-        existingOrganization.setOrganizationAdminName(organization.getOrganizationAdminName());
-        existingOrganization.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
-        existingOrganization.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
-        existingOrganization.setOrgPassword(organization.getOrgPassword()); // You can hash the password if it's updated
-        existingOrganization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))); // Update the updatedAt timestamp
-
-        // If 'deletedAt' is not null, mark as deleted (soft delete)
-        if (organization.getDeletedAt() != null) {
-            existingOrganization.setDeletedAt(organization.getDeletedAt());
-        }
-
-        // Save and return the updated organization
-        return organizationRepository.save(existingOrganization);
     }
-
     
     public boolean verifyPassword(String plainPassword, String encodedPassword) {
         return passwordEncoder.matches(plainPassword, encodedPassword);
@@ -300,6 +338,10 @@ public class OrganizationService {
         return cohortProgramRepository.findProgramsByOrganizationId(organizationId);
     }
     
+    public List<Cohort> getCohortsByOrganizationId(String organizationId) {
+        return cohortRepository.findByOrganizationOrganizationId(organizationId);
+    }
+
     
     
     public List<ProgramResponseDTO> getProgramsWithCohorts(String organizationId) {
@@ -336,4 +378,90 @@ public class OrganizationService {
         return new ArrayList<>(programMap.values());
     }
 
+    
+    public long calculateDaysToEnd(OffsetDateTime cohortEndDate) {
+        OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"));
+        return ChronoUnit.DAYS.between(now, cohortEndDate);
+    }
+
+    public Map<String, Object> getCohortDetailsWithDaysToEnd(String cohortId) {
+        Cohort cohort = cohortRepository.findById(cohortId)
+                .orElseThrow(() -> new RuntimeException("Cohort not found"));
+        long daysToEnd = calculateDaysToEnd(cohort.getCohortEndDate());
+        Map<String, Object> details = new HashMap<>();
+        details.put("cohort", cohort);
+        details.put("daysToEnd", daysToEnd);
+        return details;
+    }
+
+
+    /**
+     * Notify users and organizations about the cohort end date.
+     */
+    @Scheduled(cron = "0 0 8 * * ?") // Run daily at 8 AM
+    public void notifyCohortEndDates() {
+        OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+
+        List<Cohort> cohorts = cohortRepository.findAll();
+
+        for (Cohort cohort : cohorts) {
+            if (cohort.getCohortEndDate() != null) {
+                long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+
+                if (daysToEnd == 15 || daysToEnd == 5) {
+                    notifyOrganizationAdmin(cohort);
+                    notifyUsersInCohort(cohort);
+                }
+            }
+        }
+    }
+
+    private void notifyOrganizationAdmin(Cohort cohort) {
+        Organization organization = cohort.getOrganization();
+        if (organization != null) {
+        	OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+            long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+        	
+            String adminEmail = organization.getOrganizationAdminEmail();
+            String subject = "Cohort End Date Reminder";
+            String message = "Dear " + organization.getOrganizationAdminName() + ",\n\n" +
+                             "This is a reminder that the cohort \"" + cohort.getCohortName() + 
+                             "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
+                             "Please ensure all related tasks are completed before this date.\n\n" +
+                             "Best regards,\nFlow of English Team";
+
+            sendEmail(adminEmail, subject, message);
+        }
+    }
+
+    private void notifyUsersInCohort(Cohort cohort) {
+    	OffsetDateTime today = OffsetDateTime.now(ZoneId.systemDefault());
+        long daysToEnd = today.until(cohort.getCohortEndDate(), ChronoUnit.DAYS);
+        
+        List<UserCohortMapping> userMappings = userCohortMappingRepository.findByCohort(cohort);
+
+        for (UserCohortMapping mapping : userMappings) {
+            User user = mapping.getUser();
+            if (user != null) {
+                String userEmail = user.getUserEmail(); // Assuming User entity has an email field.
+                String subject = "Cohort End Date Reminder";
+                String message = "Dear " + user.getUserName() + ",\n\n" +
+                                 "This is a reminder that your cohort \"" + cohort.getCohortName() + 
+                                 "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
+                                 "Please ensure you complete all tasks before this date.\n\n" +
+                                 "Best regards,\nFlow of English Team";
+
+                sendEmail(userEmail, subject, message);
+            }
+        }
+    }
+
+    private void sendEmail(String to, String subject, String message) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(to);
+        mailMessage.setSubject(subject);
+        mailMessage.setText(message);
+        mailSender.send(mailMessage);
+    }
 }
+
