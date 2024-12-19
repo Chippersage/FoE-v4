@@ -21,10 +21,10 @@ export const HomePage = () => {
 
     return (
       <>
-        <div className="relative w-full min-h-full">
+        <div className="relative w-full min-h-full no-scrollbar">
           {/* Background Image */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed opacity-80"
+            className="fixed inset-0 bg-cover bg-center bg-no-repeat bg-fixed opacity-80 w-full"
             style={{ backgroundImage: "url('/images/index.png')" }}
           >
             {/* Shadow Overlay */}
@@ -32,7 +32,7 @@ export const HomePage = () => {
           </div>
 
           {/* Center Image */}
-          <div className="absolute inset-20 flex items-center justify-center">
+          <div className="fixed inset-0 flex items-center justify-center">
             <img
               src="/images/main_image.png"
               alt="Center Image"
@@ -49,7 +49,7 @@ export const HomePage = () => {
             />
           </div> */}
 
-          <div className="relative z-10 flex flex-1 custom-scrollbar-2 overflow-scroll min-h-screen">
+          <div className="relative z-10 flex flex-1 no-scrollbar overflow-scroll min-h-screen">
             <Header2 />
             <Dashboard />
           </div>

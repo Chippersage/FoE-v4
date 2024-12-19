@@ -67,10 +67,11 @@ export default function LoginPage() {
 
       // console.log("User data from backend", login.data);
 
-      const { sessionId, userType, userDetails } = login.data;
+      const { sessionId, userType, userDetails, cohortReminder } = login.data;
 
       localStorage.setItem("authToken", sessionId);
       localStorage.setItem("userType", userType);
+      localStorage.setItem("cohortReminder", cohortReminder);
       localStorage.setItem("user", JSON.stringify(userDetails));
 
       const isLoggedIn = await checkAuthUser();
