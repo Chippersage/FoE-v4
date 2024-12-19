@@ -1,6 +1,6 @@
 import { styled } from '@mui/material/styles';
 import { filter } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CSVLink } from "react-csv";
 import { Helmet } from 'react-helmet-async';
 import ReactPhoneInput from 'react-phone-input-2';
@@ -125,6 +125,7 @@ const UserCreate = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const summaryRef = useRef(null);
 
   useEffect(() => {
     // Fetch organizations on component load
@@ -259,6 +260,55 @@ const resetFormState = () => {
           setOpenCreateDialog(false);
         };
 
+    // Create a separate component for the CSV upload response
+  const CSVUploadResponse = ({ response, onDownload }) => (
+    <Card className="mt-4 p-6">
+      <Typography variant="h6" className="mb-4">Learners CSV Summary</Typography>
+      <div className="space-y-2">
+        <p>{response.summary.createdUserCount} Learners created successfully.</p>
+        <p>{response.summary.createdUserCohortMappingCount} Learner-cohort mappings created.</p>
+        <p>{response.summary.warningCount} warnings.</p>
+        <p>{response.summary.errorCount} errors.</p>
+
+        {/* Warnings Section */}
+        {response.warnings.length > 0 && (
+          <div className="mt-4">
+            <Typography variant="h6" className="text-yellow-600">Warnings</Typography>
+            <ul className="list-disc pl-6 mt-2">
+              {response.warnings.map((warning) => (
+                <li key={warning.id} className="text-yellow-700">{warning.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Errors Section */}
+        {response.errors.length > 0 && (
+          <div className="mt-4">
+            <Typography variant="h6" className="text-red-600">Errors</Typography>
+            <ul className="list-disc pl-6 mt-2">
+              {response.errors.map((error) => (
+                <li key={error.id} className="text-red-700">{error.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Download Report Button */}
+        <div className="mt-4">
+          <Button
+            variant="contained"
+            startIcon={<Iconify icon="eva:download-fill" />}
+            onClick={onDownload}
+            className="bg-[#5bc3cd] text-white font-bold hover:bg-[#DB5788] py-1.5 px-2 rounded-lg"
+          >
+            Download Report
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+    
     const handleBulkCreate = async (file) => {
     if (!file.name.endsWith('.csv')) {
     alert('Invalid file type. Please upload a CSV file.');
@@ -286,17 +336,22 @@ const resetFormState = () => {
 
     // Update the UI state to show response details
     setBulkCreateResponse({
-    summary: {
-    createdUserCount,
-    createdUserCohortMappingCount,
-    warningCount,
-    errorCount,
-    },
-    warnings: formatWarnings(warnings),
-    errors: formatErrors(errors),
+      summary: { createdUserCount, createdUserCohortMappingCount, warningCount, errorCount },
+      warnings: formatWarnings(warnings),
+      errors: formatErrors(errors),
     });
-    setIsFileUploaded(true); // Mark file upload as successful
-    fetchUsers(); // Refresh the user list
+    setIsFileUploaded(true);
+    fetchUsers();
+
+    // Scroll to response after a short delay to ensure component is rendered
+    setTimeout(() => {
+      if (summaryRef.current) {
+        summaryRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 100);
     } catch (error) {
     console.error('Bulk create failed:', error);
     setSnackbarMessage('Error bulk creating users');
@@ -646,12 +701,12 @@ const resetFormState = () => {
       </Helmet>
 
       <Container>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
           Learners
           </Typography>
           </Stack>
-        <div style={{ padding: '20px' }}>
+        {/* <div style={{ padding: '20px' }}> */}
         <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <Button
             variant="contained"
@@ -728,105 +783,81 @@ const resetFormState = () => {
           </CSVLink>
         </Stack>
         {renderTable()}
+        {/* CSV Upload Response Section */}
+        {isFileUploaded && bulkCreateResponse && (
+          <div ref={summaryRef}>
+            <CSVUploadResponse 
+              response={bulkCreateResponse} 
+              onDownload={downloadReport}
+            />
+          </div>
+        )}
         {renderActionMenu()}
 
- {/* Show the summary */}
-{isFileUploaded && bulkCreateResponse && bulkCreateResponse.summary && (
-  <Box sx={{ mt: 4 }}>
-    <Typography variant="h6">Summary</Typography>
-    <p>{bulkCreateResponse.summary.createdUserCount} users created successfully.</p>
-    <p>{bulkCreateResponse.summary.createdUserCohortMappingCount} user-cohort mappings created.</p>
-    <p>{bulkCreateResponse.summary.warningCount} warnings.</p>
-    <p> {bulkCreateResponse.summary.errorCount} errors.</p>
-
-    {/* Warnings */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" color="warning.main">Warnings</Typography>
-      {bulkCreateResponse.warnings.length > 0 && (
-        <ul>
-          {bulkCreateResponse.warnings.map((warning) => (
-            <li key={warning.id}>{warning.message}</li>
-          ))}
-        </ul>
-      )}
-    </Box>
-
-    {/* Errors */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" color="error.main">Errors</Typography>
-      {bulkCreateResponse.errors.length > 0 && (
-        <ul>
-          {bulkCreateResponse.errors.map((error) => (
-            <li key={error.id}>{error.message}</li>
-          ))}
-        </ul>
-      )}
-    </Box>
-
-    {/* Download Report Button */}
-    <Box sx={{ mt: 2 }}>
-      <Button
-        variant="contained"
-        startIcon={<Iconify icon="eva:download-fill" />}
-        onClick={downloadReport}
-        sx={{
-          bgcolor: '#5bc3cd', // Default background color
-          color: 'white', // Text color
-          fontWeight: 'bold', // Font weight
-          '&:hover': {
-            bgcolor: '#DB5788', // Hover background color
-          },
-          py: 1.5, // Padding Y
-          px: 2, // Padding X
-          borderRadius: '8px', // Border radius
-        }}>
-        Download Report
-      </Button>
-    </Box>
-  </Box>
-)}
-
-        {/* Create User Dialog */}
-        <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
-        <DialogTitle>Create Learner</DialogTitle>
-        <DialogContent>
-        <TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} required/>
-        <TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} required />
-        <TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }}  />
-        {/* Phone Input */}
-        <ReactPhoneInput country={'in'} enableSearch value={`${countryCode}${userPhoneNumber}`} onChange={(handlePhoneNumberChange)} inputStyle={{ width: '100%' }} style={{ marginBottom: '10px' }} />
-        {!validatePhoneNumber(userPhoneNumber) && (
-        <Typography color="error" variant="caption">
-        Please enter a valid phone number.
-        </Typography>)}
-        <TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
-        <TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
-        <MenuItem value="Mentor">Mentor</MenuItem>
-        <MenuItem value="Learner">Learner</MenuItem>
-        </TextField>
-        <TextField  select label="Organization"  fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} required >
-        {organizations.map((organization) => (
-        <MenuItem key={organization.organizationId} value={organization.organizationId}>
-        {organization.organizationName} ({organization.organizationId})
-        </MenuItem>
-        ))}
-        </TextField>
-        <TextField select label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required >
-        {cohorts.map((cohort) => (
-        <MenuItem key={cohort.cohortId} value={cohort.cohortId}>
-        {cohort.cohortName} ({cohort.cohortId})
-        </MenuItem>
-        ))}
-        </TextField>
-        </DialogContent>
-        <DialogActions>
-        <Button onClick={handleCloseCreateDialog} color="primary">Cancel</Button>
-        <Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}>Create</Button>
-        </DialogActions>
-        </Dialog>
+{/* Create User Dialog */}
+<Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
+<DialogTitle>Create Learner</DialogTitle>
+<DialogContent>
+<TextField label="Learner ID" fullWidth value={userId} onChange={(e) => setUserId(e.target.value)} style={{ marginBottom: '10px' }} required/>
+<TextField label="Learner Name" fullWidth value={userName} onChange={(e) => setUserName(e.target.value)} style={{ marginBottom: '10px' }} required />
+<TextField label="Learner Email" fullWidth value={userEmail} onChange={(e) => setUserEmail(e.target.value)} style={{ marginBottom: '10px' }}  />
+{/* Phone Input */}
+<ReactPhoneInput country={'in'} enableSearch value={`${countryCode}${userPhoneNumber}`} onChange={(handlePhoneNumberChange)} inputStyle={{ width: '100%' }} style={{ marginBottom: '10px' }} />
+{!validatePhoneNumber(userPhoneNumber) && (
+<Typography color="error" variant="caption">
+Please enter a valid phone number.
+</Typography>)}
+<TextField label="Learner Address" fullWidth value={userAddress} onChange={(e) => setUserAddress(e.target.value)} style={{ marginBottom: '10px' }} />
+<TextField select label="Learner Type" fullWidth value={userType} onChange={(e) => setUserType(e.target.value)} style={{ marginBottom: '10px' }} required>
+<MenuItem value="Mentor">Mentor</MenuItem>
+<MenuItem value="Learner">Learner</MenuItem>
+</TextField>
+<TextField  select label="Organization"  fullWidth value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} style={{ marginBottom: '10px' }} required >
+{organizations.map((organization) => (
+<MenuItem key={organization.organizationId} value={organization.organizationId}>
+{organization.organizationName} ({organization.organizationId})
+</MenuItem>
+))}
+</TextField>
+<TextField select label="Cohort ID" fullWidth value={cohortId} onChange={(e) => setCohortId(e.target.value)} style={{ marginBottom: '10px' }} required >
+{cohorts.map((cohort) => (
+<MenuItem key={cohort.cohortId} value={cohort.cohortId}>
+{cohort.cohortName} ({cohort.cohortId})
+</MenuItem>
+))}
+</TextField>
+</DialogContent>
+<DialogActions>
+<Button onClick={handleCloseCreateDialog}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+            >Cancel</Button>
+<Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+>Create</Button>
+</DialogActions>
+</Dialog>
 
 
-      
 {/* Update User Dialog */}
 <Dialog open={openUpdateDialog} onClose={handleCloseUpdateDialog}>
 <DialogTitle>Update Learner</DialogTitle>
@@ -865,8 +896,32 @@ const resetFormState = () => {
 <TextField label="Organization ID" name="Organization ID" fullWidth value={organizationId} style={{ marginBottom: '10px' }} disabled />
 </DialogContent>
 <DialogActions>
-<Button onClick={handleCloseUpdateDialog}>Cancel</Button>
-<Button onClick={handleUpdateUser} disabled={!userName}>Update</Button>
+<Button onClick={handleCloseUpdateDialog}
+sx={{
+  bgcolor: '#5bc3cd', // Default background color
+  color: 'white', // Text color
+  fontWeight: 'bold', // Font weight
+  '&:hover': {
+  bgcolor: '#DB5788', // Hover background color
+  },
+  py: 0.5, // Padding Y
+  px: 1, // Padding X
+  borderRadius: '4px', // Border radius
+  }}
+>Cancel</Button>
+<Button onClick={handleUpdateUser} disabled={!userName}
+              sx={{
+                bgcolor: '#5bc3cd', // Default background color
+                color: 'white', // Text color
+                fontWeight: 'bold', // Font weight
+                '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+                },
+                py: 0.5, // Padding Y
+                px: 1, // Padding X
+                borderRadius: '4px', // Border radius
+                }}
+            >Update</Button>
 </DialogActions>
 </Dialog>
 
@@ -885,12 +940,12 @@ const resetFormState = () => {
                   color: 'white', // Text color
                   fontWeight: 'bold', // Font weight
                   '&:hover': {
-                    bgcolor: '#DB5788', // Hover background color
+                  bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
-                }}
+                  py: 0.5, // Padding Y
+                  px: 1, // Padding X
+                  borderRadius: '4px', // Border radius
+                  }}
               >
                 Delete
               </Button>
@@ -902,12 +957,12 @@ const resetFormState = () => {
                   color: 'white', // Text color
                   fontWeight: 'bold', // Font weight
                   '&:hover': {
-                    bgcolor: '#DB5788', // Hover background color
+                  bgcolor: '#DB5788', // Hover background color
                   },
-                  py: 1.5, // Padding Y
-                  px: 2, // Padding X
-                  borderRadius: '8px', // Border radius
-                }}
+                  py: 0.5, // Padding Y
+                  px: 1, // Padding X
+                  borderRadius: '4px', // Border radius
+                  }}
               >
                 Cancel
               </Button>
@@ -921,7 +976,7 @@ const resetFormState = () => {
           onClose={() => setOpenSnackbar(false)}
           message={snackbarMessage}
         />
-        </div>
+        {/* </div> */}
       </Container>
     </>
   );

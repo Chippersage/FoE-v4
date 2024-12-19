@@ -22,7 +22,7 @@ public class EmailService {
     }
 
     public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
-    		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName) { 
+    		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) { 
     	
         String subject = "Welcome to Your Learning Journey!";
         
@@ -40,7 +40,8 @@ public class EmailService {
                 + programCohortDetails
                 + "To get started, please find your login credentials below:\n\n"
                 + "User ID: " + userId + "\n"
-                + "Password: " + plainPassword + "\n\n"
+                + "Password: " + plainPassword + "\n"
+                + "User Type: " + userType + "\n\n"
                 + "You can log in to the learning portal using the following link:\n"
                 + "https://flowofenglish.thechippersage.com\n\n"
                 + "If you have any questions or need assistance, please feel free to reach out to your organization administrator:\n"

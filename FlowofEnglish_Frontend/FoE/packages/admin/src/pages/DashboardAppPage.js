@@ -179,7 +179,7 @@ export default function DashboardAppPage() {
           <TableRow>
             <TableCell><strong>Learner ID</strong></TableCell>
             <TableCell><strong>Learner Name</strong></TableCell>
-            <TableCell><strong>Organisation Name</strong></TableCell>
+            <TableCell><strong>Organization Name</strong></TableCell>
             <TableCell><strong>Last Activity</strong></TableCell>
           </TableRow>
         </TableHead>

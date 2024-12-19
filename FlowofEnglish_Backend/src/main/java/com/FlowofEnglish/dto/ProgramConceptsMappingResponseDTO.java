@@ -7,6 +7,7 @@ public class ProgramConceptsMappingResponseDTO {
     private String programName;
     private String unitId;
     private String unitName;
+    private String unitDesc;
     private String stageId;
     private String stageName;
     private Map<String, SubconceptResponseDTO> subConcepts; 
@@ -54,6 +55,15 @@ public class ProgramConceptsMappingResponseDTO {
 
 	public void setUnitName(String unitName) {
 		this.unitName = unitName;
+	}
+
+	
+	public String getUnitDesc() {
+		return unitDesc;
+	}
+
+	public void setUnitDesc(String unitDesc) {
+		this.unitDesc = unitDesc;
 	}
 
 	public String getStageName() {
