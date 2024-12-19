@@ -156,6 +156,10 @@ public class UserServiceImpl implements UserService {
         return userDTO;
     }
 
+    private String sanitizeUserId(String userId) {
+        return userId != null ? userId.replaceAll("\\s+", "") : null;
+    }
+
     
     @Override
     public User createUser(UsercreateDTO userDTO) {
@@ -163,6 +167,9 @@ public class UserServiceImpl implements UserService {
         String cohortId = userDTO.getCohortId();
         String plainPassword = DEFAULT_PASSWORD;
 
+     // Sanitize userId
+        user.setUserId(sanitizeUserId(user.getUserId()));
+        
      // Validate userType
         try {
             UserType.fromString(user.getUserType()); // Throws exception if invalid
@@ -238,7 +245,7 @@ public class UserServiceImpl implements UserService {
             }
 
             while ((line = csvReader.readNext()) != null) {
-            	String userId = line[columnIndexMap.get("userid")];
+            	String userId = sanitizeUserId(line[columnIndexMap.get("userid")]);
             	String cohortId = line[columnIndexMap.get("cohortid")];
 
             	// Check if userId exists in the same batch
@@ -385,7 +392,8 @@ public class UserServiceImpl implements UserService {
                     programNames,
                     cohortNames,
                     organization.getOrganizationAdminEmail(),
-                    organization.getOrganizationName()
+                    organization.getOrganizationName(),
+                    user.getUserType()
             );
         } catch (Exception e) {
             System.err.println("Failed to send welcome email for user: " + user.getUserId() + ", error: " + e.getMessage());
