@@ -496,7 +496,7 @@ const UserCohortPage = () => {
                 ))
                 .map(user => (
                   <MenuItem key={user.userId} value={user.userId}>
-                    {user.userName}
+                    {user.userName}  ({user.userId})
                   </MenuItem>
                 ))}
               </Select>
