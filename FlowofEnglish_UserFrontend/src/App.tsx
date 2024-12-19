@@ -5,8 +5,21 @@ import SubConceptsPage from "./_root/pages/SubConceptsPage.tsx";
 import AuthLayout from "./_auth/AuthLayout.tsx";
 import RootLayout from "./_root/RootLayout";
 import SingleSubconcept from "./_root/pages/SingleSubconcept.tsx";
+import { useEffect } from "react";
 
 export default function App() {
+
+  useEffect(() => {
+    // @ts-ignore
+    const disableRightClick = (e) => {
+      e.preventDefault();
+    };
+    document.addEventListener("contextmenu", disableRightClick);
+
+    return () => {
+      document.removeEventListener("contextmenu", disableRightClick);
+    };
+  }, []);
 
   return (
     <>
