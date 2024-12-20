@@ -1,37 +1,40 @@
 import { useState, useEffect, useRef } from "react";
-// @ts-ignore
+import { useNavigate } from "react-router-dom";
+
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
-//   const [userData, setUserData] = useState(null);
-// @ts-ignore
-  const userData = JSON.parse(localStorage.getItem("userData"))
+  const userData = JSON.parse(localStorage.getItem("userData"));
   const [isComplete, setIsComplete] = useState(false);
   const contentRef = useRef(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successCountdown, setSuccessCountdown] = useState(3);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorCountdown, setErrorCountdown] = useState(3);
+  const navigate = useNavigate()
 
+  // Handle countdown for success overlay
   useEffect(() => {
-    // @ts-ignore
-    if (showPopup && countdown > 0) {
-      // Start countdown if popup is visible
-      const countdownInterval = setInterval(() => {
-        // @ts-ignore
-        setCountdown((prevCountdown) => prevCountdown - 1);
+    if (showSuccessPopup && successCountdown > 0) {
+      const interval = setInterval(() => {
+        setSuccessCountdown((prev) => prev - 1);
       }, 1000);
-
-      // Clear interval on cleanup
-      return () => clearInterval(countdownInterval);
-      // @ts-ignore
-    } else if (countdown <= 0) {
-      // Redirect when countdown reaches zero
+      return () => clearInterval(interval);
+    } else if (successCountdown <= 0) {
       window.history.back();
     }
-  }, [showPopup,countdown]);
+  }, [showSuccessPopup, successCountdown]);
 
-  const handleOpenPopup = () => {
-    setCountdown(3); // Reset countdown if needed
-    setShowPopup(true); // Show popup
-  };
+  // Handle countdown for error overlay
+  useEffect(() => {
+    if (showErrorPopup && errorCountdown > 0) {
+      const interval = setInterval(() => {
+        setErrorCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (errorCountdown <= 0) {
+      setShowErrorPopup(false); // Close error overlay after countdown
+    }
+  }, [showErrorPopup, errorCountdown]);
 
   useEffect(() => {
     if (
@@ -39,7 +42,7 @@ const MediaContent = ({ subconceptData }) => {
       subconceptData.subconceptType === "video"
     ) {
       const contentElement = contentRef.current;
-    //@ts-ignore
+      //@ts-ignore
       contentElement.addEventListener("timeupdate", handleTimeUpdate);
       return () => {
         // @ts-ignore
@@ -57,48 +60,46 @@ const MediaContent = ({ subconceptData }) => {
     setPlayedPercentage((playedTime / totalTime) * 100);
   };
 
+
   const handleComplete = () => {
     setIsComplete(true);
     if (
       subconceptData.subconceptType === "audio" ||
       subconceptData.subconceptType === "video"
     ) {
-        // @ts-ignore
       contentRef.current.pause();
     }
-            sendAttemptData(userData);
-  }
+    sendAttemptData(userData);
+  };
 
-  
-// @ts-ignore
+  const handleGoBack = () => {
+    navigate(`/subconcepts/${userData?.unitId}`)
+  };
+
   const sendAttemptData = (userData) => {
-    const finalScore = 
-    (subconceptData.subconceptType === "video" || subconceptData.subconceptType === "audio") 
-        ? playedPercentage >= 80 
-          ? subconceptData?.subconceptMaxscore 
+    const finalScore =
+      subconceptData.subconceptType === "video" ||
+      subconceptData.subconceptType === "audio"
+        ? playedPercentage >= 80
+          ? subconceptData?.subconceptMaxscore
           : 0
-        : subconceptData?.subconceptMaxscore
-    // IST TIME FORMATTING
+        : subconceptData?.subconceptMaxscore;
+
     const date = new Date();
-
-    // Calculate IST offset (UTC+5:30)
-    const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
-
-    // Convert to IST by adding the offset
+    const ISTOffset = 5.5 * 60 * 60 * 1000;
     const ISTTime = new Date(date.getTime() + ISTOffset);
-
-    // Format IST time to "YYYY-MM-DDTHH:mm:ss"
     const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
+
     const payload = {
       userAttemptFlag: true,
       userAttemptScore: finalScore,
       userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
       userAttemptEndTimestamp: formattedISTTimestamp,
-      unitId: userData.unitId ,
-      programId: userData.programId ,
-      stageId: userData.stageId ,
-      userId: userData.userId ,
-      sessionId: userData.sessionId ,
+      unitId: userData.unitId,
+      programId: userData.programId,
+      stageId: userData.stageId,
+      userId: userData.userId,
+      sessionId: userData.sessionId,
       subconceptId: userData.subconceptId,
       cohortId: userData.cohortId,
     };
@@ -108,18 +109,109 @@ const MediaContent = ({ subconceptData }) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Request failed");
+        }
+        return response.json();
+      })
       .then((data) => {
         console.log("Data sent successfully", data);
+        setShowSuccessPopup(true);
+        setSuccessCountdown(3); // Reset success countdown
       })
-      .catch((error) => console.error("Error:", error));
+      .catch((error) => {
+        console.error("Error:", error);
+        setShowErrorPopup(true);
+        setErrorCountdown(5); // Reset error countdown
+        setIsComplete(false)
+      });
   };
 
-  const handleGoBack = () => {
-    window.history.back();
+  const renderOverlay = (type) => {
+    const countdown = type === "success" ? successCountdown : errorCountdown;
+    const title =
+      type === "success"
+        ? "Next Activity Unlocked"
+        : "Oops! Something went wrong";
+    const message =
+      type === "success"
+        ? "You have unlocked the next activity."
+        : "You need to attempt this activity again.";
+    const color = type === "success" ? "#90EE90" : "#FF7F7F";
+
+    return (
+      <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
+        <div
+          className="text-center shadow-lg max-w-sm w-full"
+          style={{
+            backgroundColor: "#375368",
+            borderColor: "#375368",
+            minWidth: "300px",
+            minHeight: "180px",
+            borderRadius: "4px",
+            boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
+          }}
+        >
+          <p
+            className="mb-2 tracking-wide text-gray-100"
+            style={{
+              fontSize: "16px",
+              fontWeight: "bold",
+              textShadow: "0 1px 0 #f3f3f3",
+              fontFamily: "'OpenSans-Regular', sans-serif",
+              lineHeight: "1.3",
+              padding: "15px 0px",
+              borderBottom: "1px solid #ffffff",
+            }}
+          >
+            {title}
+          </p>
+          <h4
+            className="mt-4 tracking-wide"
+            style={{
+              color: color,
+              fontSize: "20px",
+              fontWeight: "bold",
+              textShadow: "0 1px 0 #f3f3f3",
+              fontFamily: "'OpenSans-Regular', sans-serif",
+            }}
+          >
+            {type === "success" ? "Hurrah! 😄" : "Try again 😥"}
+          </h4>
+          <p
+            className="mt-4 text-gray-100"
+            style={{
+              fontSize: "22px",
+              fontWeight: "bold",
+              textShadow: "0 1px 0 #f3f3f3",
+              fontFamily: "'OpenSans-Regular', sans-serif",
+              lineHeight: "1.3",
+              padding: "0px 20px",
+            }}
+          >
+            {message}
+          </p>
+          <p
+            className="mt-2 mb-4"
+            style={{
+              color: "#B0B0B0",
+              fontSize: "13px",
+              fontWeight: "normal",
+              fontFamily: "'OpenSans-Regular', sans-serif",
+              lineHeight: "1.3",
+            }}
+          >
+            Closing in <span style={{ fontWeight: "bold" }}>{countdown}</span>{" "}
+            seconds.
+          </p>
+        </div>
+      </div>
+    );
   };
 
   const renderContent = () => {
+    console.log(subconceptData)
     const { subconceptType, subconceptLink } = subconceptData;
     switch (subconceptType) {
       case "audio":
@@ -190,82 +282,9 @@ const MediaContent = ({ subconceptData }) => {
 
   return (
     <>
-      {/* Redirect message start */}
-      {showPopup && (
-        <div
-          id="overlay"
-          style={{
-            zIndex: 1,
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            animation: "fadeIn 0.5s forwards",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              backgroundColor: "#375368",
-              padding: "20px 10px",
-              borderRadius: "10px",
-              textAlign: "center",
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-              maxWidth: "400px",
-              width: "90%",
-              animation: "slideDown 0.6s ease-out",
-            }}
-          >
-            <p
-              style={{
-                color: "#fff",
-                fontSize: "15px",
-                margin: "0",
-                fontWeight: "bold",
-                marginBottom: "10px",
-              }}
-            >
-              Next Activity Unlocked
-            </p>
-            <hr />
-            <h4
-              style={{
-                color: "#4CAF50",
-                fontSize: "2em",
-                margin: "0",
-                fontWeight: "bold",
-              }}
-            >
-              Hurrah! 😄
-            </h4>
-            <p
-              style={{
-                fontSize: "1.5em",
-                color: "#fff",
-                marginTop: "10px",
-                fontWeight: "bold",
-              }}
-            >
-              You have unlocked the next activity.
-            </p>
-            <p
-              id="redirectMessage"
-              style={{ fontSize: "1em", color: "#cbcbcb" }}
-            >
-              Redirecting to activities page in{" "}
-              <span id="countdown">{countdown}</span> seconds.
-            </p>
-          </div>
-        </div>
-      )}
+      {showSuccessPopup && renderOverlay("success")}
+      {showErrorPopup && renderOverlay("error")}
+      {/* Rest of the component */}
       {/* @ts-ignore */}
       <div style={styles.container}>
         <h1 style={styles.heading}>Complete the activity</h1>
@@ -278,7 +297,7 @@ const MediaContent = ({ subconceptData }) => {
           <button
             onClick={() => {
               handleComplete();
-              handleOpenPopup();
+              // handleOpenPopup();
             }}
             disabled={isComplete}
             style={isComplete ? styles.disabledButton : styles.button}
@@ -351,5 +370,6 @@ const styles = {
     maxWidth: "200px",
   },
 };
+
 
 export default MediaContent;
