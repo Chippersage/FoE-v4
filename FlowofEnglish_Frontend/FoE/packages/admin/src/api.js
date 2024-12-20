@@ -7,6 +7,7 @@ const apiUrl = process.env.REACT_APP_API_URL;
 export const getOrgs = async () => {
   try {
     const response = await axios.get(`${apiUrl}/organizations`);
+    console.log('Organizations API Response:', response);
     return response.data;
   } catch (error) {
     console.error('Error fetching organizations:', error);
@@ -414,7 +415,7 @@ export async function deleteUserCohortMapping(userId) {
 export async function getPrograms() {
   try {
     const res = await axios.get(`${apiUrl}/programs`);
-    console.log(res);
+    console.log('Programs API Response:', res);
     return res.data;
   } catch (err) {
     console.log(err);
