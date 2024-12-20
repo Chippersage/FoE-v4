@@ -23,9 +23,10 @@ function Dashboard() {
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   const [userProgress, setUserProgress] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [celebratedStageName, setCelebratedStageName] = useState("");
+  
   const [completedStagesCount, setCompletedStagesCount] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [celebratedProgramName, setCelebratedProgramName] = useState("");
 
   const getProgramInfoByProgramId = async () => {
      if (user && user.userId && user.program && user.program.programId) {
@@ -58,11 +59,11 @@ function Dashboard() {
   
   };
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  
 
     useEffect(() => {
       if (user?.cohort?.cohortId) {
+        console.log(user)
         const fetchAndSetLeaderBoardInfo = async () => {
           try {
             const result = await getLeaderBoardInfo();
@@ -92,6 +93,7 @@ function Dashboard() {
           `${API_BASE_URL}/reports/program/${user?.userId}/${user?.program?.programId}`
         )
         setUserProgress(res.data)
+        setCompletedStagesCount(res.data?.completedStages)
         // console.log(res.data);
       } catch (error) {
         console.error('Error fetching user progress:', error);
@@ -111,7 +113,7 @@ function Dashboard() {
         try {
           const result = await getProgramInfoByProgramId();
           setProgramInfo(result);
-          // console.log(result)
+          console.log(result)
         } catch (err) {
           // @ts-ignore
           setError(err.message);
@@ -125,52 +127,67 @@ function Dashboard() {
     
   }, [user]);
 
-  useEffect(() => {
+  const openModal = () => {
     // @ts-ignore
-    if (programInfo && programInfo.stages) {
-      // Find the last completed stage
+    setCelebratedProgramName(programInfo?.programName);
+    setIsModalOpen(true)
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+ useEffect(() => {
+   // @ts-ignore
+   if (programInfo?.programCompletionStatus === "yes") {
+     const storedCelebrationInfo = localStorage.getItem(
+       "isProgramCompletionAlreadyCelebrated"
+     );
+
+     let isCurrentProgramAlreadyCelebrated = null;
+
+     // Safely parse the localStorage value if it exists
+     try {
+       isCurrentProgramAlreadyCelebrated = storedCelebrationInfo
+         ? JSON.parse(storedCelebrationInfo)
+         : null;
+     } catch (e) {
+       console.warn("Invalid data in localStorage, clearing it...");
+       localStorage.removeItem("isProgramCompletionAlreadyCelebrated");
+     }
+
+     // Check if the current program has been celebrated already
+     if (
+       !isCurrentProgramAlreadyCelebrated || // No celebration info exists
       // @ts-ignore
-      const stages = Object.values(programInfo.stages)
-      // console.log(stages)
-      const completedStages = stages?.filter(
+       isCurrentProgramAlreadyCelebrated.programId !== programInfo?.programId // Different program ID
+     ) {
+       // Open modal and update localStorage with the new celebration details
+       const celebratedProgramDetails = {
         // @ts-ignore
-        (stage) => stage.stageCompletionStatus === "yes"
-      );
-      // @ts-ignore
-      setCompletedStagesCount(completedStages.length);
-      const lastCompletedStage = completedStages[completedStages.length - 1];
-      
+         programId: programInfo?.programId,
+         hasCelebrated: true,
+       };
 
-      if (lastCompletedStage) {
-        const storedStage = localStorage.getItem("lastCompletedStage");
+       localStorage.setItem(
+         "isProgramCompletionAlreadyCelebrated",
+         JSON.stringify(celebratedProgramDetails)
+       );
 
-        // Show confetti and audio if this stage hasn't been celebrated yet
-        // @ts-ignore
-        if (!storedStage || (storedStage.stageId !== lastCompletedStage.stageId)) {
-          // @ts-ignore
-          setCelebratedStageName(lastCompletedStage.stageName);
-          openModal()
+       // Open the modal to celebrate
+       openModal();
+     }
+   }
+ }, [programInfo]);
 
-          // Store the current stage as the last celebrated stage
-          localStorage.setItem(
-            "lastCompletedStage",
-            // @ts-ignore
-            lastCompletedStage
-          );
-        }
-      }
-    }
-  }, [programInfo]);
+
   
   return (
-    <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2">
-      {/* Confetti Animation */}
-      {/* {showConfetti && (
-        <> */}
+    <div className="w-full flex flex-col  md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        stageName={celebratedStageName}
+        programName={celebratedProgramName}
+        congratsType="programCompletion"
       />
 
       {/* Audio Element */}
@@ -182,9 +199,6 @@ function Dashboard() {
           // onEnded={() => setShowConfetti(false)}
         />
       )}
-
-      {/* </>
-      )} */}
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
         <div className="sm:w-[50%]">
@@ -197,7 +211,7 @@ function Dashboard() {
 
       <div className="w-full sm:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
-          <div className="flex flex-col mb-6 mx-auto w-[400px] px-6 py-2 bg-white gap-1 rounded-[3px]">
+          <div className="flex flex-col mb-6 mx-auto w-full sm:w-[400px] px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
             <h3 className="text-xl font-semibold font-openSans">
               Your Progress
             </h3>

@@ -29,6 +29,7 @@ const Header2 = () => {
       localStorage.removeItem("userType");
       localStorage.removeItem("user");
       localStorage.removeItem("hasSeenWelcome");
+      localStorage.removeItem("cohortReminder");
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
       navigate("/sign-in");
@@ -39,7 +40,7 @@ const Header2 = () => {
 
   return (
     <div className="header2 mt-[66px]">
-      <div className="flex items-center justify-start flex-1">
+      <div className="flex items-center justify-start flex-1 text-nowrap">
         <img
           src={"/icons/User-icons/home-icon.png"}
           alt="Home"
@@ -56,7 +57,7 @@ const Header2 = () => {
           {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
         </h3>
       </div>
-      <div className="flex flex-1">
+      <div className="sm:flex flex-1 hidden">
         <h3 className="hellohead mx-auto text-white font-openSans">
           {user ? `${user.program.programName}` : "Continue as Guest"}{" "}
           {/* Show "Continue as Guest" if user is null */}

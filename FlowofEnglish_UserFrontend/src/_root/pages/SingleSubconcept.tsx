@@ -5,8 +5,6 @@ import MediaContent from "@/components/MediaContent";
 
 // @ts-ignore
 const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
-
-  console.log("triggered")
   const [timer, setTimer] = useState(countdown);
 
   useEffect(() => {
@@ -14,60 +12,176 @@ const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
       const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
       return () => clearInterval(interval);
     } else {
-      console.log("redirecting...")
       onRedirect();
     }
   }, [timer, onRedirect]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
-      <div className="bg-[#375368] p-6 rounded-lg text-center shadow-lg animate-slideDown max-w-sm w-full">
-        <p className="text-white text-sm font-bold mb-2">
+    <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
+      <div
+        className=" text-center shadow-lg max-w-sm w-full"
+        style={{
+          backgroundColor: "#375368",
+          borderColor: "#375368",
+          minWidth: "300px",
+          minHeight: "180px",
+          borderRadius: "4px",
+          boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
+        }}
+      >
+        <p
+          className="mb-2 tracking-wide text-gray-100"
+          style={{
+            // color: "#ffffff",
+            fontSize: "16px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+            // margin: "0px 10px",
+            padding: "15px 0px",
+            borderBottom: "1px solid #ffffff",
+            // backgroundColor: "#727887",
+          }}
+        >
           Next Activity Unlocked
         </p>
-        <hr className="border-t border-gray-500" />
-        <h4 className="text-green-400 text-2xl font-bold mt-4">Hurrah! 😄</h4>
-        <p className="text-white text-lg font-bold mt-4">
+        {/* <hr
+          style={{
+            borderTop: "1px solid #ffffff",
+            opacity: 0.5,
+          }}
+        /> */}
+        <h4
+          className="mt-4 tracking-wide"
+          style={{
+            color: "#90EE90", // Green shade
+            fontSize: "20px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+          }}
+        >
+          Hurrah! 😄
+        </h4>
+        <p
+          className="mt-4 text-gray-100"
+          style={{
+            // color: "#ffffff",
+            fontSize: "22px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+            padding: "0px 20px",
+          }}
+        >
           You have unlocked the next activity.
         </p>
-        <p className="text-gray-300 text-sm mt-2">
+        <p
+          className="mt-2 mb-4"
+          style={{
+            color: "#B0B0B0", // Gray shade
+            fontSize: "13px",
+            fontWeight: "normal",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+          }}
+        >
           Redirecting to activities page in{" "}
-          <span className="font-bold">{timer}</span> seconds.
+          <span style={{ fontWeight: "bold" }}>{timer}</span> seconds.
         </p>
       </div>
     </div>
   );
 };
+
 // @ts-ignore
-const ErrorOverlay = ({ countdown = 3, onClose }) => {
-  const [visible, setVisible] = useState(true);
+const ErrorOverlay = ({ countdown = 5, onClose }) => {
+  const [timer, setTimer] = useState(countdown);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setVisible(false);
+    if (timer > 0) {
+      const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+      return () => clearInterval(interval);
+    } else {
+      // Trigger the close function once the countdown reaches 0
       onClose();
-    }, countdown * 1000);
-
-    return () => clearTimeout(timeout);
-  }, [countdown, onClose]);
+    }
+  }, [timer, onClose]);
 
   return (
-    visible && (
-      <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
-        <div className="bg-[#375368] p-6 rounded-lg text-center shadow-lg animate-slideDown max-w-sm w-full">
-          <p className="text-white text-sm font-bold mb-2">
-            Oops! Something went wrong
-          </p>
-          <hr className="border-t border-gray-500" />
-          <h4 className="text-red-400 text-2xl font-bold mt-4">Try again 😥</h4>
-          <p className="text-white text-lg font-bold mt-4">
-            You need to attempt this activity again.
-          </p>
-        </div>
+    <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
+      <div
+        className="text-center shadow-lg max-w-sm w-full"
+        style={{
+          backgroundColor: "#375368",
+          borderColor: "#375368",
+          minWidth: "300px",
+          minHeight: "180px",
+          borderRadius: "4px",
+          boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
+        }}
+      >
+        <p
+          className="mb-2 tracking-wide text-gray-100"
+          style={{
+            fontSize: "16px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+            padding: "15px 0px",
+            borderBottom: "1px solid #ffffff",
+          }}
+        >
+          Oops! Something went wrong
+        </p>
+        <h4
+          className="mt-4 tracking-wide"
+          style={{
+            color: "#FF7F7F", // Red shade for error
+            fontSize: "20px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+          }}
+        >
+          Try again 😥
+        </h4>
+        <p
+          className="mt-4 text-gray-100"
+          style={{
+            fontSize: "22px",
+            fontWeight: "bold",
+            textShadow: "0 1px 0 #f3f3f3",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+            padding: "0px 20px",
+          }}
+        >
+          You need to attempt this activity again.
+        </p>
+        <p
+          className="mt-2 mb-4"
+          style={{
+            color: "#B0B0B0", // Gray shade
+            fontSize: "13px",
+            fontWeight: "normal",
+            fontFamily: "'OpenSans-Regular', sans-serif",
+            lineHeight: "1.3",
+          }}
+        >
+          Closing in <span style={{ fontWeight: "bold" }}>{timer}</span>{" "}
+          seconds.
+        </p>
       </div>
-    )
+    </div>
   );
 };
+
+
+
 
 const SingleSubconcept = () => {
   console.log("rendered");
@@ -220,7 +334,7 @@ const [showSubmit, setShowSubmit] = useState(
         />
       )}
       {errorOverlay && (
-        <ErrorOverlay countdown={3} onClose={() => setErrorOverlay(false)} />
+        <ErrorOverlay countdown={5} onClose={() => setErrorOverlay(false)} />
       )}
       <div className="flex flex-col md:flex-row w-full">
         {/* Iframe Container */}
