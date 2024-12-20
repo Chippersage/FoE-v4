@@ -108,8 +108,12 @@ export default function UserPage() {
   const [organizations, setOrganizations] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [subscriptionForm, setSubscriptionForm] = useState({
-    organizationId: '',
-    programId: '',
+    program: {
+      programId: '',
+    },
+    organization: {
+      organizationId: '',
+    },
     maxCohorts: '',
   });
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email); // Validate proper email format
@@ -125,10 +129,15 @@ export default function UserPage() {
     // Fetch organizations and programs data
     const fetchData = async () => {
       try {
-        const orgsResponse = await getOrgs();
+        console.log('Fetching organizations and programs data...');
+      const orgsResponse = await getOrgs();
+      console.log('Organizations data fetched:', orgsResponse);
+
         const programsResponse = await getPrograms();
-        setOrganizations(orgsResponse.data);
-        setPrograms(programsResponse.data);
+        console.log('Programs data fetched:', programsResponse);
+
+        setOrganizations(orgsResponse);
+        setPrograms(programsResponse);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -147,9 +156,31 @@ export default function UserPage() {
 
   const handleSubscriptionFormChange = (event) => {
     const { name, value } = event.target;
-    setSubscriptionForm((prev) => ({ ...prev, [name]: value }));
+  
+    if (name === 'organizationId') {
+      setSubscriptionForm((prev) => ({
+        ...prev,
+        organization: {
+          ...prev.organization,
+          organizationId: value,
+        },
+      }));
+    } else if (name === 'programId') {
+      setSubscriptionForm((prev) => ({
+        ...prev,
+        program: {
+          ...prev.program,
+          programId: value,
+        },
+      }));
+    } else {
+      setSubscriptionForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
-
+  
   
   const handleCreateSubscription = async () => {
     try {
@@ -1085,7 +1116,7 @@ sx={{
             <InputLabel>Organization</InputLabel>
             <Select
               name="organizationId"
-              value={subscriptionForm.organizationId}
+              value={subscriptionForm.organization?.organizationId || ''}
               onChange={handleSubscriptionFormChange}
             >
               {organizations.length > 0 ? (
@@ -1103,7 +1134,7 @@ sx={{
             <InputLabel>Program</InputLabel>
             <Select
               name="programId"
-              value={subscriptionForm.programId}
+              value={subscriptionForm.program?.programId || ''}
               onChange={handleSubscriptionFormChange}
             >
               {programs.length > 0 ? (
