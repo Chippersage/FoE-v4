@@ -115,6 +115,12 @@ export default function UserPage() {
       organizationId: '',
     },
     maxCohorts: '',
+    startDate: '',
+    endDate: '',
+    transactionId: '',
+    transactionType: '',
+    transactionDate: '',
+    amountPaid: '',
   });
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email); // Validate proper email format
   const [countryCode, setCountryCode] = useState('91'); // For storing country code
@@ -1151,9 +1157,63 @@ sx={{
           <TextField
             fullWidth
             margin="normal"
+            label="Start Date"
+            type="date"
+            name="Start Date"
+            InputLabelProps={{ shrink: true }}
+            value={subscriptionForm.startDate}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="End Date"
+            type = "date"
+            name="EndDate"
+            InputLabelProps={{ shrink: true }}
+            value={subscriptionForm.endDate}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
             label="Max Cohorts"
             name="maxCohorts"
             value={subscriptionForm.maxCohorts}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Transaction Id"
+            name="Transaction Id"
+            value={subscriptionForm.transactionId}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Transaction Type"
+            name="Transaction Type"
+            value={subscriptionForm.transactionType}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Transaction Date"
+            type="date"
+            name="Transaction Date"
+            InputLabelProps={{ shrink: true }}
+            value={subscriptionForm.transactionDate}
+            onChange={handleSubscriptionFormChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Amount Paid"
+            name="Amount Paid"
+            value={subscriptionForm.amountPaid}
             onChange={handleSubscriptionFormChange}
           />
         </DialogContent>
