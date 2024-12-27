@@ -434,7 +434,7 @@ export default function SubConceptsPage() {
                           index === 0 || index === totalSteps - 1 ? "70" : "30"
                         }
                         color="white"
-                        className="object-contain"
+                        className={`object-contain ${(index === totalSteps - 1) && (unitCompletionStatus != "yes") && "opacity-50"}`}
                       />
 
                       {isCompleted && (
@@ -466,7 +466,7 @@ export default function SubConceptsPage() {
                       x={point.x - 100}
                       y={point.y + 20}
                       width="200"
-                      height="40"
+                      height="500"
                     >
                       <div
                         className={`${
@@ -476,15 +476,19 @@ export default function SubConceptsPage() {
                           position: "absolute",
                           left: "50%",
                           transform: "translateX(-50%)",
-                          whiteSpace: "nowrap",
+                          whiteSpace: "normal",
                           zIndex: 1000,
+                          maxWidth: "200px", // Restrict the width to enable ellipsis
                         }}
                       >
                         {subconcept
                           ? subconcept.subconceptDesc
                           : index === 0
                           ? "Start"
-                          : "Finish"}
+                          : (index === totalSteps - 1 && unitCompletionStatus != "yes")
+                          ? "Complete all the activities"
+                          : "Finish"
+                        }
                       </div>
                     </foreignObject>
                   )}
