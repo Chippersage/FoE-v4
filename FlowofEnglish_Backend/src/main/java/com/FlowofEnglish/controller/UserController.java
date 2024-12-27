@@ -173,10 +173,20 @@ public class UserController {
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
         
-        Optional<User> userOpt = Optional.ofNullable(userRepository.findByUserId(userId));
+      //  Optional<User> userOpt = Optional.ofNullable(userRepository.findByUserId(userId));
+        
+     // Perform a case-sensitive lookup in the database
+        Optional<User> userOpt = userRepository.findByUserId(userId); // Ensure findByUserId is case-sensitive
+
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            
+         // Validate exact case-sensitive userId
+            if (!user.getUserId().equals(userId)) {
+                response.put("error", "Invalid userId. Please enter the correct case-sensitive userId.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
             
          // Check user type
             if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
