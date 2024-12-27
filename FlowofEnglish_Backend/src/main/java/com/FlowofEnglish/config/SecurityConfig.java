@@ -60,6 +60,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/programconceptsmappings/**").permitAll()
                     .requestMatchers("/api/v1/subscriptions/**").permitAll()
                     .requestMatchers("/api/v1/reports/**").permitAll()
+                    .requestMatchers("/api/v1/assignments/**").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF protection
