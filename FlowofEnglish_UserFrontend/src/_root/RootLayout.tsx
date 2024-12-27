@@ -14,7 +14,7 @@ const handleOnClose = () => {
 
   return (
     <div className="w-full md:flex">
-      {cohortReminder && cohortReminder !== null &&
+      {cohortReminder && cohortReminder !== null && cohortReminder !== undefined &&
         <AnnouncementBanner isVisible={true} onClose={handleOnClose} message={cohortReminder}/>
       }
       <Header />

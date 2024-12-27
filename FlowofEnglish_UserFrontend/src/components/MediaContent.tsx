@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
+// @ts-ignore
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
+  // @ts-ignore
   const userData = JSON.parse(localStorage.getItem("userData"));
   const [isComplete, setIsComplete] = useState(false);
   const contentRef = useRef(null);
@@ -10,7 +11,7 @@ const MediaContent = ({ subconceptData }) => {
   const [successCountdown, setSuccessCountdown] = useState(3);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorCountdown, setErrorCountdown] = useState(3);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Handle countdown for success overlay
   useEffect(() => {
@@ -39,7 +40,9 @@ const MediaContent = ({ subconceptData }) => {
   useEffect(() => {
     if (
       subconceptData.subconceptType === "audio" ||
-      subconceptData.subconceptType === "video"
+      subconceptData.subconceptType === "video" ||
+      subconceptData.subconceptType === "assignment_audio" ||
+      subconceptData.subconceptType === "assignment_video"
     ) {
       const contentElement = contentRef.current;
       //@ts-ignore
@@ -60,26 +63,30 @@ const MediaContent = ({ subconceptData }) => {
     setPlayedPercentage((playedTime / totalTime) * 100);
   };
 
-
   const handleComplete = () => {
     setIsComplete(true);
     if (
       subconceptData.subconceptType === "audio" ||
-      subconceptData.subconceptType === "video"
+      subconceptData.subconceptType === "video" ||
+      subconceptData.subconceptType === "assignment_audio" ||
+      subconceptData.subconceptType === "assignment_video"
     ) {
+      // @ts-ignore
       contentRef.current.pause();
     }
     sendAttemptData(userData);
   };
 
   const handleGoBack = () => {
-    navigate(`/subconcepts/${userData?.unitId}`)
+    navigate(`/subconcepts/${userData?.unitId}`);
   };
-
+  // @ts-ignore
   const sendAttemptData = (userData) => {
     const finalScore =
       subconceptData.subconceptType === "video" ||
-      subconceptData.subconceptType === "audio"
+      subconceptData.subconceptType === "audio" ||
+      subconceptData.subconceptType === "assignment_audio" ||
+      subconceptData.subconceptType === "assignment_video"
         ? playedPercentage >= 80
           ? subconceptData?.subconceptMaxscore
           : 0
@@ -124,10 +131,10 @@ const MediaContent = ({ subconceptData }) => {
         console.error("Error:", error);
         setShowErrorPopup(true);
         setErrorCountdown(5); // Reset error countdown
-        setIsComplete(false)
+        setIsComplete(false);
       });
   };
-
+  // @ts-ignore
   const renderOverlay = (type) => {
     const countdown = type === "success" ? successCountdown : errorCountdown;
     const title =
@@ -211,10 +218,11 @@ const MediaContent = ({ subconceptData }) => {
   };
 
   const renderContent = () => {
-    console.log(subconceptData)
+    console.log(subconceptData);
     const { subconceptType, subconceptLink } = subconceptData;
     switch (subconceptType) {
       case "audio":
+      case "assignment_audio":
         return (
           <audio
             ref={contentRef}
@@ -227,6 +235,7 @@ const MediaContent = ({ subconceptData }) => {
           </audio>
         );
       case "video":
+      case "assignment_video":
         return (
           <video
             ref={contentRef}
@@ -239,6 +248,7 @@ const MediaContent = ({ subconceptData }) => {
           </video>
         );
       case "image":
+      case "assignment_image":
         return (
           <img
             src={subconceptLink}
@@ -252,6 +262,7 @@ const MediaContent = ({ subconceptData }) => {
           />
         );
       case "pdf":
+      case "assignment_pdf":
         return (
           <div
             onContextMenu={(e) => e.preventDefault()} // Disable right-click
@@ -278,7 +289,6 @@ const MediaContent = ({ subconceptData }) => {
         return <p>Something went wrong!</p>;
     }
   };
-
 
   return (
     <>
@@ -370,6 +380,5 @@ const styles = {
     maxWidth: "200px",
   },
 };
-
 
 export default MediaContent;
