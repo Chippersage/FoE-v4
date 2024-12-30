@@ -3,12 +3,29 @@ import { useMediaRecorder } from "../hooks/useMediaRecorder";
 import { motion } from "framer-motion";
 import { Mic, Video, StopCircle, Trash2 } from "lucide-react";
 
-export function MediaRecorder() {
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+interface MediaRecorderProps {
+  onContentChange: (hasContent: boolean) => void;
+  disabled: boolean;
+}
+
+export function MediaRecorder({
+  onContentChange,
+  disabled,
+}: MediaRecorderProps) {
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
   const {
     isRecording,
     recordedBlob,
     liveStream,
+    duration,
     startRecording,
     stopRecording,
     clearRecording,
@@ -33,27 +50,38 @@ export function MediaRecorder() {
     }
   }, [liveStream, mediaType]);
 
+  useEffect(() => {
+    onContentChange(!!recordedBlob);
+  }, [recordedBlob, onContentChange]);
+
+  const handleClearRecording = () => {
+    clearRecording();
+    onContentChange(false);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex space-x-4">
         <button
           onClick={() => setMediaType("audio")}
-          className={`px-4 py-2 rounded-[5px] ${
+          className={`px-4 py-2 rounded-md ${
             mediaType === "audio"
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-gray-700"
-          }`}
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          disabled={disabled}
         >
           <Mic className="inline-block mr-2" size={18} />
           Audio
         </button>
         <button
           onClick={() => setMediaType("video")}
-          className={`px-4 py-2 rounded-[5px] ${
+          className={`px-4 py-2 rounded-md ${
             mediaType === "video"
               ? "bg-blue-500 text-white"
               : "bg-gray-200 text-gray-700"
-          }`}
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          disabled={disabled}
         >
           <Video className="inline-block mr-2" size={18} />
           Video
@@ -65,7 +93,10 @@ export function MediaRecorder() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={startRecording}
-            className="px-4 py-2 bg-green-500 text-white rounded-[5px]"
+            className={`px-4 py-2 bg-green-500 text-white rounded-md ${
+              disabled ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={disabled}
           >
             Start Recording
           </motion.button>
@@ -75,7 +106,7 @@ export function MediaRecorder() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={stopRecording}
-            className="px-4 py-2 bg-red-500 text-white rounded-[5px]"
+            className="px-4 py-2 bg-red-500 text-white rounded-md"
           >
             <StopCircle className="inline-block mr-2" size={18} />
             Stop Recording
@@ -85,8 +116,11 @@ export function MediaRecorder() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={clearRecording}
-            className="px-4 py-2 bg-gray-500 text-white rounded-[5px]"
+            onClick={handleClearRecording}
+            className={`px-4 py-2 bg-gray-500 text-white rounded-md ${
+              disabled ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={disabled}
           >
             <Trash2 className="inline-block mr-2" size={18} />
             Clear Recording
@@ -95,15 +129,20 @@ export function MediaRecorder() {
       </div>
       <div className="mt-4">
         {mediaType === "video" && (
-          <div className="relative aspect-video bg-black rounded-[5px] overflow-hidden">
+          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
             {liveStream ? (
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded-md">
+                  {formatDuration(duration)}
+                </div>
+              </>
             ) : recordedBlob ? (
               <video
                 src={URL.createObjectURL(recordedBlob)}
@@ -118,11 +157,14 @@ export function MediaRecorder() {
           </div>
         )}
         {mediaType === "audio" && (
-          <div className="bg-gray-100 p-4 rounded-[5px]">
+          <div className="bg-gray-100 p-4 rounded-lg">
             {liveStream ? (
-              <div className="flex items-center justify-center h-24">
+              <div className="flex flex-col items-center justify-center h-24">
                 <audio ref={audioRef} autoPlay muted className="hidden" />
                 <Mic size={48} className="text-blue-500 animate-pulse" />
+                <div className="mt-2 text-lg font-semibold">
+                  {formatDuration(duration)}
+                </div>
               </div>
             ) : recordedBlob ? (
               <audio
@@ -138,6 +180,16 @@ export function MediaRecorder() {
           </div>
         )}
       </div>
+      {recordedBlob && (
+        <input
+          type="file"
+          id="recorded-blob"
+          name="recorded-blob"
+          className="hidden"
+          value=""
+          onChange={() => {}}
+        />
+      )}
     </div>
   );
 }

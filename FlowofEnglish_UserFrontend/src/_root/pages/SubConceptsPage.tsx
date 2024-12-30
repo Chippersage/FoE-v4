@@ -9,7 +9,7 @@ import {
   // Play,
   // Flag,
 } from "lucide-react";
-// import PenNib from "@/components/PenNib";
+import PenNib from "@/components/activityIcons/PenNib";
 import Book from "@/components/activityIcons/Book";
 import Camera from "@/components/activityIcons/Camera";
 import Speaker from "@/components/activityIcons/Speaker";
@@ -51,7 +51,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  // html: PenNib,
+  html: PenNib,
   pdf: Book,
   video: Camera,
   audio: Speaker,
