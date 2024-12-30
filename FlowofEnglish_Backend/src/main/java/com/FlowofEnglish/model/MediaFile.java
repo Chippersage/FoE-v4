@@ -9,10 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(name = "MediaFiles")
 public class MediaFile {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "file_id")
-    private Long fileId;
+	@Id
+    @Column(name = "file_id", nullable = false, unique = true, length = 255)
+    private String fileId;
 
     @Column(name = "file_name", nullable = false)
     private String fileName;
@@ -33,15 +32,16 @@ public class MediaFile {
     @Column(name = "uuid", nullable = false, unique = true)
     private String uuid;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     
     // Getters, Setters, Constructors
   
 	public MediaFile() {
 		}
-
-	
-	public MediaFile(Long fileId, String fileName, String fileType, Long fileSize, String filePath,
-			OffsetDateTime uploadedAt, String uuid) {
+	public MediaFile(String fileId, String fileName, String fileType, Long fileSize, String filePath,
+			OffsetDateTime uploadedAt, String uuid, User user) {
 		super();
 		this.fileId = fileId;
 		this.fileName = fileName;
@@ -50,77 +50,72 @@ public class MediaFile {
 		this.filePath = filePath;
 		this.uploadedAt = uploadedAt;
 		this.uuid = uuid;
+		this.user = user;
 	}
 
-
-	public Long getFileId() {
+		public String getFileId() {
 		return fileId;
 	}
-
-	public void setFileId(Long fileId) {
+	public void setFileId(String fileId) {
 		this.fileId = fileId;
 	}
-
 	public String getFileName() {
 		return fileName;
 	}
-
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
 	}
-
 	public String getFileType() {
 		return fileType;
 	}
-
 	public void setFileType(String fileType) {
 		this.fileType = fileType;
 	}
-
 	public Long getFileSize() {
 		return fileSize;
 	}
-
 	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
-
 	public String getFilePath() {
 		return filePath;
 	}
-
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
-
 	public OffsetDateTime getUploadedAt() {
 		return uploadedAt;
 	}
-
 	public void setUploadedAt(OffsetDateTime uploadedAt) {
 		this.uploadedAt = uploadedAt;
 	}
-
 	public String getUuid() {
 		return uuid;
 	}
-
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
-    
-	 @Override
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+	
+		@Override
 	public String toString() {
 		return "MediaFile [fileId=" + fileId + ", fileName=" + fileName + ", fileType=" + fileType + ", fileSize="
-				+ fileSize + ", filePath=" + filePath + ", uploadedAt=" + uploadedAt + ", uuid=" + uuid + "]";
+				+ fileSize + ", filePath=" + filePath + ", uploadedAt=" + uploadedAt + ", uuid=" + uuid + ", user="
+				+ user + "]";
 	}
-
 		// Method to ensure UUID and generate fileId before persisting
 	    @PrePersist
-	    private void ensureUuid() {
+	    private void generateFileId() {
 	        if (this.uuid == null) {
 	            this.uuid = UUID.randomUUID().toString();
 	        }
+	        this.fileId = user.getUserId() + "-" + UUID.randomUUID().toString().substring(0, 8);
 	    }
 
 }
