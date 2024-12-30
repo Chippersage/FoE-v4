@@ -2,7 +2,6 @@ package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,11 +11,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "UserAssignments")
 public class UserAssignment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "assignment_id")
-    private Long assignmentId;
-
+	@Id
+    @Column(name = "assignment_id", nullable = false, unique = true, length = 255)
+    private String assignmentId;
+	
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -67,7 +65,7 @@ public class UserAssignment {
     public UserAssignment() {
 		}
 
-	public UserAssignment(Long assignmentId, User user, Cohort cohort, Program program, Stage stage, Unit unit,
+	public UserAssignment(String assignmentId, User user, Cohort cohort, Program program, Stage stage, Unit unit,
 			Subconcept subconcept, MediaFile submittedFile, MediaFile correctedFile, OffsetDateTime submittedDate,
 			OffsetDateTime correctedDate, Integer score, String uuid) {
 		super();
@@ -86,13 +84,13 @@ public class UserAssignment {
 		this.uuid = uuid;
 	}
 
-	// Getters and Setters
 
-	public Long getAssignmentId() {
+	// Getters and Setters
+public String getAssignmentId() {
 		return assignmentId;
 	}
 
-	public void setAssignmentId(Long assignmentId) {
+	public void setAssignmentId(String assignmentId) {
 		this.assignmentId = assignmentId;
 	}
 
@@ -199,26 +197,13 @@ public class UserAssignment {
 				+ submittedFile + ", correctedFile=" + correctedFile + ", submittedDate=" + submittedDate
 				+ ", correctedDate=" + correctedDate + ", score=" + score + ", uuid=" + uuid + "]";
 	}
-	
-// Ensure UUID and default timestamps to UTC
-    @PrePersist
-    @PreUpdate
-    private void initializeOrAdjustTimestamps() {
-        if (this.uuid == null) {
-            this.uuid = UUID.randomUUID().toString();
-        }
 
-        ZoneOffset utcZoneOffset = ZoneOffset.UTC;
-
-        if (this.submittedDate == null) {
-            this.submittedDate = OffsetDateTime.now(utcZoneOffset);
-        }
-
-        if (this.correctedDate == null) {
-            this.correctedDate = OffsetDateTime.now(utcZoneOffset);
-        }
-    }
-
-	
+	 @PrePersist
+	    private void generateAssignmentId() {
+	        if (this.uuid == null) {
+	            this.uuid = UUID.randomUUID().toString();
+	        }
+	        this.assignmentId = user.getUserId() + "-A" + UUID.randomUUID().toString().substring(0, 6);
+	 }
 
 }
