@@ -1,16 +1,39 @@
-import { useFileUpload } from "../hooks/useFileUpload";
+import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { FileIcon, X } from "lucide-react";
 
-export function FileUpload() {
-  const { files, handleFileUpload, removeFile } = useFileUpload();
+interface FileUploadProps {
+  onContentChange: (hasContent: boolean) => void;
+  disabled: boolean;
+}
+
+export function FileUpload({ onContentChange, disabled }: FileUploadProps) {
+  const [file, setFile] = React.useState<File | null>(null);
+
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        const lastFile = event.target.files[event.target.files.length - 1];
+        setFile(lastFile);
+        onContentChange(true);
+      }
+    },
+    [onContentChange]
+  );
+
+  const removeFile = useCallback(() => {
+    setFile(null);
+    onContentChange(false);
+  }, [onContentChange]);
 
   return (
     <div>
       <div className="mb-4">
         <label
           htmlFor="file-upload"
-          className="flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-[5px] appearance-none cursor-pointer hover:border-gray-400 focus:outline-none"
+          className={`flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-gray-400 focus:outline-none ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <span className="flex items-center space-x-2">
             <svg
@@ -28,7 +51,7 @@ export function FileUpload() {
               />
             </svg>
             <span className="font-medium text-gray-600">
-              Drop files to Attach, or{" "}
+              Drop file to Attach, or{" "}
               <span className="text-blue-600 underline">browse</span>
             </span>
           </span>
@@ -37,34 +60,32 @@ export function FileUpload() {
             name="file-upload"
             type="file"
             className="hidden"
-            multiple
             onChange={handleFileUpload}
             accept=".pdf,image/*,video/*,audio/*"
+            disabled={disabled}
           />
         </label>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        {files.map((file, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="relative flex items-center p-2 bg-gray-100 rounded-[5px]"
+      {file && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="relative flex items-center p-2 bg-gray-100 rounded-md"
+        >
+          <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700 truncate">
+            {file.name}
+          </span>
+          <button
+            onClick={removeFile}
+            className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+            disabled={disabled}
           >
-            <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700 truncate">
-              {file.name}
-            </span>
-            <button
-              onClick={() => removeFile(index)}
-              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-            >
-              <X size={16} />
-            </button>
-          </motion.div>
-        ))}
-      </div>
+            <X size={16} />
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
