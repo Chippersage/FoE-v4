@@ -21,10 +21,10 @@ public interface UserAssignmentService {
             String stageId, String unitId, String subconceptId, 
             MultipartFile file) throws IOException;
 
-UserAssignment submitCorrectedAssignment(Long assignmentId, Integer score, 
+UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
                   MultipartFile correctedFile) throws IOException;
 
-    UserAssignment getAssignmentById(Long assignmentId);
-    MediaFile getSubmittedFile(Long assignmentId); // Add this line
-    MediaFile getCorrectedFile(Long assignmentId);
+    UserAssignment getAssignmentById(String assignmentId);
+    MediaFile getSubmittedFile(String assignmentId); // Add this line
+    MediaFile getCorrectedFile(String assignmentId);
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface UserAssignmentRepository extends JpaRepository<UserAssignment, Long> {
+public interface UserAssignmentRepository extends JpaRepository<UserAssignment, String> {
 
     List<UserAssignment> findByUserUserId(String userId);
 

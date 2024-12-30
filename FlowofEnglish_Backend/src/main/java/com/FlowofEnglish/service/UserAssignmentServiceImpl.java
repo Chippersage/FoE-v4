@@ -5,6 +5,8 @@ import com.FlowofEnglish.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,6 +46,8 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     @Autowired
     private SubconceptRepository subconceptRepository;
 
+    @Autowired
+    private S3Client s3Client;
 
     private static final String UPLOAD_DIR = "uploads/";
     private static final long MAX_PDF_SIZE = 1 * 1024 * 1024; // 1MB
@@ -108,7 +112,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return userAssignmentRepository.save(assignment);
     }
 
-    public MediaFile getSubmittedFile(Long assignmentId) {
+    public MediaFile getSubmittedFile(String assignmentId) {
         Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
         if (assignmentOpt.isPresent()) {
             MediaFile file = assignmentOpt.get().getSubmittedFile();
@@ -118,7 +122,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         }
     }
 
-    public MediaFile getCorrectedFile(Long assignmentId) {
+    public MediaFile getCorrectedFile(String assignmentId) {
         Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
         if (assignmentOpt.isPresent()) {
             MediaFile file = assignmentOpt.get().getSubmittedFile();
@@ -129,7 +133,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     }
     
     @Override
-    public UserAssignment submitCorrectedAssignment(Long assignmentId, Integer score, 
+    public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
                                                   MultipartFile correctedFile) throws IOException {
         UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
             .orElseThrow(() -> new RuntimeException("Assignment not found"));
@@ -185,7 +189,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     }
     
     @Override
-    public UserAssignment getAssignmentById(Long assignmentId) {
+    public UserAssignment getAssignmentById(String assignmentId) {
         return userAssignmentRepository.findById(assignmentId).orElseThrow(() -> new RuntimeException("Assignment not found"));
     }
 

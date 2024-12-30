@@ -44,7 +44,7 @@ public class UserAssignmentController {
 
     @PostMapping("/{assignmentId}/correct")
     public ResponseEntity<UserAssignment> submitCorrectedAssignment(
-            @PathVariable Long assignmentId,
+            @PathVariable String assignmentId,
             @RequestParam("score") Integer score,
             @RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.ok(userAssignmentService.submitCorrectedAssignment(
@@ -68,7 +68,7 @@ public class UserAssignmentController {
     }
 
     @GetMapping("/{assignmentId}/file")
-    public ResponseEntity<Resource> getSubmittedFile(@PathVariable Long assignmentId) {
+    public ResponseEntity<Resource> getSubmittedFile(@PathVariable String assignmentId) {
         MediaFile file = userAssignmentService.getSubmittedFile(assignmentId);
         Path filePath = Paths.get(file.getFilePath()); // Assuming the file is saved on the disk
         Resource resource = new FileSystemResource(filePath);
@@ -78,7 +78,7 @@ public class UserAssignmentController {
     }
     
     @GetMapping("/{assignmentId}/corrected-file")
-    public ResponseEntity<Resource> getCorrectedFile(@PathVariable Long assignmentId) {
+    public ResponseEntity<Resource> getCorrectedFile(@PathVariable String assignmentId) {
         MediaFile file = userAssignmentService.getCorrectedFile(assignmentId);
         Path filePath = Paths.get(file.getFilePath());
         Resource resource = new FileSystemResource(filePath);
@@ -88,7 +88,7 @@ public class UserAssignmentController {
     }
 
     @GetMapping("/{assignmentId}")
-    public ResponseEntity<UserAssignment> getAssignmentById(@PathVariable Long assignmentId) {
+    public ResponseEntity<UserAssignment> getAssignmentById(@PathVariable String assignmentId) {
         return ResponseEntity.ok(userAssignmentService.getAssignmentById(assignmentId));
     }
 }
