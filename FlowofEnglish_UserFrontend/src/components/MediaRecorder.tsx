@@ -14,11 +14,13 @@ function formatDuration(seconds: number): string {
 interface MediaRecorderProps {
   onContentChange: (hasContent: boolean) => void;
   disabled: boolean;
+  onBlobGenerated: (blob: Blob | null) => void; // Callback for notifying parent of new blob
 }
 
 export function MediaRecorder({
   onContentChange,
   disabled,
+  onBlobGenerated,
 }: MediaRecorderProps) {
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
   const {
@@ -33,6 +35,12 @@ export function MediaRecorder({
   } = useMediaRecorder(mediaType);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Notify parent when a new blob is available
+  useEffect(() => {
+    onBlobGenerated(recordedBlob);
+    onContentChange(!!recordedBlob);
+  }, [recordedBlob, onBlobGenerated, onContentChange]);
 
   useEffect(() => {
     return () => {
@@ -56,6 +64,7 @@ export function MediaRecorder({
 
   const handleClearRecording = () => {
     clearRecording();
+    onBlobGenerated(null); // Notify parent that the recording is cleared
     onContentChange(false);
   };
 
