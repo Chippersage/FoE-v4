@@ -66,6 +66,29 @@ public class UserAssignmentController {
     public ResponseEntity<List<UserAssignment>> getAssignmentsByCohortIdAndUserId(@PathVariable String cohortId, @PathVariable String userId) {
         return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortIdAndUserId(cohortId, userId));
     }
+    
+    @GetMapping("/bulk-download")
+    public ResponseEntity<Resource> downloadAllAssignments(
+            @RequestParam("cohortId") String cohortId) throws IOException {
+        Resource zipResource = userAssignmentService.downloadAllAssignments(cohortId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"assignments.zip\"")
+                .body(zipResource);
+    }
+    
+    @PostMapping("/bulk-upload-corrected")
+    public ResponseEntity<String> uploadCorrectedAssignments(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam("scores") List<Integer> scores,
+            @RequestParam("assignmentIds") List<String> assignmentIds) throws IOException {
+        if (files.size() != scores.size() || scores.size() != assignmentIds.size()) {
+            return ResponseEntity.badRequest().body("Mismatched number of files, scores, and assignment IDs.");
+        }
+        userAssignmentService.uploadCorrectedAssignments(files, scores, assignmentIds);
+        return ResponseEntity.ok("Corrected assignments uploaded successfully.");
+    }
+
+
 
     @GetMapping("/{assignmentId}/file")
     public ResponseEntity<Resource> getSubmittedFile(@PathVariable String assignmentId) {

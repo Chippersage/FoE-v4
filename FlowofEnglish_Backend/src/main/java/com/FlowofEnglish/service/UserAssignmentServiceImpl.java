@@ -5,6 +5,9 @@ import com.FlowofEnglish.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -19,6 +22,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class UserAssignmentServiceImpl implements UserAssignmentService {
@@ -89,14 +94,22 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             .orElseThrow(() -> new RuntimeException("Unit not found"));
         Subconcept subconcept = subconceptRepository.findById(subconceptId)
             .orElseThrow(() -> new RuntimeException("Subconcept not found"));
+        
+     // Check if an assignment already exists for the user with the same program, stage, unit, and subconcept
+        Optional<UserAssignment> existingAssignment = userAssignmentRepository.findByUserUserIdAndProgramProgramIdAndStageStageIdAndUnitUnitIdAndSubconceptSubconceptId(
+            userId, programId, stageId, unitId, subconceptId
+        );
+        if (existingAssignment.isPresent()) {
+            throw new RuntimeException("Assignment for this subconcept in the same unit has already been submitted by the user.");
+        }
 
         // Validate file size
         validateFileSize(file);
 
         // Save the file and create media file entry
         String filePath = saveFileToSystem(file);
-        MediaFile mediaFile = saveFileMetadata(file, filePath);
-
+        MediaFile mediaFile = saveFileMetadata(file, filePath, user);
+        
         // Create new assignment
         UserAssignment assignment = new UserAssignment();
         assignment.setUser(user);
@@ -141,7 +154,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         validateFileSize(correctedFile);
 
         String filePath = saveFileToSystem(correctedFile);
-        MediaFile mediaFile = saveFileMetadata(correctedFile, filePath);
+        MediaFile mediaFile = saveFileMetadata(correctedFile, filePath, assignment.getUser());
 
         assignment.setCorrectedFile(mediaFile);
         assignment.setCorrectedDate(OffsetDateTime.now(ZoneOffset.UTC));
@@ -178,19 +191,64 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return path.toString();
     }
 
-    private MediaFile saveFileMetadata(MultipartFile file, String filePath) {
+    private MediaFile saveFileMetadata(MultipartFile file, String filePath,  User user) {
         MediaFile mediaFile = new MediaFile();
         mediaFile.setFileName(file.getOriginalFilename());
         mediaFile.setFileType(file.getContentType());
         mediaFile.setFileSize(file.getSize());
         mediaFile.setFilePath(filePath);
         mediaFile.setUuid(UUID.randomUUID().toString());
+        mediaFile.setUser(user);
         return mediaFileRepository.save(mediaFile);
     }
     
     @Override
     public UserAssignment getAssignmentById(String assignmentId) {
         return userAssignmentRepository.findById(assignmentId).orElseThrow(() -> new RuntimeException("Assignment not found"));
+    }
+    @Override
+    public Resource downloadAllAssignments(String cohortId) throws IOException {
+        List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
+
+        if (assignments.isEmpty()) {
+            throw new RuntimeException("No assignments found for the cohort.");
+        }
+
+        Path zipPath = Paths.get(UPLOAD_DIR + "assignments_" + cohortId + ".zip");
+        try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+            for (UserAssignment assignment : assignments) {
+                MediaFile file = assignment.getSubmittedFile();
+                Path filePath = Paths.get(file.getFilePath());
+                zipOut.putNextEntry(new ZipEntry(file.getFileName()));
+                Files.copy(filePath, zipOut);
+                zipOut.closeEntry();
+            }
+        }
+
+        return new FileSystemResource(zipPath);
+    }
+    @Override
+    public void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores, 
+                                           List<String> assignmentIds) throws IOException {
+        for (int i = 0; i < files.size(); i++) {
+            String assignmentId = assignmentIds.get(i);
+            MultipartFile correctedFile = files.get(i);
+            Integer score = scores.get(i);
+
+            UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("Assignment not found for ID: " + assignmentId));
+
+            validateFileSize(correctedFile);
+
+            String filePath = saveFileToSystem(correctedFile);
+            MediaFile mediaFile = saveFileMetadata(correctedFile, filePath, assignment.getUser());
+
+            assignment.setCorrectedFile(mediaFile);
+            assignment.setCorrectedDate(OffsetDateTime.now(ZoneOffset.UTC));
+            assignment.setScore(score);
+
+            userAssignmentRepository.save(assignment);
+        }
     }
 
 }
