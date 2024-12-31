@@ -8,7 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "UserAssignments")
+@Table(name = "UserAssignments",
+uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "user_id", "unit_id", "subconcept_id"}))
 public class UserAssignment {
 
 	@Id
