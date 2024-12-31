@@ -22,6 +22,7 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
 
 
   const handleContentChange = useCallback((hasContent: boolean) => {
@@ -35,9 +36,6 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
       const fileUploadInput = document.getElementById(
         "file-upload"
       ) as HTMLInputElement;
-      const mediaRecorderInput = document.getElementById(
-        "recorded-blob"
-      ) as HTMLInputElement;
 
       const formData = new FormData();
 
@@ -50,12 +48,12 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
           "file",
           fileUploadInput.files[fileUploadInput.files.length - 1]
         );
-      } else if (
-        mediaRecorderInput &&
-        mediaRecorderInput.files &&
-        mediaRecorderInput.files.length > 0
-      ) {
-        formData.append("file", mediaRecorderInput.files[0]);
+      } else if (recordedBlob) {
+        formData.append(
+          "file",
+          recordedBlob,
+          `recording-${Date.now()}.webm`
+        );
       } else {
         throw new Error("No file selected");
       }
@@ -143,6 +141,7 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
               <MediaRecorder
                 onContentChange={handleContentChange}
                 disabled={isLoading}
+                onBlobGenerated={setRecordedBlob}
               />
             )}
             <div className="mt-6 flex justify-end">
