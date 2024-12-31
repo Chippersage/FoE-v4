@@ -9,14 +9,14 @@ import {
   // Play,
   // Flag,
 } from "lucide-react";
-// import PenNib from "@/components/PenNib";
-import Book from "@/components/Book";
-import Camera from "@/components/Camera";
-import Speaker from "@/components/Speaker";
-import Picture from "@/components/Picture";
+import PenNib from "@/components/activityIcons/PenNib";
+import Book from "@/components/activityIcons/Book";
+import Camera from "@/components/activityIcons/Camera";
+import Speaker from "@/components/activityIcons/Speaker";
+import Picture from "@/components/activityIcons/Picture";
 // import ReadAlongBook from "@/components/ReadAlongBook";
-import Start from "@/components/Start";
-import QnA from "@/components/QnA";
+import Start from "@/components/activityIcons/Start";
+import QnA from "@/components/activityIcons/QnA";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -24,20 +24,19 @@ import axios from "axios";
 import Header2 from "@/components/Header2";
 import { useUserContext } from "@/context/AuthContext";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import Finish from "@/components/Finish";
-import FIB from "@/components/FIB";
-import JumbledWords from "@/components/JumbledWords";
-import Grammar from "@/components/Grammar";
-import Read from "@/components/Read";
-import Spelling from "@/components/Spelling";
-import Comprehension from "@/components/Comprehension";
-import TrueOrFalse from "@/components/TrueOrFalse";
-import Listen from "@/components/Listen";
-import Match from "@/components/Match";
-import TeacherAssist from "@/components/TeacherAssist";
-import Write from "@/components/Write";
-import KidFriendlyModal from "@/components/CongratulatoryModal";
-
+import Finish from "@/components/activityIcons/Finish";
+import FIB from "@/components/activityIcons/FIB";
+import JumbledWords from "@/components/activityIcons/JumbledWords";
+import Grammar from "@/components/activityIcons/Grammar";
+import Read from "@/components/activityIcons/Read";
+import Spelling from "@/components/activityIcons/Spelling";
+import Comprehension from "@/components/activityIcons/Comprehension";
+import TrueOrFalse from "@/components/activityIcons/TrueOrFalse";
+import Listen from "@/components/activityIcons/Listen";
+import Match from "@/components/activityIcons/Match";
+import TeacherAssist from "@/components/activityIcons/TeacherAssist";
+import Write from "@/components/activityIcons/Write";
+import KidFriendlyModal from "@/components/modals/CongratulatoryModal";
 
 interface Subconcept {
   subconceptId: string;
@@ -52,7 +51,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  // html: PenNib,
+  html: PenNib,
   pdf: Book,
   video: Camera,
   audio: Speaker,
@@ -68,7 +67,7 @@ const iconMap = {
   match: Match,
   read: Read,
   teacher_assist: TeacherAssist,
-  write: Write, 
+  write: Write,
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -106,8 +105,8 @@ export default function SubConceptsPage() {
   const [unitDescription, setUnitDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [celebratedStageName, setCelebratedStageName] = useState("");
-  const navigate = useNavigate()
-  
+  const navigate = useNavigate();
+
   const fetchSubconcepts = async () => {
     try {
       const response = await axios.get(
@@ -128,12 +127,12 @@ export default function SubConceptsPage() {
         try {
           const result = await fetchSubconcepts();
           console.log(result);
-          setUnitCompletionStatus(result.unitCompletionStatus)
-          setStageId(result.stageId)
-          setCurrentUnitId(result.unitId)
-          setUnitName(result.unitName)
-          setUnitDescription(result.unitDesc)
-          setCelebratedStageName(result.stageName)
+          setUnitCompletionStatus(result.unitCompletionStatus);
+          setStageId(result.stageId);
+          setCurrentUnitId(result.unitId);
+          setUnitName(result.unitName);
+          setUnitDescription(result.unitDesc);
+          setCelebratedStageName(result.stageName);
           const fetchedSubconcepts: SubconceptData = result.subConcepts;
           setSubconcepts(Object.values(fetchedSubconcepts));
         } catch (err) {
@@ -169,13 +168,13 @@ export default function SubConceptsPage() {
     const allUnits: { unitId: string }[] = allUnitsString
       ? JSON.parse(allUnitsString)
       : [];
-    console.log(allUnits)
+    console.log(allUnits);
     // Find the current unit index
     const currentIndex = allUnits.findIndex((unit) => {
-      console.log(unit)
+      console.log(unit);
       return unit.unitId == unitId;
     });
-    console.log(currentIndex)
+    console.log(currentIndex);
     // Find the next unit
     if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
       const nextUnit = allUnits[currentIndex + 1];
@@ -188,23 +187,26 @@ export default function SubConceptsPage() {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
-    setIsModalOpen(false)
-    navigate("/")
+    setIsModalOpen(false);
+    navigate("/");
   };
 
   const getPath = () => {
-
     const radius = 50; // Radius of the curves at ends
     return `
       M100,${rowHeight / 2} 
       H${pathWidth - 100 - radius} 
       A${radius},${radius} 0 0 1 ${pathWidth - 100},${rowHeight / 2 + radius}
       V${rowHeight + rowHeight / 2 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${rowHeight + rowHeight / 2}
+      A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${
+      rowHeight + rowHeight / 2
+    }
       H${100 + radius}
       A${radius},${radius} 0 0 0 100,${rowHeight + rowHeight / 2 + radius}
     V${rowHeight + rowHeight + rowHeight / 2 - radius} 
-    A${radius},${radius} 0 0 0 ${100 +radius},${rowHeight + rowHeight +rowHeight / 2}
+    A${radius},${radius} 0 0 0 ${100 + radius},${
+      rowHeight + rowHeight + rowHeight / 2
+    }
     H${pathWidth - 100 - radius}
      
     `;
@@ -218,13 +220,13 @@ export default function SubConceptsPage() {
     return { x: point.x, y: point.y };
   };
 
-   const handleFinishClick = () => {
-     setShowConfetti(true); // Trigger confetti animation
-     setAudioPlaying(true); // Play audio
-     setTimeout(() => {
-       setShowConfetti(false); // Hide confetti after 5 seconds
-     }, 5000);
-   };
+  const handleFinishClick = () => {
+    setShowConfetti(true); // Trigger confetti animation
+    setAudioPlaying(true); // Play audio
+    setTimeout(() => {
+      setShowConfetti(false); // Hide confetti after 5 seconds
+    }, 5000);
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -434,7 +436,11 @@ export default function SubConceptsPage() {
                           index === 0 || index === totalSteps - 1 ? "70" : "30"
                         }
                         color="white"
-                        className={`object-contain ${(index === totalSteps - 1) && (unitCompletionStatus != "yes") && "opacity-50"}`}
+                        className={`object-contain ${
+                          index === totalSteps - 1 &&
+                          unitCompletionStatus != "yes" &&
+                          "opacity-50"
+                        }`}
                       />
 
                       {isCompleted && (
@@ -485,10 +491,10 @@ export default function SubConceptsPage() {
                           ? subconcept.subconceptDesc
                           : index === 0
                           ? "Start"
-                          : (index === totalSteps - 1 && unitCompletionStatus != "yes")
+                          : index === totalSteps - 1 &&
+                            unitCompletionStatus != "yes"
                           ? "Complete all the activities"
-                          : "Finish"
-                        }
+                          : "Finish"}
                       </div>
                     </foreignObject>
                   )}
@@ -500,5 +506,4 @@ export default function SubConceptsPage() {
       </div>
     </>
   );
-
 }

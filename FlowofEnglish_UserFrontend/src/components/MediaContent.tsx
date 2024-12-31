@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { UploadModal } from "./modals/UploadModal";
 // @ts-ignore
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -11,6 +12,7 @@ const MediaContent = ({ subconceptData }) => {
   const [successCountdown, setSuccessCountdown] = useState(3);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorCountdown, setErrorCountdown] = useState(3);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Handle countdown for success overlay
@@ -297,7 +299,16 @@ const MediaContent = ({ subconceptData }) => {
       {/* Rest of the component */}
       {/* @ts-ignore */}
       <div style={styles.container}>
-        <h1 style={styles.heading}>Complete the activity</h1>
+        <h1 style={styles.heading}>
+          Complete{" "}
+          {subconceptData?.subconceptType.startsWith("assignment")
+            ? "your assignment"
+            : "the activity"}
+        </h1>
+        <UploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+        />
         {/* @ts-ignore */}
         <div id="contentArea" style={styles.contentArea}>
           {renderContent()}
@@ -306,13 +317,18 @@ const MediaContent = ({ subconceptData }) => {
         <div className="buttons" style={styles.buttons}>
           <button
             onClick={() => {
-              handleComplete();
+              setIsUploadModalOpen(true);
+              // subconceptData?.subconceptType.startsWith("assignment")
+              //   ? setIsUploadModalOpen(true)
+              //   : handleComplete();
               // handleOpenPopup();
             }}
             disabled={isComplete}
             style={isComplete ? styles.disabledButton : styles.button}
           >
-            Complete
+            {subconceptData?.subconceptType.startsWith("assignment")
+              ? "Upload your assignment"
+              : "Complete"}
           </button>
           <button onClick={handleGoBack} style={styles.button}>
             Go Back to Activities
