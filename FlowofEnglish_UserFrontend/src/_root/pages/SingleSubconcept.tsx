@@ -180,9 +180,6 @@ const ErrorOverlay = ({ countdown = 5, onClose }) => {
   );
 };
 
-
-
-
 const SingleSubconcept = () => {
   console.log("rendered");
   const { user } = useUserContext();

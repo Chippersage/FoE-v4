@@ -1,20 +1,32 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { FileIcon, X } from "lucide-react";
 
 interface FileUploadProps {
   onContentChange: (hasContent: boolean) => void;
   disabled: boolean;
+  setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export function FileUpload({ onContentChange, disabled }: FileUploadProps) {
-  const [file, setFile] = React.useState<File | null>(null);
+export function FileUpload({ onContentChange, disabled, setErrorMessage }: FileUploadProps) {
+  const [file, setFile] = useState<{ file: File; previewUrl: string } | null>(
+    null
+  );
+  const [isViewed, setIsViewed] = useState(false);
+
+  const handleFileClick = () => {
+    if (file?.previewUrl) {
+      window.open(file.previewUrl, "_blank", "noopener,noreferrer"); // Open the file in a new tab
+      setIsViewed(true);
+    }
+  };
 
   const handleFileUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.files && event.target.files.length > 0) {
         const lastFile = event.target.files[event.target.files.length - 1];
-        setFile(lastFile);
+        const previewUrl = URL.createObjectURL(lastFile); // Create a temporary URL
+        setFile({ file: lastFile, previewUrl }); // Save the file and its preview URL
         onContentChange(true);
       }
     },
@@ -22,9 +34,17 @@ export function FileUpload({ onContentChange, disabled }: FileUploadProps) {
   );
 
   const removeFile = useCallback(() => {
+    setErrorMessage(null);
     setFile(null);
     onContentChange(false);
   }, [onContentChange]);
+
+  const handleRemoveFile = () => {
+    if (file?.previewUrl) {
+      URL.revokeObjectURL(file.previewUrl); // Release the object URL
+    }
+    removeFile();
+  };
 
   return (
     <div>
@@ -61,7 +81,7 @@ export function FileUpload({ onContentChange, disabled }: FileUploadProps) {
             type="file"
             className="hidden"
             onChange={handleFileUpload}
-            accept=".pdf,image/*,video/*,audio/*"
+            accept=".pdf,image/*"
             disabled={disabled}
           />
         </label>
@@ -71,14 +91,21 @@ export function FileUpload({ onContentChange, disabled }: FileUploadProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="relative flex items-center p-2 bg-gray-100 rounded-md"
+          className={`relative flex items-center p-2 rounded-md ${
+            isViewed ? "bg-blue-100" : "bg-gray-100"
+          }`}
+          onClick={handleFileClick}
+          style={{ cursor: "pointer" }} // Indicate that it's clickable
         >
           <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
           <span className="text-sm font-medium text-gray-700 truncate">
-            {file.name}
+            {file.file?.name}
           </span>
           <button
-            onClick={removeFile}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the file open on button click
+              handleRemoveFile();
+            }}
             className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
             disabled={disabled}
           >
