@@ -15,14 +15,17 @@ interface MediaRecorderProps {
   onContentChange: (hasContent: boolean) => void;
   disabled: boolean;
   onBlobGenerated: (blob: Blob | null) => void; // Callback for notifying parent of new blob
+  setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  mediaType: "audio" | "video";
 }
 
 export function MediaRecorder({
   onContentChange,
   disabled,
   onBlobGenerated,
+  setErrorMessage,
+  mediaType
 }: MediaRecorderProps) {
-  const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
   const {
     isRecording,
     recordedBlob,
@@ -63,6 +66,7 @@ export function MediaRecorder({
   }, [recordedBlob, onContentChange]);
 
   const handleClearRecording = () => {
+    setErrorMessage(null)
     clearRecording();
     onBlobGenerated(null); // Notify parent that the recording is cleared
     onContentChange(false);
@@ -70,32 +74,7 @@ export function MediaRecorder({
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-4">
-        <button
-          onClick={() => setMediaType("audio")}
-          className={`px-4 py-2 rounded-md ${
-            mediaType === "audio"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
-          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-          disabled={disabled}
-        >
-          <Mic className="inline-block mr-2" size={18} />
-          Audio
-        </button>
-        <button
-          onClick={() => setMediaType("video")}
-          className={`px-4 py-2 rounded-md ${
-            mediaType === "video"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
-          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-          disabled={disabled}
-        >
-          <Video className="inline-block mr-2" size={18} />
-          Video
-        </button>
-      </div>
+      
       <div className="flex justify-center space-x-4">
         {!isRecording && !recordedBlob && (
           <motion.button
