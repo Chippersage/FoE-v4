@@ -37,6 +37,10 @@ import Match from "@/components/activityIcons/Match";
 import TeacherAssist from "@/components/activityIcons/TeacherAssist";
 import Write from "@/components/activityIcons/Write";
 import KidFriendlyModal from "@/components/modals/CongratulatoryModal";
+import Riddle from "@/components/activityIcons/Riddle";
+import Dictation from "@/components/activityIcons/Dictation";
+import Assignment from "@/components/activityIcons/Assignment";
+import Assessment from "@/components/activityIcons/Assessment";
 
 interface Subconcept {
   subconceptId: string;
@@ -68,6 +72,8 @@ const iconMap = {
   read: Read,
   teacher_assist: TeacherAssist,
   write: Write,
+  riddles: Riddle,
+  dictation: Dictation,
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -75,6 +81,10 @@ const iconMap = {
   passage_spelling: Spelling,
   passage_vocab: Spelling,
   passage_comprehension: Comprehension,
+  passage_qna: QnA,
+
+  assignment: Assignment,
+  assessment: Assessment,
 };
 
 export default function SubConceptsPage() {
