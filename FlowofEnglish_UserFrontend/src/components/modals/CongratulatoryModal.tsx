@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaStar, FaRocket, FaGraduationCap, FaTrophy } from "react-icons/fa";
 import Confetti from "react-confetti";
+import { generateCertificate } from "../CertificateGenerator";
+import { useUserContext } from "@/context/AuthContext";
 
 interface KidFriendlyModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
 }) => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [confettiActive, setConfettiActive] = useState(false);
+  const {user} = useUserContext();
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,7 +69,7 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
         heading: "Excellent! Kudos!",
         message: `You have successfully completed all the activities in the Program -  
                   ${programName ? programName : "this amazing program"}!`,
-        buttonText: "OK 🤩",
+        buttonText: "Download Certificate 🤩",
       };
     } else {
       return {
@@ -153,7 +156,10 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
               whileHover={{ scale: 1.1, rotate: [0, -5, 5, -5, 0] }}
               whileTap={{ scale: 0.95 }}
               className="bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-blue-600 transition duration-300 shadow-lg relative z-10"
-              onClick={onClose}
+              onClick={() => {
+                generateCertificate(user?.userName, user?.program?.programName, user?.cohort?.cohortStartDate, user?.cohort?.cohortEndDate);
+                onClose
+              }}
             >
               {buttonText}
             </motion.button>
