@@ -15,6 +15,8 @@ const MediaContent = ({ subconceptData }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const navigate = useNavigate();
 
+
+
   // Handle countdown for success overlay
   useEffect(() => {
     if (showSuccessPopup && successCountdown > 0) {
@@ -220,7 +222,7 @@ const MediaContent = ({ subconceptData }) => {
   };
 
   const renderContent = () => {
-    console.log(subconceptData);
+    console.log(subconceptData?.subconceptType);
     const { subconceptType, subconceptLink } = subconceptData;
     switch (subconceptType) {
       case "audio":
@@ -288,12 +290,8 @@ const MediaContent = ({ subconceptData }) => {
           </div>
         );
         case "assessment":
+          console.log(`${subconceptLink + "=" + userData?.userId}`);
           return (
-            <div
-              onContextMenu={(e) => e.preventDefault()} // Disable right-click
-              className="iframe-wrapper"
-              style={{ position: "relative" }}
-            >
               <iframe
                 src={`${subconceptLink + '=' + userData?.userId}`} // Disable PDF toolbar
                 width="100%"
@@ -308,7 +306,6 @@ const MediaContent = ({ subconceptData }) => {
                 // @ts-ignore
                 // controlsList="nodownload" // Restrict download
               />
-            </div>
           );
       default:
         return <p>Something went wrong!</p>;
@@ -340,11 +337,9 @@ const MediaContent = ({ subconceptData }) => {
         <div className="buttons" style={styles.buttons}>
           <button
             onClick={() => {
-              setIsUploadModalOpen(true);
-              // subconceptData?.subconceptType.startsWith("assignment")
-              //   ? setIsUploadModalOpen(true)
-              //   : handleComplete();
-              // handleOpenPopup();
+              subconceptData?.subconceptType.startsWith("assignment")
+                ? setIsUploadModalOpen(true)
+                : handleComplete();
             }}
             disabled={isComplete}
             style={isComplete ? styles.disabledButton : styles.button}
