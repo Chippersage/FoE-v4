@@ -84,7 +84,13 @@ const iconMap = {
   passage_qna: QnA,
 
   assignment: Assignment,
+  assignment_pdf: Assignment,
+  assignment_video: Assignment,
+  assignment_audio: Assignment,
+  assignment_image: Assignment,
   assessment: Assessment,
+
+
 };
 
 export default function SubConceptsPage() {

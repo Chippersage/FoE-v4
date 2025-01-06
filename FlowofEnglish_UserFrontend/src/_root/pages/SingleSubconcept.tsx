@@ -193,7 +193,7 @@ const SingleSubconcept = () => {
   const subconcept = location.state?.subconcept;
   // @ts-ignore
   const [showIframe, setShowIframe] = useState(
-    !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image"].includes(subconcept?.subconceptType)
+    !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image", "assessment"].includes(subconcept?.subconceptType)
   );
 const [showSubmit, setShowSubmit] = useState(
   subconcept?.subconceptType?.startsWith('passage')
