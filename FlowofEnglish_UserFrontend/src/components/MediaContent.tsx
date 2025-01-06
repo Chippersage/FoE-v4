@@ -103,7 +103,7 @@ const MediaContent = ({ subconceptData }) => {
 
     const payload = {
       userAttemptFlag: true,
-      userAttemptScore: finalScore,
+      userAttemptScore: subconceptData?.subconceptType === "assessment" ? 0 : finalScore,
       userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
       userAttemptEndTimestamp: formattedISTTimestamp,
       unitId: userData.unitId,
