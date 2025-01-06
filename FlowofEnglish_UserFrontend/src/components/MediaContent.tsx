@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { UploadModal } from "./modals/UploadModal";
+import AlertModal from "./modals/AlertModal";
 // @ts-ignore
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -13,9 +14,15 @@ const MediaContent = ({ subconceptData }) => {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorCountdown, setErrorCountdown] = useState(3);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const navigate = useNavigate();
 
 
+    useEffect(() => {
+      // Show the popup after a short delay
+      const timer = setTimeout(() => setShowAlert(true), 500);
+      return () => clearTimeout(timer);
+    }, []);
 
   // Handle countdown for success overlay
   useEffect(() => {
@@ -25,7 +32,7 @@ const MediaContent = ({ subconceptData }) => {
       }, 1000);
       return () => clearInterval(interval);
     } else if (successCountdown <= 0) {
-      window.history.back();
+      navigate(`/subconcepts/${userData?.unitId}`);
     }
   }, [showSuccessPopup, successCountdown]);
 
@@ -87,10 +94,11 @@ const MediaContent = ({ subconceptData }) => {
   // @ts-ignore
   const sendAttemptData = (userData) => {
     const finalScore =
-      subconceptData.subconceptType === "video" ||
-      subconceptData.subconceptType === "audio" ||
-      subconceptData.subconceptType === "assignment_audio" ||
-      subconceptData.subconceptType === "assignment_video"
+      subconceptData?.subconceptType?.startsWith("assignment") ||
+      subconceptData?.subconceptType?.startsWith("assessment")
+        ? 0
+        : subconceptData?.subconceptType === "video" ||
+          subconceptData?.subconceptType === "audio"
         ? playedPercentage >= 80
           ? subconceptData?.subconceptMaxscore
           : 0
@@ -103,7 +111,7 @@ const MediaContent = ({ subconceptData }) => {
 
     const payload = {
       userAttemptFlag: true,
-      userAttemptScore: subconceptData?.subconceptType === "assessment" ? 0 : finalScore,
+      userAttemptScore: finalScore,
       userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
       userAttemptEndTimestamp: formattedISTTimestamp,
       unitId: userData.unitId,
@@ -314,6 +322,7 @@ const MediaContent = ({ subconceptData }) => {
 
   return (
     <>
+      {showAlert && <AlertModal onAlertClose={() => setShowAlert(false)}/>}
       {showSuccessPopup && renderOverlay("success")}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
