@@ -11,7 +11,7 @@ interface GenerateCertificateProps {
 
 export const generateCertificate = async ({
   userName = "Atul Kumar",
-  programName = "flow of english",
+  programName = "Flow of English",
   cohortStartDate = "Jan, 2024",
   cohortEndDate = "Dec, 2025",
 }: GenerateCertificateProps): Promise<void> => {

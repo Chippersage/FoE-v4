@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2 } from "lucide-react";
 import { FileUpload } from "../FileUpload";
@@ -11,12 +11,17 @@ import { SuccessModal } from "./SuccessModal";
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  setIsAssignmentUploadSuccesfull: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export function UploadModal({ isOpen, onClose }: UploadModalProps) {
-   const [activeTab, setActiveTab] = useState<
-     "upload" | "recordAudio" | "recordVideo"
-   >("upload");
+export function UploadModal({
+  isOpen,
+  onClose,
+  setIsAssignmentUploadSuccesfull,
+}: UploadModalProps) {
+  const [activeTab, setActiveTab] = useState<
+    "upload" | "recordAudio" | "recordVideo"
+  >("upload");
   const [hasContent, setHasContent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -80,33 +85,32 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
         console.log("Upload successful");
         onClose();
         setShowSuccessModal(true);
+        setIsAssignmentUploadSuccesfull(true)
       } else {
         throw new Error("Upload failed. Please try again.");
       }
     } catch (error: any) {
-      console.log("in catch block: ",error)
+      console.log("in catch block: ", error);
       setErrorMessage(
-        error.response?.data ||
-          error.message ||
-          "An unknown error occurred."
+        error.response?.data || error.message || "An unknown error occurred."
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (showSuccessModal) {
-      const timer = setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 2000);
+  // useEffect(() => {
+  //   if (showSuccessModal) {
+  //     const timer = setTimeout(() => {
+  //       setShowSuccessModal(false);
+  //     }, 2000);
 
-      return () => {
-        clearTimeout(timer)
-        navigate(`/subconcepts/${currentUnitId}`)
-      };
-      }
-  }, [showSuccessModal]);
+  //     return () => {
+  //       clearTimeout(timer);
+  //       navigate(`/subconcepts/${currentUnitId}`);
+  //     };
+  //   }
+  // }, [showSuccessModal]);
 
   return (
     <>
