@@ -1,5 +1,5 @@
 // @ts-ignore
-const Avatar = ({ src, size = "w-12 h-12" }) => {
+const Avatar = ({ src, size = "w-10 h-10" }) => {
   return (
     <div
       className={`inline-flex items-center justify-center ${size} rounded-full bg-gray-200 overflow-hidden`}
