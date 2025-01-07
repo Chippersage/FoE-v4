@@ -176,6 +176,7 @@ public class UnitServiceImpl implements UnitService {
         return unitRepository.findById(unitId)
                 .orElseThrow(() -> new RuntimeException("Unit not found with id: " + unitId));
     }
+    
     @Override 
     public ProgramDTO getProgramWithStagesAndUnits(String userId, String programId) {
         // Fetch the program details
@@ -247,39 +248,54 @@ public class UnitServiceImpl implements UnitService {
                             .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
                         .count();
                     
+                    // Calculate counts for non-assignment subconcepts
+                    int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
+                        .map(ProgramConceptsMapping::getSubconcept)
+                        .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                        .count();
+
+                    long completedNonAssignmentSubConceptCount = accessibleMappings.stream()
+                        .map(ProgramConceptsMapping::getSubconcept)
+                        .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                        .map(Subconcept::getSubconceptId)
+                        .filter(id -> userSubConceptsForUnit.stream()
+                            .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
+                        .count();
+                    
+                 // Check for pending assignments
+                    boolean hasPendingAssignments = accessibleMappings.stream()
+                        .anyMatch(mapping -> mapping.getSubconcept().getSubconceptType().toLowerCase().startsWith("assignment"));
+
                     String unitCompletionStatus;
                     
-                    if (totalSubConceptCount == 0) {
-                        // No sub concepts in the unit
+                    if (totalNonAssignmentSubConceptCount == 0) {
                         unitCompletionStatus = "No subconcepts in this unit";
-                    } else if (completedSubConceptCount == totalSubConceptCount) {
-                        // All sub concepts completed
-                        unitCompletionStatus = "yes";
+                    } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
+                        if (hasPendingAssignments) {
+                            unitCompletionStatus = "Unit Completed without Assignments";
+                        } else {
+                            unitCompletionStatus = "yes";
+                        }
                     } else {
                         // Check the previous unit's completion status for enabling/disabling logic
                     	if (j == 0) {
                     	    // First unit logic (first unit in the stage)
-                    	    unitCompletionStatus = completedSubConceptCount > 0 ? "incomplete" : "incomplete"; 
+                    	    unitCompletionStatus = "incomplete"; 
                     	}
-                           else  {
-//                            Unit previousUnit = units.get(j - 1);
-//                            String previousUnitStatus = unitMap.get(String.valueOf(j - 1)).getCompletionStatus();
-                        	   Unit previousUnit = units.get(j - 1);
+                           else  {                        	   
                                UnitResponseDTO previousUnitResp = unitMap.get(String.valueOf(j - 1));
                                String previousUnitStatus = previousUnitResp != null ? previousUnitResp.getCompletionStatus() : "disabled";
 
-                            if ("yes".equals(previousUnitStatus)) {
-                                // Mark this unit as incomplete if the previous unit is completed
-                                unitCompletionStatus = "incomplete";
-                            }else {
-                        // No sub concepts completed, unit is locked
-                        unitCompletionStatus = "disabled";
-                            }
-                    }
-
-                    stageCompleted = false; // As this unit is not fully completed
-                    programCompleted = false; // At least one unit is not completed
-                }
+                               if ("yes".equals(previousUnitStatus) || 
+                                       "Unit Completed without Assignments".equals(previousUnitStatus)) {
+                                       unitCompletionStatus = "incomplete";
+                                   } else {
+                                       unitCompletionStatus = "disabled";
+                                   }
+                               }
+                               stageCompleted = false;
+                               programCompleted = false;
+                           }
 
                 // Set the unit status and add it to the unit map
                 unitResponse.setCompletionStatus(unitCompletionStatus);
@@ -287,14 +303,14 @@ public class UnitServiceImpl implements UnitService {
                 totalUnitCount++;
                 }
 
-                // Check if all units are completed to mark the stage as completed
+                // Check if all units are completed (either fully or without assignments)
                 boolean allUnitsCompleted = unitMap.values().stream()
-                    .allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()));
+                    .allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()) || 
+                                        "Unit Completed without Assignments".equals(unitResp.getCompletionStatus()));
                 
                 stageResponse.setUnits(unitMap);
                 stageResponse.setStageCompletionStatus(allUnitsCompleted ? "yes" : "no");
             }
-            
             
          // Set stage enabled status based on previous stage completion
             if (i == 0) {
@@ -341,6 +357,7 @@ public class UnitServiceImpl implements UnitService {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
         return subconcepts.size();
     }
+    
     
     @Override
     public void deleteUnit(String unitId) {
