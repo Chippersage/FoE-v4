@@ -130,6 +130,8 @@ public class UserServiceImpl implements UserService {
             CohortDTO cohortDTO = new CohortDTO();
             cohortDTO.setCohortId(userCohortMapping.getCohort().getCohortId());
             cohortDTO.setCohortName(userCohortMapping.getCohort().getCohortName());
+            cohortDTO.setCohortStartDate(userCohortMapping.getCohort().getCohortStartDate());
+            cohortDTO.setCohortEndDate(userCohortMapping.getCohort().getCohortEndDate());
             userDTO.setCohort(cohortDTO);
             
          // Fetch the program from CohortProgramRepository
