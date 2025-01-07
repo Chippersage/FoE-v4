@@ -218,11 +218,14 @@ public class UnitServiceImpl implements UnitService {
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             
             boolean stageCompleted = true;
+            boolean stageCompletedWithoutAssignments = false;
             
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
+                programCompleted = false;
             } else {
-  
+            	boolean allUnitsAtLeastPartiallyCompleted = true; // Track if all units are at least completed without assignments
+            	
                 for (int j = 0; j < units.size(); j++) {
                     Unit unit = units.get(j);
                     UnitResponseDTO unitResponse = new UnitResponseDTO();
@@ -239,14 +242,14 @@ public class UnitServiceImpl implements UnitService {
                         .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
                         .collect(Collectors.toList());
                     
-                 // Calculate total and completed subconcept counts based on user type
-                    int totalSubConceptCount = accessibleMappings.size();
-                    long completedSubConceptCount = accessibleMappings.stream()
-                        .map(ProgramConceptsMapping::getSubconcept)
-                        .map(Subconcept::getSubconceptId)
-                        .filter(id -> userSubConceptsForUnit.stream()
-                            .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
-                        .count();
+//                 // Calculate total and completed subconcept counts based on user type
+//                    int totalSubConceptCount = accessibleMappings.size();
+//                    long completedSubConceptCount = accessibleMappings.stream()
+//                        .map(ProgramConceptsMapping::getSubconcept)
+//                        .map(Subconcept::getSubconceptId)
+//                        .filter(id -> userSubConceptsForUnit.stream()
+//                            .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
+//                        .count();
                     
                     // Calculate counts for non-assignment subconcepts
                     int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
@@ -264,7 +267,11 @@ public class UnitServiceImpl implements UnitService {
                     
                  // Check for pending assignments
                     boolean hasPendingAssignments = accessibleMappings.stream()
-                        .anyMatch(mapping -> mapping.getSubconcept().getSubconceptType().toLowerCase().startsWith("assignment"));
+                    	    .filter(mapping -> mapping.getSubconcept().getSubconceptType().toLowerCase().startsWith("assignment"))
+                    	    .map(ProgramConceptsMapping::getSubconcept)
+                    	    .map(Subconcept::getSubconceptId)
+                    	    .anyMatch(id -> !userSubConceptsForUnit.stream()
+                    	        .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)));
 
                     String unitCompletionStatus;
                     
@@ -273,6 +280,7 @@ public class UnitServiceImpl implements UnitService {
                     } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
                         if (hasPendingAssignments) {
                             unitCompletionStatus = "Unit Completed without Assignments";
+                            stageCompletedWithoutAssignments = true;
                         } else {
                             unitCompletionStatus = "yes";
                         }
@@ -293,8 +301,6 @@ public class UnitServiceImpl implements UnitService {
                                        unitCompletionStatus = "disabled";
                                    }
                                }
-                               stageCompleted = false;
-                               programCompleted = false;
                            }
 
                 // Set the unit status and add it to the unit map
@@ -309,8 +315,20 @@ public class UnitServiceImpl implements UnitService {
                                         "Unit Completed without Assignments".equals(unitResp.getCompletionStatus()));
                 
                 stageResponse.setUnits(unitMap);
-                stageResponse.setStageCompletionStatus(allUnitsCompleted ? "yes" : "no");
+                // Adjust stage completion based on units
+                if (stageCompletedWithoutAssignments) {
+                    stageResponse.setStageCompletionStatus("Stage Completed without Assignments");
+                 // Consider this as incomplete for overall program completion
+                    programCompleted = false;
+                } else {
+                	String stageStatus = allUnitsCompleted ? "yes" : "no";
+                stageResponse.setStageCompletionStatus(stageStatus);
+                // Update program completion status
+                if (!"yes".equals(stageStatus)) {
+                    programCompleted = false;
+                }
             }
+        }
             
          // Set stage enabled status based on previous stage completion
             if (i == 0) {
@@ -322,7 +340,7 @@ public class UnitServiceImpl implements UnitService {
             }
             
          // Update previousStageCompleted for the next iteration
-            previousStageCompleted = stageCompleted;
+            previousStageCompleted = "yes".equals(stageResponse.getStageCompletionStatus());
 
             // Add the stage to the response
             stageMap.put(String.valueOf(i), stageResponse);
