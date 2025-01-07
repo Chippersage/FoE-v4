@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useMediaRecorder } from "../hooks/useMediaRecorder";
 import { motion } from "framer-motion";
 import { Mic, Video, StopCircle, Trash2 } from "lucide-react";

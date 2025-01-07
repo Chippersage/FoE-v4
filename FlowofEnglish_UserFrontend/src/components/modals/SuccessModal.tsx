@@ -6,6 +6,28 @@ interface SuccessModalProps {
   onClose: () => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
 export function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
   return (
     <AnimatePresence>
@@ -20,14 +42,34 @@ export function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white rounded-full p-8"
+            className="bg-white rounded-lg p-8 flex flex-col items-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="mb-4"
             >
               <Check size={64} className="text-green-500" />
+            </motion.div>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="text-center"
+            >
+              <motion.p
+                variants={itemVariants}
+                className="text-lg font-semibold text-gray-800"
+              >
+                Your upload was successful
+              </motion.p>
+              <motion.p
+                variants={itemVariants}
+                className="text-sm text-gray-600"
+              >
+                Completing the assignment, please wait...
+              </motion.p>
             </motion.div>
           </motion.div>
         </motion.div>

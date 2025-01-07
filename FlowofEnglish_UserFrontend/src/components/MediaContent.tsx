@@ -15,8 +15,14 @@ const MediaContent = ({ subconceptData }) => {
   const [errorCountdown, setErrorCountdown] = useState(3);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [isAssignmentUploadSuccesfull, setIsAssignmentUploadSuccesfull] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (isAssignmentUploadSuccesfull) {
+      handleComplete();
+    }
+  }, [isAssignmentUploadSuccesfull]);
 
     useEffect(() => {
       // Show the popup after a short delay
@@ -322,7 +328,7 @@ const MediaContent = ({ subconceptData }) => {
 
   return (
     <>
-      {showAlert && <AlertModal onAlertClose={() => setShowAlert(false)}/>}
+      {showAlert && <AlertModal onAlertClose={() => setShowAlert(false)} />}
       {showSuccessPopup && renderOverlay("success")}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
@@ -337,6 +343,7 @@ const MediaContent = ({ subconceptData }) => {
         <UploadModal
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
+          setIsAssignmentUploadSuccesfull={setIsAssignmentUploadSuccesfull}
         />
         {/* @ts-ignore */}
         <div id="contentArea" style={styles.contentArea}>
