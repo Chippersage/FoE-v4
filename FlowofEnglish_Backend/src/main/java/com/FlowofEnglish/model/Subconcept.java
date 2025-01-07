@@ -30,7 +30,7 @@ public class Subconcept {
     private String subconceptLink;
 
 
-    @Column(name = "subconcept_type", length = 1000, nullable = true)
+    @Column(name = "subconcept_type", length = 1000, nullable = false)
     private String subconceptType;
 
     @Column(name = "num_questions", length = 100, nullable = true)
