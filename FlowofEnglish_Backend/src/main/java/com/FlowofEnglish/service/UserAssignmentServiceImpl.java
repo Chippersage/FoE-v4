@@ -175,19 +175,20 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         long fileSize = file.getSize();
         String fileType = file.getContentType();
 
-        if (fileType.contains("pdf") && fileSize > MAX_PDF_SIZE) {
+        if ("application/pdf".equals(fileType) && fileSize > MAX_PDF_SIZE) {
             throw new RuntimeException("PDF file size exceeds the limit of 1MB");
         }
-        if (fileType.contains("video") && fileSize > MAX_VIDEO_SIZE) {
+        if (fileType != null && fileType.startsWith("video/") && fileSize > MAX_VIDEO_SIZE) {
             throw new RuntimeException("Video file size exceeds the limit of 30MB");
         }
-        if (fileType.contains("audio") && fileSize > MAX_AUDIO_SIZE) {
+        if (fileType != null && fileType.startsWith("audio/") && fileSize > MAX_AUDIO_SIZE) {
             throw new RuntimeException("Audio file size exceeds the limit of 10MB");
         }
-        if (fileType.contains("image") && fileSize > MAX_IMAGE_SIZE) {
+        if (fileType != null && fileType.startsWith("image/") && fileSize > MAX_IMAGE_SIZE) {
             throw new RuntimeException("Image file size exceeds the limit of 1MB");
         }
     }
+
 
     private String saveFileToSystem(MultipartFile file) throws IOException {
         // Define the directory path where the files will be saved
