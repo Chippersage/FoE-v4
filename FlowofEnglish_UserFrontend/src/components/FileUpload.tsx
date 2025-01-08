@@ -92,7 +92,7 @@ export function FileUpload({
             type="file"
             className="hidden"
             onChange={handleFileUpload}
-            accept=".pdf,image/*"
+            accept=".pdf,.doc,.docx,image/*"
             disabled={disabled}
           />
         </label>

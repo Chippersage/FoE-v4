@@ -11,14 +11,10 @@ import { SuccessModal } from "./SuccessModal";
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setIsAssignmentUploadSuccesfull: React.Dispatch<React.SetStateAction<boolean>>
+  onUploadSuccess: () => void;
 }
 
-export function UploadModal({
-  isOpen,
-  onClose,
-  setIsAssignmentUploadSuccesfull,
-}: UploadModalProps) {
+export function UploadModal({ isOpen, onClose, onUploadSuccess }: UploadModalProps) {
   const [activeTab, setActiveTab] = useState<
     "upload" | "recordAudio" | "recordVideo"
   >("upload");
@@ -51,13 +47,8 @@ export function UploadModal({
     try {
       const formData = new FormData();
 
-      if (
-        uploadedFile
-      ) {
-        formData.append(
-          "file",
-          uploadedFile
-        );
+      if (uploadedFile) {
+        formData.append("file", uploadedFile);
       } else if (recordedBlob) {
         formData.append("file", recordedBlob);
       } else {
@@ -85,7 +76,6 @@ export function UploadModal({
         console.log("Upload successful");
         onClose();
         setShowSuccessModal(true);
-        setIsAssignmentUploadSuccesfull(true)
       } else {
         throw new Error("Upload failed. Please try again.");
       }
@@ -99,18 +89,10 @@ export function UploadModal({
     }
   };
 
-  // useEffect(() => {
-  //   if (showSuccessModal) {
-  //     const timer = setTimeout(() => {
-  //       setShowSuccessModal(false);
-  //     }, 2000);
-
-  //     return () => {
-  //       clearTimeout(timer);
-  //       navigate(`/subconcepts/${currentUnitId}`);
-  //     };
-  //   }
-  // }, [showSuccessModal]);
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false); // Close child success modal
+    onUploadSuccess(); // Notify parent for further processing
+  };
 
   return (
     <>
@@ -142,7 +124,10 @@ export function UploadModal({
               <div className="flex mb-4 space-x-4">
                 {/* Upload File Button */}
                 <button
-                  onClick={() => setActiveTab("upload")}
+                  onClick={() => {
+                    setActiveTab("upload")
+                    setErrorMessage(null);
+                  }}
                   className={`px-4 py-2 rounded-[5px] ${
                     activeTab === "upload"
                       ? "bg-blue-500 text-white"
@@ -155,7 +140,10 @@ export function UploadModal({
 
                 {/* Record Audio Button */}
                 <button
-                  onClick={() => setActiveTab("recordAudio")}
+                  onClick={() => {
+                    setActiveTab("recordAudio");
+                    setErrorMessage(null);
+                  }}
                   className={`px-4 py-2 rounded-[5px] ${
                     activeTab === "recordAudio"
                       ? "bg-blue-500 text-white"
@@ -168,7 +156,10 @@ export function UploadModal({
 
                 {/* Record Audio Button */}
                 <button
-                  onClick={() => setActiveTab("recordVideo")}
+                  onClick={() => {
+                    setActiveTab("recordVideo");
+                    setErrorMessage(null);
+                  }}
                   className={`px-4 py-2 rounded-[5px] ${
                     activeTab === "recordVideo"
                       ? "bg-blue-500 text-white"
@@ -222,7 +213,7 @@ export function UploadModal({
       </AnimatePresence>
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={handleSuccessModalClose}
       />
     </>
   );
