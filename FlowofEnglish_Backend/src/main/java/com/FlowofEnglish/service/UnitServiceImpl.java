@@ -246,11 +246,20 @@ public class UnitServiceImpl implements UnitService {
                     List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
                         .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
                         .collect(Collectors.toList());
-                                 
+                          
+                 // Get total number of subconcepts (including assignments)
+                    int totalSubConceptCount = accessibleMappings.size();
+                    
                     // Calculate counts for non-assignment subconcepts
                     int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
                         .map(ProgramConceptsMapping::getSubconcept)
                         .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                        .count();
+                    
+                    // Calculate counts for assignment subconcepts
+                    int totalAssignmentSubConceptCount = (int) accessibleMappings.stream()
+                        .map(ProgramConceptsMapping::getSubconcept)
+                        .filter(sub -> sub.getSubconceptType().toLowerCase().startsWith("assignment"))
                         .count();
 
                     long completedNonAssignmentSubConceptCount = accessibleMappings.stream()
@@ -271,8 +280,26 @@ public class UnitServiceImpl implements UnitService {
 
                     String unitCompletionStatus;
                     
-                    if (totalNonAssignmentSubConceptCount == 0) {
+//                    if (totalNonAssignmentSubConceptCount == 0) {
+//                        unitCompletionStatus = "No subconcepts in this unit";
+//                    } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
+//                        if (hasPendingAssignments) {
+//                            unitCompletionStatus = "Unit Completed without Assignments";
+//                            stageCompletedWithoutAssignments = true;
+//                        } else {
+//                            unitCompletionStatus = "yes";
+//                        }
+//                    } else {
+                    if (totalSubConceptCount == 0) {
+                        // Only mark as "No subconcepts" if there are truly no subconcepts of any type
                         unitCompletionStatus = "No subconcepts in this unit";
+                    } else if (totalNonAssignmentSubConceptCount == 0 && totalAssignmentSubConceptCount > 0) {
+                        // Unit has only assignments
+                        if (hasPendingAssignments) {
+                            unitCompletionStatus = "incomplete";
+                        } else {
+                            unitCompletionStatus = "yes";
+                        }
                     } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
                         if (hasPendingAssignments) {
                             unitCompletionStatus = "Unit Completed without Assignments";
