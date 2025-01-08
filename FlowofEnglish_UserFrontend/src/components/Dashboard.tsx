@@ -36,7 +36,7 @@ function Dashboard() {
         const response = await axios.get(
           `${API_BASE_URL}/units/${userId}/program/${programId}`
         );
-
+        console.log(response.data);
         return response.data;
       } catch (error) {
         //  console.log('Error fetching program info:', error); // Log any error during fetching
