@@ -293,6 +293,9 @@ export default function SubConceptsPage() {
                 Congratulations!
               </h2>
               <p>You have unlocked the next unit!</p>
+              <p className="text-sm text-gray-500 mt-2">
+                You are being redirected to the next unit...
+              </p>
             </div>
           </div>
         )}
@@ -383,7 +386,9 @@ export default function SubConceptsPage() {
                     onClick={() => {
                       if (
                         index === totalSteps - 1 &&
-                        unitCompletionStatus === "yes" &&
+                        (unitCompletionStatus === "yes" ||
+                          unitCompletionStatus.toLowerCase() ===
+                            "unit completed without assignments") &&
                         nextUnitId
                       ) {
                         setShowConfetti(true);
