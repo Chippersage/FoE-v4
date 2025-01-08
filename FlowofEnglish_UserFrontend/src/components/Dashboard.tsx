@@ -59,7 +59,6 @@ function Dashboard() {
 
   useEffect(() => {
     if (user?.cohort?.cohortId) {
-      console.log(user);
       const fetchAndSetLeaderBoardInfo = async () => {
         try {
           const result = await getLeaderBoardInfo();
@@ -110,7 +109,6 @@ function Dashboard() {
         try {
           const result = await getProgramInfoByProgramId();
           setProgramInfo(result);
-          console.log(result);
         } catch (err) {
           // @ts-ignore
           setError(err.message);

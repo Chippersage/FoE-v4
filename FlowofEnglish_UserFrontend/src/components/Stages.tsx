@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 // import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -113,8 +113,8 @@ export default function Stages({ stages }) {
                       className={`w-full transition-all duration-300 ease-in-out h-9 ${
                         // @ts-ignore
                         stage.stageEnabled
-                        // @ts-ignore
-                          ? stage.stageCompletionStatus === "yes"
+                          ? // @ts-ignore
+                            stage.stageCompletionStatus === "yes"
                             ? "bg-green-500 text-white hover:bg-[#DB5788]" // Green to Pink
                             : "bg-[#5bc3cd] text-white hover:bg-[#DB5788]" // Blue to Pink
                           : "bg-[#5bc3cd] text-white hover:bg-[#5bc3cd] cursor-not-allowed" // Disabled
@@ -124,8 +124,8 @@ export default function Stages({ stages }) {
                         <span>
                           {/* @ts-ignore */}
                           {stage.stageEnabled
-                          // @ts-ignore
-                            ? stage.stageCompletionStatus === "yes"
+                            ? // @ts-ignore
+                              stage.stageCompletionStatus === "yes"
                               ? "Well Done!"
                               : "Let's Go"
                             : "Not Yet..."}
@@ -168,13 +168,13 @@ export default function Stages({ stages }) {
                       // @ts-ignore
                       Object.values(stage.units).map((unit, unitIndex) => (
                         <Link
-                        // @ts-ignore
+                          // @ts-ignore
                           to={
                             // @ts-ignore
                             unit.completionStatus !== "disabled" ||
                             unitIndex === 0
-                            // @ts-ignore
-                              ? `/subconcepts/${unit.unitId}`
+                              ? // @ts-ignore
+                                `/subconcepts/${unit.unitId}`
                               : null
                           }
                           key={unitIndex}
@@ -208,19 +208,29 @@ export default function Stages({ stages }) {
                           }}
                         >
                           {/* @ts-ignore */}
-                          {unit.completionStatus === "yes" && (
-                            <CircleCheck
-                              className={`absolute top-0 left-0 ${
-                                // @ts-ignore
-                                hoveredUnit === unit.unitId &&
-                                // @ts-ignore
-                                unit.completionStatus !== "disabled"
-                                  ? "text-white"
-                                  : "text-green-500"
-                              }`}
-                              size={16}
-                            />
-                          )}
+                          {(unit.completionStatus === "yes" ||
+                            unit.completionStatus?.toLowerCase() ===
+                              "unit completed without assignments") &&
+                            (unit.completionStatus === "yes" ? (
+                              <CircleCheck
+                                className={`absolute top-0 left-0 ${
+                                  hoveredUnit === unit.unitId &&
+                                  unit.completionStatus !== "disabled"
+                                    ? "text-white"
+                                    : "text-green-500"
+                                }`}
+                                size={16}
+                              />
+                            ) : (
+                              <CircleAlert
+                                className={`absolute top-0 left-0 ${
+                                  hoveredUnit === unit.unitId &&
+                                  unit.completionStatus !== "disabled"
+                                    ? "text-white"
+                                    : "text-red-500"}`}
+                                size={16}
+                              />
+                            ))}
                           <div className="flex-shrink-0 transition-all duration-100">
                             <img
                               src={
