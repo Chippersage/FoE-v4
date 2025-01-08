@@ -6,9 +6,15 @@ interface FileUploadProps {
   onContentChange: (hasContent: boolean) => void;
   disabled: boolean;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  onFileUpload: (file: File | null) => void; // New callback
 }
 
-export function FileUpload({ onContentChange, disabled, setErrorMessage }: FileUploadProps) {
+export function FileUpload({
+  onContentChange,
+  disabled,
+  setErrorMessage,
+  onFileUpload,
+}: FileUploadProps) {
   const [file, setFile] = useState<{ file: File; previewUrl: string } | null>(
     null
   );
@@ -28,15 +34,20 @@ export function FileUpload({ onContentChange, disabled, setErrorMessage }: FileU
         const previewUrl = URL.createObjectURL(lastFile); // Create a temporary URL
         setFile({ file: lastFile, previewUrl }); // Save the file and its preview URL
         onContentChange(true);
+        onFileUpload(lastFile); // Pass file to parent
+
+        // Reset file input value to allow re-uploading the same file
+        event.target.value = "";
       }
     },
-    [onContentChange]
+    [onContentChange, onFileUpload]
   );
 
   const removeFile = useCallback(() => {
     setErrorMessage(null);
     setFile(null);
     onContentChange(false);
+    onFileUpload(null); // Notify parent of file removal
   }, [onContentChange]);
 
   const handleRemoveFile = () => {
