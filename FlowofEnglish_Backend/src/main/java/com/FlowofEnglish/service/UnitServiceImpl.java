@@ -223,7 +223,7 @@ public class UnitServiceImpl implements UnitService {
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             
             boolean stageCompleted = true;
-            boolean stageCompletedWithoutAssignments = true;
+            boolean stageCompletedWithoutAssignments = false;
             
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
@@ -246,11 +246,20 @@ public class UnitServiceImpl implements UnitService {
                     List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
                         .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
                         .collect(Collectors.toList());
-                                 
+                          
+                 // Get total number of subconcepts (including assignments)
+                    int totalSubConceptCount = accessibleMappings.size();
+                    
                     // Calculate counts for non-assignment subconcepts
                     int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
                         .map(ProgramConceptsMapping::getSubconcept)
                         .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                        .count();
+                    
+                    // Calculate counts for assignment subconcepts
+                    int totalAssignmentSubConceptCount = (int) accessibleMappings.stream()
+                        .map(ProgramConceptsMapping::getSubconcept)
+                        .filter(sub -> sub.getSubconceptType().toLowerCase().startsWith("assignment"))
                         .count();
 
                     long completedNonAssignmentSubConceptCount = accessibleMappings.stream()
@@ -271,8 +280,26 @@ public class UnitServiceImpl implements UnitService {
 
                     String unitCompletionStatus;
                     
-                    if (totalNonAssignmentSubConceptCount == 0) {
+//                    if (totalNonAssignmentSubConceptCount == 0) {
+//                        unitCompletionStatus = "No subconcepts in this unit";
+//                    } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
+//                        if (hasPendingAssignments) {
+//                            unitCompletionStatus = "Unit Completed without Assignments";
+//                            stageCompletedWithoutAssignments = true;
+//                        } else {
+//                            unitCompletionStatus = "yes";
+//                        }
+//                    } else {
+                    if (totalSubConceptCount == 0) {
+                        // Only mark as "No subconcepts" if there are truly no subconcepts of any type
                         unitCompletionStatus = "No subconcepts in this unit";
+                    } else if (totalNonAssignmentSubConceptCount == 0 && totalAssignmentSubConceptCount > 0) {
+                        // Unit has only assignments
+                        if (hasPendingAssignments) {
+                            unitCompletionStatus = "incomplete";
+                        } else {
+                            unitCompletionStatus = "yes";
+                        }
                     } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
                         if (hasPendingAssignments) {
                             unitCompletionStatus = "Unit Completed without Assignments";
@@ -326,22 +353,21 @@ public class UnitServiceImpl implements UnitService {
             }
         }
             
-         // **Here you insert your logic for enabling the stage based on completion of previous stage**
-            if (stageCompleted || stageCompletedWithoutAssignments) {
-                stageResponse.setStageEnabled(true);
-                previousStageCompleted = true;
-            } else {
-                stageResponse.setStageEnabled(false);
-                previousStageCompleted = false;
-            }
-            
+
          // Set stage enabled status based on previous stage completion
             if (i == 0) {
                 // Enable the first stage by default
                 stageResponse.setStageEnabled(true);
             } else {
-                // Enable this stage only if the previous stage was completed
-                stageResponse.setStageEnabled(previousStageCompleted && !units.isEmpty());
+            	// Get previous stage's completion status
+                StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
+                String previousStageStatus = previousStage.getStageCompletionStatus();
+                
+                // Enable this stage if previous stage was completed (either fully or without assignments)
+                boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                 "Stage Completed without Assignments".equals(previousStageStatus);
+                
+                stageResponse.setStageEnabled(isPreviousStageCompleted && !units.isEmpty());
             }
             
          // Update previousStageCompleted for the next iteration
