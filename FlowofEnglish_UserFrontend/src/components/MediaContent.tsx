@@ -17,9 +17,10 @@ const MediaContent = ({ subconceptData }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isAssignmentUploadSuccesfull, setIsAssignmentUploadSuccesfull] = useState(false);
-  const [isRetryPopupOpen, setIsRetryPopupOpen] = useState(false);
+  // const [isRetryPopupOpen, setIsRetryPopupOpen] = useState(false);
   const [isAssessmentIntegrityChecked, setIsAssessmentIntegrityChecked] = useState(false)
   const [alertDismissed, setAlertDismissed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -156,7 +157,7 @@ const MediaContent = ({ subconceptData }) => {
       userId: userData.userId,
       sessionId: userData.sessionId,
       subconceptId: userData.subconceptId,
-      cohortId: userData.cohortId,
+      // cohortId: userData.cohortId,
     };
 
     fetch(`${userData.API_BASE_URL}/user-attempts`, {
@@ -183,7 +184,7 @@ const MediaContent = ({ subconceptData }) => {
           setErrorCountdown(5); // Reset error countdown
           setIsComplete(false);
         } else {
-          setIsRetryPopupOpen(true);
+          // setIsRetryPopupOpen(true);
         }
       });
   };
