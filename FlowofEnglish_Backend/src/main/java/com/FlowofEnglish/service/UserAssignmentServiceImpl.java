@@ -8,10 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+//import software.amazon.awssdk.core.ResponseInputStream;
+//import software.amazon.awssdk.services.s3.S3Client;
+//import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+//import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,21 +53,17 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     @Autowired
     private SubconceptRepository subconceptRepository;
 
-    @Autowired
-    private S3StorageService s3StorageService;
-    
-    @Autowired
-    private S3Client s3Client;
-    
-    private static final String BUCKET_NAME = "your-s3-bucket-name";
+//    @Autowired
+//    private S3StorageService s3StorageService;
+//    @Autowired
+//    private S3Client s3Client;  
+//    private static final String BUCKET_NAME = "your-s3-bucket-name";
 
-
-    private static final String UPLOAD_DIR = "uploads/";
+    private static final String UPLOAD_DIR = "/var/app/uploads/";
     private static final long MAX_PDF_SIZE = 1 * 1024 * 1024; // 1MB
     private static final long MAX_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB
     private static final long MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
     private static final long MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
-
 
     @Override
     public List<UserAssignment> getAssignmentsByUserId(String userId) {
@@ -108,16 +104,19 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             userId, programId, stageId, unitId, subconceptId
         );
         if (existingAssignment.isPresent()) {
-            throw new RuntimeException("Assignment for this subconcept in the same unit has already been submitted by the user.");
+            throw new RuntimeException("It looks like you have already submitted an assignment.");
         }
 
         // Validate file size
         validateFileSize(file);
-
-     // Upload to S3 and save metadata
-        String s3Key = s3StorageService.uploadFile(file, "assignments");
-        MediaFile mediaFile = saveFileMetadata(file, s3Key, user);
         
+        String filePath = saveFileToSystem(file);
+        MediaFile mediaFile = saveFileMetadata(file, filePath, user);
+
+//     // Upload to S3 and save metadata
+//        String s3Key = s3StorageService.uploadFile(file, "assignments");
+//        MediaFile mediaFile = saveFileMetadata(file, s3Key, user);
+       
         // Create new assignment
         UserAssignment assignment = new UserAssignment();
         assignment.setUser(user);
@@ -191,20 +190,28 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     }
 
     private String saveFileToSystem(MultipartFile file) throws IOException {
+        // Define the directory path where the files will be saved
         String directory = UPLOAD_DIR + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "/";
         String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
         Path path = Paths.get(directory + filename);
-        Files.createDirectories(path.getParent());
+     // Ensure the directory exists
+        Path parentPath = path.getParent();
+        if (!Files.exists(parentPath)) {
+            Files.createDirectories(parentPath); // This will create the directory if it does not exist
+        }
+        // Write the file data to the directory
         Files.write(path, file.getBytes());
-        return path.toString();
+        return path.toString(); // Return the file path for database storage
     }
 
-    private MediaFile saveFileMetadata(MultipartFile file, String s3Key, User user) {
+
+    private MediaFile saveFileMetadata(MultipartFile file, String filePath, User user) {
         MediaFile mediaFile = new MediaFile();
         mediaFile.setFileName(file.getOriginalFilename());
         mediaFile.setFileType(file.getContentType());
         mediaFile.setFileSize(file.getSize());
-        mediaFile.setFilePath(s3Key);  // Store S3 key instead of local path
+      //  mediaFile.setFilePath(s3Key);  // Store S3 key instead of local path
+        mediaFile.setFilePath(filePath); // Save the local path
         mediaFile.setUuid(UUID.randomUUID().toString());
         mediaFile.setUser(user);
         return mediaFileRepository.save(mediaFile);
@@ -214,6 +221,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     public UserAssignment getAssignmentById(String assignmentId) {
         return userAssignmentRepository.findById(assignmentId).orElseThrow(() -> new RuntimeException("Assignment not found"));
     }
+    
     @Override
     public Resource downloadAllAssignments(String cohortId) throws IOException {
         List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
@@ -222,36 +230,63 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             throw new RuntimeException("No assignments found for the cohort.");
         }
 
-     // Create a temporary zip file
+        // Create a temporary zip file
         Path tempZipPath = Files.createTempFile("assignments_" + cohortId, ".zip");
         try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(tempZipPath))) {
             for (UserAssignment assignment : assignments) {
                 MediaFile file = assignment.getSubmittedFile();
-                
-                // Download from S3 and add to zip
-                try (ResponseInputStream<GetObjectResponse> s3Object = 
-                        s3StorageService.downloadFile(file.getFilePath())) {
+
+                // Get the file from the EC2 file system
+                Path filePath = Paths.get(file.getFilePath());
+                if (Files.exists(filePath)) {
                     zipOut.putNextEntry(new ZipEntry(file.getFileName()));
-                    s3Object.transferTo(zipOut);
+                    Files.copy(filePath, zipOut); // Copy file content directly into zip
                     zipOut.closeEntry();
                 }
             }
         }
-        
+
         return new FileSystemResource(tempZipPath);
     }
+
+//    @Override
+//    public Resource downloadAllAssignments(String cohortId) throws IOException {
+//        List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
+//
+//        if (assignments.isEmpty()) {
+//            throw new RuntimeException("No assignments found for the cohort.");
+//        }
+//
+//     // Create a temporary zip file
+//        Path tempZipPath = Files.createTempFile("assignments_" + cohortId, ".zip");
+//        try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(tempZipPath))) {
+//            for (UserAssignment assignment : assignments) {
+//                MediaFile file = assignment.getSubmittedFile();
+//                
+//                // Download from S3 and add to zip
+//                try (ResponseInputStream<GetObjectResponse> s3Object = 
+//                        s3StorageService.downloadFile(file.getFilePath())) {
+//                    zipOut.putNextEntry(new ZipEntry(file.getFileName()));
+//                    s3Object.transferTo(zipOut);
+//                    zipOut.closeEntry();
+//                }
+//            }
+//        }
+//        
+//        return new FileSystemResource(tempZipPath);
+//    }
     
-    private String uploadFileToS3(MultipartFile file) throws IOException {
-        String fileKey = LocalDate.now() + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-        s3Client.putObject(
-            PutObjectRequest.builder()
-                .bucket(BUCKET_NAME)
-                .key(fileKey)
-                .build(),
-            Paths.get(file.getOriginalFilename()) // Save the file locally temporarily
-        );
-        return fileKey; // Return the S3 key for the file
-    }
+//    private String uploadFileToS3(MultipartFile file) throws IOException {
+//        String fileKey = LocalDate.now() + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+//        s3Client.putObject(
+//            PutObjectRequest.builder()
+//                .bucket(BUCKET_NAME)
+//                .key(fileKey)
+//                .build(),
+//            Paths.get(file.getOriginalFilename()) // Save the file locally temporarily
+//        );
+//        return fileKey; // Return the S3 key for the file
+//    }
     
     @Override
     public void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores, 
