@@ -363,14 +363,21 @@ export default function SubConceptsPage() {
                     to={
                       index === totalSteps - 1 &&
                       nextUnitId &&
-                      unitCompletionStatus === "yes"
+                      (unitCompletionStatus === "yes" ||
+                        unitCompletionStatus.toLowerCase() ===
+                          "unit completed without assignments")
                         ? `/subconcepts/${nextUnitId}`
                         : isEnabled && index !== totalSteps - 1 && index !== 0
                         ? `/subconcept/${subconcept?.subconceptId}`
                         : null
                     }
                     state={{ subconcept, stageId, currentUnitId }}
-                    className={`${!isEnabled && "cursor-not-allowed"}`}
+                    className={`${
+                      !isEnabled &&
+                      unitCompletionStatus.toLowerCase() !==
+                        "unit completed without assignments" &&
+                      "cursor-not-allowed"
+                    }`}
                     onMouseEnter={() => setActiveTooltip(index)}
                     onMouseLeave={() => setActiveTooltip(null)}
                     onClick={() => {
@@ -455,6 +462,8 @@ export default function SubConceptsPage() {
                         className={`object-contain ${
                           index === totalSteps - 1 &&
                           unitCompletionStatus != "yes" &&
+                          unitCompletionStatus?.toLowerCase() !=
+                            "unit completed without assignments" &&
                           "opacity-50"
                         }`}
                       />
@@ -492,7 +501,12 @@ export default function SubConceptsPage() {
                     >
                       <div
                         className={`${
-                          isEnabled ? "bg-[#22C55E]" : "bg-slate-400"
+                          isEnabled
+                            ? "bg-[#22C55E]" // Green for enabled
+                            : unitCompletionStatus?.toLowerCase() ===
+                              "unit completed without assignments"
+                            ? "bg-[#FFC107]" // Yellow for "unit completed without assignments"
+                            : "bg-slate-400" // Default slate for all others
                         } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
                         style={{
                           position: "absolute",
@@ -503,14 +517,28 @@ export default function SubConceptsPage() {
                           maxWidth: "200px", // Restrict the width to enable ellipsis
                         }}
                       >
-                        {subconcept
-                          ? subconcept.subconceptDesc
-                          : index === 0
-                          ? "Start"
-                          : index === totalSteps - 1 &&
-                            unitCompletionStatus != "yes"
-                          ? "Complete all the activities"
-                          : "Finish"}
+                        {subconcept ? (
+                          subconcept.subconceptDesc
+                        ) : index === 0 ? (
+                          "Start"
+                        ) : index === totalSteps - 1 &&
+                          unitCompletionStatus !== "yes" &&
+                          unitCompletionStatus?.toLowerCase() !==
+                            "unit completed without assignments" ? (
+                          "Complete all the activities"
+                        ) : unitCompletionStatus?.toLowerCase() ===
+                          "unit completed without assignments" ? (
+                          <>
+                            <span>Finish!</span>
+                            <br />
+                            <span>
+                              Don't forget to come back and complete your
+                              assignment(s)
+                            </span>
+                          </>
+                        ) : (
+                          "Finish"
+                        )}
                       </div>
                     </foreignObject>
                   )}
