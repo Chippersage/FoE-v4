@@ -157,7 +157,7 @@ const MediaContent = ({ subconceptData }) => {
       userId: userData.userId,
       sessionId: userData.sessionId,
       subconceptId: userData.subconceptId,
-      // cohortId: userData.cohortId,
+      cohortId: userData.cohortId,
     };
 
     fetch(`${userData.API_BASE_URL}/user-attempts`, {
@@ -179,14 +179,19 @@ const MediaContent = ({ subconceptData }) => {
       .catch((error) => {
         console.error("Error:", error);
 
-        if (subconceptData?.subconceptType === "assignment") {
+        if (subconceptData?.subconceptType === "assignment" && retryCount < 1) {
+          setRetryCount((prev) => prev + 1);
+          sendAttemptData(userData);
+        } else {
           setShowErrorPopup(true);
           setErrorCountdown(5); // Reset error countdown
           setIsComplete(false);
-        } else {
-          // setIsRetryPopupOpen(true);
         }
       });
+  };
+
+  const handleUploadSuccess = () => {
+    setIsAssignmentUploadSuccesfull(true); // Trigger useEffect
   };
   // @ts-ignore
   const renderOverlay = (type) => {
@@ -375,11 +380,11 @@ const MediaContent = ({ subconceptData }) => {
 
   return (
     <>
-      <RetryModal
+      {/* <RetryModal
         isOpen={isRetryPopupOpen}
         onClose={() => setIsRetryPopupOpen(false)}
         onRetry={handleComplete}
-      />
+      /> */}
       {showAlert && (
         <AlertModal
           onAlertClose={() => {
@@ -402,7 +407,7 @@ const MediaContent = ({ subconceptData }) => {
         <UploadModal
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
-          setIsAssignmentUploadSuccesfull={setIsAssignmentUploadSuccesfull}
+          onUploadSuccess={handleUploadSuccess} // Pass callback
         />
         {/* @ts-ignore */}
         <div id="contentArea" style={styles.contentArea}>
