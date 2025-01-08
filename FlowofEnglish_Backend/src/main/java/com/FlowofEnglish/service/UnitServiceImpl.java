@@ -223,7 +223,7 @@ public class UnitServiceImpl implements UnitService {
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             
             boolean stageCompleted = true;
-            boolean stageCompletedWithoutAssignments = true;
+            boolean stageCompletedWithoutAssignments = false;
             
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
@@ -326,22 +326,21 @@ public class UnitServiceImpl implements UnitService {
             }
         }
             
-         // **Here you insert your logic for enabling the stage based on completion of previous stage**
-            if (stageCompleted || stageCompletedWithoutAssignments) {
-                stageResponse.setStageEnabled(true);
-                previousStageCompleted = true;
-            } else {
-                stageResponse.setStageEnabled(false);
-                previousStageCompleted = false;
-            }
-            
+
          // Set stage enabled status based on previous stage completion
             if (i == 0) {
                 // Enable the first stage by default
                 stageResponse.setStageEnabled(true);
             } else {
-                // Enable this stage only if the previous stage was completed
-                stageResponse.setStageEnabled(previousStageCompleted && !units.isEmpty());
+            	// Get previous stage's completion status
+                StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
+                String previousStageStatus = previousStage.getStageCompletionStatus();
+                
+                // Enable this stage if previous stage was completed (either fully or without assignments)
+                boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                 "Stage Completed without Assignments".equals(previousStageStatus);
+                
+                stageResponse.setStageEnabled(isPreviousStageCompleted && !units.isEmpty());
             }
             
          // Update previousStageCompleted for the next iteration
