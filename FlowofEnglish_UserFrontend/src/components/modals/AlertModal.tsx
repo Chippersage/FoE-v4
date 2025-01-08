@@ -5,8 +5,8 @@ export default function AlertModal({onAlertClose}) {
           <div className="bg-white rounded-[8px] shadow-lg max-w-md w-full p-6 relative">
             <h3 className="text-lg font-semibold mb-2">Don't forget!</h3>
             <p className="text-gray-600">
-              Please remember to click the "Complete" button after
-              you finish this activity.
+              Please remember to come back and click the "Complete" button after
+              you submit the assesment.
             </p>
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
