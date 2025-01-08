@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.FlowofEnglish.model.ErrorResponse;
 
@@ -38,6 +39,12 @@ public class GlobalExceptionHandler {
             new ErrorResponse("Invalid date format", e.getMessage()), 
             HttpStatus.BAD_REQUEST
         );
+    }
+    
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+            .body("File size exceeds the maximum allowed limit.");
     }
     // You can also add more exception handlers here if needed
 }
