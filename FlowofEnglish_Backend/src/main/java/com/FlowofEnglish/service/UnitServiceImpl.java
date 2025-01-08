@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 
 import java.io.BufferedReader;
@@ -55,6 +58,8 @@ public class UnitServiceImpl implements UnitService {
     
     @Autowired
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(ProgramService.class);
 
     @Override
     public Unit createUnit(Unit unit) {
@@ -241,16 +246,7 @@ public class UnitServiceImpl implements UnitService {
                     List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
                         .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
                         .collect(Collectors.toList());
-                    
-//                 // Calculate total and completed subconcept counts based on user type
-//                    int totalSubConceptCount = accessibleMappings.size();
-//                    long completedSubConceptCount = accessibleMappings.stream()
-//                        .map(ProgramConceptsMapping::getSubconcept)
-//                        .map(Subconcept::getSubconceptId)
-//                        .filter(id -> userSubConceptsForUnit.stream()
-//                            .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)))
-//                        .count();
-                    
+                                 
                     // Calculate counts for non-assignment subconcepts
                     int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
                         .map(ProgramConceptsMapping::getSubconcept)
@@ -329,6 +325,15 @@ public class UnitServiceImpl implements UnitService {
                 }
             }
         }
+            
+         // **Here you insert your logic for enabling the stage based on completion of previous stage**
+            if (stageCompleted || stageCompletedWithoutAssignments) {
+                stageResponse.setStageEnabled(true);
+                previousStageCompleted = true;
+            } else {
+                stageResponse.setStageEnabled(false);
+                previousStageCompleted = false;
+            }
             
          // Set stage enabled status based on previous stage completion
             if (i == 0) {
