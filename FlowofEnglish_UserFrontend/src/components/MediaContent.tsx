@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { UploadModal } from "./modals/UploadModal";
 import AlertModal from "./modals/AlertModal";
+import { RetryModal } from "./modals/RetryModal";
 // @ts-ignore
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -16,7 +17,34 @@ const MediaContent = ({ subconceptData }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isAssignmentUploadSuccesfull, setIsAssignmentUploadSuccesfull] = useState(false);
+  const [isRetryPopupOpen, setIsRetryPopupOpen] = useState(false);
+  const [isAssessmentIntegrityChecked, setIsAssessmentIntegrityChecked] = useState(false)
+  const [alertDismissed, setAlertDismissed] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (
+      alertDismissed &&
+      subconceptData?.subconceptType.startsWith("assessment")
+    ) {
+      setTimeout(() => {
+        const userConfirmed = window.confirm(
+          "Do you want to open the assessment?"
+        );
+        if (userConfirmed) {
+          const link = document.createElement("a");
+          link.href = subconceptData?.subconceptLink + "=" + userData?.userId; // Replace with your custom protocol or URL
+          link.target = "_blank"; // Open in a new tab if needed
+          link.click();
+        }
+      }, 500);
+      
+    }
+  }, [alertDismissed, subconceptData]);
+
+  const openAssessment = () => {
+    window.open(subconceptData?.subconceptLink + '=' + userData?.userId, "_blank");
+  }
 
   useEffect(() => {
     if (isAssignmentUploadSuccesfull) {
@@ -25,10 +53,12 @@ const MediaContent = ({ subconceptData }) => {
   }, [isAssignmentUploadSuccesfull]);
 
     useEffect(() => {
-      // Show the popup after a short delay
-      const timer = setTimeout(() => setShowAlert(true), 500);
-      return () => clearTimeout(timer);
-    }, []);
+      if (!subconceptData?.subconceptType.startsWith("assignment")) {
+        // Show the popup after a short delay
+        const timer = setTimeout(() => setShowAlert(true), 500);
+        return () => clearTimeout(timer);
+      }
+    }, [subconceptData]);
 
   // Handle countdown for success overlay
   useEffect(() => {
@@ -147,9 +177,14 @@ const MediaContent = ({ subconceptData }) => {
       })
       .catch((error) => {
         console.error("Error:", error);
-        setShowErrorPopup(true);
-        setErrorCountdown(5); // Reset error countdown
-        setIsComplete(false);
+
+        if (subconceptData?.subconceptType === "assignment") {
+          setShowErrorPopup(true);
+          setErrorCountdown(5); // Reset error countdown
+          setIsComplete(false);
+        } else {
+          setIsRetryPopupOpen(true);
+        }
       });
   };
   // @ts-ignore
@@ -236,7 +271,6 @@ const MediaContent = ({ subconceptData }) => {
   };
 
   const renderContent = () => {
-    console.log(subconceptData?.subconceptType);
     const { subconceptType, subconceptLink } = subconceptData;
     switch (subconceptType) {
       case "audio":
@@ -304,22 +338,34 @@ const MediaContent = ({ subconceptData }) => {
           </div>
         );
         case "assessment":
-          console.log(`${subconceptLink + "=" + userData?.userId}`);
           return (
-              <iframe
-                src={`${subconceptLink + '=' + userData?.userId}`} // Disable PDF toolbar
-                width="100%"
-                height="500px"
-                title="PDF Document"
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-                  // pointerEvents: "none",
-                }}
-                // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-                // @ts-ignore
-                // controlsList="nodownload" // Restrict download
-              />
+            <div className="max-w-md mx-auto p-6 bg-white rounded-lg">
+              <p className="text-lg mb-4">
+                Click "OK" on the dialog box shown by the browser. If you
+                don't see a dialog or if doesn't open assessment in new tab, click on "Open Assessment" below.
+              </p>
+
+              <div className="flex items-start space-x-2 mb-4">
+                <input
+                  type="checkbox"
+                  id="agreement"
+                  checked={isAssessmentIntegrityChecked}
+                  onChange={(e) => setIsAssessmentIntegrityChecked(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="agreement" className="text-sm text-gray-700">
+                  I agree that I have answered and submitted the Google Form
+                  assessment that was opened in a new tab
+                </label>
+              </div>
+
+              <button
+                onClick={openAssessment}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
+              >
+                Open Assessment
+              </button>
+            </div>
           );
       default:
         return <p>Something went wrong!</p>;
@@ -328,7 +374,19 @@ const MediaContent = ({ subconceptData }) => {
 
   return (
     <>
-      {showAlert && <AlertModal onAlertClose={() => setShowAlert(false)} />}
+      <RetryModal
+        isOpen={isRetryPopupOpen}
+        onClose={() => setIsRetryPopupOpen(false)}
+        onRetry={handleComplete}
+      />
+      {showAlert && (
+        <AlertModal
+          onAlertClose={() => {
+            setShowAlert(false);
+            setAlertDismissed(true);
+          }}
+        />
+      )}
       {showSuccessPopup && renderOverlay("success")}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
@@ -357,11 +415,22 @@ const MediaContent = ({ subconceptData }) => {
                 ? setIsUploadModalOpen(true)
                 : handleComplete();
             }}
-            disabled={isComplete}
-            style={isComplete ? styles.disabledButton : styles.button}
+            disabled={
+              subconceptData?.subconceptType.startsWith("assessment")
+                ? !isAssessmentIntegrityChecked
+                : isComplete
+            }
+            style={
+              subconceptData?.subconceptType.startsWith("assessment") &&
+              !isAssessmentIntegrityChecked
+                ? styles.disabledButton
+                : isComplete
+                ? styles.disabledButton
+                : styles.button
+            }
           >
             {subconceptData?.subconceptType.startsWith("assignment")
-              ? "Upload your assignment"
+              ? "Upload assignment"
               : "Complete"}
           </button>
           <button onClick={handleGoBack} style={styles.button}>

@@ -33,30 +33,30 @@ export function UploadModal({
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const navigate = useNavigate();
 
   const handleContentChange = useCallback((hasContent: boolean) => {
     setHasContent(hasContent);
   }, []);
 
+  const handleFileUpload = (file: File | null) => {
+    setUploadedFile(file); // Store the uploaded file
+    console.log("Uploaded file:", file);
+  };
+
   const handleSubmit = async () => {
     setErrorMessage(null); // Clear previous error
     setIsLoading(true);
     try {
-      const fileUploadInput = document.getElementById(
-        "file-upload"
-      ) as HTMLInputElement;
-
       const formData = new FormData();
 
       if (
-        fileUploadInput &&
-        fileUploadInput.files &&
-        fileUploadInput.files.length > 0
+        uploadedFile
       ) {
         formData.append(
           "file",
-          fileUploadInput.files[fileUploadInput.files.length - 1]
+          uploadedFile
         );
       } else if (recordedBlob) {
         formData.append("file", recordedBlob);
@@ -184,6 +184,7 @@ export function UploadModal({
                   onContentChange={handleContentChange}
                   disabled={isLoading}
                   setErrorMessage={setErrorMessage}
+                  onFileUpload={handleFileUpload} // Pass callback
                 />
               ) : (
                 <MediaRecorder

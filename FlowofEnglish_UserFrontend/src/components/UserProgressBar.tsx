@@ -1,7 +1,6 @@
 import { useState } from "react";
 // @ts-ignore
 export default function UserProgressBar({ userProgress }) {
-  console.log(userProgress)
   const {
     totalStages,
     totalUnits,
