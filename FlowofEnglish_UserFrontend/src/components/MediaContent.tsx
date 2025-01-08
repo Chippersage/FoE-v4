@@ -157,7 +157,7 @@ const MediaContent = ({ subconceptData }) => {
       userId: userData.userId,
       sessionId: userData.sessionId,
       subconceptId: userData.subconceptId,
-      cohortId: userData.cohortId,
+      // cohortId: userData.cohortId,
     };
 
     fetch(`${userData.API_BASE_URL}/user-attempts`, {
