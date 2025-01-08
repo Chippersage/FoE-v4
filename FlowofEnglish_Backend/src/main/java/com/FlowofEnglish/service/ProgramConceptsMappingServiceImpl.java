@@ -162,8 +162,12 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             // Check if the current subconcept has been completed by the user
             boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());
             if (subconcept.getSubconceptType().toLowerCase().startsWith("assignment")) {
-                hasPendingAssignments = true;
-                subconceptResponseDTO.setCompletionStatus("ignored");
+                if (isCompleted) {
+                    subconceptResponseDTO.setCompletionStatus("yes");
+                } else {
+                    hasPendingAssignments = true;
+                    subconceptResponseDTO.setCompletionStatus("ignored");
+                }
             } else if (isCompleted) {
                 subconceptResponseDTO.setCompletionStatus("yes");
                 enableNextSubconcept = true;
@@ -173,21 +177,19 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             } else {
                 subconceptResponseDTO.setCompletionStatus("disabled");
             }
-
             // Add to the map with an appropriate key (like an index or ID)
             subconcepts.put(String.valueOf(subconcepts.size()), subconceptResponseDTO);
+            subconceptCount++;
         }
          // Check if all non-assignment subconcepts are completed
             boolean allSubconceptsCompleted = completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount;
         System.out.println("Subconcept Count: " + subconceptCount);
         System.out.println("User Subconcepts Completed: " + completedSubconceptIds.size());
 
-     // Set the unit completion status
-        String unitCompletionStatus = "no"; // Default status
-        if (hasPendingAssignments) {
-            unitCompletionStatus = "Unit Completed without Assignments";
-        } else if (allSubconceptsCompleted) {
-            unitCompletionStatus = "yes";
+     // Determine unit completion status
+        String unitCompletionStatus = "no";
+        if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
+            unitCompletionStatus = hasPendingAssignments ? "Unit Completed without Assignments" : "yes";
         }
      
      // Add subconcept count and final completion status to the response
