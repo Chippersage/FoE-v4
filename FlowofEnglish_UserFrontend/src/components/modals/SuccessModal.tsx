@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
+import { useEffect } from "react";
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -29,6 +30,18 @@ const itemVariants = {
 };
 
 export function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
+
+  useEffect(() => {
+    if (isOpen) {
+      const timeout = setTimeout(() => {
+        onClose(); // Trigger the onClose callback
+      }, 3000); // Close after 3 seconds
+
+      return () => clearTimeout(timeout); // Cleanup timeout
+    }
+  }, [isOpen]);
+
+
   return (
     <AnimatePresence>
       {isOpen && (
