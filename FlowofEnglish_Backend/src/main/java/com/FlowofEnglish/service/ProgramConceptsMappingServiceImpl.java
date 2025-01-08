@@ -43,6 +43,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMappingService {
 
@@ -81,16 +84,24 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     @Override
     public Optional<ProgramConceptsMappingResponseDTO> getProgramConceptsMappingByUnitId(String userId, String unitId) {
         
+    	Logger logger = LoggerFactory.getLogger(this.getClass());
+    	logger.info("Method getProgramConceptsMappingByUnitId started for userId: {} and unitId: {}", userId, unitId);
+
     	// Fetch user details
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            .orElseThrow(() -> {
+            	logger.error("User with userId: {} not found", userId);
+                return new ResourceNotFoundException("User not found");
+            });
         
         String userType = user.getUserType();
+        logger.info("User found: {}, UserType: {}", user.getUserName(), userType);
         
     	// Fetch all mappings related to the unitId
         List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findByUnit_UnitIdOrdered(unitId);
 
         if (mappings.isEmpty()) {
+        	logger.warn("No mappings found for unitId: {}", unitId);
             return Optional.empty();
         }
 
@@ -104,7 +115,6 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         responseDTO.setUnitDesc(mappings.get(0).getUnit().getUnitDesc());
         responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
         responseDTO.setStageName(mappings.get(0).getStage().getStageName());
-
         // Set stageId (assuming all mappings belong to the same stage)
         responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
 
@@ -114,11 +124,12 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         
      // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unitId);
-        
      // Initialize a set to hold completed subconcept IDs for easier comparison
         Set<String> completedSubconceptIds = userSubConcepts.stream()
             .map(us -> us.getSubconcept().getSubconceptId())
             .collect(Collectors.toSet());
+        logger.info("User has completed {} subconcepts for unitId: {}", completedSubconceptIds.size(), unitId);
+
 
      // Determine accessible subconcepts based on user type
         List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
@@ -138,6 +149,9 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 .map(Subconcept::getSubconceptId)
                 .filter(completedSubconceptIds::contains)
                 .count();
+        logger.info("Total non-assignment subconcepts: {}", totalNonAssignmentSubConceptCount);
+        logger.info("Completed non-assignment subconcepts: {}", completedNonAssignmentSubConceptCount);
+
         
         boolean enableNextSubconcept = true; // Initially, the first subconcept is enabled
         boolean hasPendingAssignments = false;
@@ -162,7 +176,9 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             // Check if the current subconcept has been completed by the user
             boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());
             if (subconcept.getSubconceptType().toLowerCase().startsWith("assignment")) {
-                if (isCompleted) {
+            	if (completedNonAssignmentSubConceptCount < totalNonAssignmentSubConceptCount) {
+                    subconceptResponseDTO.setCompletionStatus("disabled");
+                } else if (isCompleted) {
                     subconceptResponseDTO.setCompletionStatus("yes");
                 } else {
                     hasPendingAssignments = true;
@@ -182,7 +198,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptCount++;
         }
          // Check if all non-assignment subconcepts are completed
-            boolean allSubconceptsCompleted = completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount;
+        boolean allSubconceptsCompleted = completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount;
         System.out.println("Subconcept Count: " + subconceptCount);
         System.out.println("User Subconcepts Completed: " + completedSubconceptIds.size());
 
@@ -196,7 +212,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         responseDTO.setSubconceptCount(totalNonAssignmentSubConceptCount);
         responseDTO.setSubConcepts(subconcepts);
         responseDTO.setUnitCompletionStatus(unitCompletionStatus);
-        
+        logger.info("Method getProgramConceptsMappingByUnitId completed for userId: {} and unitId: {}", userId, unitId);
         return Optional.of(responseDTO);
     }
     /**
