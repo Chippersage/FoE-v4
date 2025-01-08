@@ -8,9 +8,9 @@ export default function LeaderboardSkeleton() {
         <CardTitle className="text-2xl font-bold">
           <Skeleton className="h-8 w-48 mx-auto" />
         </CardTitle>
-        <p className="text-muted-foreground">
+        <div className="text-muted-foreground">
           <Skeleton className="h-4 w-32 mx-auto" />
-        </p>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
