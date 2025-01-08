@@ -218,7 +218,7 @@ public class UnitServiceImpl implements UnitService {
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             
             boolean stageCompleted = true;
-            boolean stageCompletedWithoutAssignments = false;
+            boolean stageCompletedWithoutAssignments = true;
             
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
