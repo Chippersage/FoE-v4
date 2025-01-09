@@ -6,7 +6,6 @@ import AuthLayout from "./_auth/AuthLayout.tsx";
 import RootLayout from "./_root/RootLayout";
 import SingleSubconcept from "./_root/pages/SingleSubconcept.tsx";
 import { useEffect } from "react";
-import ScrollToTop from "./components/ScrollToTop.tsx";
 
 export default function App() {
 
@@ -24,8 +23,6 @@ export default function App() {
 
   return (
     <>
-      <ScrollToTop />
-
       <main className="flex h-screen">
         <Routes>
           {/* public routes */}
