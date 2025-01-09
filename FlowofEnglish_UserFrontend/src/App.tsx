@@ -42,7 +42,10 @@ export default function App() {
           <Route element={<RootLayout />}>
             <Route index element={<HomePage />} />
             <Route path="/subconcepts/:unitId" element={<SubConceptsPage />} />
-            <Route path="/subconcept/:subconceptId" element={<SingleSubconcept />} />
+            <Route
+              path="/subconcept/:subconceptId"
+              element={<SingleSubconcept />}
+            />
           </Route>
         </Routes>
       </main>
