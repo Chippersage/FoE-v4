@@ -6,14 +6,9 @@ const ScrollToTop = () => {
 
   useEffect(() => {
     console.log(`Scrolling to top for path: ${pathname}`);
-    window.scrollTo(0, 0); // Simple scroll without smooth behavior
-  }, [pathname]);
-
-
-  useEffect(() => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth", // Enables smooth scrolling
+      behavior: "smooth", // Smooth scrolling
     });
   }, [pathname]); // Trigger scroll on route change
 

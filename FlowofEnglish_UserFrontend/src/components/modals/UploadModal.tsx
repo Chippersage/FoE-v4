@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2 } from "lucide-react";
@@ -14,7 +15,11 @@ interface UploadModalProps {
   onUploadSuccess: () => void;
 }
 
-export function UploadModal({ isOpen, onClose, onUploadSuccess }: UploadModalProps) {
+export function UploadModal({
+  isOpen,
+  onClose,
+  onUploadSuccess,
+}: UploadModalProps) {
   const [activeTab, setActiveTab] = useState<
     "upload" | "recordAudio" | "recordVideo"
   >("upload");
@@ -125,7 +130,7 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }: UploadModalPro
                 {/* Upload File Button */}
                 <button
                   onClick={() => {
-                    setActiveTab("upload")
+                    setActiveTab("upload");
                     setErrorMessage(null);
                   }}
                   className={`px-4 py-2 rounded-[5px] ${
