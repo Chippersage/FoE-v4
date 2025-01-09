@@ -115,12 +115,6 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         responseDTO.setUnitDesc(mappings.get(0).getUnit().getUnitDesc());
         responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
         responseDTO.setStageName(mappings.get(0).getStage().getStageName());
-        // Set stageId (assuming all mappings belong to the same stage)
-        responseDTO.setStageId(mappings.get(0).getStage().getStageId()); 
-
-        // Initialize the sub_concepts map
-        Map<String, SubconceptResponseDTO> subconcepts = new LinkedHashMap<>();
-        int subconceptCount = 0;  // Variable to keep track of total subconcept count
         
      // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unitId);
@@ -135,31 +129,28 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
             .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
             .collect(Collectors.toList());
-
-        // Update totalSubConceptCount based on accessible mappings
-        int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
-                .map(ProgramConceptsMapping::getSubconcept)
-                .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
-                .count();
         
-        // Calculate completedSubConceptCount based on accessible mappings
-        long completedNonAssignmentSubConceptCount = accessibleMappings.stream()
-                .map(ProgramConceptsMapping::getSubconcept)
-                .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
-                .map(Subconcept::getSubconceptId)
-                .filter(completedSubconceptIds::contains)
-                .count();
-        logger.info("Total non-assignment subconcepts: {}", totalNonAssignmentSubConceptCount);
-        logger.info("Completed non-assignment subconcepts: {}", completedNonAssignmentSubConceptCount);
-
-        
-        boolean enableNextSubconcept = true; // Initially, the first subconcept is enabled
+     // Initialize the sub_concepts map
+        Map<String, SubconceptResponseDTO> subconcepts = new LinkedHashMap<>();
+     //  int subconceptCount = 0;  // Variable to keep track of total subconcept count
         boolean hasPendingAssignments = false;
-        
+        boolean enableNextSubconcept = true; // Initially, the first subconcept is enabled
+        int lastCompletedNormalIndex = -1;
+        int currentIndex = 0;
+     // First pass: find last completed normal concept
+        for (int i = 0; i < accessibleMappings.size(); i++) {
+            ProgramConceptsMapping mapping = accessibleMappings.get(i);
+            Subconcept subconcept = mapping.getSubconcept();
+            boolean isCompleted = completedSubconceptIds.contains(subconcept.getSubconceptId());
+            boolean isAssignment = subconcept.getSubconceptType().toLowerCase().startsWith("assignment");
+            
+            if (isCompleted && !isAssignment) {
+                lastCompletedNormalIndex = i;
+            }
+        }
         
         for (ProgramConceptsMapping mapping : accessibleMappings) {
             Subconcept subconcept = mapping.getSubconcept();
-           
             SubconceptResponseDTO subconceptResponseDTO = new SubconceptResponseDTO();
             subconceptResponseDTO.setSubconceptId(mapping.getSubconcept().getSubconceptId());
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
@@ -175,31 +166,76 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
          
             // Check if the current subconcept has been completed by the user
             boolean isCompleted = completedSubconceptIds.contains(mapping.getSubconcept().getSubconceptId());
-            if (subconcept.getSubconceptType().toLowerCase().startsWith("assignment")) {
-            	if (completedNonAssignmentSubConceptCount < totalNonAssignmentSubConceptCount) {
-                    subconceptResponseDTO.setCompletionStatus("disabled");
-                } else if (isCompleted) {
-                    subconceptResponseDTO.setCompletionStatus("yes");
-                } else {
-                    hasPendingAssignments = true;
-                    subconceptResponseDTO.setCompletionStatus("ignored");
-                }
-            } else if (isCompleted) {
+            boolean isAssignment = subconcept.getSubconceptType().toLowerCase().startsWith("assignment");
+
+            // Determine completion status
+            if (isCompleted) {
                 subconceptResponseDTO.setCompletionStatus("yes");
-                enableNextSubconcept = true;
+                if (!isAssignment) {
+                    enableNextSubconcept = true;
+                }
+            } else {
+            if (isAssignment) {
+            	 // Check if all previous concepts up to next assignment are completed
+                boolean prevConceptsCompleted = true;
+                int prevAssignmentIndex = -1;
+                
+                // Find previous assignment
+                for (int i = currentIndex - 1; i >= 0; i--) {
+                    if (accessibleMappings.get(i).getSubconcept().getSubconceptType()
+                            .toLowerCase().startsWith("assignment")) {
+                        prevAssignmentIndex = i;
+                        break;
+                    }
+                }
+                
+             // Check completion of concepts between previous assignment and current
+                for (int i = prevAssignmentIndex + 1; i < currentIndex; i++) {
+                    Subconcept prev = accessibleMappings.get(i).getSubconcept();
+                    if (!prev.getSubconceptType().toLowerCase().startsWith("assignment") &&
+                        !completedSubconceptIds.contains(prev.getSubconceptId())) {
+                        prevConceptsCompleted = false;
+                        break;
+                    }
+                }
+                
+                if (prevConceptsCompleted) {
+                    subconceptResponseDTO.setCompletionStatus("ignored");
+                    hasPendingAssignments = true;
+                } else {
+                    subconceptResponseDTO.setCompletionStatus("disabled");
+                }
             } else if (enableNextSubconcept) {
                 subconceptResponseDTO.setCompletionStatus("incomplete");
                 enableNextSubconcept = false;
             } else {
                 subconceptResponseDTO.setCompletionStatus("disabled");
             }
-            // Add to the map with an appropriate key (like an index or ID)
-            subconcepts.put(String.valueOf(subconcepts.size()), subconceptResponseDTO);
-            subconceptCount++;
         }
+         // Add to the map with an appropriate key (like an index or ID)
+        subconcepts.put(String.valueOf(currentIndex), subconceptResponseDTO);
+        currentIndex++;
+       // subconceptCount++;
+    }
+     // Update totalSubConceptCount based on accessible mappings
+        int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
+                .map(ProgramConceptsMapping::getSubconcept)
+                .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                .count();
+        
+        // Calculate completedSubConceptCount based on accessible mappings
+        long completedNonAssignmentSubConceptCount = accessibleMappings.stream()
+                .map(ProgramConceptsMapping::getSubconcept)
+                .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
+                .map(Subconcept::getSubconceptId)
+                .filter(completedSubconceptIds::contains)
+                .count();
+        logger.info("Total non-assignment subconcepts: {}", totalNonAssignmentSubConceptCount);
+        logger.info("Completed non-assignment subconcepts: {}", completedNonAssignmentSubConceptCount);
+
          // Check if all non-assignment subconcepts are completed
-        boolean allSubconceptsCompleted = completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount;
-        System.out.println("Subconcept Count: " + subconceptCount);
+     //   boolean allSubconceptsCompleted = completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount;
+       // System.out.println("Subconcept Count: " + subconceptCount);
         System.out.println("User Subconcepts Completed: " + completedSubconceptIds.size());
 
      // Determine unit completion status
