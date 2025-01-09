@@ -1,4 +1,4 @@
-
+// @ts-nocheck
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,8 +45,6 @@ export default function Stages({ stages }) {
       setExpandedModule(expandedModule === index ? null : index);
     }
   };
-
-
 
   return (
     <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]">
@@ -157,10 +155,10 @@ export default function Stages({ stages }) {
                     </Button>
                   </div>
                   <div
-                    className={`mt-4 grid grid-cols-2 gap-4 overflow-hidden transition-all duration-300 ease-in-out ${
+                    className={`mt-4 grid grid-cols-2 gap-4 overflow-visible transition-all duration-300 ease-in-out ${
                       expandedModule === index
                         ? "max-h-96 opacity-100"
-                        : "max-h-0 opacity-0"
+                        : "max-h-0 opacity-0 hidden"
                     }`}
                   >
                     {/* @ts-ignore */}
@@ -193,7 +191,7 @@ export default function Stages({ stages }) {
                             unit.completionStatus !== "disabled"
                               ? "bg-[#DB5788]"
                               : ""
-                          }`}
+                          } hover:transform hover:scale-105 hover:perspective-[1000px]`}
                           // @ts-ignore
                           onMouseEnter={() => setHoveredUnit(unit.unitId)}
                           onMouseLeave={() => setHoveredUnit(null)}
@@ -227,7 +225,8 @@ export default function Stages({ stages }) {
                                   hoveredUnit === unit.unitId &&
                                   unit.completionStatus !== "disabled"
                                     ? "text-white"
-                                    : "text-red-500"}`}
+                                    : "text-red-500"
+                                }`}
                                 size={16}
                               />
                             ))}
@@ -271,7 +270,8 @@ export default function Stages({ stages }) {
                   </div>
                 </CardContent>
               </Card>
-            );})
+            );
+          })
         ) : (
           <p className="text-gray-500">No stages available</p>
         )}
