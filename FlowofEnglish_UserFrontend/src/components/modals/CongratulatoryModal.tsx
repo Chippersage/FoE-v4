@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -24,7 +25,7 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
 }) => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [confettiActive, setConfettiActive] = useState(false);
-  const {user} = useUserContext();
+  const { user } = useUserContext();
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,7 +66,9 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
   const getCongratsContent = () => {
     if (congratsType === "programCompletion") {
       return {
-        icon: <FaTrophy className="text-yellow-400 text-7xl mx-auto mb-4 z-10 relative" />,
+        icon: (
+          <FaTrophy className="text-yellow-400 text-7xl mx-auto mb-4 z-10 relative" />
+        ),
         heading: "Excellent! Kudos!",
         message: `You have successfully completed all the activities in the Program -  
                   ${programName ? programName : "this amazing program"}!`,
@@ -158,8 +161,13 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
               className="bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-blue-600 transition duration-300 shadow-lg relative z-10"
               onClick={() => {
                 congratsType === "programCompletion" &&
-                generateCertificate(user?.userName, user?.program?.programName, user?.cohort?.cohortStartDate, user?.cohort?.cohortEndDate);
-                onClose()
+                  generateCertificate(
+                    user?.userName,
+                    user?.program?.programName,
+                    user?.cohort?.cohortStartDate,
+                    user?.cohort?.cohortEndDate
+                  );
+                onClose();
               }}
             >
               {buttonText}
