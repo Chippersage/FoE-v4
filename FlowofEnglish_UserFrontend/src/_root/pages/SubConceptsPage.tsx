@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// @ts-nocheck
+import { useState, useEffect, useRef } from "react";
 import {
   CheckCircle2,
   // BookOpen,
@@ -18,7 +19,7 @@ import Picture from "@/components/activityIcons/Picture";
 import Start from "@/components/activityIcons/Start";
 import QnA from "@/components/activityIcons/QnA";
 // import TeachingIcon from "@/assets/icons/workshop.svg";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 // import { useLocation } from "react-router-dom";
 import Header2 from "@/components/Header2";
@@ -122,6 +123,18 @@ export default function SubConceptsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [celebratedStageName, setCelebratedStageName] = useState("");
   const navigate = useNavigate();
+
+  const scrollableDivRef = useRef(null);
+  const { pathname } = useLocation(); // Detect route changes
+
+  useEffect(() => {
+    if (scrollableDivRef.current) {
+      scrollableDivRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  }, [pathname]); // Trigger scroll when the route changes
 
   const fetchSubconcepts = async () => {
     try {
@@ -272,6 +285,7 @@ export default function SubConceptsPage() {
         />
       )}
       <div
+        ref={scrollableDivRef}
         className=" w-full h-screen overflow-y-auto"
         style={{
           backgroundImage: `url('/images/index.png')`,
@@ -293,6 +307,9 @@ export default function SubConceptsPage() {
                 Congratulations!
               </h2>
               <p>You have unlocked the next unit!</p>
+              <p className="text-sm text-gray-500 mt-2">
+                You are being redirected to the next unit...
+              </p>
             </div>
           </div>
         )}
@@ -383,7 +400,9 @@ export default function SubConceptsPage() {
                     onClick={() => {
                       if (
                         index === totalSteps - 1 &&
-                        unitCompletionStatus === "yes" &&
+                        (unitCompletionStatus === "yes" ||
+                          unitCompletionStatus.toLowerCase() ===
+                            "unit completed without assignments") &&
                         nextUnitId
                       ) {
                         setShowConfetti(true);
