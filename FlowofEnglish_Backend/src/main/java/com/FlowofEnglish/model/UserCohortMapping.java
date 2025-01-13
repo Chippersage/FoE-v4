@@ -98,4 +98,12 @@ public class UserCohortMapping  {
             this.uuid = UUID.randomUUID().toString();
         }
     }
+    
+    public String getOrganizationId() {
+        return this.cohort.getOrganization().getOrganizationId();
+    }
+    
+    public String getCohortId() {
+        return this.cohort.getCohortId();
+    }
 }
