@@ -143,7 +143,17 @@ public class User {
         this.organization = organization;
     }
 
-    @Override
+    public List<UserCohortMapping> getUserCohortMappings() {
+		return userCohortMappings;
+	}
+
+
+	public void setUserCohortMappings(List<UserCohortMapping> userCohortMappings) {
+		this.userCohortMappings = userCohortMappings;
+	}
+
+
+	@Override
     public String toString() {
         return "User [userId=" + userId + ", userAddress=" + userAddress + ", userEmail=" + userEmail + ", userName="
                 + userName + ", userPhoneNumber=" + userPhoneNumber + ", userPassword=" + userPassword + ", userType="
