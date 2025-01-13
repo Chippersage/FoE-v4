@@ -136,7 +136,12 @@
         <artifactId>forms</artifactId>
         <version>7.2.5</version>
     </dependency>
-
+<!-- Razorpay Java SDK -->
+    <dependency>
+        <groupId>com.razorpay</groupId>
+        <artifactId>razorpay-java</artifactId>
+        <version>1.3.6</version>
+    </dependency>
 <!-- For Excel file processing -->
 <dependency>
     <groupId>org.apache.poi</groupId>
