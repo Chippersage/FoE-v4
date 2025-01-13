@@ -1,20 +1,40 @@
+// @ts-nocheck
+
 import jsPDF from "jspdf";
 import img from "/images/certificate_template.jpg";
 import "../assets/fonts/Parisienne-Regular-normal.js";
+import { format } from "path";
 
 interface GenerateCertificateProps {
-  userName?: string;
-  programName?: string;
-  cohortEndDate?: string;
-  cohortStartDate?: string;
+  userName: string;
+  programName: string;
+  cohortEndDate: string;
+  cohortStartDate: string;
 }
 
 export const generateCertificate = async ({
-  userName = "Atul Kumar",
-  programName = "Flow of English",
-  cohortStartDate = "Jan, 2024",
-  cohortEndDate = "Dec, 2025",
+  userName,
+  programName,
+  cohortStartDate,
+  cohortEndDate,
 }: GenerateCertificateProps): Promise<void> => {
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp || timestamp === "") {
+      return ""; // Return an empty string if the timestamp is missing
+    }
+
+    // Convert seconds to milliseconds
+    const date = new Date(Number(timestamp) * 1000);
+
+    // Format the date as "Jan, 2025"
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+
+
   const image = new Image();
   image.src = img;
 
@@ -66,7 +86,7 @@ export const generateCertificate = async ({
     doc.setFontSize(20);
     doc.setFont("helvetica");
     doc.text(
-      `${cohortStartDate} - ${cohortEndDate}`,
+      `${formatTimestamp(cohortStartDate)} - ${formatTimestamp(cohortEndDate)}`,
       235,
       223,
       { align: "center" }
