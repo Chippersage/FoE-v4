@@ -16,6 +16,9 @@ import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.repository.UserRepository;
 import com.FlowofEnglish.repository.UserSessionMappingRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.transaction.Transactional;
 
 @Service
@@ -28,18 +31,24 @@ public class WeeklyReportService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportService.class);
 
     @Transactional
     public void sendWeeklyReports() {
+    	logger.info("Starting weekly email report process...");
+
         OffsetDateTime fiveDaysAgo = OffsetDateTime.now().minusDays(5);
 
         // Fetch all users inactive for more than 5 days
         List<User> inactiveUsers = userSessionMappingRepository.findInactiveUsersSince(fiveDaysAgo);
+        logger.info("Fetched {} inactive users since {}", inactiveUsers.size(), fiveDaysAgo);
 
         // Separate users with valid emails
         List<User> usersWithEmails = inactiveUsers.stream()
             .filter(user -> user.getUserEmail() != null && !user.getUserEmail().isEmpty())
             .collect(Collectors.toList());
+        logger.info("Found {} users with valid emails", usersWithEmails.size());
 
         // Group inactive users by organization and cohort
         Map<String, Map<String, List<User>>> orgCohortMap = inactiveUsers.stream()
@@ -56,6 +65,7 @@ public class WeeklyReportService {
         // Process each organization
         orgCohortMap.forEach((orgId, cohortUsers) -> {
             cohortUsers.forEach((cohortId, users) -> {
+            	try {
                 // Find the top scorer in this cohort
                 UserCohortMapping topper = users.stream()
                     .flatMap(user -> user.getUserCohortMappings().stream())
@@ -65,12 +75,26 @@ public class WeeklyReportService {
 
                 // Send report email to admin
                 sendEmailToOrganizationAdmin(orgId, cohortId, users, topper);
+                logger.info("Processed cohort {} in organization {}, sent {} admin emails.", cohortId, orgId, 1);
+
 
                 // Send individual emails to users
-                usersWithEmails.forEach(user -> sendInactiveUserEmail(user, topper));
-            });
+                usersWithEmails.forEach(user ->{
+                	try {
+                sendInactiveUserEmail(user, topper);
+                logger.info("Email sent successfully to user: {}", user.getUserEmail());
+                    } catch (Exception e) {
+                        logger.error("Failed to send email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
+                    }
+                });
+            } catch (Exception e) {
+                logger.error("Error processing cohort {} in organization {}. Error: {}", cohortId, orgId, e.getMessage(), e);
+            }
         });
-    }
+    });
+
+    logger.info("Completed weekly email report process.");
+}
 
     private void sendEmailToOrganizationAdmin(String orgId, String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
         if (inactiveUsers == null || inactiveUsers.isEmpty()) {
