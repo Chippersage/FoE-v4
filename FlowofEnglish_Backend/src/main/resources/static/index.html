@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <button id="payButton">Pay Now</button>
+
+    <script>
+        document.getElementById('payButton').onclick = function() {
+            fetch('api/v1/payments/createOrder?amount=500&currency=INR')  // Amount in INR (500 INR for example)
+                .then(response => response.json())
+                .then(data => {
+                    var options = {
+                        "key": "your_key_id", // Replace with your Razorpay Key ID
+                        "amount": data.amount, // Amount in paise (500 INR for example)
+                        "currency": data.currency,
+                        "order_id": data.id, // Get Order ID from response
+                        "handler": function (response) {
+                            alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+                        },
+                        "prefill": {
+                            "name": "John Doe",
+                            "email": "johndoe@example.com",
+                            "contact": "9876543210"
+                        }
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                });
+        };
+    </script>
+</body>
+</html>
