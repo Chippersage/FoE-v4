@@ -17,6 +17,8 @@ interface MediaRecorderProps {
   onBlobGenerated: (blob: Blob | null) => void; // Callback for notifying parent of new blob
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
   mediaType: "audio" | "video";
+  setIsMediaRecording: React.Dispatch<React.SetStateAction<boolean>>;
+  activeTab: "upload" | "recordAudio" | "recordVideo";
 }
 
 export function MediaRecorder({
@@ -24,7 +26,9 @@ export function MediaRecorder({
   disabled,
   onBlobGenerated,
   setErrorMessage,
-  mediaType
+  mediaType,
+  setIsMediaRecording,
+  activeTab,
 }: MediaRecorderProps) {
   const {
     isRecording,
@@ -38,6 +42,16 @@ export function MediaRecorder({
   } = useMediaRecorder(mediaType);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (recordedBlob) {
+      handleClearRecording();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    setIsMediaRecording(isRecording);
+  }, [isRecording, setIsMediaRecording]);
 
   // Notify parent when a new blob is available
   useEffect(() => {
@@ -66,7 +80,7 @@ export function MediaRecorder({
   }, [recordedBlob, onContentChange]);
 
   const handleClearRecording = () => {
-    setErrorMessage(null)
+    setErrorMessage(null);
     clearRecording();
     onBlobGenerated(null); // Notify parent that the recording is cleared
     onContentChange(false);
@@ -74,7 +88,6 @@ export function MediaRecorder({
 
   return (
     <div className="space-y-4">
-      
       <div className="flex justify-center space-x-4">
         {!isRecording && !recordedBlob && (
           <motion.button
