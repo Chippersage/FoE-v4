@@ -40,7 +40,8 @@ export function useMediaRecorder(mediaType: MediaType) {
       };
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, {
-          type: mediaType === "audio" ? "audio/webm" : "video/webm",
+          // type: mediaType === "audio" ? "audio/webm" : "video/webm",
+          type: mediaType === "audio" ? "mp3" : "mp4",
         });
         setRecordedBlob(blob);
         chunksRef.current = [];
