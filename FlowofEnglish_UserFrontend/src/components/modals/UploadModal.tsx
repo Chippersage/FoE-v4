@@ -35,7 +35,16 @@ export function UploadModal({
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isMediaRecording, setIsMediaRecording] = useState(false); // Lifted state to disable other tabs when recording is in progress
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (activeTab === "upload") {
+      setRecordedBlob(null); // Clear recordedBlob when switching to upload tab
+    } else {
+      setUploadedFile(null); // Clear uploadedFile when switching to other tabs
+    }
+  }, [activeTab]);
 
   const handleContentChange = useCallback((hasContent: boolean) => {
     setHasContent(hasContent);
@@ -52,10 +61,25 @@ export function UploadModal({
     try {
       const formData = new FormData();
 
-      if (uploadedFile) {
-        formData.append("file", uploadedFile);
-      } else if (recordedBlob) {
-        formData.append("file", recordedBlob);
+      if (activeTab === "upload" && uploadedFile) {
+        formData.append(
+          "file",
+          uploadedFile,
+          `${user?.userId}-${subconcept?.subconceptId}.${uploadedFile?.name
+            ?.split(".")
+            ?.pop()}`
+        );
+        console.log("Uploaded file:", uploadedFile);
+      } else if (
+        (activeTab === "recordAudio" || activeTab === "recordVideo") &&
+        recordedBlob
+      ) {
+        formData.append(
+          "file",
+          recordedBlob,
+          `${user?.userId}-${subconcept?.subconceptId}.${recordedBlob?.type}`
+        );
+        console.log("Recorded blob:", recordedBlob);
       } else {
         throw new Error("Please select a file or record media to upload.");
       }
@@ -138,7 +162,7 @@ export function UploadModal({
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 text-gray-700"
                   }`}
-                  disabled={isLoading}
+                  disabled={isLoading || isMediaRecording}
                 >
                   Upload File
                 </button>
@@ -154,7 +178,7 @@ export function UploadModal({
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 text-gray-700"
                   }`}
-                  disabled={isLoading}
+                  disabled={isLoading || isMediaRecording}
                 >
                   Record Audio
                 </button>
@@ -170,7 +194,7 @@ export function UploadModal({
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 text-gray-700"
                   }`}
-                  disabled={isLoading}
+                  disabled={isLoading || isMediaRecording}
                 >
                   Record Video
                 </button>
@@ -189,6 +213,8 @@ export function UploadModal({
                   onBlobGenerated={setRecordedBlob}
                   setErrorMessage={setErrorMessage}
                   mediaType={activeTab === "recordAudio" ? "audio" : "video"}
+                  setIsMediaRecording={setIsMediaRecording}
+                  activeTab={activeTab}
                 />
               )}
               {errorMessage && (

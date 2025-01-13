@@ -161,12 +161,15 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
               className="bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl hover:bg-blue-600 transition duration-300 shadow-lg relative z-10"
               onClick={() => {
                 congratsType === "programCompletion" &&
-                  generateCertificate(
-                    user?.userName,
-                    user?.program?.programName,
-                    user?.cohort?.cohortStartDate,
-                    user?.cohort?.cohortEndDate
-                  );
+                  generateCertificate({
+                    userName: user?.userName || "",
+                    programName:
+                      user?.program?.programName || "",
+                    cohortStartDate:
+                      user?.cohort?.cohortStartDate || "",
+                    cohortEndDate:
+                      user?.cohort?.cohortEndDate || "",
+                  });
                 onClose();
               }}
             >
