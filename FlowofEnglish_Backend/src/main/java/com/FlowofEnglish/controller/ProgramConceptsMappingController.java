@@ -41,7 +41,7 @@ public class ProgramConceptsMappingController {
         return programConceptsMappingService.createProgramConceptsMapping(programConceptsMapping);
     }
 
-    @PostMapping("/bulk-upload")
+    @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> bulkUpload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
