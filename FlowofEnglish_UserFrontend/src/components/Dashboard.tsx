@@ -2,10 +2,10 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUserContext } from "../context/AuthContext";
 import "../Styles/Stages.css";
-import Leaderboard from "./Leaderboard";
+// import Leaderboard from "./Leaderboard";
 import Stages from "./Stages";
 import StagesSkeleton from "./skeletons/StageSkeleton";
-import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
+// import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import UserProgressBar from "./UserProgressBar";
 // @ts-ignore
 import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
@@ -232,7 +232,7 @@ function Dashboard() {
           <ProgressbarSkeleton />
         )}
 
-        {/* @ts-ignore */}
+        {/* @ts-ignore 
         {leaderBoardInfo ? (
           <div className="">
             <Leaderboard
@@ -244,7 +244,7 @@ function Dashboard() {
           </div>
         ) : (
           <LeaderboardSkeleton />
-        )}
+        )} */}
       </div>
     </div>
   );
