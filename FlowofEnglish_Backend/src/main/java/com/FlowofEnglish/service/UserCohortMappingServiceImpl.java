@@ -179,13 +179,60 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     
+//    @Override
+//    public List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(String cohortId) {
+//        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+//        return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
+//    }
     @Override
-    public List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(String cohortId) {
+    public Map<String, Object> getUserCohortMappingsByCohortId(String cohortId) {
+        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
+        if (!cohortOpt.isPresent()) {
+            throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
+        }
+
+        Cohort cohort = cohortOpt.get();
+
+        // Check the Show_leaderboard flag
+        if (!cohort.isShowLeaderboard()) {
+            // If the leaderboard is disabled, return the information with a "not available" status
+            return Map.of("leaderboardStatus", "not available", "message", "Leaderboard is disabled for this cohort.");
+        }
+
+        // If the leaderboard is enabled, fetch and return the data
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
-        return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
+        List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+
+        return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
     }
 
     
+    @Override
+    public Map<String, Object> getUserCohortMappingsWithLeaderboard(String cohortId) {
+        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
+        if (!cohortOpt.isPresent()) {
+            throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
+        }
+
+        Cohort cohort = cohortOpt.get();
+
+        // Check the Show_leaderboard flag
+        if (!cohort.isShowLeaderboard()) {
+            // If the leaderboard is disabled, return the information with a "not available" flag
+            return Map.of("leaderboardStatus", "not available");
+        }
+
+        // Otherwise, return the leaderboard data
+        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+        List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+
+        return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
+    }
+
     @Override
     public UserCohortMapping findByUserUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId)

@@ -1,21 +1,8 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.dto.ProgramDTO;
-import com.FlowofEnglish.dto.StageDTO;
-import com.FlowofEnglish.dto.UnitResponseDTO;
-import com.FlowofEnglish.model.Program;
-import com.FlowofEnglish.model.ProgramConceptsMapping;
-import com.FlowofEnglish.model.Stage;
-import com.FlowofEnglish.model.Subconcept;
-import com.FlowofEnglish.model.Unit;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserSubConcept;
-import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
-import com.FlowofEnglish.repository.ProgramRepository;
-import com.FlowofEnglish.repository.StageRepository;
-import com.FlowofEnglish.repository.UnitRepository;
-import com.FlowofEnglish.repository.UserRepository;
-import com.FlowofEnglish.repository.UserSubConceptRepository;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,15 +14,9 @@ import com.FlowofEnglish.exception.ResourceNotFoundException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +39,9 @@ public class UnitServiceImpl implements UnitService {
     
     @Autowired
     private ProgramConceptsMappingRepository programConceptsMappingRepository;
+    
+    @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ProgramService.class);
 
@@ -182,11 +166,54 @@ public class UnitServiceImpl implements UnitService {
                 .orElseThrow(() -> new RuntimeException("Unit not found with id: " + unitId));
     }
     
+
+    @Override
+    public void deleteUnit(String unitId) {
+        unitRepository.deleteById(unitId);
+    }
+
+    @Override
+    public void deleteUnits(List<String> unitIds) {
+        unitRepository.deleteAllById(unitIds);
+    }
+
+    @Override
+    public List<UnitResponseDTO> getAllUnits() {
+        return unitRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private UnitResponseDTO mapToDTO(Unit unit) {
+        UnitResponseDTO dto = new UnitResponseDTO();
+        dto.setUnitId(unit.getUnitId());
+        dto.setUnitName(unit.getUnitName());
+        dto.setUnitDesc(unit.getUnitDesc());
+        return dto;
+    }
+    
     @Override 
     public ProgramDTO getProgramWithStagesAndUnits(String userId, String programId) {
         // Fetch the program details
         Program program = programRepository.findById(programId)
             .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+        
+     // Fetch user details to determine visibility
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String userType = user.getUserType();
+        
+     // Fetch cohort mapping
+        UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cohort not found for the user and program"));
+
+     // Fetch cohort details from mapping
+        Cohort cohort = userCohortMapping.getCohort();
+        // Retrieve delayed stage unlock settings
+        boolean delayedStageUnlock = cohort.isDelayedStageUnlock();
+        int delayInDays = cohort.getDelayInDays();
+        OffsetDateTime currentDate = OffsetDateTime.now();
+
 
         ProgramDTO programResponse = new ProgramDTO();
         programResponse.setProgramId(program.getProgramId());
@@ -198,17 +225,14 @@ public class UnitServiceImpl implements UnitService {
         Map<String, StageDTO> stageMap = new HashMap<>();
         int totalUnitCount = 0;
         int stagesCount = 0;
-        
-     // Fetch user details to determine visibility
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String userType = user.getUserType();
 
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
         
         boolean previousStageCompleted = true;  
-        boolean programCompleted = true;  
+        boolean programCompleted = true;
+     // Track the earliest completion date of the previous stage
+        OffsetDateTime previousStageCompletionDate = null;
         
         // Iterate through stages and build the stage map
         for (int i = 0; i < stages.size(); i++) {
@@ -224,6 +248,8 @@ public class UnitServiceImpl implements UnitService {
             
             boolean stageCompleted = true;
             boolean stageCompletedWithoutAssignments = false;
+         // Track the completion date of the current stage
+            OffsetDateTime currentStageCompletionDate = null;
             
             if (units.isEmpty()) {
                 stageResponse.setStageCompletionStatus("There are no units and subconcepts in this stage");
@@ -240,7 +266,21 @@ public class UnitServiceImpl implements UnitService {
 
                     // Fetch user sub concepts for the current unit
                     List<UserSubConcept> userSubConceptsForUnit = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
-
+                    // Update completion date tracking
+                    if (!userSubConceptsForUnit.isEmpty()) {
+                        OffsetDateTime latestCompletion = userSubConceptsForUnit.stream()
+                            .map(UserSubConcept::getCompletionDate)
+                            .filter(Objects::nonNull)
+                            .max(OffsetDateTime::compareTo)
+                            .orElse(null);
+                        
+                        if (latestCompletion != null) {
+                            if (currentStageCompletionDate == null || 
+                                latestCompletion.isAfter(currentStageCompletionDate)) {
+                                currentStageCompletionDate = latestCompletion;
+                            }
+                        }
+                    }
                  // Determine accessible mappings
                     List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
                     List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
@@ -279,17 +319,6 @@ public class UnitServiceImpl implements UnitService {
                     	        .anyMatch(us -> us.getSubconcept().getSubconceptId().equals(id)));
 
                     String unitCompletionStatus;
-                    
-//                    if (totalNonAssignmentSubConceptCount == 0) {
-//                        unitCompletionStatus = "No subconcepts in this unit";
-//                    } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
-//                        if (hasPendingAssignments) {
-//                            unitCompletionStatus = "Unit Completed without Assignments";
-//                            stageCompletedWithoutAssignments = true;
-//                        } else {
-//                            unitCompletionStatus = "yes";
-//                        }
-//                    } else {
                     if (totalSubConceptCount == 0) {
                         // Only mark as "No subconcepts" if there are truly no subconcepts of any type
                         unitCompletionStatus = "No subconcepts in this unit";
@@ -353,22 +382,32 @@ public class UnitServiceImpl implements UnitService {
             }
         }
             
-
-         // Set stage enabled status based on previous stage completion
             if (i == 0) {
-                // Enable the first stage by default
+                // First stage is always enabled
                 stageResponse.setStageEnabled(true);
             } else {
-            	// Get previous stage's completion status
-                StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
-                String previousStageStatus = previousStage.getStageCompletionStatus();
-                
-                // Enable this stage if previous stage was completed (either fully or without assignments)
-                boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
-                                                 "Stage Completed without Assignments".equals(previousStageStatus);
-                
-                stageResponse.setStageEnabled(isPreviousStageCompleted && !units.isEmpty());
-            }
+                // Apply delay unlock for subsequent stages
+                if (delayedStageUnlock) {
+                    if (currentStageCompletionDate != null) {
+                        OffsetDateTime unlockDate = currentStageCompletionDate.plusDays(delayInDays);
+                        if (currentDate.isBefore(unlockDate)) {
+                            stageResponse.setStageEnabled(false);
+                        } else {
+                            stageResponse.setStageEnabled(true);
+                        }
+                    } else {
+                        stageResponse.setStageEnabled(false); // Fallback if currentStageCompletionDate is null
+                    }
+                } else {
+                    // Default logic for subsequent stages based on previous stage completion
+                    StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
+                    String previousStageStatus = previousStage.getStageCompletionStatus();
+                    
+                    boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                      "Stage Completed without Assignments".equals(previousStageStatus);
+                    stageResponse.setStageEnabled(isPreviousStageCompleted && !units.isEmpty());
+                }
+           }
             
          // Update previousStageCompleted for the next iteration
             previousStageCompleted = "yes".equals(stageResponse.getStageCompletionStatus());
@@ -406,44 +445,4 @@ public class UnitServiceImpl implements UnitService {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
         return subconcepts.size();
     }
-    
-    
-    @Override
-    public void deleteUnit(String unitId) {
-        unitRepository.deleteById(unitId);
-    }
-
-    @Override
-    public void deleteUnits(List<String> unitIds) {
-        unitRepository.deleteAllById(unitIds);
-    }
-
-    @Override
-    public List<UnitResponseDTO> getAllUnits() {
-        return unitRepository.findAll().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-
-    private UnitResponseDTO mapToDTO(Unit unit) {
-        UnitResponseDTO dto = new UnitResponseDTO();
-        dto.setUnitId(unit.getUnitId());
-        dto.setUnitName(unit.getUnitName());
-        dto.setUnitDesc(unit.getUnitDesc());
-        return dto;
-    }
 }
-
-
-
-
-
-
-
-// check whether all units within a stage are completed usingThis
-//boolean allUnitsCompleted = unitMap.values().stream()
-//.allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()));
-
-//For each unit, you calculate whether subconcepts are completed usingThis
-//int totalSubConceptCount = getTotalSubConceptCount(unit.getUnitId());
-//int completedSubConceptCount = userSubConceptsForUnit.size();
