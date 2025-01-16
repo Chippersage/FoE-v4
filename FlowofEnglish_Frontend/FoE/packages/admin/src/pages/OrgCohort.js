@@ -12,7 +12,7 @@ import MuiAlert from '@mui/material/Alert';
 import {
   Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
   IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
-  Link} from '@mui/material';
+  Link,FormControl,InputLabel, Select} from '@mui/material';
 
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -75,6 +75,9 @@ const INITIAL_FORM_STATE = {
   cohortName: '',
   cohortStartDate: '',
   cohortEndDate: '',
+  showLeaderboard: true, // Default true
+  delayedStageUnlock: false, // Default is false
+  delayInDays: 0, // Default is 0 (no delay)
   organization: { organizationId: '' }
 };
 
@@ -167,6 +170,9 @@ const isFormValid = () => {
       cohortName: '',
       cohortStartDate: '',
       cohortEndDate: '',
+      showLeaderboard: true, // Default tue
+      delayedStageUnlock: false, // Default is false
+      delayInDays: 0, // Default is 0 (no delay)
       organization: { organizationId },
     });
     setFormErrors({});
@@ -180,6 +186,9 @@ const isFormValid = () => {
       cohortName: row.cohortName,
       cohortStartDate: row.cohortStartDate ? format(new Date(row.cohortStartDate), 'yyyy-MM-dd') : '',
       cohortEndDate: row.cohortEndDate ? format(new Date(row.cohortEndDate), 'yyyy-MM-dd') : '',
+      showLeaderboard: row.showLeaderboard,
+      delayedStageUnlock: row.delayedStageUnlock,
+      delayInDays: row.delayInDays,
       organization: { organizationId },
     });
     setFormErrors({});
@@ -489,6 +498,42 @@ const handleCloseDialogs = () => {
             }
           }}
     />
+    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+      <Select
+        labelId="show-leaderboard-label"
+        id="show-leaderboard"
+        name="showLeaderboard"
+        value={formData.showLeaderboard}
+        onChange={(e) =>
+          setFormData((prevData) => ({
+            ...prevData,
+            showLeaderboard: e.target.value === 'true',
+          }))
+        }
+      >
+        <MenuItem value="true">True</MenuItem>
+        <MenuItem value="false">False</MenuItem>
+      </Select>
+    </FormControl>
+    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+      <Select
+        labelId="DelayedStageUnlock-label"
+        id="DelayedStageUnlock"
+        name="DelayedStageUnlock"
+        value={formData.delayedStageUnlock}
+        onChange={(e) =>
+          setFormData((prevData) => ({
+            ...prevData,
+            delayedStageUnlock: e.target.value === 'true',
+          }))
+        }
+      >
+        <MenuItem value="true">True</MenuItem>
+        <MenuItem value="false">False</MenuItem>
+      </Select>
+    </FormControl>
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}sx={{
@@ -603,6 +648,42 @@ const handleCloseDialogs = () => {
             }
           }}
     />
+    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+      <Select
+        labelId="show-leaderboard-label"
+        id="show-leaderboard"
+        name="showLeaderboard"
+        value={formData.showLeaderboard}
+        onChange={(e) =>
+          setFormData((prevData) => ({
+            ...prevData,
+            showLeaderboard: e.target.value === 'true',
+          }))
+        }
+      >
+        <MenuItem value="true">True</MenuItem>
+        <MenuItem value="false">False</MenuItem>
+      </Select>
+    </FormControl>
+    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+      <Select
+        labelId="DelayedStageUnlock-label"
+        id="DelayedStageUnlock"
+        name="DelayedStageUnlock"
+        value={formData.delayedStageUnlock}
+        onChange={(e) =>
+          setFormData((prevData) => ({
+            ...prevData,
+            delayedStageUnlock: e.target.value === 'true',
+          }))
+        }
+      >
+        <MenuItem value="true">True</MenuItem>
+        <MenuItem value="false">False</MenuItem>
+      </Select>
+    </FormControl>
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}
