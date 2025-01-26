@@ -12,7 +12,7 @@ import MuiAlert from '@mui/material/Alert';
 import {
   Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
   IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
-  Link,FormControl,InputLabel, Select} from '@mui/material';
+  Link,FormControl,InputLabel, Select, FormHelperText} from '@mui/material';
 
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -134,9 +134,9 @@ const validateForm = () => {
 const errors = {};
 // Check if cohortName is empty
 if (!formData.cohortName.trim()) {errors.cohortName = 'Cohort name is required';}
-else { const cohortNamePattern = /^[A-Za-z]{4}.*$/;
+else { const cohortNamePattern = /^[A-Za-z]{3}.*$/;
 if (!cohortNamePattern.test(formData.cohortName)) {
-errors.cohortName = 'The first 4 characters must be letters';
+errors.cohortName = 'The first 3 characters must be letters';
 }
 }
 // Check if cohortStartDate is empty
@@ -147,6 +147,10 @@ errors.cohortStartDate = 'Start date is required';
 if (formData.cohortEndDate) {
   if (new Date(formData.cohortEndDate) <= new Date(formData.cohortStartDate)) {
     errors.cohortEndDate = 'End date must be greater than start date';
+  }
+  // Validate delayInDays if delayedStageUnlock is enabled
+  if (formData.delayedStageUnlock && (formData.delayInDays < 1 || formData.delayInDays > 15)) {
+    errors.delayInDays = 'Delay in days must be between 1 and 10';
   }
 }
 return errors;
@@ -499,11 +503,12 @@ const handleCloseDialogs = () => {
           }}
     />
     <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+      <InputLabel id="show-leaderboard-label" sx={{ fontSize: '16px' }}>Show Leaderboard</InputLabel>
       <Select
         labelId="show-leaderboard-label"
         id="show-leaderboard"
         name="showLeaderboard"
+        InputLabelProps={{ shrink: true }}
         value={formData.showLeaderboard}
         onChange={(e) =>
           setFormData((prevData) => ({
@@ -517,11 +522,12 @@ const handleCloseDialogs = () => {
       </Select>
     </FormControl>
     <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+      <InputLabel id="DelayedStageUnlock-label" sx={{ fontSize: '16px' }}>DelayedStageUnlock</InputLabel>
       <Select
         labelId="DelayedStageUnlock-label"
         id="DelayedStageUnlock"
         name="DelayedStageUnlock"
+        InputLabelProps={{ shrink: true }}
         value={formData.delayedStageUnlock}
         onChange={(e) =>
           setFormData((prevData) => ({
@@ -534,6 +540,28 @@ const handleCloseDialogs = () => {
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
+    {formData.delayedStageUnlock && (
+      <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+        <InputLabel id="delay-in-days-label" sx={{ fontSize: '16px' }}>Delay in Days</InputLabel>
+        <Select
+          labelId="delay-in-days-label"
+          id="delay-in-days"
+          name="delayInDays"
+          value={formData.delayInDays}
+          onChange={handleFormChange}
+          error={!!formErrors.delayInDays}
+        >
+          {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
+            <MenuItem key={day} value={day}>
+              {day}
+            </MenuItem>
+          ))}
+        </Select>
+        {formErrors.delayInDays && (
+          <FormHelperText error>{formErrors.delayInDays}</FormHelperText>
+        )}
+      </FormControl>
+    )}
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}sx={{
@@ -649,7 +677,7 @@ const handleCloseDialogs = () => {
           }}
     />
     <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+      <InputLabel id="show-leaderboard-label" sx={{ fontSize: '16px' }}>Show Leaderboard</InputLabel>
       <Select
         labelId="show-leaderboard-label"
         id="show-leaderboard"
@@ -667,7 +695,7 @@ const handleCloseDialogs = () => {
       </Select>
     </FormControl>
     <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+      <InputLabel id="DelayedStageUnlock-label" sx={{ fontSize: '16px' }}>DelayedStageUnlock</InputLabel>
       <Select
         labelId="DelayedStageUnlock-label"
         id="DelayedStageUnlock"
@@ -684,6 +712,28 @@ const handleCloseDialogs = () => {
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
+    {formData.delayedStageUnlock && (
+      <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+        <InputLabel id="delay-in-days-label" sx={{ fontSize: '16px' }}>Delay in Days</InputLabel>
+        <Select
+          labelId="delay-in-days-label"
+          id="delay-in-days"
+          name="delayInDays"
+          value={formData.delayInDays}
+          onChange={handleFormChange}
+          error={!!formErrors.delayInDays}
+        >
+          {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
+            <MenuItem key={day} value={day}>
+              {day}
+            </MenuItem>
+          ))}
+        </Select>
+        {formErrors.delayInDays && (
+          <FormHelperText error>{formErrors.delayInDays}</FormHelperText>
+        )}
+      </FormControl>
+    )}
   </DialogContent>
   <DialogActions>
     <Button onClick={handleCloseDialogs}
