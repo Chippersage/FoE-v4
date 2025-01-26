@@ -20,7 +20,7 @@ public interface UserCohortMappingService {
 	Map<String, Object> getUserCohortMappingsWithLeaderboard(String cohortId);
 	Map<String, Object> getUserCohortMappingsByCohortId(String cohortId);
     List<UserCohortMappingDTO> getAllUserCohortMappings();
-   // List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(String cohortId);
+    List<UserCohortMappingDTO> getUserCohortMappingsCohortId(String cohortId);
     UserCohortMapping findByUserUserId(String userId);
     Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId);
     List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId);
