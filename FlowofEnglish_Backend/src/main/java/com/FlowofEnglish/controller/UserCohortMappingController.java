@@ -40,10 +40,10 @@ public class UserCohortMappingController {
         }
     }
 
-//    @GetMapping("/cohort/{cohortId}")
-//    public List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
-//        return userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
-//    }
+    @GetMapping("/cohort/{cohortId}/learner")
+    public List<UserCohortMappingDTO> getUserCohortMappingsCohortId(@PathVariable String cohortId) {
+        return userCohortMappingService.getUserCohortMappingsCohortId(cohortId);
+    }
     
     @GetMapping("/cohort/{cohortId}/leaderboard")
     public ResponseEntity<Map<String, Object>> getCohortLeaderboard(@PathVariable String cohortId) {

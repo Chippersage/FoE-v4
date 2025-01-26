@@ -25,6 +25,28 @@ public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, 
 		Optional<OffsetDateTime> findEarliestCompletionDateByUserIdAndStageId(@Param("userId") String userId,
 		                                                                     @Param("stageId") String stageId);
 
+	@Query("SELECT usc.completionDate FROM UserSubConcept usc " +
+	           "WHERE usc.user.userId = :userId AND usc.stage.stageId = :stageId " +
+	           "ORDER BY usc.completionDate DESC")
+	    List<OffsetDateTime> findCompletionDatesByUserIdAndStageIdOrderByDateDesc(
+	        @Param("userId") String userId,
+	        @Param("stageId") String stageId
+	    );
 
+	    @Query("SELECT MIN(usc.completionDate) FROM UserSubConcept usc " +
+	           "WHERE usc.user.userId = :userId AND usc.stage.stageId = :stageId " +
+	           "AND usc.completionDate IS NOT NULL")
+	    Optional<OffsetDateTime> findFirstCompletionDateByUserIdAndStageId(
+	        @Param("userId") String userId,
+	        @Param("stageId") String stageId
+	    );
+
+	    @Query("SELECT MAX(usc.completionDate) FROM UserSubConcept usc " +
+	           "WHERE usc.user.userId = :userId AND usc.stage.stageId = :stageId " +
+	           "AND usc.completionDate IS NOT NULL")
+	    Optional<OffsetDateTime> findLatestCompletionDateByUserIdAndStageId(
+	        @Param("userId") String userId,
+	        @Param("stageId") String stageId
+	    );
 }
 
