@@ -75,6 +75,7 @@ const iconMap = {
   write: Write,
   riddles: Riddle,
   dictation: Dictation,
+  vocab: Spelling,
 
   passage_read: Read,
   passage_jw: JumbledWords,
