@@ -48,7 +48,7 @@ function Dashboard() {
   const getLeaderBoardInfo = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}`
+        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}/learner`
       );
       return response.data;
     } catch (error) {

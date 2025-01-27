@@ -1,4 +1,4 @@
-
+// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
@@ -162,6 +162,8 @@ export default function LoginPage() {
                     onClick={() => {
                       // @ts-ignore
                       setSelectedProgramId(program?.programId);
+
+                      localStorage.setItem("selectedProgramId", program?.programId);
                       // @ts-ignore
                       setSelectedProgramName(program?.programName);
                       setIsProgramsOpen(false);
