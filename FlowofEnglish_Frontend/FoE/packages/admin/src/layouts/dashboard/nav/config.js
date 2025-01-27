@@ -78,6 +78,11 @@ const getNavConfig = () => {
           path: `/org-dashboards/${orgId}/programs`,
           icon: icon('program'),
         },
+        {
+          title: 'Payment',
+          path: `/org-dashboards/${orgId}/payments`,
+          icon: icon('program'),
+        },
       {
         title: 'Organisation Reports',
         path: `/org-dashboards/${orgId}/orgreport`,

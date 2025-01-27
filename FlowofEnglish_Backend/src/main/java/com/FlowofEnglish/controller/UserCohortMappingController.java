@@ -3,6 +3,8 @@ package com.FlowofEnglish.controller;
 import com.FlowofEnglish.dto.UserCohortMappingDTO;
 import com.FlowofEnglish.model.UserCohortMapping;
 import com.FlowofEnglish.service.UserCohortMappingService;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +29,31 @@ public class UserCohortMappingController {
     
  // GET user cohort mappings by cohortId
     @GetMapping("/cohort/{cohortId}")
-    public List<UserCohortMappingDTO> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
-        return userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
+    public ResponseEntity<Map<String, Object>> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
+        try {
+            Map<String, Object> response = userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred."));
+        }
     }
 
+    @GetMapping("/cohort/{cohortId}/learner")
+    public List<UserCohortMappingDTO> getUserCohortMappingsCohortId(@PathVariable String cohortId) {
+        return userCohortMappingService.getUserCohortMappingsCohortId(cohortId);
+    }
+    
+    @GetMapping("/cohort/{cohortId}/leaderboard")
+    public ResponseEntity<Map<String, Object>> getCohortLeaderboard(@PathVariable String cohortId) {
+        try {
+            Map<String, Object> leaderboardData = userCohortMappingService.getUserCohortMappingsWithLeaderboard(cohortId);
+            return ResponseEntity.ok(leaderboardData);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
 
     // GET user cohort mappings by userId
     @GetMapping("/user/{userId}")
@@ -58,7 +81,6 @@ public class UserCohortMappingController {
         Map<String, List<String>> response = userCohortMappingService.importUserCohortMappingsWithResponse(file);
         return ResponseEntity.ok(response);
     }
-
     
     @PutMapping("/cohort/{cohortId}")
     public ResponseEntity<String> updateUserCohortMappingByCohortId(
@@ -74,15 +96,12 @@ public class UserCohortMappingController {
         }
     }
 
-
     // PUT (update) an existing mapping by userId
     @PutMapping("/user/{userId}")
     public ResponseEntity<UserCohortMapping> updateUserCohortMapping(@PathVariable String userId, @RequestBody UserCohortMapping userCohortMapping) {
         return ResponseEntity.ok(userCohortMappingService.updateUserCohortMapping(userId, userCohortMapping));
     }
     
-    
-
     // DELETE a specific mapping by userId
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<Void> deleteUserCohortMappingByUserId(@PathVariable String userId) {

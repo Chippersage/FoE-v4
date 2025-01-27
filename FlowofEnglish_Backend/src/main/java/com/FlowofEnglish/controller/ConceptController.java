@@ -34,7 +34,7 @@ public class ConceptController {
         return conceptService.createConcept(concept);
     }
     
-    @PostMapping("/bulk-upload")
+    @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> bulkUploadConcepts(@RequestParam("file") MultipartFile file) {
         Map<String, Object> result = conceptService.bulkUploadConcepts(file);
         return ResponseEntity.ok(result);

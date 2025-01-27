@@ -168,7 +168,7 @@ public class UserController {
         System.out.println("Received userId: " + userId);
         System.out.println("Received password: " + userPassword);
         System.out.println("Received programId: " + selectedProgramId);
-        System.out.println("Expected userType: " + expectedUserType);
+        System.out.println("Received userType: " + expectedUserType);
         
      // Initialize response map
         Map<String, Object> response = new HashMap<>();
