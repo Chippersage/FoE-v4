@@ -67,6 +67,9 @@ public class CohortServiceImpl implements CohortService {
                     }
                     cohort.setCohortName(updatedCohort.getCohortName());
                     cohort.setCohortEndDate(updatedCohort.getCohortEndDate());
+                    cohort.setShowLeaderboard(updatedCohort.isShowLeaderboard());
+                    cohort.setDelayedStageUnlock(updatedCohort.isDelayedStageUnlock());
+                    cohort.setDelayInDays(updatedCohort.getDelayInDays());
                     cohort.setOrganization(updatedCohort.getOrganization());
                     return cohortRepository.save(cohort);
                 })
