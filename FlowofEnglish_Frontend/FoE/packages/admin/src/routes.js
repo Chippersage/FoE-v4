@@ -8,6 +8,7 @@ import SimpleLayout from './layouts/simple';
 import AddCtOc from './pages/AddCtOc';
 import BlogPage from './pages/BlogPage';
 import CohortPage from './pages/CohortPage';
+import PaymentUI from './pages/PaymentUI';
 import ProgramPage from './pages/ProgramPage';
 import CohortPrograms from './pages/CohortPrograms';
 import DashboardAppPage from './pages/DashboardAppPage';
@@ -88,6 +89,7 @@ export default function Router() {
         { path: 'appx', element: <UserPassword /> },
         { path: 'org-Create-Users', element: <OrgUserCreate /> },
         { path: 'programs', element: <OrgProgramPage />},
+        { path: 'payments', element: <PaymentUI/>},
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         { path: 'orgdashc', element: <OrgCohort /> },
         { path: 'orgreport', element: <OrgCourses /> },

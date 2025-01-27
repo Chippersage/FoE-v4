@@ -12,13 +12,33 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
+
 
     public void sendEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+        logger.info("Attempting to send email to: {}", to);
+        System.out.println("Attempting to send email to: " + to);
+        
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            
+            logger.info("Email content prepared. Subject: {}", subject);
+            System.out.println("Email content prepared. Subject: " + subject);
+            
+            mailSender.send(message);
+            
+            logger.info("Email successfully sent to: {}", to);
+            System.out.println("Email successfully sent to: " + to);
+        } catch (Exception e) {
+            logger.error("Failed to send email to: {}. Error: {}", to, e.getMessage());
+            System.err.println("Failed to send email to: " + to + ". Error: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace to console
+            throw e; // Re-throw to be handled by caller
+        }
     }
 
     public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
@@ -53,5 +73,39 @@ public class EmailService {
 
         sendEmail(userEmail, subject, body);
     }
+    
+    public void sendCohortAssignmentEmail(String userEmail, String userName, String cohortName, 
+            String programName, String orgName) {
+    	logger.info("Preparing cohort assignment email for user: {}, cohort: {}, program: {}", 
+                userName, cohortName, programName);
+            System.out.println("Preparing cohort assignment email for user: " + userName + 
+                ", cohort: " + cohortName + ", program: " + programName);
+            String subject = "Your Learning Adventure Just Got Even Better! 🌟";
 
+            String body = "Hi " + userName + ",\n\n"
+                        + "We’re thrilled to welcome you to the next step in your learning journey at " + orgName + "! 💡\n\n"
+                        + "Here’s what’s new for you:\n"
+                        + "👉 **Program Name**: " + programName + "\n"
+                        + "👉 **Cohort Name**: " + cohortName + "\n\n"
+                        + "This program is designed to help you grow, connect, and achieve your goals. We're confident that you'll find it both enriching and inspiring. 🎯\n\n"
+                        + "Ready to get started? Simply log in to your account here:\n"
+                        + "[Access Your Program](https://flowofenglish.thechippersage.com)\n\n"
+                        + "Take this opportunity to:\n"
+                        + "✅ Dive into new program content\n"
+                        + "✅ Collaborate with your cohort members\n"
+                        + "✅ Continue building your skills and knowledge\n\n"
+                        + "Your growth matters to us, and we’re here to support you every step of the way. If you have any questions, feel free to reach out—we’ve got your back! 💪\n\n"
+                        + "Let’s make this an amazing chapter in your learning journey.\n\n"
+                        + "Warm regards,\n"
+                        + "Team Chippersage\n\n"
+                        + "P.S. Remember, every step you take is one closer to achieving your goals. Let’s do this together! 🚀";
+
+        try {
+            sendEmail(userEmail, subject, body);
+        } catch (Exception e) {
+            logger.error("Failed to send cohort assignment email. User: {}, Error: {}", userName, e.getMessage());
+            System.err.println("Failed to send cohort assignment email. User: " + userName + ", Error: " + e.getMessage());
+            throw e;
+        }
+    }
 }
