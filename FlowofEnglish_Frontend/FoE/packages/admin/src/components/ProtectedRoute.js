@@ -1,34 +1,19 @@
 /*eslint-disable*/
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useUser } from '../UserContext';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-
+  const { userType } = useUser();
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+  if (userType === 'orgAdmin') {
+    return <Navigate to="/org-dashboards/:id/app" replace />;
   }
 
   return children;
 };
 
 export default ProtectedRoute;
-
-// import { useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-
-// const ProtectedRoute = () => {
-//   const navigate = useNavigate();
-//   const isAuthenticated = !!localStorage.getItem('token'); // Adjust this based on your auth logic
-
-//   useEffect(() => {
-//     if (!isAuthenticated) {
-//       navigate('/login');
-//     }
-//   }, [isAuthenticated, navigate]);
-
-//   return isAuthenticated;
-// };
-
-// export default ProtectedRoute;
-/* eslint-enable */

@@ -8,7 +8,7 @@ import SimpleLayout from './layouts/simple';
 import AddCtOc from './pages/AddCtOc';
 import BlogPage from './pages/BlogPage';
 import CohortPage from './pages/CohortPage';
-import PaymentUI from './pages/PaymentUI';
+// import PaymentUI from './pages/PaymentUI';
 import ProgramPage from './pages/ProgramPage';
 import CohortPrograms from './pages/CohortPrograms';
 import DashboardAppPage from './pages/DashboardAppPage';
@@ -70,7 +70,7 @@ export default function Router() {
       children: [
         { element: <Navigate to="/org-dashboard/:id/app" />, index: true },
         { path: 'app', element: <DashboardClientPage /> },
-        { path: 'cohorts/organization/:organizationId', element: <OrgCohort /> },
+        { path: 'cohorts/organization/:organizationId', element: <CohortPage /> },
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         { path: 'users', element: <UserCreate /> },
         
@@ -89,9 +89,10 @@ export default function Router() {
         { path: 'appx', element: <UserPassword /> },
         { path: 'org-Create-Users', element: <OrgUserCreate /> },
         { path: 'programs', element: <OrgProgramPage />},
-        { path: 'payments', element: <PaymentUI/>},
+      //  { path: 'payments', element: <PaymentUI/>},
         { path: 'userdetails/:user_id', element: <UserDetailsPage /> },
         { path: 'orgdashc', element: <OrgCohort /> },
+        { path: 'user-cohort/:organizationId/:cohortId', element: <UserCohortpage /> },
         { path: 'orgreport', element: <OrgCourses /> },
       ],
     },

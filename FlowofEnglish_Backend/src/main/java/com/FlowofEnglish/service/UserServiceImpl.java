@@ -1,36 +1,15 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.Cohort;
-import com.FlowofEnglish.model.CohortProgram;
-import com.FlowofEnglish.model.Organization;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserCohortMapping;
-import com.FlowofEnglish.model.UserType;
-import com.FlowofEnglish.dto.CohortDTO;
-import com.FlowofEnglish.dto.OrganizationDTO;
-import com.FlowofEnglish.dto.ProgramDTO;
-import com.FlowofEnglish.dto.UserDTO;
-import com.FlowofEnglish.dto.UserGetDTO;
-import com.FlowofEnglish.dto.UsercreateDTO;
-import com.FlowofEnglish.repository.UserRepository;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
-import com.FlowofEnglish.repository.UserCohortMappingRepository;
-import com.FlowofEnglish.repository.CohortProgramRepository;
-import com.FlowofEnglish.repository.CohortRepository;
-import com.FlowofEnglish.repository.OrganizationRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -641,6 +620,51 @@ public class UserServiceImpl implements UserService {
 
         return dto;
     }
+    @Override
+    public UserDetailsWithCohortsAndProgramsDTO getUserDetailsWithCohortsAndPrograms(String userId) {
+        // Fetch the user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-    
+        // Convert user to DTO
+        UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = new UserDetailsWithCohortsAndProgramsDTO();
+        userDetailsDTO.setUserId(user.getUserId());
+        userDetailsDTO.setUserName(user.getUserName());
+        userDetailsDTO.setUserEmail(user.getUserEmail());
+        userDetailsDTO.setUserPhoneNumber(user.getUserPhoneNumber());
+        userDetailsDTO.setUserAddress(user.getUserAddress());
+        userDetailsDTO.setUserType(user.getUserType());
+        userDetailsDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
+
+        // Fetch all cohorts and their programs for the user
+        List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(userId);
+        List<CohortProgramDTO> cohortProgramDTOs = new ArrayList<>();
+
+        for (UserCohortMapping userCohortMapping : userCohortMappings) {
+            Cohort cohort = userCohortMapping.getCohort();
+            Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId());
+
+            if (cohortProgramOpt.isPresent()) {
+                CohortProgram cohortProgram = cohortProgramOpt.get();
+                CohortProgramDTO cohortProgramDTO = new CohortProgramDTO();
+                cohortProgramDTO.setCohortId(cohort.getCohortId());
+                cohortProgramDTO.setCohortName(cohort.getCohortName());
+                cohortProgramDTO.setCohortStartDate(cohort.getCohortStartDate());
+                cohortProgramDTO.setCohortEndDate(cohort.getCohortEndDate());
+
+                ProgramDTO programDTO = new ProgramDTO();
+                programDTO.setProgramId(cohortProgram.getProgram().getProgramId());
+                programDTO.setProgramName(cohortProgram.getProgram().getProgramName());
+                programDTO.setProgramDesc(cohortProgram.getProgram().getProgramDesc());
+                programDTO.setStagesCount(cohortProgram.getProgram().getStages());
+                programDTO.setUnitCount(cohortProgram.getProgram().getUnitCount());
+
+                cohortProgramDTO.setProgram(programDTO);
+                cohortProgramDTOs.add(cohortProgramDTO);
+            }
+        }
+
+        userDetailsDTO.setAllCohortsWithPrograms(cohortProgramDTOs);
+        return userDetailsDTO;
+    }
 }

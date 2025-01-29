@@ -67,8 +67,18 @@ export default function DashboardOrgClientPage() {
           : null
         };
       });
+      Promise.all(fetchMappings)
+  .then((learners) => {
+    // Sort learners by sessionStartTimestamp in descending order (most recent first)
+    learners.sort((a, b) => {
+      if (!a.sessionStartTimestamp) return 1; // Place users without a login at the end
+      if (!b.sessionStartTimestamp) return -1;
+      return new Date(b.sessionStartTimestamp) - new Date(a.sessionStartTimestamp);
+    });
+    setRegisteredLearners(learners);
+  })
+  .catch(console.error);
 
-      Promise.all(fetchMappings).then(setRegisteredLearners).catch(console.error);
     }).catch(() => setUsers([]));
     getOrgPrograms(id).then(setPrograms).catch(() => setPrograms([]));
   }, [id, navigate]);
@@ -231,9 +241,9 @@ export default function DashboardOrgClientPage() {
           //   >
           //     View All Cohorts
           //   </Button>
-          //   </Grid> 
+          //   </Grid>
           
-   
+
           // <Grid item xs={12} sm={6} md={4}>
           //   <Card>
           //     <CardHeader title="Learners" />
@@ -277,6 +287,6 @@ export default function DashboardOrgClientPage() {
           //       )}
           //     </CardContent>
           //   </Card>
-          // </Grid> 
+          // </Grid>
           
         
