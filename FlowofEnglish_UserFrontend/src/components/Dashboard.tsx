@@ -2,10 +2,10 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUserContext } from "../context/AuthContext";
 import "../Styles/Stages.css";
-// import Leaderboard from "./Leaderboard";
+import Leaderboard from "./Leaderboard";
 import Stages from "./Stages";
 import StagesSkeleton from "./skeletons/StageSkeleton";
-// import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
+import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import UserProgressBar from "./UserProgressBar";
 // @ts-ignore
 import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
@@ -17,7 +17,7 @@ function Dashboard() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [currentUserLeaderBoardInfo, setCurrentUserLeaderBoardInfo] =
     useState(null);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   // @ts-ignore
   const [error, setError] = useState(null);
 
@@ -48,7 +48,7 @@ function Dashboard() {
   const getLeaderBoardInfo = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}`
+        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}/learner`
       );
       return response.data;
     } catch (error) {
@@ -232,7 +232,7 @@ function Dashboard() {
           <ProgressbarSkeleton />
         )}
 
-        {/* @ts-ignore 
+        {/* @ts-ignore */}
         {leaderBoardInfo ? (
           <div className="">
             <Leaderboard
@@ -244,7 +244,7 @@ function Dashboard() {
           </div>
         ) : (
           <LeaderboardSkeleton />
-        )} */}
+        )} 
       </div>
     </div>
   );

@@ -2,7 +2,8 @@ import { styled } from '@mui/material/styles';
 import { filter } from 'lodash';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Navigate, useParams } from 'react-router-dom';
 import { format, formatISO } from 'date-fns';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
@@ -372,9 +373,8 @@ const handleCloseDialogs = () => {
               </TableCell>
               <TableCell component="th" scope="row" padding="none">
                 <Typography variant="subtitle2" noWrap>
-                <Link href ={`/admin/dashboard/user-cohort/${organizationId}/${cohortId}`} color = "inherit" underline="hover" >
-                {cohortId}
-              </Link>
+                <Link href={`/admin/org-dashboards/${organizationId}/user-cohort/${organizationId}/${cohortId}`} color="inherit" underline="hover">
+                {cohortId}</Link>
               
                 </Typography>
               </TableCell>

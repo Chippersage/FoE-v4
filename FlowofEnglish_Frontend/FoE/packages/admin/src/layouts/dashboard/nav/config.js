@@ -42,11 +42,6 @@ const getNavConfig = () => {
         path: '/dashboard/superreport',
         icon: icon('report'),
       },
-      // {
-      //   title: 'User Report',
-      //   path: '/dashboard/superuserreport',
-      //   icon: icon('report'),
-      // },
       {
         title: 'Setting',
         path: '/dashboard/superpassword',
@@ -78,11 +73,11 @@ const getNavConfig = () => {
           path: `/org-dashboards/${orgId}/programs`,
           icon: icon('program'),
         },
-        {
-          title: 'Payment',
-          path: `/org-dashboards/${orgId}/payments`,
-          icon: icon('program'),
-        },
+        // {
+        //   title: 'Payment',
+        //   path: `/org-dashboards/${orgId}/payments`,
+        //   icon: icon('program'),
+        // },
       {
         title: 'Organisation Reports',
         path: `/org-dashboards/${orgId}/orgreport`,
