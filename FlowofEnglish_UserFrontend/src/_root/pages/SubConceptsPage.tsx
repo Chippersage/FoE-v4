@@ -127,7 +127,7 @@ export default function SubConceptsPage() {
 
   const bounceAnimation = {
     y: [0, -20, 0],
-    scale: [1, 1.2, 1], // Scale up to 1.1 at the peak of the bounce
+    // scale: [1, 1.2, 1], // Scale up to 1.1 at the peak of the bounce
     transition: {
       duration: 1,
       repeat: Number.POSITIVE_INFINITY,
@@ -138,7 +138,7 @@ export default function SubConceptsPage() {
 
   const backgroundUrl =
     selectedProgramId === "PET-Level-1"
-      ? "/images/PET-background.png"
+      ? "/images/PET-background-1.png"
       : "/images/index.png";
 
   const [targetIndex, setTargetIndex] = useState(null);
@@ -148,11 +148,33 @@ export default function SubConceptsPage() {
 
   // Calculate target index and update state
   useEffect(() => {
-    const calculatedTargetIndex =
-      subconcepts.findIndex((s) => s.completionStatus === "incomplete") + 1; // Adjust the index calculation if needed
-    setTargetIndex(calculatedTargetIndex === 0 ? subconcepts.length + 1 : calculatedTargetIndex); 
+    const incompleteIndex = subconcepts.findIndex(
+      (s) => s.completionStatus === "incomplete"
+    );
+    const ignoredIndex = subconcepts.findIndex(
+      (s) => s.completionStatus === "ignored"
+    );
+
+    // Find the first occurring status
+    let calculatedTargetIndex;
+    if (
+      incompleteIndex !== -1 &&
+      (ignoredIndex === -1 || incompleteIndex < ignoredIndex)
+    ) {
+      calculatedTargetIndex = incompleteIndex;
+    } else {
+      calculatedTargetIndex = ignoredIndex;
+    }
+
+    setTargetIndex(
+      calculatedTargetIndex === -1
+        ? subconcepts.length + 1
+        : calculatedTargetIndex + 1
+    );
     console.log(calculatedTargetIndex);
-  }, [subconcepts]); // Trigger when subconcepts change
+  }, [subconcepts]);
+
+
 
   // Scroll to the active subconcept when the target index changes
   useEffect(() => {
@@ -326,14 +348,14 @@ export default function SubConceptsPage() {
         className="relative w-full h-screen overflow-y-auto"
       >
         <div
-          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none shadow-inner-black`}
+          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 `}
           style={{
             backgroundImage: `url(${backgroundUrl})`,
           }}
         />
         {/* Confetti Animation */}
         {showConfetti && (
-          <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 bg-black">
+          <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
             <DotLottieReact
               src="/animation.lottie"
               loop
@@ -430,7 +452,7 @@ export default function SubConceptsPage() {
                         ? `/subconcepts/${nextUnitId}`
                         : isEnabled && index !== totalSteps - 1 && index !== 0
                         ? `/subconcept/${subconcept?.subconceptId}`
-                        : null
+                        : `/`
                     }
                     state={{ subconcept, stageId, currentUnitId }}
                     className={`${
