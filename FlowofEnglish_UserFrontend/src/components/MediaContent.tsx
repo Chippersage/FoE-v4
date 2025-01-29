@@ -9,7 +9,15 @@ const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
   // @ts-ignore
   const userData = JSON.parse(localStorage.getItem("userData"));
-  const [isComplete, setIsComplete] = useState(!subconceptData?.subconceptType?.startsWith("assessment"));
+  const [isComplete, setIsComplete] = useState(
+    !(
+      subconceptData?.subconceptType?.startsWith("assessment") ||
+      subconceptData?.subconceptType?.startsWith("assignment_image") ||
+      subconceptData?.subconceptType?.startsWith("pdf") ||
+      subconceptData?.subconceptType?.startsWith("assignment_pdf") ||
+      subconceptData?.subconceptType?.startsWith("image")
+    )
+  );
   const contentRef = useRef(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successCountdown, setSuccessCountdown] = useState(3);
@@ -303,6 +311,7 @@ const MediaContent = ({ subconceptData }) => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+            className="border-2 border-black rounded-md shadow-md w-full h-[300px] "
           >
             <source src={subconceptLink} type="audio/mp3" />
             Your browser does not support the audio element.
@@ -317,6 +326,7 @@ const MediaContent = ({ subconceptData }) => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+            className="border-2 border-black rounded-md shadow-md max-h-[70vh]"
           >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
@@ -410,13 +420,23 @@ const MediaContent = ({ subconceptData }) => {
       {/* @ts-ignore */}
       <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full">
         <h1 className="mt-12 pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
-          Complete{" "}
-          {subconceptData?.subconceptType.startsWith("assignment")
-            ? "your assignment"
-            : subconceptData?.subconceptType.startsWith("assessment")
-            ? "the assessment"
-            : "the activity"}
+          {subconceptData?.subconceptType === "video"
+            ? "Watch the video"
+            : subconceptData?.subconceptType === "audio"
+            ? "Listen to the audio"
+            : subconceptData?.subconceptType === "pdf"
+            ? "Read the PDF"
+            : subconceptData?.subconceptType === "image"
+            ? "See the image"
+            : `Complete ${
+                subconceptData?.subconceptType.startsWith("assignment")
+                  ? "your assignment"
+                  : subconceptData?.subconceptType.startsWith("assessment")
+                  ? "the assessment"
+                  : "the activity"
+              }`}
         </h1>
+
         <UploadModal
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
@@ -425,9 +445,11 @@ const MediaContent = ({ subconceptData }) => {
         <div
           id="contentArea"
           className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 ${
-            subconceptData?.subconceptType !== "assessment"
-              ? "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-              : "w-full"
+            ["assessment", "video", "assignment_video"].includes(
+              subconceptData?.subconceptType
+            )
+              ? "w-11/12 flex justify-center items-center"
+              : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
           } bg-white rounded-lg overflow-y-auto max-h-[80vh]`}
         >
           {renderContent()}
@@ -440,23 +462,24 @@ const MediaContent = ({ subconceptData }) => {
               ? "sticky"
               : "fixed w-full"
           } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
-        >{subconceptData?.subconceptType === "assessment" &&
-          <div className="flex justify-center items-center space-x-2">
-            <input
-              type="checkbox"
-              id="agreement"
-              checked={isAssessmentIntegrityChecked}
-              onChange={(e) =>
-                setIsAssessmentIntegrityChecked(e.target.checked)
-              }
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="agreement" className="text-sm text-gray-700">
-              I agree that I have submitted the Google Form response for this
-              activity.
-            </label>
-          </div>
-          }
+        >
+          {subconceptData?.subconceptType === "assessment" && (
+            <div className="flex justify-center items-center space-x-2">
+              <input
+                type="checkbox"
+                id="agreement"
+                checked={isAssessmentIntegrityChecked}
+                onChange={(e) =>
+                  setIsAssessmentIntegrityChecked(e.target.checked)
+                }
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="agreement" className="text-sm text-gray-700">
+                I agree that I have submitted the Google Form response for this
+                activity.
+              </label>
+            </div>
+          )}
           <div>
             <button
               onClick={() => {
