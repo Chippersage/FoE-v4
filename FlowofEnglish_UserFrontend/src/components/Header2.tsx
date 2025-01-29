@@ -30,6 +30,12 @@ const Header2 = () => {
       localStorage.removeItem("user");
       localStorage.removeItem("hasSeenWelcome");
       localStorage.removeItem("cohortReminder");
+      localStorage.removeItem("selectedProgramId");
+      localStorage.removeItem("allUnitsOfCurrentStage");
+      localStorage.removeItem("currentUnit");
+      localStorage.removeItem("isProgramCompletionAlreadyCelebrated");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userId");
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
       navigate("/sign-in");
