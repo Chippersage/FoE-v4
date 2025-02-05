@@ -7,12 +7,42 @@ import { useUserContext } from "@/context/AuthContext.tsx";
 export const HomePage = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const { user } = useUserContext();
-  const selectedProgramId = localStorage.getItem("selectedProgramId");
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
+  const [isLoading, setIsLoading] = useState(true); // Loader state
+  // const selectedProgramId = localStorage.getItem("selectedProgramId");
 
-  const backgroundUrl =
-    selectedProgramId === "PET-Level-1"
-      ? "/images/PET-background.png"
-      : "/images/index.png";
+  useEffect(() => {
+    const selectedProgramId = localStorage.getItem("selectedProgramId");
+
+    if (!selectedProgramId || selectedProgramId === "null") {
+      // If `selectedProgramId` is not set, wait for `user` to load
+      if (user && user.program && user.program.programId) {
+        const programId = user.program.programId;
+        localStorage.setItem("selectedProgramId", programId);
+
+        // Set background URL dynamically
+        setBackgroundUrl(
+          programId === "PET-Level-1"
+            ? "/images/PET-background-1.png"
+            : "/images/index.png"
+        );
+        setIsLoading(false); // Background determined, stop loading
+      }
+    } else {
+      // Use existing `selectedProgramId`
+      setBackgroundUrl(
+        selectedProgramId === "PET-Level-1"
+          ? "/images/PET-background-1.png"
+          : "/images/index.png"
+      );
+      setIsLoading(false); // Background determined, stop loading
+    }
+  }, [user]);
+
+  // const backgroundUrl =
+  //   selectedProgramId === "PET-Level-1"
+  //     ? "/images/PET-background-1.png"
+  //     : "/images/index.png";
 
   useEffect(() => {
     // Check if the welcome modal has already been shown
@@ -27,45 +57,46 @@ export const HomePage = () => {
   return (
     <>
       <div className="relative w-full min-h-full no-scrollbar">
-        {/* Background Image */}
-        <div
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat bg-fixed w-full shadow-inner-black"
-          style={{
-            backgroundImage: `url(${backgroundUrl})`,
-            marginTop: "100px",
-          }}
-        ></div>
-
-        {/* Center Image */}
-        {selectedProgramId !== "PET-Level-1" && (
-          <div className="fixed inset-0 flex items-center justify-center">
-            <img
-              src="/images/main_image.png"
-              alt="Center Image"
-              className="w-[20%] h-auto"
-            />
+        {/* Show Loader until backgroundUrl is ready */}
+        {isLoading ? (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
           </div>
-        )}
-        {/* Flying Bird GIF */}
-        {/* <div className="absolute w-screen z-50 animate-fly">
-            <img
-              src="/images/pajaro.gif"
-              alt="Flying Bird"
-              className="w-32 h-auto"
-            />
-          </div> */}
+        ) : (
+          <>
+            {/* Background Image */}
+            <div
+              className="fixed inset-0 bg-cover bg-center bg-no-repeat bg-fixed w-full"
+              style={{
+                backgroundImage: `url(${backgroundUrl})`,
+                marginTop: "100px",
+              }}
+            ></div>
 
-        <div className="relative z-10 flex flex-1 no-scrollbar overflow-scroll min-h-screen">
-          <Header2 />
-          <Dashboard />
-        </div>
+            {/* Center Image */}
+            {backgroundUrl === "/images/index.png" && (
+              <div className="fixed inset-0 flex items-center justify-center">
+                <img
+                  src="/images/main_image.png"
+                  alt="Center Image"
+                  className="w-[20%] h-auto"
+                />
+              </div>
+            )}
 
-        {showWelcome && user.userName && user.program.programName && (
-          <WelcomeModal
-            userName={user.userName}
-            programName={user.program.programName}
-            onClose={() => setShowWelcome(false)}
-          />
+            <div className="relative z-10 flex flex-1 no-scrollbar overflow-scroll min-h-screen">
+              <Header2 />
+              <Dashboard />
+            </div>
+
+            {showWelcome && user?.userName && user?.program?.programName && (
+              <WelcomeModal
+                userName={user.userName}
+                programName={user.program.programName}
+                onClose={() => setShowWelcome(false)}
+              />
+            )}
+          </>
         )}
       </div>
     </>
