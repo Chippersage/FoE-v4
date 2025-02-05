@@ -350,6 +350,7 @@ const [showSubmit, setShowSubmit] = useState(
                 setShowGoBack(true);
                 setOnFrameLoad(true);
               }}
+              allow="autoplay"
             />
           ) : (
             <MediaContent subconceptData={subconcept} />

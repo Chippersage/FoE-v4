@@ -26,28 +26,28 @@ const MediaContent = ({ subconceptData }) => {
   const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
 
-  const handleContentLoaded = () => {
-    setIsComplete(false); // Enable the "Complete" button when content is fully loaded
-  };
+  // const handleContentLoaded = () => {
+  //   setIsComplete(false); // Enable the "Complete" button when content is fully loaded
+  // };
 
-  useEffect(() => {
-    if (
-      alertDismissed &&
-      subconceptData?.subconceptType.startsWith("assessment")
-    ) {
-      setTimeout(() => {
-        const userConfirmed = window.confirm(
-          "Do you want to open the assessment?"
-        );
-        if (userConfirmed) {
-          const link = document.createElement("a");
-          link.href = subconceptData?.subconceptLink + "=" + userData?.userId; // Replace with your custom protocol or URL
-          link.target = "_blank"; // Open in a new tab if needed
-          link.click();
-        }
-      }, 500);
+  const appendParamsToUrl = (url, userId, cohortId) => {
+    const urlObj = new URL(url); // Parse the URL
+    const params = urlObj.searchParams; // Get the query parameters
+
+    // Dynamically find the keys for userId and cohortId
+    const keys = [...params.keys()]; // Get all query parameter keys
+    if (keys.length < 2) {
+      console.error("URL does not have enough entry parameters.");
+      return url;
     }
-  }, [alertDismissed, subconceptData]);
+
+    // Assign userId and cohortId to the first and second keys
+    params.set(keys[0], userId); // Set the first entry
+    params.set(keys[1], cohortId); // Set the second entry
+
+    // Return the modified URL
+    return urlObj.toString();
+  };
 
   const openAssessment = () => {
     window.open(
@@ -117,7 +117,13 @@ const MediaContent = ({ subconceptData }) => {
     const playedTime = contentElement.currentTime;
     // @ts-ignore
     const totalTime = contentElement.duration;
-    setPlayedPercentage((playedTime / totalTime) * 100);
+    const percentage = (playedTime / totalTime) * 100;
+    setPlayedPercentage(percentage);
+
+    // Check if percentage exceeds 80 and update state
+    if (percentage > 80 && isComplete) {
+      setIsComplete(false);
+    }
   };
 
   const handleComplete = () => {
@@ -292,7 +298,7 @@ const MediaContent = ({ subconceptData }) => {
       case "assignment_audio":
         return (
           <audio
-            onLoadedData={handleContentLoaded}
+            // onLoadedData={handleContentLoaded}
             ref={contentRef}
             controls
             controlsList="nodownload" // Restrict download
@@ -306,7 +312,7 @@ const MediaContent = ({ subconceptData }) => {
       case "assignment_video":
         return (
           <video
-            onLoadedData={handleContentLoaded} // Called when video is loaded
+            // onLoadedData={handleContentLoaded} // Called when video is loaded
             ref={contentRef}
             controls
             controlsList="nodownload" // Restrict download
@@ -320,7 +326,7 @@ const MediaContent = ({ subconceptData }) => {
       case "assignment_image":
         return (
           <img
-            onLoad={handleContentLoaded}
+            // onLoad={handleContentLoaded}
             src={subconceptLink}
             alt="Image content"
             style={{
@@ -340,7 +346,7 @@ const MediaContent = ({ subconceptData }) => {
             style={{ position: "relative" }}
           >
             <iframe
-              onLoad={handleContentLoaded}
+              // onLoad={handleContentLoaded}
               src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
               width="100%"
               height="500px"
@@ -357,38 +363,27 @@ const MediaContent = ({ subconceptData }) => {
           </div>
         );
       case "assessment":
-        return (
-          <div className="max-w-md mx-auto p-6 bg-white rounded-lg">
-            <p className="text-lg mb-4">
-              Click "OK" on the dialog box shown by the browser. If you don't
-              see a dialog or if doesn't open assessment in new tab, click on
-              "Open Assessment" below.
-            </p>
-
-            <div className="flex items-start space-x-2 mb-4">
-              <input
-                type="checkbox"
-                id="agreement"
-                checked={isAssessmentIntegrityChecked}
-                onChange={(e) =>
-                  setIsAssessmentIntegrityChecked(e.target.checked)
-                }
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="agreement" className="text-sm text-gray-700">
-                I agree that I have answered and submitted the Google Form
-                assessment that was opened in a new tab
-              </label>
-            </div>
-
-            <button
-              onClick={openAssessment}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
-            >
-              Open Assessment
-            </button>
-          </div>
+        const updatedUrl = appendParamsToUrl(
+          subconceptData?.subconceptLink,
+          userData?.userId,
+          userData?.cohortId
         );
+        return (
+              <iframe
+                src={updatedUrl} // Disable PDF toolbar
+                width="100%"
+                height="600px"
+                title="PDF Document"
+                style={{
+                  borderRadius: "10px",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                  // pointerEvents: "none",
+                }}
+                // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+                // @ts-ignore
+                // controlsList="nodownload" // Restrict download
+              />
+          );
       default:
         return <p>Something went wrong!</p>;
     }
@@ -401,14 +396,14 @@ const MediaContent = ({ subconceptData }) => {
         onClose={() => setIsRetryPopupOpen(false)}
         onRetry={handleComplete}
       /> */}
-      {showAlert && (
+      {/* {showAlert && (
         <AlertModal
           onAlertClose={() => {
             setShowAlert(false);
             setAlertDismissed(true);
           }}
         />
-      )}
+      )} */}
       {showSuccessPopup && renderOverlay("success")}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
@@ -429,109 +424,74 @@ const MediaContent = ({ subconceptData }) => {
         />
         <div
           id="contentArea"
-          className="mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl bg-white rounded-lg shadow-md overflow-y-auto max-h-[80vh]"
+          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 ${
+            subconceptData?.subconceptType !== "assessment"
+              ? "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
+              : "w-full"
+          } bg-white rounded-lg overflow-y-auto max-h-[80vh]`}
         >
           {renderContent()}
         </div>
         <div
-          className={`buttons bg-white ${
+          className={` bg-white ${
             subconceptData?.subconceptType === "pdf" ||
-            subconceptData?.subconceptType === "assignment_pdf"
+            subconceptData?.subconceptType === "assignment_pdf" ||
+            subconceptData?.subconceptType === "assignment_image"
               ? "sticky"
               : "fixed w-full"
-          }  bottom-0 mt-4 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
-        >
-          <button
-            onClick={() => {
-              subconceptData?.subconceptType.startsWith("assignment")
-                ? setIsUploadModalOpen(true)
-                : handleComplete();
-            }}
-            disabled={
-              subconceptData?.subconceptType.startsWith("assessment")
-                ? !isAssessmentIntegrityChecked
-                : isComplete
-            }
-            className={`${
-              (subconceptData?.subconceptType.startsWith("assessment") &&
-                !isAssessmentIntegrityChecked) ||
-              isComplete
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#00A66B] hover:bg-green-600"
-            } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
-          >
-            {subconceptData?.subconceptType.startsWith("assignment")
-              ? "Upload assignment"
-              : "Complete"}
-          </button>
-          <button
-            onClick={handleGoBack}
-            className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
-          >
-            Go Back to Activities
-          </button>
+          } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
+        >{subconceptData?.subconceptType === "assessment" &&
+          <div className="flex justify-center items-center space-x-2">
+            <input
+              type="checkbox"
+              id="agreement"
+              checked={isAssessmentIntegrityChecked}
+              onChange={(e) =>
+                setIsAssessmentIntegrityChecked(e.target.checked)
+              }
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="agreement" className="text-sm text-gray-700">
+              I agree that I have submitted the Google Form response for this
+              activity.
+            </label>
+          </div>
+          }
+          <div>
+            <button
+              onClick={() => {
+                subconceptData?.subconceptType.startsWith("assignment")
+                  ? setIsUploadModalOpen(true)
+                  : handleComplete();
+              }}
+              disabled={
+                subconceptData?.subconceptType.startsWith("assessment")
+                  ? !isAssessmentIntegrityChecked
+                  : isComplete
+              }
+              className={`${
+                (subconceptData?.subconceptType.startsWith("assessment") &&
+                  !isAssessmentIntegrityChecked) ||
+                isComplete
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#00A66B] hover:bg-green-600"
+              } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
+            >
+              {subconceptData?.subconceptType.startsWith("assignment")
+                ? "Upload assignment"
+                : "Complete"}
+            </button>
+            <button
+              onClick={handleGoBack}
+              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
+            >
+              Go Back to Activities
+            </button>
+          </div>
         </div>
       </div>
     </>
   );
 };
-
-// const styles = {
-//   container: {
-//     background: "linear-gradient(#CAF3BC, #ffff)",
-//     textAlign: "center",
-//     fontFamily: "Arial, sans-serif",
-//     color: "#333",
-//     outerWidth: "100%",
-//     width: "100%",
-//   },
-//   heading: {
-//     marginTop: "66px",
-//     fontSize: "2.2em",
-//     color: "#2C3E50",
-//     fontWeight: "bold",
-//   },
-//   contentArea: {
-//     margin: "30px auto",
-//     padding: "20px",
-//     width: "90%",
-//     maxWidth: "800px",
-//     backgroundColor: "#ffffff",
-//     borderRadius: "10px",
-//     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-//     overflowY: "auto",
-//     maxHeight: "80vh",
-//   },
-//   buttons: {
-//     marginTop: "20px",
-//     display: "flex",
-//     justifyContent: "center",
-//     flexWrap: "wrap",
-//   },
-//   button: {
-//     padding: "10px 15px",
-//     margin: "10px",
-//     backgroundColor: "#00A66B",
-//     color: "white",
-//     border: "none",
-//     borderRadius: "5px",
-//     fontSize: "1.1em",
-//     cursor: "pointer",
-//     transition: "background-color 0.3s ease",
-//     maxWidth: "200px",
-//   },
-//   disabledButton: {
-//     backgroundColor: "gray",
-//     cursor: "not-allowed",
-//     padding: "10px 15px",
-//     margin: "10px",
-//     color: "white",
-//     border: "none",
-//     borderRadius: "5px",
-//     fontSize: "1.1em",
-//     transition: "background-color 0.3s ease",
-//     maxWidth: "200px",
-//   },
-// };
 
 export default MediaContent;

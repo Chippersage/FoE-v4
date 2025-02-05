@@ -4,9 +4,12 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      boxShadow: {
+        "inner-black": "inset 0 0 1000px rgba(0, 0, 0, 0.8)", // Add an inner shadow
+      },
       fontFamily: {
         garamond: ["Garamond"], // Add Garamond with fallback
-        openSans: ["Open sans"]
+        openSans: ["Open sans"],
       },
       borderRadius: {
         lg: "var(--radius)",
