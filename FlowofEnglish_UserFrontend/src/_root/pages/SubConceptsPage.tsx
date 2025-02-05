@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   CheckCircle2,
   // BookOpen,
@@ -75,6 +76,7 @@ const iconMap = {
   write: Write,
   riddles: Riddle,
   dictation: Dictation,
+  vocab: Spelling,
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -90,8 +92,6 @@ const iconMap = {
   assignment_audio: Assignment,
   assignment_image: Assignment,
   assessment: Assessment,
-
-
 };
 
 export default function SubConceptsPage() {
@@ -123,18 +123,55 @@ export default function SubConceptsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [celebratedStageName, setCelebratedStageName] = useState("");
   const navigate = useNavigate();
+  const selectedProgramId = localStorage.getItem("selectedProgramId");
 
+  const bounceAnimation = {
+    y: [0, -20, 0],
+    scale: [1, 1.2, 1], // Scale up to 1.1 at the peak of the bounce
+    transition: {
+      duration: 1,
+      repeat: Number.POSITIVE_INFINITY,
+      repeatType: "loop",
+      ease: "easeInOut",
+    },
+  };
+
+  const backgroundUrl =
+    selectedProgramId === "PET-Level-1"
+      ? "/images/PET-background.png"
+      : "/images/index.png";
+
+  const [targetIndex, setTargetIndex] = useState(null);
   const scrollableDivRef = useRef(null);
-  const { pathname } = useLocation(); // Detect route changes
+  const stepRefs = useRef([]);
+  // const { pathname } = useLocation(); // Detect route changes
 
+  // Calculate target index and update state
   useEffect(() => {
-    if (scrollableDivRef.current) {
-      scrollableDivRef.current.scrollTo({
-        top: 0,
+    const calculatedTargetIndex =
+      subconcepts.findIndex((s) => s.completionStatus === "incomplete") + 1; // Adjust the index calculation if needed
+    setTargetIndex(calculatedTargetIndex === 0 ? subconcepts.length + 1 : calculatedTargetIndex); 
+    console.log(calculatedTargetIndex);
+  }, [subconcepts]); // Trigger when subconcepts change
+
+  // Scroll to the active subconcept when the target index changes
+  useEffect(() => {
+    if (targetIndex !== null && stepRefs.current[targetIndex]) {
+      stepRefs.current[targetIndex].scrollIntoView({
         behavior: "smooth",
+        block: "center",
       });
     }
-  }, [pathname]); // Trigger scroll when the route changes
+  }, [targetIndex]); // Trigger on targetIndex change
+
+  // useEffect(() => {
+  //   if (scrollableDivRef.current) {
+  //     scrollableDivRef.current.scrollTo({
+  //       top: 0,
+  //       behavior: "smooth",
+  //     });
+  //   }
+  // }, [pathname]); // Trigger scroll when the route changes
 
   const fetchSubconcepts = async () => {
     try {
@@ -286,13 +323,14 @@ export default function SubConceptsPage() {
       )}
       <div
         ref={scrollableDivRef}
-        className=" w-full h-screen overflow-y-auto"
-        style={{
-          backgroundImage: `url('/images/index.png')`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-        }}
+        className="relative w-full h-screen overflow-y-auto"
       >
+        <div
+          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none shadow-inner-black`}
+          style={{
+            backgroundImage: `url(${backgroundUrl})`,
+          }}
+        />
         {/* Confetti Animation */}
         {showConfetti && (
           <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 bg-black">
@@ -335,7 +373,7 @@ export default function SubConceptsPage() {
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full h-full sm:mt-36 mt-44">
+        <div className="w-full h-full sm:mt-36 mt-44 relative">
           <svg
             className="w-full h-auto"
             viewBox={`0 0 ${pathWidth} ${pathWidth / 1.5}`}
@@ -373,8 +411,14 @@ export default function SubConceptsPage() {
                 (subconcept?.completionStatus !== "disabled" &&
                   index !== totalSteps - 1);
 
+              // // Find the first incomplete subconcept index
+              // const firstIncompleteIndex = subconcepts.findIndex(
+              //   (s) => s.completionStatus === "incomplete"
+              // );
+              // const targetIndex = firstIncompleteIndex + 1; // Adjust for the offset
+
               return (
-                <g key={index}>
+                <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
                   <Link
                     // @ts-ignore
                     to={
@@ -510,6 +554,19 @@ export default function SubConceptsPage() {
                         </g>
                       )}
                     </g>
+                    {/* Google Pin for the first incomplete subconcept */}
+                    {index === targetIndex && (
+                      <motion.g animate={bounceAnimation}>
+                        <image
+                          x={point.x - 28}
+                          y={point.y - 90} // Position above the icon
+                          width="54"
+                          height="60"
+                          href="/images/google-pin.png" // Replace with your pin image path
+                          className=""
+                        />
+                      </motion.g>
+                    )}
                   </Link>
                   {activeTooltip === index && (
                     <foreignObject
