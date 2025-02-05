@@ -10,6 +10,8 @@ import UserProgressBar from "./UserProgressBar";
 // @ts-ignore
 import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
 import KidFriendlyModal from "./modals/CongratulatoryModal";
+import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
+import Leaderboard from "./Leaderboard";
 
 function Dashboard() {
   const { user } = useUserContext();
@@ -232,7 +234,10 @@ function Dashboard() {
           <ProgressbarSkeleton />
         )}
 
+<<<<<<< HEAD
         {/* @ts-ignore */}
+=======
+>>>>>>> 6332ce26a31d72dbfa26f65530415bb1b2ebe5a8
         {leaderBoardInfo ? (
           <div className="">
             <Leaderboard
@@ -244,7 +249,11 @@ function Dashboard() {
           </div>
         ) : (
           <LeaderboardSkeleton />
+<<<<<<< HEAD
         )} 
+=======
+        )}
+>>>>>>> 6332ce26a31d72dbfa26f65530415bb1b2ebe5a8
       </div>
     </div>
   );
