@@ -226,6 +226,9 @@ public class UnitServiceImpl implements UnitService {
         int totalUnitCount = 0;
         int stagesCount = 0;
 
+     // Calculate the number of digits needed for padding
+        int maxDigits = String.valueOf(stages.size()).length();
+
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
         logger.info("Fetched UserSubConcepts: {}", userSubConcepts);
@@ -242,6 +245,12 @@ public class UnitServiceImpl implements UnitService {
         for (int i = 0; i < stages.size(); i++) {
             Stage stage = stages.get(i);
             StageDTO stageResponse = new StageDTO();
+            
+         // Format the key with leading zeros
+            String stageKey = String.format("%0" + maxDigits + "d", i);
+            stageMap.put(stageKey, stageResponse);
+            stagesCount++;
+            
             stageResponse.setStageId(stage.getStageId());
             stageResponse.setStageName(stage.getStageName());
             stageResponse.setStageDesc(stage.getStageDesc());
