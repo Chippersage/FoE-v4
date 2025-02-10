@@ -450,15 +450,14 @@ const MediaContent = ({ subconceptData }) => {
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          } bg-white rounded-lg overflow-y-auto max-h-[80vh]`}
+          } bg-white rounded-lg overflow-y-auto max-h-[80vh] no-scrollbar`}
         >
           {renderContent()}
         </div>
         <div
           className={` bg-white ${
             subconceptData?.subconceptType === "pdf" ||
-            subconceptData?.subconceptType === "assignment_pdf" ||
-            subconceptData?.subconceptType === "assignment_image"
+            subconceptData?.subconceptType === "assignment_pdf" 
               ? "sticky"
               : "fixed w-full"
           } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}

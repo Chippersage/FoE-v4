@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { ChevronDown } from "lucide-react";
+import { CircleAlert, CircleCheck, Trophy } from "lucide-react";
+import { ChevronDown, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 // import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import {  } from "lucide-react";
 // Define a type for the stage object
 // interface Stage {
 //   stageEnabled: boolean;
@@ -21,7 +23,7 @@ import { useRef } from "react";
 // }
 
 // @ts-ignore
-export default function Stages({ stages }) {
+export default function Stages({ stages, programCompletionStatus }) {
   const [expandedModule, setExpandedModule] = useState(null);
   const [hoveredUnit, setHoveredUnit] = useState(null);
   const containerRef = useRef(null);
@@ -49,10 +51,17 @@ export default function Stages({ stages }) {
   return (
     <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]">
       {/* Fixed Title */}
-      <h3 className="text-xl font-semibold font-openSans mb-4">
-        Your Learning Path
-      </h3>
-
+      <div>
+        <h3 className="text-xl font-semibold font-openSans mb-4">
+          Your Learning Path
+        </h3>
+        {programCompletionStatus === "yes" &&
+          <div className="bg-emerald-50 text-emerald-600 px-4 py-2 text-sm font-medium flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            All Stages Complete!
+          </div>
+        }
+      </div>
       {/* Scrollable Cards */}
       <div
         ref={containerRef}
@@ -78,8 +87,39 @@ export default function Stages({ stages }) {
                       {/* @ts-ignore */}
                       {stage.stageName}
                     </CardTitle>
+                    {stage?.stageCompletionStatus ===
+                    "Stage Completed without Assignments" ? (
+                      <Badge
+                        variant="outline"
+                        className="bg-orange-50 text-orange-600 border-orange-200 px-3 py-1 rounded-full"
+                      >
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        Pending
+                      </Badge>
+                    ) : stage?.stageCompletionStatus === "yes" ? (
+                      <Badge
+                        variant="outline"
+                        className="bg-emerald-50 text-emerald-600 border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Completed
+                      </Badge>
+                    ) : (
+                      stage.stageEnabled && (
+                        <ChevronDown
+                          className={`h-5 w-5 transition-transform duration-300 ${
+                            expandedModule === index ? "rotate-180" : ""
+                          } text-gray-900`}
+                          onClick={() => {
+                            toggleExpand(index);
+                            handleScrollToCard(cardRef);
+                          }}
+                        />
+                      )
+                    )}
+
                     {/* @ts-ignore */}
-                    {stage.stageEnabled && (
+                    {/* {stage.stageEnabled && (
                       <ChevronDown
                         className={`h-5 w-5 transition-transform duration-300 ${
                           expandedModule === index ? "rotate-180" : ""
@@ -89,7 +129,7 @@ export default function Stages({ stages }) {
                           handleScrollToCard(cardRef);
                         }}
                       />
-                    )}
+                    )} */}
                   </div>
                 </CardHeader>
                 <CardContent className="relative pb-16">
