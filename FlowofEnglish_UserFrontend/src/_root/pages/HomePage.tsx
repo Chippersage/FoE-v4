@@ -22,16 +22,17 @@ export const HomePage = () => {
 
         // Set background URL dynamically
         setBackgroundUrl(
-          programId === "PET-Level-1"
+          programId.startsWith("PET")
             ? "/images/PET-background-1.png"
             : "/images/index.png"
         );
+
         setIsLoading(false); // Background determined, stop loading
       }
     } else {
       // Use existing `selectedProgramId`
       setBackgroundUrl(
-        selectedProgramId === "PET-Level-1"
+        selectedProgramId.startsWith("PET")
           ? "/images/PET-background-1.png"
           : "/images/index.png"
       );

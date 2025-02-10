@@ -124,6 +124,7 @@ export default function SubConceptsPage() {
   const [celebratedStageName, setCelebratedStageName] = useState("");
   const navigate = useNavigate();
   const selectedProgramId = localStorage.getItem("selectedProgramId");
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
 
   const bounceAnimation = {
     y: [0, -20, 0],
@@ -136,10 +137,32 @@ export default function SubConceptsPage() {
     },
   };
 
-  const backgroundUrl =
-    selectedProgramId === "PET-Level-1"
-      ? "/images/PET-background-1.png"
-      : "/images/index.png";
+  useEffect(() => {
+    const selectedProgramId = localStorage.getItem("selectedProgramId");
+
+    if (!selectedProgramId || selectedProgramId === "null") {
+      // If `selectedProgramId` is not set, wait for `user` to load
+      if (user && user.program && user.program.programId) {
+        const programId = user.program.programId;
+        localStorage.setItem("selectedProgramId", programId);
+
+        // Set background URL dynamically
+        setBackgroundUrl(
+          programId.startsWith("PET")
+            ? "/images/PET-background-1.png"
+            : "/images/index.png"
+        );
+
+      }
+    } else {
+      // Use existing `selectedProgramId`
+      setBackgroundUrl(
+        selectedProgramId.startsWith("PET")
+          ? "/images/PET-background-1.png"
+          : "/images/index.png"
+      );
+    }
+  }, [user]);
 
   const [targetIndex, setTargetIndex] = useState(null);
   const scrollableDivRef = useRef(null);
@@ -173,8 +196,6 @@ export default function SubConceptsPage() {
     );
     console.log(calculatedTargetIndex);
   }, [subconcepts]);
-
-
 
   // Scroll to the active subconcept when the target index changes
   useEffect(() => {
@@ -452,7 +473,7 @@ export default function SubConceptsPage() {
                         ? `/subconcepts/${nextUnitId}`
                         : isEnabled && index !== totalSteps - 1 && index !== 0
                         ? `/subconcept/${subconcept?.subconceptId}`
-                        : `/`
+                        : null
                     }
                     state={{ subconcept, stageId, currentUnitId }}
                     className={`${
@@ -478,7 +499,9 @@ export default function SubConceptsPage() {
                         }, 5000);
                       } else if (
                         index === totalSteps - 1 &&
-                        unitCompletionStatus === "yes" &&
+                        (unitCompletionStatus === "yes" ||
+                          unitCompletionStatus.toLowerCase() ===
+                            "unit completed without assignments") &&
                         !nextUnitId
                       ) {
                         openModal();
