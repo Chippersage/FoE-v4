@@ -106,7 +106,6 @@ export default function SubConceptsPage() {
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   // const [started, setStarted] = useState(true);
-  const [totalSteps, setTotalSteps] = useState(2);
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -115,6 +114,7 @@ export default function SubConceptsPage() {
   const pathWidth = 1000; // Total width of the SVG
   const pathHeight = 400; // Total height of the SVG
   const rowHeight = pathHeight / 2; // Height of each row
+  const [totalSteps, setTotalSteps] = useState(2);
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
