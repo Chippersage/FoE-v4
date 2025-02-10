@@ -2,10 +2,10 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUserContext } from "../context/AuthContext";
 import "../Styles/Stages.css";
-import Leaderboard from "./Leaderboard";
+// import Leaderboard from "./Leaderboard";
 import Stages from "./Stages";
 import StagesSkeleton from "./skeletons/StageSkeleton";
-import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
+// import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import UserProgressBar from "./UserProgressBar";
 // @ts-ignore
 import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
@@ -19,7 +19,7 @@ function Dashboard() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [currentUserLeaderBoardInfo, setCurrentUserLeaderBoardInfo] =
     useState(null);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   // @ts-ignore
   const [error, setError] = useState(null);
 
@@ -197,7 +197,8 @@ function Dashboard() {
       {programInfo && programInfo.stages ? (
         <div className="sm:w-[50%]">
           {/* @ts-ignore */}
-          <Stages stages={programInfo?.stages} programCompletionStatus={programInfo?.programCompletionStatus}/>
+          <Stages stages={programInfo?.stages} programCompletionStatus={programInfo?.programCompletionStatus}
+          />
         </div>
       ) : (
         <StagesSkeleton />
@@ -234,10 +235,6 @@ function Dashboard() {
           <ProgressbarSkeleton />
         )}
 
-<<<<<<< HEAD
-        {/* @ts-ignore */}
-=======
->>>>>>> 6332ce26a31d72dbfa26f65530415bb1b2ebe5a8
         {leaderBoardInfo ? (
           <div className="">
             <Leaderboard
@@ -249,11 +246,7 @@ function Dashboard() {
           </div>
         ) : (
           <LeaderboardSkeleton />
-<<<<<<< HEAD
-        )} 
-=======
         )}
->>>>>>> 6332ce26a31d72dbfa26f65530415bb1b2ebe5a8
       </div>
     </div>
   );
