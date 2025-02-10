@@ -12,6 +12,8 @@ public interface UserSessionMappingService {
     List<UserSessionMapping> getUserSessionMappingsByUserId(String userId);
     
     Optional<UserSessionMapping> findBySessionId(String sessionId);
+    Optional<UserSessionMapping> findActiveSessionByUserIdAndCohortId(String userId, String cohortId);
+    void invalidateSession(String sessionId);
     UserSessionMapping createUserSessionMapping(UserSessionMapping userSessionMapping);
     UserSessionMapping updateUserSessionMapping(String sessionId, UserSessionMapping userSessionMapping);
     void deleteUserSessionMapping(String sessionId);
