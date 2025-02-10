@@ -16,6 +16,12 @@ import org.springframework.stereotype.Repository;
 public interface UserSessionMappingRepository extends JpaRepository<UserSessionMapping, String> {
 	Optional<UserSessionMapping> findBySessionId(String sessionId);
 	List<UserSessionMapping> findByUser_UserId(String userId);
+	
+	Optional<UserSessionMapping> findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(
+		    String userId, String cohortId);
+	@Query("SELECT us FROM UserSessionMapping us WHERE us.user.userId = :userId AND us.cohort.cohortId = :cohortId AND us.sessionEndTimestamp IS NULL")
+	Optional<UserSessionMapping> findActiveSession(@Param("userId") String userId, @Param("cohortId") String cohortId);
+
 	@Query("SELECT u FROM User u JOIN u.userSessions us WHERE us.sessionStartTimestamp < :timestamp")
 	List<User> findInactiveUsersSince(@Param("timestamp") OffsetDateTime timestamp);
 
