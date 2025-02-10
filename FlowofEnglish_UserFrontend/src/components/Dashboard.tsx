@@ -197,7 +197,7 @@ function Dashboard() {
       {programInfo && programInfo.stages ? (
         <div className="sm:w-[50%]">
           {/* @ts-ignore */}
-          <Stages stages={programInfo.stages} />
+          <Stages stages={programInfo?.stages} programCompletionStatus={programInfo?.programCompletionStatus}/>
         </div>
       ) : (
         <StagesSkeleton />
@@ -205,7 +205,7 @@ function Dashboard() {
 
       <div className="w-full sm:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
-          <div className="flex flex-col mb-6 mx-auto w-full sm:w-[400px] px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
+          <div className="flex flex-col mb-6 mx-auto max-w-[400px] w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
             <h3 className="text-xl font-semibold font-openSans">
               Your Progress
             </h3>
