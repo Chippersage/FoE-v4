@@ -111,9 +111,9 @@ export default function SubConceptsPage() {
   const [error, setError] = useState("");
   const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const pathWidth = 1000; // Total width of the SVG
-  const pathHeight = 400; // Total height of the SVG
-  const rowHeight = pathHeight / 2; // Height of each row
+  const [pathWidth, setPathWidth] = useState(1000);
+  const [pathHeight, setPathHeight] = useState(400);
+  const rowHeight = pathHeight / 2.5; // Height of each row
   const [totalSteps, setTotalSteps] = useState(2);
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -138,6 +138,29 @@ export default function SubConceptsPage() {
   };
 
   useEffect(() => {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    // Adjust pathWidth based on screen size
+    if (screenWidth < 768) {
+      // For mobile devices
+      setPathWidth(300);
+    } else if (screenWidth >= 768 && screenWidth < 1024) {
+      // For tablets
+      setPathWidth(800);
+    } else {
+      // For desktops
+      setPathWidth(1000);
+    }
+
+    // Adjust pathHeight based on totalSteps to avoid dense population of icons
+    const baseHeight = 400; // Base height for 2 steps
+    const heightIncrement = 50; // Additional height for each extra step
+    const newHeight = baseHeight + (totalSteps - 2) * heightIncrement;
+    setPathHeight(newHeight);
+  }, [totalSteps]); // Recalculate when totalSteps changes
+
+  useEffect(() => {
     const selectedProgramId = localStorage.getItem("selectedProgramId");
 
     if (!selectedProgramId || selectedProgramId === "null") {
@@ -152,7 +175,6 @@ export default function SubConceptsPage() {
             ? "/images/PET-background-1.png"
             : "/images/index.png"
         );
-
       }
     } else {
       // Use existing `selectedProgramId`
@@ -300,26 +322,38 @@ export default function SubConceptsPage() {
     navigate("/");
   };
 
-  const getPath = () => {
-    const radius = 50; // Radius of the curves at ends
-    return `
-      M100,${rowHeight / 2} 
+const getPath = (numWaves = 2) => {
+  const radius = 50; // Radius of the curves at ends
+  const waveHeight = rowHeight; // Vertical height of each wave
+  let path = `M100,${rowHeight / 2}`; // Start position
+
+  for (let i = 0; i < numWaves; i++) {
+    let yOffset = i * waveHeight * 2; // Offset for each wave cycle
+
+    path += `
       H${pathWidth - 100 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100},${rowHeight / 2 + radius}
-      V${rowHeight + rowHeight / 2 - radius} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 100},${
+      rowHeight / 2 + radius + yOffset
+    }
+      V${waveHeight + rowHeight / 2 - radius + yOffset} 
       A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${
-      rowHeight + rowHeight / 2
+      waveHeight + rowHeight / 2 + yOffset
     }
       H${100 + radius}
-      A${radius},${radius} 0 0 0 100,${rowHeight + rowHeight / 2 + radius}
-    V${rowHeight + rowHeight + rowHeight / 2 - radius} 
-    A${radius},${radius} 0 0 0 ${100 + radius},${
-      rowHeight + rowHeight + rowHeight / 2
+      A${radius},${radius} 0 0 0 100,${
+      waveHeight + rowHeight / 2 + radius + yOffset
     }
-    H${pathWidth - 100 - radius}
-     
+      V${waveHeight * 2 + rowHeight / 2 - radius + yOffset} 
+      A${radius},${radius} 0 0 0 ${100 + radius},${
+      waveHeight * 2 + rowHeight / 2 + yOffset
+    }
     `;
-  };
+  }
+
+  return path;
+};
+
+
 
   const getPointOnPath = (progress: number) => {
     const path = document.querySelector(".curve-path") as SVGPathElement | null;
@@ -418,12 +452,12 @@ export default function SubConceptsPage() {
         {/* Scrollable SVG Container */}
         <div className="w-full h-full sm:mt-36 mt-44 relative">
           <svg
-            className="w-full h-auto"
-            viewBox={`0 0 ${pathWidth} ${pathWidth / 1.5}`}
+            className="w-full h-auto "
+            viewBox={`0 0 ${pathWidth} ${pathHeight * 4}`}
             preserveAspectRatio="xMinYMin meet"
           >
             <path
-              d={getPath()}
+              d={getPath(3)}
               fill="none"
               stroke="white"
               strokeWidth="5"
@@ -517,8 +551,8 @@ export default function SubConceptsPage() {
                       <rect
                         x={point.x - 20}
                         y={point.y - 20}
-                        width="36"
-                        height="36"
+                        width="50"
+                        height="50"
                         rx="2"
                         ry="2"
                         fill={
@@ -561,10 +595,10 @@ export default function SubConceptsPage() {
                             : point.y - 15
                         }
                         width={
-                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                          index === 0 || index === totalSteps - 1 ? "70" : "44"
                         }
                         height={
-                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                          index === 0 || index === totalSteps - 1 ? "70" : "44"
                         }
                         color="white"
                         className={`object-contain ${
