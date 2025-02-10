@@ -5,6 +5,8 @@ import com.FlowofEnglish.repository.UserSessionMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,20 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     @Override
     public List<UserSessionMapping> getUserSessionMappingsByUserId(String userId) {
         return userSessionMappingRepository.findByUser_UserId(userId);
+    }
+    @Override
+    public Optional<UserSessionMapping> findActiveSessionByUserIdAndCohortId(String userId, String cohortId) {
+        return userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(
+            userId, cohortId);
+    }
+    
+    @Override
+    public void invalidateSession(String sessionId) {
+        userSessionMappingRepository.findBySessionId(sessionId)
+            .ifPresent(session -> {
+                session.setSessionEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+                userSessionMappingRepository.save(session);
+            });
     }
 
     @Override

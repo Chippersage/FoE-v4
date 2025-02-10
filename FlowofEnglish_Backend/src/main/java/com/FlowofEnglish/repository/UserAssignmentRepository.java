@@ -4,6 +4,7 @@ import com.FlowofEnglish.model.UserAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +19,7 @@ public interface UserAssignmentRepository extends JpaRepository<UserAssignment, 
     Optional<UserAssignment> findByUserUserIdAndProgramProgramIdAndStageStageIdAndUnitUnitIdAndSubconceptSubconceptId(
     	    String userId, String programId, String stageId, String unitId, String subconceptId
     	);
+    
+    List<UserAssignment> findBySubmittedDateBetween(OffsetDateTime startDate, OffsetDateTime endDate);
+
 }

@@ -1,9 +1,7 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.dto.UserDTO;
-import com.FlowofEnglish.dto.UserGetDTO;
-import com.FlowofEnglish.dto.UsercreateDTO;
-import com.FlowofEnglish.model.User;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
 import com.opencsv.CSVReader;
 
 import java.util.List;
@@ -24,6 +22,7 @@ public interface UserService {
 	UserDTO getUserDetailsWithProgram(String userId);
 	String getCohortIdByUserId(String userId);
 	List<String> getCohortsByUserId(String userId);
+	UserDetailsWithCohortsAndProgramsDTO getUserDetailsWithCohortsAndPrograms(String userId);
 	//List<User> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages);
 	Map<String, Object> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages, List<String> warnings);
     boolean verifyPassword(String plainPassword, String encodedPassword);
