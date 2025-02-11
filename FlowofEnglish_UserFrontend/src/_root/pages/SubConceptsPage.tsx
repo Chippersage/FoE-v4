@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -137,7 +137,23 @@ export default function SubConceptsPage() {
     },
   };
 
+  // just to ensure paths calculated and 
+  const [delayedPoints, setDelayedPoints] = useState<
+    { x: number; y: number }[]
+  >([]);
+
   useEffect(() => {
+    const timer = setTimeout(() => {
+      const newPoints = [...Array(totalSteps)].map((_, index) =>
+        getPointOnPath(index / (totalSteps - 1))
+      );
+      setDelayedPoints(newPoints);
+    }, 300); // Adjust delay as needed
+
+    return () => clearTimeout(timer); // Cleanup timeout
+  }, [totalSteps, pathWidth, pathHeight]); // Run effect when dependencies change
+
+  useLayoutEffect(() => {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
@@ -221,22 +237,16 @@ export default function SubConceptsPage() {
 
   // Scroll to the active subconcept when the target index changes
   useEffect(() => {
-    if (targetIndex !== null && stepRefs.current[targetIndex]) {
-      stepRefs.current[targetIndex].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
+    setTimeout(() => {
+      if (targetIndex !== null && stepRefs.current[targetIndex]) {
+        stepRefs.current[targetIndex].scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 500)
+    
   }, [targetIndex]); // Trigger on targetIndex change
-
-  // useEffect(() => {
-  //   if (scrollableDivRef.current) {
-  //     scrollableDivRef.current.scrollTo({
-  //       top: 0,
-  //       behavior: "smooth",
-  //     });
-  //   }
-  // }, [pathname]); // Trigger scroll when the route changes
 
   const fetchSubconcepts = async () => {
     try {
@@ -322,38 +332,41 @@ export default function SubConceptsPage() {
     navigate("/");
   };
 
-const getPath = (numWaves = 2) => {
-  const radius = 50; // Radius of the curves at ends
-  const waveHeight = rowHeight; // Vertical height of each wave
-  let path = `M100,${rowHeight / 2}`; // Start position
+  const getPath = (numWaves = 2) => {
+    const radius = 10; // Radius of the curves at ends
+    const waveHeight = rowHeight / 2; // Vertical height of each wave
+    let path = `M100,${rowHeight / 2}`; // Start position
 
-  for (let i = 0; i < numWaves; i++) {
-    let yOffset = i * waveHeight * 2; // Offset for each wave cycle
+    for (let i = 0; i < numWaves; i++) {
+      let yOffset = i * waveHeight * 2; // Offset for each wave cycle
 
-    path += `
-      H${pathWidth - 100 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100},${
-      rowHeight / 2 + radius + yOffset
-    }
+      path += `
+      H${pathWidth - 40 - radius} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 40},${
+        rowHeight / 2 + radius + yOffset
+      }
       V${waveHeight + rowHeight / 2 - radius + yOffset} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${
-      waveHeight + rowHeight / 2 + yOffset
-    }
-      H${100 + radius}
-      A${radius},${radius} 0 0 0 100,${
-      waveHeight + rowHeight / 2 + radius + yOffset
-    }
+      A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
+        waveHeight + rowHeight / 2 + yOffset
+      }
+      H${40 + radius}
+      A${radius},${radius} 0 0 0 40,${
+        waveHeight + rowHeight / 2 + radius + yOffset
+      }
       V${waveHeight * 2 + rowHeight / 2 - radius + yOffset} 
-      A${radius},${radius} 0 0 0 ${100 + radius},${
-      waveHeight * 2 + rowHeight / 2 + yOffset
-    }
+      A${radius},${radius} 0 0 0 ${40 + radius},${
+        waveHeight * 2 + rowHeight / 2 + yOffset
+      }
     `;
-  }
+    }
 
-  return path;
-};
+    // ✅ Ensure the last part of the path extends to the right
+    path += `
+    H${pathWidth - 40} 
+  `;
 
-
+    return path;
+  };
 
   const getPointOnPath = (progress: number) => {
     const path = document.querySelector(".curve-path") as SVGPathElement | null;
@@ -450,21 +463,21 @@ const getPath = (numWaves = 2) => {
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full h-full sm:mt-36 mt-44 relative">
+        <div className="w-full h-full sm:mt-36 mt-24 relative">
           <svg
-            className="w-full h-auto "
-            viewBox={`0 0 ${pathWidth} ${pathHeight * 4}`}
+            className="w-full h-auto"
+            viewBox={`0 0 ${pathWidth} ${pathHeight * (totalSteps > 14 ? 1.5 : 1.1) }`}
             preserveAspectRatio="xMinYMin meet"
           >
             <path
-              d={getPath(3)}
+              d={getPath(totalSteps > 8 ? totalSteps > 14 ? 3 : 2 : 1)}
               fill="none"
               stroke="white"
               strokeWidth="5"
               className="curve-path"
               strokeDasharray={"20,5"}
             />
-            {[...Array(totalSteps)].map((_, index) => {
+            {delayedPoints.map((_, index) => {
               const point = getPointOnPath(index / (totalSteps - 1));
               const subconcept =
                 index > 0 && index < totalSteps - 1
@@ -551,8 +564,8 @@ const getPath = (numWaves = 2) => {
                       <rect
                         x={point.x - 20}
                         y={point.y - 20}
-                        width="50"
-                        height="50"
+                        width="40"
+                        height="40"
                         rx="2"
                         ry="2"
                         fill={
@@ -585,20 +598,20 @@ const getPath = (numWaves = 2) => {
                             ? point.x - 64
                             : index === totalSteps - 1
                             ? point.x - 30
-                            : point.x - 17
+                            : point.x - 18
                         }
                         y={
                           index === 0
                             ? point.y - 45
                             : index === totalSteps - 1
                             ? point.y - 50
-                            : point.y - 15
+                            : point.y - 18
                         }
                         width={
-                          index === 0 || index === totalSteps - 1 ? "70" : "44"
+                          index === 0 || index === totalSteps - 1 ? "70" : "38"
                         }
                         height={
-                          index === 0 || index === totalSteps - 1 ? "70" : "44"
+                          index === 0 || index === totalSteps - 1 ? "70" : "38"
                         }
                         color="white"
                         className={`object-contain ${
