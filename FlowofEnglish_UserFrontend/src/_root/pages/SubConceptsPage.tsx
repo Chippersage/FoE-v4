@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -106,15 +106,15 @@ export default function SubConceptsPage() {
   const { user } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   // const [started, setStarted] = useState(true);
-  const [totalSteps, setTotalSteps] = useState(2);
   const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const pathWidth = 1000; // Total width of the SVG
-  const pathHeight = 400; // Total height of the SVG
-  const rowHeight = pathHeight / 2; // Height of each row
+  const [pathWidth, setPathWidth] = useState(1000);
+  const [pathHeight, setPathHeight] = useState(400);
+  const rowHeight = pathHeight / 2.5; // Height of each row
+  const [totalSteps, setTotalSteps] = useState(2);
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
@@ -137,6 +137,45 @@ export default function SubConceptsPage() {
     },
   };
 
+  // just to ensure paths calculated and 
+  const [delayedPoints, setDelayedPoints] = useState<
+    { x: number; y: number }[]
+  >([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const newPoints = [...Array(totalSteps)].map((_, index) =>
+        getPointOnPath(index / (totalSteps - 1))
+      );
+      setDelayedPoints(newPoints);
+    }, 300); // Adjust delay as needed
+
+    return () => clearTimeout(timer); // Cleanup timeout
+  }, [totalSteps, pathWidth, pathHeight]); // Run effect when dependencies change
+
+  useLayoutEffect(() => {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    // Adjust pathWidth based on screen size
+    if (screenWidth < 768) {
+      // For mobile devices
+      setPathWidth(300);
+    } else if (screenWidth >= 768 && screenWidth < 1024) {
+      // For tablets
+      setPathWidth(800);
+    } else {
+      // For desktops
+      setPathWidth(1000);
+    }
+
+    // Adjust pathHeight based on totalSteps to avoid dense population of icons
+    const baseHeight = 400; // Base height for 2 steps
+    const heightIncrement = 50; // Additional height for each extra step
+    const newHeight = baseHeight + (totalSteps - 2) * heightIncrement;
+    setPathHeight(newHeight);
+  }, [totalSteps]); // Recalculate when totalSteps changes
+
   useEffect(() => {
     const selectedProgramId = localStorage.getItem("selectedProgramId");
 
@@ -152,7 +191,6 @@ export default function SubConceptsPage() {
             ? "/images/PET-background-1.png"
             : "/images/index.png"
         );
-
       }
     } else {
       // Use existing `selectedProgramId`
@@ -199,22 +237,16 @@ export default function SubConceptsPage() {
 
   // Scroll to the active subconcept when the target index changes
   useEffect(() => {
-    if (targetIndex !== null && stepRefs.current[targetIndex]) {
-      stepRefs.current[targetIndex].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
+    setTimeout(() => {
+      if (targetIndex !== null && stepRefs.current[targetIndex]) {
+        stepRefs.current[targetIndex].scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 500)
+    
   }, [targetIndex]); // Trigger on targetIndex change
-
-  // useEffect(() => {
-  //   if (scrollableDivRef.current) {
-  //     scrollableDivRef.current.scrollTo({
-  //       top: 0,
-  //       behavior: "smooth",
-  //     });
-  //   }
-  // }, [pathname]); // Trigger scroll when the route changes
 
   const fetchSubconcepts = async () => {
     try {
@@ -300,25 +332,40 @@ export default function SubConceptsPage() {
     navigate("/");
   };
 
-  const getPath = () => {
-    const radius = 50; // Radius of the curves at ends
-    return `
-      M100,${rowHeight / 2} 
-      H${pathWidth - 100 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100},${rowHeight / 2 + radius}
-      V${rowHeight + rowHeight / 2 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 100 - radius},${
-      rowHeight + rowHeight / 2
-    }
-      H${100 + radius}
-      A${radius},${radius} 0 0 0 100,${rowHeight + rowHeight / 2 + radius}
-    V${rowHeight + rowHeight + rowHeight / 2 - radius} 
-    A${radius},${radius} 0 0 0 ${100 + radius},${
-      rowHeight + rowHeight + rowHeight / 2
-    }
-    H${pathWidth - 100 - radius}
-     
+  const getPath = (numWaves = 2) => {
+    const radius = 10; // Radius of the curves at ends
+    const waveHeight = rowHeight / 2; // Vertical height of each wave
+    let path = `M100,${rowHeight / 2}`; // Start position
+
+    for (let i = 0; i < numWaves; i++) {
+      let yOffset = i * waveHeight * 2; // Offset for each wave cycle
+
+      path += `
+      H${pathWidth - 40 - radius} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 40},${
+        rowHeight / 2 + radius + yOffset
+      }
+      V${waveHeight + rowHeight / 2 - radius + yOffset} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
+        waveHeight + rowHeight / 2 + yOffset
+      }
+      H${40 + radius}
+      A${radius},${radius} 0 0 0 40,${
+        waveHeight + rowHeight / 2 + radius + yOffset
+      }
+      V${waveHeight * 2 + rowHeight / 2 - radius + yOffset} 
+      A${radius},${radius} 0 0 0 ${40 + radius},${
+        waveHeight * 2 + rowHeight / 2 + yOffset
+      }
     `;
+    }
+
+    // ✅ Ensure the last part of the path extends to the right
+    path += `
+    H${pathWidth - 40} 
+  `;
+
+    return path;
   };
 
   const getPointOnPath = (progress: number) => {
@@ -416,21 +463,21 @@ export default function SubConceptsPage() {
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full h-full sm:mt-36 mt-44 relative">
+        <div className="w-full h-full sm:mt-36 mt-24 relative">
           <svg
             className="w-full h-auto"
-            viewBox={`0 0 ${pathWidth} ${pathWidth / 1.5}`}
+            viewBox={`0 0 ${pathWidth} ${pathHeight * (totalSteps > 14 ? 1.5 : 1.1) }`}
             preserveAspectRatio="xMinYMin meet"
           >
             <path
-              d={getPath()}
+              d={getPath(totalSteps > 8 ? totalSteps > 14 ? 3 : 2 : 1)}
               fill="none"
               stroke="white"
               strokeWidth="5"
               className="curve-path"
               strokeDasharray={"20,5"}
             />
-            {[...Array(totalSteps)].map((_, index) => {
+            {delayedPoints.map((_, index) => {
               const point = getPointOnPath(index / (totalSteps - 1));
               const subconcept =
                 index > 0 && index < totalSteps - 1
@@ -517,8 +564,8 @@ export default function SubConceptsPage() {
                       <rect
                         x={point.x - 20}
                         y={point.y - 20}
-                        width="36"
-                        height="36"
+                        width="40"
+                        height="40"
                         rx="2"
                         ry="2"
                         fill={
@@ -551,20 +598,20 @@ export default function SubConceptsPage() {
                             ? point.x - 64
                             : index === totalSteps - 1
                             ? point.x - 30
-                            : point.x - 17
+                            : point.x - 18
                         }
                         y={
                           index === 0
                             ? point.y - 45
                             : index === totalSteps - 1
                             ? point.y - 50
-                            : point.y - 15
+                            : point.y - 18
                         }
                         width={
-                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                          index === 0 || index === totalSteps - 1 ? "70" : "38"
                         }
                         height={
-                          index === 0 || index === totalSteps - 1 ? "70" : "30"
+                          index === 0 || index === totalSteps - 1 ? "70" : "38"
                         }
                         color="white"
                         className={`object-contain ${
