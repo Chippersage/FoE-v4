@@ -226,8 +226,8 @@ public class UnitServiceImpl implements UnitService {
         int totalUnitCount = 0;
         int stagesCount = 0;
 
-     // Calculate the number of digits needed for padding
-        int maxDigits = String.valueOf(stages.size()).length();
+//     // Calculate the number of digits needed for padding
+//        int maxDigits = String.valueOf(stages.size()).length();
 
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
@@ -246,10 +246,16 @@ public class UnitServiceImpl implements UnitService {
             Stage stage = stages.get(i);
             StageDTO stageResponse = new StageDTO();
             
-         // Format the key with leading zeros
-            String stageKey = String.format("%0" + maxDigits + "d", i);
-            stageMap.put(stageKey, stageResponse);
-            stagesCount++;
+         // Fetch units for each stage
+            List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
+            if (units.isEmpty()) {
+                continue; // Skip stages without units
+            }
+            
+//         // Format the key with leading zeros
+//            String stageKey = String.format("%0" + maxDigits + "d", i);
+//            stageMap.put(stageKey, stageResponse);
+//            stagesCount++;
             
             stageResponse.setStageId(stage.getStageId());
             stageResponse.setStageName(stage.getStageName());
@@ -258,12 +264,14 @@ public class UnitServiceImpl implements UnitService {
             logger.info("Processing stage {} with name: {}", stage.getStageId(), stage.getStageName());
 
             // Fetch units for each stage
-            List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
+         //   List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
             Map<String, UnitResponseDTO> unitMap = new HashMap<>();
             logger.info("Fetched units for stage {}: {}", stage.getStageId(), units);
 
             boolean stageCompleted = true;
-            boolean stageCompletedWithoutAssignments = false;  
+            boolean stageCompletedWithoutAssignments = true;  // Changed to true by default
+            boolean hasIncompleteUnits = false;   // New flag to track incomplete units
+            
             // Get all completion dates for the current stage
             List<UserSubConcept> stageSubConcepts = userSubConcepts.stream()
                 .filter(usc -> usc.getStage().getStageId().equals(stage.getStageId()))
@@ -285,6 +293,8 @@ public class UnitServiceImpl implements UnitService {
                 programCompleted = false;
             } else {
             	boolean allUnitsAtLeastPartiallyCompleted = true; // Track if all units are at least completed without assignments
+            	boolean hasAnyUnitCompletedWithoutAssignments = false;
+                boolean allUnitsFullyCompleted = true;
             	
                 for (int j = 0; j < units.size(); j++) {
                     Unit unit = units.get(j);
@@ -295,26 +305,16 @@ public class UnitServiceImpl implements UnitService {
 
                     // Fetch user sub concepts for the current unit
                     List<UserSubConcept> userSubConceptsForUnit = userSubConceptRepository.findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
-                    // Update completion date tracking
-                    if (!userSubConceptsForUnit.isEmpty()) {
-                        OffsetDateTime latestCompletion = userSubConceptsForUnit.stream()
-                            .map(UserSubConcept::getCompletionDate)
-                            .filter(Objects::nonNull)
-                            .max(OffsetDateTime::compareTo)
-                            .orElse(null);
-                        
-                        if (latestCompletion != null) {
-                            if (currentStageCompletionDate == null || 
-                                latestCompletion.isAfter(currentStageCompletionDate)) {
-                                currentStageCompletionDate = latestCompletion;
-                            }
-                        }
-                    }
+                    
                  // Determine accessible mappings
                     List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
                     List<ProgramConceptsMapping> accessibleMappings = mappings.stream()
                         .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
                         .collect(Collectors.toList());
+                    
+                    if (accessibleMappings.isEmpty()) {
+                        continue; // Skip units without subconcepts
+                    }
                           
                  // Get total number of sub-concepts (including assignments)
                     int totalSubConceptCount = accessibleMappings.size();
@@ -354,14 +354,19 @@ public class UnitServiceImpl implements UnitService {
                     } else if (totalNonAssignmentSubConceptCount == 0 && totalAssignmentSubConceptCount > 0) {
                         // Unit has only assignments
                         if (hasPendingAssignments) {
-                            unitCompletionStatus = "incomplete";
+                            unitCompletionStatus = "Unit Completed without Assignments";
+                           // hasIncompleteUnits = true;
+                            hasAnyUnitCompletedWithoutAssignments = true;
+                            allUnitsFullyCompleted = false;
+                            // allUnitsAtLeastPartiallyCompleted = false;
                         } else {
                             unitCompletionStatus = "yes";
                         }
                     } else if (completedNonAssignmentSubConceptCount == totalNonAssignmentSubConceptCount) {
                         if (hasPendingAssignments) {
                             unitCompletionStatus = "Unit Completed without Assignments";
-                            stageCompletedWithoutAssignments = true;
+                            hasAnyUnitCompletedWithoutAssignments = true;
+                            allUnitsFullyCompleted = false;
                         } else {
                             unitCompletionStatus = "yes";
                         }
@@ -382,34 +387,48 @@ public class UnitServiceImpl implements UnitService {
                                        unitCompletionStatus = "disabled";
                                    }
                                }
+                    	hasIncompleteUnits = true;
+                        allUnitsFullyCompleted = false;
+                        allUnitsAtLeastPartiallyCompleted = false;
                            }
 
                 // Set the unit status and add it to the unit map
                 unitResponse.setCompletionStatus(unitCompletionStatus);
                 unitMap.put(String.valueOf(j), unitResponse);
                 totalUnitCount++;
-                }
-
-                // Check if all units are completed (either fully or without assignments)
-                boolean allUnitsCompleted = unitMap.values().stream()
-                    .allMatch(unitResp -> "yes".equals(unitResp.getCompletionStatus()) || 
-                                        "Unit Completed without Assignments".equals(unitResp.getCompletionStatus()));
-                
-                stageResponse.setUnits(unitMap);
-                // Adjust stage completion based on units
-                if (stageCompletedWithoutAssignments) {
-                    stageResponse.setStageCompletionStatus("Stage Completed without Assignments");
-                 // Consider this as incomplete for overall program completion
-                    programCompleted = false;
-                } else {
-                	String stageStatus = allUnitsCompleted ? "yes" : "no";
-                stageResponse.setStageCompletionStatus(stageStatus);
-                // Update program completion status
-                if (!"yes".equals(stageStatus)) {
-                    programCompleted = false;
+             // Update completion date tracking
+                if (!userSubConceptsForUnit.isEmpty()) {
+                    OffsetDateTime latestCompletion = userSubConceptsForUnit.stream()
+                        .map(UserSubConcept::getCompletionDate)
+                        .filter(Objects::nonNull)
+                        .max(OffsetDateTime::compareTo)
+                        .orElse(null);
+                    
+                    if (latestCompletion != null) {
+                        if (currentStageCompletionDate == null || 
+                            latestCompletion.isAfter(currentStageCompletionDate)) {
+                            currentStageCompletionDate = latestCompletion;
+                        }
+                    }
                 }
             }
-        }
+
+            stageResponse.setUnits(unitMap);
+
+                
+             // Determine stage completion status
+                if (hasIncompleteUnits) {
+                    stageResponse.setStageCompletionStatus("no");
+                    programCompleted = false;
+                } else if (allUnitsFullyCompleted) {
+                    stageResponse.setStageCompletionStatus("yes");
+                } else if (stageCompletedWithoutAssignments) {
+                    stageResponse.setStageCompletionStatus("Stage Completed without Assignments");
+                    programCompleted = false;
+                } else {
+                    stageResponse.setStageCompletionStatus("yes");
+                }
+            }
             
             if (i == 0) {
                 // First stage is always enabled
@@ -523,6 +542,9 @@ public class UnitServiceImpl implements UnitService {
 
         return programResponse;
     }
+    
+    
+    
     /**
      * Helper method to determine if a sub-concept is visible to the user based on user type.
      */
