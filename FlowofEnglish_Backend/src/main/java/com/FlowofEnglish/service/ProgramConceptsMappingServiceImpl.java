@@ -1,22 +1,9 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.dto.ProgramConceptsMappingResponseDTO;
-import com.FlowofEnglish.dto.SubconceptResponseDTO;
+import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.exception.ResourceNotFoundException;
-import com.FlowofEnglish.model.Program;
-import com.FlowofEnglish.model.ProgramConceptsMapping;
-import com.FlowofEnglish.model.Stage;
-import com.FlowofEnglish.model.Subconcept;
-import com.FlowofEnglish.model.Unit;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserSubConcept;
-import com.FlowofEnglish.repository.ProgramConceptsMappingRepository;
-import com.FlowofEnglish.repository.ProgramRepository;
-import com.FlowofEnglish.repository.StageRepository;
-import com.FlowofEnglish.repository.SubconceptRepository;
-import com.FlowofEnglish.repository.UnitRepository;
-import com.FlowofEnglish.repository.UserRepository;
-import com.FlowofEnglish.repository.UserSubConceptRepository;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
 import jakarta.transaction.Transactional;
 
 import org.apache.commons.csv.CSVFormat;
@@ -30,16 +17,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -107,6 +85,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
 
         // Build the response DTO
         ProgramConceptsMappingResponseDTO responseDTO = new ProgramConceptsMappingResponseDTO();
+        responseDTO.setProgramConceptDesc(mappings.get(0).getProgramConceptDesc());
         // Fetch and set programName, unitName, and stageName
         responseDTO.setProgramId(mappings.get(0).getProgram().getProgramId());
         responseDTO.setProgramName(mappings.get(0).getProgram().getProgramName());
@@ -251,6 +230,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         logger.info("Method getProgramConceptsMappingByUnitId completed for userId: {} and unitId: {}", userId, unitId);
         return Optional.of(responseDTO);
     }
+    
     /**
      * Helper method to determine if a subconcept is visible to the user based on user type.
      */
