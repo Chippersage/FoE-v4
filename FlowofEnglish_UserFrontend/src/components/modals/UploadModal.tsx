@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Loader2 } from "lucide-react";
+import { X, Send, Loader2, FileIcon } from "lucide-react";
 import { FileUpload } from "../FileUpload";
 import { MediaRecorder } from "../MediaRecorder";
 import axios from "axios";
@@ -13,12 +13,14 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUploadSuccess: () => void;
+  file: File | null;
 }
 
 export function UploadModal({
   isOpen,
   onClose,
   onUploadSuccess,
+  file
 }: UploadModalProps) {
   const [activeTab, setActiveTab] = useState<
     "upload" | "recordAudio" | "recordVideo"
@@ -38,22 +40,10 @@ export function UploadModal({
   const [isMediaRecording, setIsMediaRecording] = useState(false); // Lifted state to disable other tabs when recording is in progress
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (activeTab === "upload") {
-      setRecordedBlob(null); // Clear recordedBlob when switching to upload tab
-    } else {
-      setUploadedFile(null); // Clear uploadedFile when switching to other tabs
-    }
-  }, [activeTab]);
-
-  const handleContentChange = useCallback((hasContent: boolean) => {
-    setHasContent(hasContent);
-  }, []);
-
-  const handleFileUpload = (file: File | null) => {
-    setUploadedFile(file); // Store the uploaded file
-    console.log("Uploaded file:", file);
-  };
+    const handleFileClick = () => {
+      const previewUrl = URL.createObjectURL(file); 
+        window.open(previewUrl, "_blank", "noopener,noreferrer"); // Open the file in a new tab
+    };
 
   const handleSubmit = async () => {
     setErrorMessage(null); // Clear previous error
@@ -122,6 +112,7 @@ export function UploadModal({
     setShowSuccessModal(false); // Close child success modal
     onUploadSuccess(); // Notify parent for further processing
   };
+  console.log(file)
 
   return (
     <>
@@ -149,73 +140,32 @@ export function UploadModal({
               >
                 <X size={24} />
               </button>
-              <h2 className="text-2xl font-bold mb-4">Upload File</h2>
-              <div className="flex mb-4 space-x-4">
-                {/* Upload File Button */}
-                <button
-                  onClick={() => {
-                    setActiveTab("upload");
-                    setErrorMessage(null);
-                  }}
-                  className={`px-4 py-2 rounded-[5px] ${
-                    activeTab === "upload"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                  disabled={isLoading || isMediaRecording}
-                >
-                  Upload File
-                </button>
+              <h2 className="text-2xl font-bold mb-4">Uploaded File</h2>
 
-                {/* Record Audio Button */}
-                <button
-                  onClick={() => {
-                    setActiveTab("recordAudio");
-                    setErrorMessage(null);
-                  }}
-                  className={`px-4 py-2 rounded-[5px] ${
-                    activeTab === "recordAudio"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                  disabled={isLoading || isMediaRecording}
+              {file && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className={`relative flex items-center p-2 rounded-md bg-gray-100`}
+                  onClick={handleFileClick}
+                  style={{ cursor: "pointer" }} // Indicate that it's clickable
                 >
-                  Record Audio
-                </button>
-
-                {/* Record Audio Button */}
-                <button
-                  onClick={() => {
-                    setActiveTab("recordVideo");
-                    setErrorMessage(null);
-                  }}
-                  className={`px-4 py-2 rounded-[5px] ${
-                    activeTab === "recordVideo"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                  disabled={isLoading || isMediaRecording}
-                >
-                  Record Video
-                </button>
-              </div>
-              {activeTab === "upload" ? (
-                <FileUpload
-                  onContentChange={handleContentChange}
-                  disabled={isLoading}
-                  setErrorMessage={setErrorMessage}
-                  onFileUpload={handleFileUpload} // Pass callback
-                />
-              ) : (
-                <MediaRecorder
-                  onContentChange={handleContentChange}
-                  disabled={isLoading}
-                  onBlobGenerated={setRecordedBlob}
-                  setErrorMessage={setErrorMessage}
-                  mediaType={activeTab === "recordAudio" ? "audio" : "video"}
-                  setIsMediaRecording={setIsMediaRecording}
-                  activeTab={activeTab}
-                />
+                  <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {file?.name}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the file open on button click
+                      handleRemoveFile();
+                    }}
+                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+                    // disabled={disabled}
+                  >
+                    <X size={16} />
+                  </button>
+                </motion.div>
               )}
               {errorMessage && (
                 <p className="text-sm text-red-500 mt-4">{errorMessage}</p>
@@ -223,12 +173,8 @@ export function UploadModal({
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSubmit}
-                  disabled={!hasContent || isLoading}
-                  className={`flex items-center px-4 py-2 rounded-[5px] text-white ${
-                    hasContent && !isLoading
-                      ? "bg-green-500 hover:bg-green-600"
-                      : "bg-gray-300 cursor-not-allowed"
-                  } transition-colors duration-200`}
+                  // disabled={!hasContent || isLoading}
+                  className={`flex items-center px-4 py-2 rounded-[5px] text-white bg-green-500 hover:bg-green-600 transition-colors duration-200`}
                 >
                   {isLoading ? (
                     <Loader2 size={18} className="mr-2 animate-spin" />
