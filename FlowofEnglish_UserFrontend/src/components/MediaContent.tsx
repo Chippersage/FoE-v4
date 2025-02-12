@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { UploadModal } from "./modals/UploadModal";
 import AlertModal from "./modals/AlertModal";
 import { RetryModal } from "./modals/RetryModal";
+import { FileUploaderRecorder } from "./FileUploaderRecorder";
 // @ts-ignore
 const MediaContent = ({ subconceptData }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -437,11 +438,11 @@ const MediaContent = ({ subconceptData }) => {
               }`}
         </h1>
 
-        <UploadModal
+        {/* <UploadModal
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
           onUploadSuccess={handleUploadSuccess} // Pass callback
-        />
+        /> */}
         <div
           id="contentArea"
           className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 ${
@@ -479,8 +480,11 @@ const MediaContent = ({ subconceptData }) => {
               </label>
             </div>
           )}
-          <div>
-            <button
+          <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
+            {subconceptData?.subconceptType.startsWith("assignment") ? (
+                <FileUploaderRecorder/>
+            ): (
+              <button
               onClick={() => {
                 subconceptData?.subconceptType.startsWith("assignment")
                   ? setIsUploadModalOpen(true)
@@ -503,6 +507,8 @@ const MediaContent = ({ subconceptData }) => {
                 ? "Upload assignment"
                 : "Complete"}
             </button>
+            )}
+            
             <button
               onClick={handleGoBack}
               className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
