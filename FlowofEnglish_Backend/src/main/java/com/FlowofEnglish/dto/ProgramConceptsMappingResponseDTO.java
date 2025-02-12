@@ -10,6 +10,7 @@ public class ProgramConceptsMappingResponseDTO {
     private String unitDesc;
     private String stageId;
     private String stageName;
+    private String programConceptDesc;
     private Map<String, SubconceptResponseDTO> subConcepts; 
     private String unitCompletionStatus; 
     private int subconceptCount;
@@ -97,4 +98,14 @@ public class ProgramConceptsMappingResponseDTO {
     public void setSubconceptCount(int subconceptCount) {
         this.subconceptCount = subconceptCount;
     }
+
+	public String getProgramConceptDesc() {
+		return programConceptDesc;
+	}
+
+	public void setProgramConceptDesc(String programConceptDesc) {
+		this.programConceptDesc = programConceptDesc;
+	}
+    
+    
 }
