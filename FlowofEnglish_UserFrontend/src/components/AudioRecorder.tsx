@@ -7,7 +7,7 @@ import { Square, Play, Pause, RotateCcw } from "lucide-react";
 
 interface AudioRecorderProps {
   onRecordingStart: () => void;
-  onRecordingStop: () => void;
+  onRecordingStop: (blob: Blob, type: "audio" | "video") => void; // ✅ Accepts blob & type
   onRecordingStateChange: (state: "recording" | "paused" | "stopped") => void;
 }
 
@@ -60,8 +60,15 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     ) {
       mediaRecorderRef.current.stop();
       setRecordingState("stopped");
-      onRecordingStop();
+      // onRecordingStop();
       onRecordingStateChange("stopped");
+
+       mediaRecorderRef.current.onstop = () => {
+         const blob = new Blob(chunksRef.current, {
+           type: "audio/ogg; codecs=opus",
+         });
+         onRecordingStop(blob, "audio"); // Pass recorded audio to parent
+       };
     }
   };
 
