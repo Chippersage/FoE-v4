@@ -482,7 +482,7 @@ const MediaContent = ({ subconceptData }) => {
           )}
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
-                <FileUploaderRecorder/>
+                <FileUploaderRecorder onUploadSuccess={handleUploadSuccess}/>
             ): (
               <button
               onClick={() => {

@@ -7,7 +7,7 @@ import { Square, Play, Pause, RotateCcw } from "lucide-react";
 
 interface VideoRecorderProps {
   onRecordingStart: (stream: MediaStream) => void;
-  onRecordingStop: () => void;
+  onRecordingStop: (blob: Blob, type: "audio" | "video") => void; // ✅ Accepts blob & type
   onRecordingStateChange: (state: "recording" | "paused" | "stopped") => void;
 }
 
@@ -66,8 +66,13 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
       setRecordingState("stopped");
-      onRecordingStop();
+      // onRecordingStop();
       onRecordingStateChange("stopped");
+
+       mediaRecorderRef.current.onstop = () => {
+         const blob = new Blob(chunksRef.current, { type: "video/webm" });
+         onRecordingStop(blob, "video"); // Pass recorded video to parent
+       };
     }
   };
 

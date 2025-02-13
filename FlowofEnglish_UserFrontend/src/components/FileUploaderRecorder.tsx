@@ -6,9 +6,11 @@ import { AudioRecorder } from "./AudioRecorder";
 import { VideoRecorder } from "./VideoRecorder";
 import { Preview } from "./Preview";
 import { Upload, Mic, Video } from "lucide-react";
-import { UploadModal } from "./modals/UploadModal";
+import  UploadModal  from "./modals/UploadModal";
 
-export const FileUploaderRecorder: React.FC = () => {
+export const FileUploaderRecorder: React.FC<{
+  onUploadSuccess: () => void;
+}> = ({ onUploadSuccess }) => {
   const [activeAction, setActiveAction] = useState<
     "upload" | "audio" | "video" | null
   >(null);
@@ -19,81 +21,80 @@ export const FileUploaderRecorder: React.FC = () => {
     null
   );
   const streamRef = useRef<MediaStream | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0); // Duration in seconds
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
-  const [videoRecordingDuration, setVideoRecordingDuration] = useState(0);
-  const videoRecordingInterval = useRef<NodeJS.Timeout | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [recordedMedia, setRecordedMedia] = useState<{
+    type: "audio" | "video";
+    blob: Blob;
+  } | null>(null);
 
   // Close active action when clicking outside
-//   useEffect(() => {
-//     const handleClickOutside = () => setActiveAction(null);
+  //   useEffect(() => {
+  //     const handleClickOutside = () => setActiveAction(null);
 
-//     if (activeAction) {
-//       document.addEventListener("click", handleClickOutside);
-//     }
+  //     if (activeAction) {
+  //       document.addEventListener("click", handleClickOutside);
+  //     }
 
-//     return () => {
-//       document.removeEventListener("click", handleClickOutside);
-//     };
-//   }, [activeAction]);
+  //     return () => {
+  //       document.removeEventListener("click", handleClickOutside);
+  //     };
+  //   }, [activeAction]);
 
   // Prevent closing when clicking on action buttons
-  const handleActionClick = (action: "upload" | "audio" | "video") => {
-    setActiveAction(action);
+  const startRecordingTimer = () => {
+    setRecordingDuration(0); // Reset duration
+    if (recordingInterval.current) clearInterval(recordingInterval.current); // Clear existing timer
+
+    recordingInterval.current = setInterval(() => {
+      setRecordingDuration((prev) => prev + 1);
+    }, 1000);
   };
 
+  const stopRecordingTimer = () => {
+    if (recordingInterval.current) {
+      clearInterval(recordingInterval.current);
+      recordingInterval.current = null;
+    }
+  };
+
+  // const handleActionClick = (action: "upload" | "audio" | "video") => {
+  //   setActiveAction(action);
+  // };
+
   const handleUpload = (file: File) => {
-     setUploadedFile(file);
-     setIsUploadModalOpen(true)
+    setUploadedFile(file);
+    setIsUploadModalOpen(true);
   };
 
   const handleAudioRecordingStart = () => {
     setActiveAction("audio");
-    setRecordingDuration(0); // Reset duration
+    startRecordingTimer();
     setPreviewContent(<AudioPulse />);
-
-    // Start the timer
-    recordingInterval.current = setInterval(() => {
-      setRecordingDuration((prev) => {
-        const newDuration = prev + 1;
-        setPreviewContent(<AudioPulse duration={newDuration} />);
-        return newDuration;
-      });
-    }, 1000);
   };
 
-const handleVideoRecordingStart = (stream: MediaStream) => {
-  setActiveAction("video");
-  streamRef.current = stream;
-  setVideoRecordingDuration(0); // Reset duration
-  setPreviewContent(<VideoPreview stream={stream} duration={0} />);
+  const handleVideoRecordingStart = (stream: MediaStream) => {
+    setActiveAction("video");
+    streamRef.current = stream;
+    startRecordingTimer();
+    setPreviewContent(<VideoPreview stream={stream} />);
+  };
 
-  // Start the timer
-  videoRecordingInterval.current = setInterval(() => {
-    setVideoRecordingDuration((prev) => {
-      const newDuration = prev + 1;
-      setPreviewContent(
-        <VideoPreview stream={stream} duration={newDuration} />
-      );
-      return newDuration;
-    });
-  }, 1000);
-};
-
-  const handleRecordingStop = () => {
-     if (recordingInterval.current) {
-       clearInterval(recordingInterval.current);
-       recordingInterval.current = null;
-     }else if (videoRecordingInterval.current) {
-       clearInterval(videoRecordingInterval.current);
-       videoRecordingInterval.current = null;
-     }
+  const handleRecordingStop = (blob: Blob, type: "audio" | "video") => {
+    stopRecordingTimer();
     setActiveAction(null);
     setPreviewContent(null);
     setRecordingState("stopped");
     streamRef.current = null;
+
+    if (!blob) {
+      console.error("handleRecordingStop received an invalid blob:", blob);
+      return;
+    }
+    setRecordedMedia({ type, blob }); // Store recorded media
+    setIsUploadModalOpen(true); // Open Upload Modal
   };
 
   const handleRecordingStateChange = (
@@ -159,14 +160,25 @@ const handleVideoRecordingStart = (stream: MediaStream) => {
         />
       )}
 
-      <Preview>{previewContent}</Preview>
+      <Preview
+        recordingState="recording"
+        recordingDuration={recordingDuration}
+        activeAction={activeAction}
+      >
+        {previewContent}
+      </Preview>
 
-        <UploadModal
-          isOpen={isUploadModalOpen}
-          file={uploadedFile}
-          onClose={() => setUploadedFile(null)}
-        />
-
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        file={uploadedFile}
+        recordedMedia={recordedMedia}
+        onClose={() => {
+          setUploadedFile(null);
+          setRecordedMedia(null);
+          setIsUploadModalOpen(false);
+        }}
+        onUploadSuccess={onUploadSuccess}
+      />
     </>
   );
 };
@@ -195,37 +207,21 @@ const ActionButton: React.FC<{
  
 
 
-const AudioPulse: React.FC<{ duration: number }> = ({ duration }) => {
-
-  const safeDuration = isNaN(duration) ? 0 : duration;
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const secs = (seconds % 60).toString().padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
-
+const AudioPulse: React.FC = () => {
     return (
-      <div className="flex flex-column items-center gap-2">
-        <div className="relative w-8 h-8 z-50">
-          <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
-          <div className="relative flex items-center justify-center w-full h-full bg-red-500 rounded-full">
-            <Mic className="w-4 h-4 text-white" />
-          </div>
+      <div className="relative w-8 h-8">
+        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+        <div className="relative flex items-center justify-center w-full h-full bg-red-500 rounded-full">
+          <Mic className="w-4 h-4 text-white" />
         </div>
-        <span className="text-gray-500 text-sm">{formatTime(safeDuration)}</span>
       </div>
     );
 }
 
-const VideoPreview: React.FC<{ stream: MediaStream; duration: number }> = ({
-  stream,
-  duration,
+const VideoPreview: React.FC<{ stream: MediaStream}> = ({
+  stream
 }) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
-  const safeDuration = isNaN(duration) ? 0 : duration;
 
   React.useEffect(() => {
     if (videoRef.current) {
@@ -233,24 +229,13 @@ const VideoPreview: React.FC<{ stream: MediaStream; duration: number }> = ({
     }
   }, [stream]);
 
-   const formatTime = (seconds: number) => {
-     const mins = Math.floor(seconds / 60)
-       .toString()
-       .padStart(2, "0");
-     const secs = (seconds % 60).toString().padStart(2, "0");
-     return `${mins}:${secs}`;
-   };
-
   return (
-    <div className="flex flex-col items-center gap-1">
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-16 h-24 rounded-lg object-cover"
-      />
-      <span className="text-black text-sm">{formatTime(safeDuration)}</span>
-    </div>
+    <video
+      ref={videoRef}
+      autoPlay
+      muted
+      playsInline
+      className="w-16 h-24 rounded-lg object-cover"
+    />
   );
 };
