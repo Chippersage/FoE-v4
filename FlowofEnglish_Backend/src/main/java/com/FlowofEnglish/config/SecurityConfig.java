@@ -25,7 +25,7 @@ public class SecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://13.234.42.153:8080", "http://13.234.42.153:3000",
                     		"https://flowofenglish.thechippersage.com", "https://flowofenglish.thechippersage.com/admin",
-                    		"http://localhost:5173", "https://chippersageblr.s3.ap-south-1.amazonaws.com"));
+                    		"http://localhost:5173", "http://10.12.131.110:5173/", "http://10.12.127.175:5173/", "https://chippersageblr.s3.ap-south-1.amazonaws.com"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
