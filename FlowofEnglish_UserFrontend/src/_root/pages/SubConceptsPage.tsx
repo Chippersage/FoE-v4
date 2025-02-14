@@ -113,7 +113,7 @@ export default function SubConceptsPage() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [pathWidth, setPathWidth] = useState(1000);
   const [pathHeight, setPathHeight] = useState(400);
-  const rowHeight = pathHeight / 2.5; // Height of each row
+  const rowHeight = pathHeight / 2; // Height of each row
   const [totalSteps, setTotalSteps] = useState(2);
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -332,10 +332,33 @@ export default function SubConceptsPage() {
     navigate("/");
   };
 
+  const getSinglePath = () => {
+    // Apply different division values based on screen width
+    // let divisor = window.innerWidth <= 600 ? 4 : 5; // Mobile: 4, Others: 5
+
+    // Start position (left to right, in the middle of the screen)
+    let path = `M100,${rowHeight / 2}`;
+
+    // Draw a straight horizontal line to the right
+    path += `H${pathWidth - 40}`;
+
+    return path;
+  };
+
+
   const getPath = (numWaves = 2) => {
-    const radius = 10; // Radius of the curves at ends
+    const radius = window.innerWidth >= 640 ? 50 : 30; // Radius of the curves at ends
     const waveHeight = rowHeight / 2; // Vertical height of each wave
-    let path = `M100,${rowHeight / 2}`; // Start position
+    // Apply different division values based on screen width
+    let divisor;
+    if (window.innerWidth <= 600) {
+      // Mobile devices (less than 768px)
+      divisor = 4;
+    }else{
+      divisor = 5
+    }
+
+    let path = `M100,${rowHeight / divisor}`; // Start position
 
     for (let i = 0; i < numWaves; i++) {
       let yOffset = i * waveHeight * 2; // Offset for each wave cycle
@@ -343,19 +366,19 @@ export default function SubConceptsPage() {
       path += `
       H${pathWidth - 40 - radius} 
       A${radius},${radius} 0 0 1 ${pathWidth - 40},${
-        rowHeight / 2 + radius + yOffset
+        rowHeight / divisor + radius + yOffset
       }
-      V${waveHeight + rowHeight / 2 - radius + yOffset} 
+      V${waveHeight + rowHeight / divisor - radius + yOffset} 
       A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
-        waveHeight + rowHeight / 2 + yOffset
+        waveHeight + rowHeight / divisor + yOffset
       }
       H${40 + radius}
       A${radius},${radius} 0 0 0 40,${
-        waveHeight + rowHeight / 2 + radius + yOffset
+        waveHeight + rowHeight / divisor + radius + yOffset
       }
-      V${waveHeight * 2 + rowHeight / 2 - radius + yOffset} 
+      V${waveHeight * 2 + rowHeight / divisor - radius + yOffset} 
       A${radius},${radius} 0 0 0 ${40 + radius},${
-        waveHeight * 2 + rowHeight / 2 + yOffset
+        waveHeight * 2 + rowHeight / divisor + yOffset
       }
     `;
     }
@@ -413,10 +436,10 @@ export default function SubConceptsPage() {
       )}
       <div
         ref={scrollableDivRef}
-        className="relative w-full h-screen overflow-y-auto"
+        className="relative w-full h-auto sm:mt-[200px] mt-[220px] md:mt-[200px] overflow-y-auto"
       >
         <div
-          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 `}
+          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-28 sm:top-0`}
           style={{
             backgroundImage: `url(${backgroundUrl})`,
           }}
@@ -453,24 +476,24 @@ export default function SubConceptsPage() {
 
         {/* Current Unit Title */}
         <div
-          className="absolute top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
+          className="fixed z-[10] top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
           style={{ maxWidth: "90%" }} // Ensures text doesn't overflow
         >
           <div>{unitName || "Loading Unit..."}</div>
-          <div className=" text-xs sm:text-xs md:text-xs  font-normal opacity-80 italic">
+          <div className=" text-xs sm:text-xs md:text-xs  font-normal opacity-80 italic truncate">
             {unitDescription || "Loading description..."}
           </div>
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full h-full sm:mt-36 mt-24 relative">
+        <div className="w-full min-h-full relative flex items-center justify-center">
           <svg
             className="w-full h-auto"
             viewBox={`0 0 ${pathWidth} ${pathHeight * (totalSteps > 14 ? 1.5 : 1.1) }`}
             preserveAspectRatio="xMinYMin meet"
           >
             <path
-              d={getPath(totalSteps > 8 ? totalSteps > 14 ? 3 : 2 : 1)}
+              d={(totalSteps <= 5) && window.innerWidth > 728 ? getSinglePath() : getPath(totalSteps > 8 ? totalSteps > 14 ? 3 : 2 : 1)}
               fill="none"
               stroke="white"
               strokeWidth="5"
