@@ -32,24 +32,43 @@ export function UploadModal({
   const stageId = location.state?.stageId;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); // URL for preview
 
+  console.log("recordedMedia", recordedMedia);
+  console.log("file", file);
+
+
   useEffect(() => {
     if (recordedMedia) {
-      const url = URL.createObjectURL(recordedMedia.blob);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url); // Cleanup when component unmounts
+      // Revoke the previous URL if it exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+       const newUrl = URL.createObjectURL(recordedMedia.blob);
+       setPreviewUrl(newUrl);
+      return () => URL.revokeObjectURL(newUrl); // Cleanup when component unmounts
     }
-    return () => {};
+    return () => { 
+      if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }};
   }, [recordedMedia]);
+
+  const handleClose = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setErrorMessage(null)
+    onClose(); // Call the parent function
+  };
 
   // Handle File Preview
   const handleFileClick = () => {
     if (file) {
       const previewUrl = URL.createObjectURL(file);
       window.open(previewUrl, "_blank", "noopener,noreferrer");
-    } else if (recordedMedia) {
-      const previewUrl = URL.createObjectURL(recordedMedia.blob);
-      window.open(previewUrl, "_blank", "noopener,noreferrer");
-    }
+    } 
   };
 
   // Handle API Submit
@@ -60,12 +79,20 @@ export function UploadModal({
     try {
       const formData = new FormData();
       if (file) {
-        formData.append("file", file, file.name);
+        console.log("file", file);
+        formData.append(
+          "file",
+          file,
+          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${
+            subconcept?.subconceptId
+          }.${file.name?.split(".")?.pop()}`
+        );
       } else if (recordedMedia) {
+        const extension = recordedMedia.type === "audio" ? "mp3" : "mp4";
         formData.append(
           "file",
           recordedMedia.blob,
-          `recording.${recordedMedia.blob.type.split("/")[1]}`
+          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${subconcept?.subconceptId}.${extension}`
         );
       } else {
         throw new Error("No file or media found for upload.");
@@ -120,25 +147,24 @@ export function UploadModal({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg p-6 bg-white rounded-lg shadow-xl"
+              className="relative w-full max-w-lg p-6 bg-white rounded-[3px] shadow-xl"
             >
               {/* Close Button */}
-              {/* <button
-                onClick={() => {
-                  onClose();
-                  setErrorMessage(null);
-                }}
+              <button
+                onClick={handleClose}
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                 disabled={isLoading}
               >
                 <X size={24} />
-              </button> */}
+              </button>
 
               {/* Header */}
-              <h2 className="text-2xl font-bold mb-4">Submit File</h2>
+              <h2 className="text-2xl font-bold mb-4">
+                {file ? "Upload File" : "Upload Recording"}
+              </h2>
 
               {/* File Preview */}
-              {file  && (
+              {file && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -148,7 +174,7 @@ export function UploadModal({
                 >
                   <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 truncate">
-                    {file?.name || `Recorded ${recordedMedia?.type}`}
+                    {file?.name}
                   </span>
                 </motion.div>
               )}
@@ -180,14 +206,18 @@ export function UploadModal({
                 <button
                   onClick={handleSubmit}
                   disabled={isLoading}
-                  className="flex items-center px-4 py-2 rounded-md text-white bg-green-500 hover:bg-green-600 transition-colors duration-200"
+                  className={`flex items-center px-4 py-2 rounded-[3px] text-white ${
+                    isLoading
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600"
+                  }  transition-colors duration-200`}
                 >
                   {isLoading ? (
                     <Loader2 size={18} className="mr-2 animate-spin" />
                   ) : (
                     <Send size={18} className="mr-2" />
                   )}
-                  {isLoading ? "Submitting..." : "Submit"}
+                  {"Submit"}
                 </button>
               </div>
             </motion.div>

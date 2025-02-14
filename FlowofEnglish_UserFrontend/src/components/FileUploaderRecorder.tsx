@@ -93,6 +93,13 @@ export const FileUploaderRecorder: React.FC<{
       console.error("handleRecordingStop received an invalid blob:", blob);
       return;
     }
+    console.log(blob.size)
+    const maxSize = 50 * 1024 * 1024; // 10MB in bytes
+    if (blob.size > maxSize) {
+      alert("File size limit exceeded! Recorded audio/video should be less than 50MB.");
+      // event.target.value = ""; // Reset input
+      return;
+    }
     setRecordedMedia({ type, blob }); // Store recorded media
     setIsUploadModalOpen(true); // Open Upload Modal
   };
@@ -176,6 +183,8 @@ export const FileUploaderRecorder: React.FC<{
           setUploadedFile(null);
           setRecordedMedia(null);
           setIsUploadModalOpen(false);
+          setRecordingState("stopped")
+          setActiveAction(null);
         }}
         onUploadSuccess={onUploadSuccess}
       />
