@@ -4,7 +4,7 @@ const StagesSkeleton = () => {
       {/* Skeleton card 1 */}
       {[...Array(3)].map((_, index) => (
         <div key={index} className="animate-pulse">
-          <div className="rounded-lg bg-gray-200 p-4">
+          <div className="rounded-lg bg-white p-4">
             <div className="flex justify-between items-center mb-2">
               <div className="h-4 bg-gray-300 rounded w-3/4"></div>
               <div className="h-4 bg-gray-300 rounded w-6"></div>
