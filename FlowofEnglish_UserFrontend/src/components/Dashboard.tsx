@@ -176,7 +176,7 @@ function Dashboard() {
   }, [programInfo]);
 
   return (
-    <div className="w-full flex flex-col  md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2">
+    <div className="w-full flex flex-col  md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2 pb-10">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
