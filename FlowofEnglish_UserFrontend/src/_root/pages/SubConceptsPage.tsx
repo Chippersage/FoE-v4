@@ -125,6 +125,7 @@ export default function SubConceptsPage() {
   const navigate = useNavigate();
   const selectedProgramId = localStorage.getItem("selectedProgramId");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
+  const [pathData, setPathData] = useState(null);
 
   const bounceAnimation = {
     y: [0, -20, 0],
@@ -137,12 +138,23 @@ export default function SubConceptsPage() {
     },
   };
 
-  // just to ensure paths calculated and 
+  // just to ensure paths calculated and
   const [delayedPoints, setDelayedPoints] = useState<
     { x: number; y: number }[]
   >([]);
 
   useEffect(() => {
+    if (totalSteps) {
+      if (totalSteps < 5 && window.innerWidth >= 640) {
+        const calculatedPath = getSinglePath();
+        setPathData(calculatedPath);
+      } else {
+        const calculatedPath = getPath(
+          totalSteps > 8 ? (totalSteps > 14 ? 3 : 2) : 1
+        );
+        setPathData(calculatedPath);
+      }
+    }
     const timer = setTimeout(() => {
       const newPoints = [...Array(totalSteps)].map((_, index) =>
         getPointOnPath(index / (totalSteps - 1))
@@ -244,8 +256,7 @@ export default function SubConceptsPage() {
           block: "center",
         });
       }
-    }, 500)
-    
+    }, 500);
   }, [targetIndex]); // Trigger on targetIndex change
 
   const fetchSubconcepts = async () => {
@@ -337,31 +348,27 @@ export default function SubConceptsPage() {
     // let divisor = window.innerWidth <= 600 ? 4 : 5; // Mobile: 4, Others: 5
 
     // Start position (left to right, in the middle of the screen)
+    let maxY = rowHeight;
     let path = `M100,${rowHeight / 2}`;
 
     // Draw a straight horizontal line to the right
     path += `H${pathWidth - 40}`;
 
-    return path;
+    return { path, dynamicHeight: maxY + 50 };
   };
 
-
   const getPath = (numWaves = 2) => {
-    const radius = window.innerWidth >= 640 ? 50 : 30; // Radius of the curves at ends
-    const waveHeight = rowHeight / 2; // Vertical height of each wave
-    // Apply different division values based on screen width
-    let divisor;
-    if (window.innerWidth <= 600) {
-      // Mobile devices (less than 768px)
-      divisor = 4;
-    }else{
-      divisor = 5
-    }
+    const radius = window.innerWidth >= 640 ? 50 : 30;
+    const waveHeight = rowHeight / 2;
+    const divisor = window.innerWidth <= 600 ? 6 : 3;
 
-    let path = `M100,${rowHeight / divisor}`; // Start position
+    let path = `M100,${rowHeight / divisor}`;
+    let maxY = rowHeight / divisor; // Track max Y-coordinate
 
     for (let i = 0; i < numWaves; i++) {
-      let yOffset = i * waveHeight * 2; // Offset for each wave cycle
+      let yOffset = i * waveHeight * 2;
+      let bottomY = waveHeight * 2 + rowHeight / divisor + yOffset;
+      maxY = Math.max(maxY, bottomY); // Update max Y-coordinate
 
       path += `
       H${pathWidth - 40 - radius} 
@@ -377,18 +384,13 @@ export default function SubConceptsPage() {
         waveHeight + rowHeight / divisor + radius + yOffset
       }
       V${waveHeight * 2 + rowHeight / divisor - radius + yOffset} 
-      A${radius},${radius} 0 0 0 ${40 + radius},${
-        waveHeight * 2 + rowHeight / divisor + yOffset
-      }
+      A${radius},${radius} 0 0 0 ${40 + radius},${bottomY}
     `;
     }
 
-    // ✅ Ensure the last part of the path extends to the right
-    path += `
-    H${pathWidth - 40} 
-  `;
+    path += ` H${pathWidth - 40}`; // Ensure path extends properly
 
-    return path;
+    return { path, dynamicHeight: maxY + 100 }; // Add some padding
   };
 
   const getPointOnPath = (progress: number) => {
@@ -446,7 +448,7 @@ export default function SubConceptsPage() {
         />
         {/* Confetti Animation */}
         {showConfetti && (
-          <div className="absolute inset-0 flex items-center justify-center bg-opacity-50">
+          <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
             <DotLottieReact
               src="/animation.lottie"
               loop
@@ -486,258 +488,271 @@ export default function SubConceptsPage() {
         </div>
 
         {/* Scrollable SVG Container */}
-        <div className="w-full min-h-full relative flex items-center justify-center">
-          <svg
-            className="w-full h-auto"
-            viewBox={`0 0 ${pathWidth} ${pathHeight * (totalSteps > 14 ? 1.5 : 1.1) }`}
-            preserveAspectRatio="xMinYMin meet"
-          >
-            <path
-              d={(totalSteps <= 5) && window.innerWidth > 728 ? getSinglePath() : getPath(totalSteps > 8 ? totalSteps > 14 ? 3 : 2 : 1)}
-              fill="none"
-              stroke="white"
-              strokeWidth="5"
-              className="curve-path"
-              strokeDasharray={"20,5"}
-            />
-            {delayedPoints.map((_, index) => {
-              const point = getPointOnPath(index / (totalSteps - 1));
-              const subconcept =
-                index > 0 && index < totalSteps - 1
-                  ? subconcepts[index - 1]
-                  : null;
+        {pathData && (
+          <div className="w-full min-h-full relative flex items-center justify-center ">
+            <svg
+              className="w-full h-auto"
+              viewBox={`0 0 ${pathWidth} ${pathData.dynamicHeight}`}
+              preserveAspectRatio="xMinYMin meet"
+            >
+              <path
+                d={
+                  pathData.path
+                  // totalSteps <= 5 && window.innerWidth > 728
+                  //   ? getSinglePath()
+                  //   : getPath(totalSteps > 8 ? (totalSteps > 14 ? 3 : 2) : 1)
+                }
+                fill="none"
+                stroke="white"
+                strokeWidth="5"
+                className="curve-path"
+                strokeDasharray={"20,5"}
+              />
+              {delayedPoints.map((_, index) => {
+                const point = getPointOnPath(index / (totalSteps - 1));
+                const subconcept =
+                  index > 0 && index < totalSteps - 1
+                    ? subconcepts[index - 1]
+                    : null;
 
-              const Icon = subconcept
-                ? iconMap[subconcept.subconceptType as keyof typeof iconMap]
-                : index === 0
-                ? Start
-                : Finish;
+                const Icon = subconcept
+                  ? iconMap[subconcept.subconceptType as keyof typeof iconMap]
+                  : index === 0
+                  ? Start
+                  : Finish;
 
-              const isCompleted =
-                subconcept && subconcept.completionStatus === "yes";
-              const isEnabled =
-                // @ts-ignore
-                // started &&
-                index === 0 ||
-                (index === totalSteps - 1 &&
-                  subconcepts.every((s) => s.completionStatus === "yes")) ||
-                (subconcept?.completionStatus !== "disabled" &&
-                  index !== totalSteps - 1);
+                const isCompleted =
+                  subconcept && subconcept.completionStatus === "yes";
+                const isEnabled =
+                  // @ts-ignore
+                  // started &&
+                  index === 0 ||
+                  (index === totalSteps - 1 &&
+                    subconcepts.every((s) => s.completionStatus === "yes")) ||
+                  (subconcept?.completionStatus !== "disabled" &&
+                    index !== totalSteps - 1);
 
-              // // Find the first incomplete subconcept index
-              // const firstIncompleteIndex = subconcepts.findIndex(
-              //   (s) => s.completionStatus === "incomplete"
-              // );
-              // const targetIndex = firstIncompleteIndex + 1; // Adjust for the offset
+                // // Find the first incomplete subconcept index
+                // const firstIncompleteIndex = subconcepts.findIndex(
+                //   (s) => s.completionStatus === "incomplete"
+                // );
+                // const targetIndex = firstIncompleteIndex + 1; // Adjust for the offset
 
-              return (
-                <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
-                  <Link
-                    // @ts-ignore
-                    to={
-                      index === totalSteps - 1 &&
-                      nextUnitId &&
-                      (unitCompletionStatus === "yes" ||
-                        unitCompletionStatus.toLowerCase() ===
-                          "unit completed without assignments")
-                        ? `/subconcepts/${nextUnitId}`
-                        : isEnabled && index !== totalSteps - 1 && index !== 0
-                        ? `/subconcept/${subconcept?.subconceptId}`
-                        : null
-                    }
-                    state={{ subconcept, stageId, currentUnitId }}
-                    className={`${
-                      !isEnabled &&
-                      unitCompletionStatus.toLowerCase() !==
-                        "unit completed without assignments" &&
-                      "cursor-not-allowed"
-                    }`}
-                    onMouseEnter={() => setActiveTooltip(index)}
-                    onMouseLeave={() => setActiveTooltip(null)}
-                    onClick={() => {
-                      if (
+                return (
+                  <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
+                    <Link
+                      // @ts-ignore
+                      to={
                         index === totalSteps - 1 &&
+                        nextUnitId &&
                         (unitCompletionStatus === "yes" ||
                           unitCompletionStatus.toLowerCase() ===
-                            "unit completed without assignments") &&
-                        nextUnitId
-                      ) {
-                        setShowConfetti(true);
-                        setAudioPlaying(true);
-                        setTimeout(() => {
-                          setShowConfetti(false);
-                        }, 5000);
-                      } else if (
-                        index === totalSteps - 1 &&
-                        (unitCompletionStatus === "yes" ||
-                          unitCompletionStatus.toLowerCase() ===
-                            "unit completed without assignments") &&
-                        !nextUnitId
-                      ) {
-                        openModal();
+                            "unit completed without assignments")
+                          ? `/subconcepts/${nextUnitId}`
+                          : isEnabled && index !== totalSteps - 1 && index !== 0
+                          ? `/subconcept/${subconcept?.subconceptId}`
+                          : null
                       }
-                    }}
-                  >
-                    <g
-                      className={`transition-transform duration-300 ease-out  ${
-                        animationTrigger ? "scale-100" : "scale-0"
+                      state={{ subconcept, stageId, currentUnitId }}
+                      className={`${
+                        !isEnabled &&
+                        unitCompletionStatus.toLowerCase() !==
+                          "unit completed without assignments" &&
+                        "cursor-not-allowed"
                       }`}
-                      style={{ transitionDelay: `${index * 100}ms` }}
-                    >
-                      <rect
-                        x={point.x - 20}
-                        y={point.y - 20}
-                        width="40"
-                        height="40"
-                        rx="2"
-                        ry="2"
-                        fill={
-                          index === 0 || index === totalSteps - 1
-                            ? "transparent"
-                            : subconcept?.completionStatus === "incomplete"
-                            ? "#2196F3"
-                            : "#fff"
-                        }
-                        stroke={
-                          index === 0 || index === totalSteps - 1
-                            ? "none"
-                            : isEnabled
-                            ? isCompleted
-                              ? "#4CAF50"
-                              : "#2196F3"
-                            : "#9E9E9E"
-                        }
-                        strokeWidth="2"
-                        onClick={
-                          index === totalSteps - 1
-                            ? handleFinishClick
-                            : undefined
-                        }
-                      />
-
-                      <Icon
-                        x={
-                          index === 0
-                            ? point.x - 64
-                            : index === totalSteps - 1
-                            ? point.x - 30
-                            : point.x - 18
-                        }
-                        y={
-                          index === 0
-                            ? point.y - 45
-                            : index === totalSteps - 1
-                            ? point.y - 50
-                            : point.y - 18
-                        }
-                        width={
-                          index === 0 || index === totalSteps - 1 ? "70" : "38"
-                        }
-                        height={
-                          index === 0 || index === totalSteps - 1 ? "70" : "38"
-                        }
-                        color="white"
-                        className={`object-contain ${
+                      onMouseEnter={() => setActiveTooltip(index)}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                      onClick={() => {
+                        if (
                           index === totalSteps - 1 &&
-                          unitCompletionStatus != "yes" &&
-                          unitCompletionStatus?.toLowerCase() !=
-                            "unit completed without assignments" &&
-                          "opacity-50"
-                        }`}
-                      />
-
-                      {isCompleted && (
-                        <g
-                          className={`transition-transform duration-300 ease-out ${
-                            animationTrigger ? "scale-100" : "scale-0"
-                          }`}
-                          style={{ transitionDelay: `${index * 100 + 300}ms` }}
-                        >
-                          <circle
-                            cx={point.x + 12}
-                            cy={point.y - 12}
-                            r="8"
-                            fill="#4CAF50"
-                          />
-                          <CheckCircle2
-                            x={point.x + 8}
-                            y={point.y - 16}
-                            width="8"
-                            height="8"
-                            color="white"
-                          />
-                        </g>
-                      )}
-                    </g>
-                    {/* Google Pin for the first incomplete subconcept */}
-                    {index === targetIndex && (
-                      <motion.g animate={bounceAnimation}>
-                        <image
-                          x={point.x - 28}
-                          y={point.y - 90} // Position above the icon
-                          width="54"
-                          height="60"
-                          href="/images/google-pin.png" // Replace with your pin image path
-                          className=""
-                        />
-                      </motion.g>
-                    )}
-                  </Link>
-                  {activeTooltip === index && (
-                    <foreignObject
-                      x={point.x - 100}
-                      y={point.y + 20}
-                      width="200"
-                      height="500"
+                          (unitCompletionStatus === "yes" ||
+                            unitCompletionStatus.toLowerCase() ===
+                              "unit completed without assignments") &&
+                          nextUnitId
+                        ) {
+                          setShowConfetti(true);
+                          setAudioPlaying(true);
+                          setTimeout(() => {
+                            setShowConfetti(false);
+                          }, 5000);
+                        } else if (
+                          index === totalSteps - 1 &&
+                          (unitCompletionStatus === "yes" ||
+                            unitCompletionStatus.toLowerCase() ===
+                              "unit completed without assignments") &&
+                          !nextUnitId
+                        ) {
+                          openModal();
+                        }
+                      }}
                     >
-                      <div
-                        className={`${
-                          isEnabled
-                            ? "bg-[#22C55E]" // Green for enabled
-                            : unitCompletionStatus?.toLowerCase() ===
-                              "unit completed without assignments"
-                            ? "bg-[#FFC107]" // Yellow for "unit completed without assignments"
-                            : "bg-slate-400" // Default slate for all others
-                        } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
-                        style={{
-                          position: "absolute",
-                          left: "50%",
-                          transform: "translateX(-50%)",
-                          whiteSpace: "normal",
-                          zIndex: 1000,
-                          maxWidth: "200px", // Restrict the width to enable ellipsis
-                        }}
+                      <g
+                        className={`transition-transform duration-300 ease-out  ${
+                          animationTrigger ? "scale-100" : "scale-0"
+                        }`}
+                        style={{ transitionDelay: `${index * 100}ms` }}
                       >
-                        {subconcept ? (
-                          subconcept.subconceptDesc
-                        ) : index === 0 ? (
-                          "Start"
-                        ) : index === totalSteps - 1 &&
-                          unitCompletionStatus !== "yes" &&
-                          unitCompletionStatus?.toLowerCase() !==
-                            "unit completed without assignments" ? (
-                          "Complete all the activities"
-                        ) : unitCompletionStatus?.toLowerCase() ===
-                          "unit completed without assignments" ? (
-                          <>
-                            <span>Finish!</span>
-                            <br />
-                            <span>
-                              Don't forget to come back and complete your
-                              assignment(s)
-                            </span>
-                          </>
-                        ) : (
-                          "Finish"
+                        <rect
+                          x={point.x - 20}
+                          y={point.y - 20}
+                          width="40"
+                          height="40"
+                          rx="2"
+                          ry="2"
+                          fill={
+                            index === 0 || index === totalSteps - 1
+                              ? "transparent"
+                              : subconcept?.completionStatus === "incomplete"
+                              ? "#2196F3"
+                              : "#fff"
+                          }
+                          stroke={
+                            index === 0 || index === totalSteps - 1
+                              ? "none"
+                              : isEnabled
+                              ? isCompleted
+                                ? "#4CAF50"
+                                : "#2196F3"
+                              : "#9E9E9E"
+                          }
+                          strokeWidth="2"
+                          onClick={
+                            index === totalSteps - 1
+                              ? handleFinishClick
+                              : undefined
+                          }
+                        />
+
+                        <Icon
+                          x={
+                            index === 0
+                              ? point.x - 64
+                              : index === totalSteps - 1
+                              ? point.x - 30
+                              : point.x - 18
+                          }
+                          y={
+                            index === 0
+                              ? point.y - 45
+                              : index === totalSteps - 1
+                              ? point.y - 50
+                              : point.y - 18
+                          }
+                          width={
+                            index === 0 || index === totalSteps - 1
+                              ? "70"
+                              : "38"
+                          }
+                          height={
+                            index === 0 || index === totalSteps - 1
+                              ? "70"
+                              : "38"
+                          }
+                          color="white"
+                          className={`object-contain ${
+                            index === totalSteps - 1 &&
+                            unitCompletionStatus != "yes" &&
+                            unitCompletionStatus?.toLowerCase() !=
+                              "unit completed without assignments" &&
+                            "opacity-50"
+                          }`}
+                        />
+
+                        {isCompleted && (
+                          <g
+                            className={`transition-transform duration-300 ease-out ${
+                              animationTrigger ? "scale-100" : "scale-0"
+                            }`}
+                            style={{
+                              transitionDelay: `${index * 100 + 300}ms`,
+                            }}
+                          >
+                            <circle
+                              cx={point.x + 18}
+                              cy={point.y - 20}
+                              r="10"
+                              fill="#4CAF50"
+                            />
+                            <CheckCircle2
+                              x={point.x + 8}
+                              y={point.y - 30}
+                              width="20"
+                              height="20"
+                              color="white"
+                            />
+                          </g>
                         )}
-                      </div>
-                    </foreignObject>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
+                      </g>
+                      {/* Google Pin for the first incomplete subconcept */}
+                      {index === targetIndex && (
+                        <motion.g animate={bounceAnimation}>
+                          <image
+                            x={point.x - 28}
+                            y={point.y - 90} // Position above the icon
+                            width="54"
+                            height="60"
+                            href="/images/google-pin.png" // Replace with your pin image path
+                            className=""
+                          />
+                        </motion.g>
+                      )}
+                    </Link>
+                    {activeTooltip === index && (
+                      <foreignObject
+                        x={point.x - 100}
+                        y={point.y + 20}
+                        width="200"
+                        height="500"
+                      >
+                        <div
+                          className={`${
+                            isEnabled
+                              ? "bg-[#22C55E]" // Green for enabled
+                              : unitCompletionStatus?.toLowerCase() ===
+                                "unit completed without assignments"
+                              ? "bg-[#FFC107]" // Yellow for "unit completed without assignments"
+                              : "bg-slate-400" // Default slate for all others
+                          } text-white p-1 rounded-[5px] text-[8px] text-center font-medium z-[1000]`}
+                          style={{
+                            position: "absolute",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            whiteSpace: "normal",
+                            zIndex: 1000,
+                            maxWidth: "200px", // Restrict the width to enable ellipsis
+                          }}
+                        >
+                          {subconcept ? (
+                            subconcept.subconceptDesc
+                          ) : index === 0 ? (
+                            "Start"
+                          ) : index === totalSteps - 1 &&
+                            unitCompletionStatus !== "yes" &&
+                            unitCompletionStatus?.toLowerCase() !==
+                              "unit completed without assignments" ? (
+                            "Complete all the activities"
+                          ) : unitCompletionStatus?.toLowerCase() ===
+                            "unit completed without assignments" ? (
+                            <>
+                              <span>Finish!</span>
+                              <br />
+                              <span>
+                                Don't forget to come back and complete your
+                                assignment(s)
+                              </span>
+                            </>
+                          ) : (
+                            "Finish"
+                          )}
+                        </div>
+                      </foreignObject>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        )}
       </div>
     </>
   );
