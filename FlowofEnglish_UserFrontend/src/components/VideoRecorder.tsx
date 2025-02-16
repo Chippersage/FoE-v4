@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import type React from "react";
@@ -56,6 +57,24 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
     }
   };
 
+  const restartRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      setRecordingState("stopped");
+      // onRecordingStop();
+      onRecordingStateChange("stopped");
+    }
+
+    chunksRef.current = [];
+    startRecording();
+  }
+
   const stopRecording = () => {
     if (
       mediaRecorderRef.current &&
@@ -98,11 +117,11 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
     }
   };
 
-  const restartRecording = () => {
-    stopRecording();
-    chunksRef.current = [];
-    startRecording();
-  };
+  // const restartRecording = () => {
+  //   stopRecording();
+  //   chunksRef.current = [];
+  //   startRecording();
+  // };
 
   return (
     <div className="fixed bottom-20 left-4 right-4 flex justify-center space-x-4">

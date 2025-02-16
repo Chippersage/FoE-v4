@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -45,7 +46,7 @@ export const FileUploaderRecorder: React.FC<{
 
   // Prevent closing when clicking on action buttons
   const startRecordingTimer = () => {
-    setRecordingDuration(0); // Reset duration
+    // setRecordingDuration(0); // Reset duration
     if (recordingInterval.current) clearInterval(recordingInterval.current); // Clear existing timer
 
     recordingInterval.current = setInterval(() => {
@@ -109,8 +110,10 @@ export const FileUploaderRecorder: React.FC<{
   ) => {
     setRecordingState(state);
     if (state === "paused") {
+      stopRecordingTimer(); // Pause timer
       setPreviewContent(<div className="text-sm">Recording paused</div>);
     } else if (state === "recording") {
+      startRecordingTimer(); // Resume timer
       setPreviewContent(
         activeAction === "audio" ? (
           <AudioPulse />
@@ -118,6 +121,9 @@ export const FileUploaderRecorder: React.FC<{
           <VideoPreview stream={streamRef.current!} />
         )
       );
+    } else if (state === "stopped") {
+      stopRecordingTimer();
+      setRecordingDuration(0); // Reset duration on stop
     }
   };
 
@@ -132,16 +138,19 @@ export const FileUploaderRecorder: React.FC<{
             icon={<Upload />}
             onClick={() => setActiveAction("upload")}
             isActive={activeAction === "upload"}
+            activeAction={activeAction}
           />
           <ActionButton
             icon={<Mic />}
             onClick={() => setActiveAction("audio")}
             isActive={activeAction === "audio"}
+            activeAction={activeAction}
           />
           <ActionButton
             icon={<Video />}
             onClick={() => setActiveAction("video")}
             isActive={activeAction === "video"}
+            activeAction={activeAction}
           />
         </div>
       </div>
@@ -168,9 +177,10 @@ export const FileUploaderRecorder: React.FC<{
       )}
 
       <Preview
-        recordingState="recording"
+        // recordingState="recording"
         recordingDuration={recordingDuration}
         activeAction={activeAction}
+        recordingState={recordingState}
       >
         {previewContent}
       </Preview>
@@ -183,7 +193,7 @@ export const FileUploaderRecorder: React.FC<{
           setUploadedFile(null);
           setRecordedMedia(null);
           setIsUploadModalOpen(false);
-          setRecordingState("stopped")
+          setRecordingState("stopped");
           setActiveAction(null);
         }}
         onUploadSuccess={onUploadSuccess}
@@ -196,23 +206,23 @@ const ActionButton: React.FC<{
   icon: React.ReactNode;
   isActive: boolean;
   onClick: () => void;
-}> = ({ icon, isActive, onClick }) => {
-    return (
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // Prevents closing when clicking the button
-          onClick();
-        }}
-        className={`p-2 rounded-full flex items-center h-10 w-10 transition-colors ${
-          isActive
-            ? "bg-green-500 text-white"
-            : "text-gray-500 hover:bg-gray-200"
-        }`}
-      >
-        {icon}
-      </button>
-    );
-}
+  activeAction;
+}> = ({ icon, isActive, onClick, activeAction }) => {
+  return (
+    <button
+      disabled={!isActive && activeAction}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevents closing when clicking the button
+        onClick();
+      }}
+      className={`p-2 rounded-full flex items-center h-10 w-10 transition-colors ${
+        isActive ? "bg-green-500 text-white" : "text-gray-500 hover:bg-gray-200"
+      }`}
+    >
+      {icon}
+    </button>
+  );
+};
  
 
 
@@ -244,7 +254,7 @@ const VideoPreview: React.FC<{ stream: MediaStream}> = ({
       autoPlay
       muted
       playsInline
-      className="w-16 h-24 rounded-lg object-cover"
+      className="w-16 h-16 sm:w-36 sm:h-36 lg:w-52 lg:h-52 rounded-lg object-cover"
     />
   );
 };
