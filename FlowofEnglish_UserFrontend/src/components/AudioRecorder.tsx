@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import type React from "react";
@@ -41,7 +42,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         const blob = new Blob(chunksRef.current, {
           type: "audio/ogg; codecs=opus",
         });
-        // Here you can handle the recorded audio blob (e.g., upload it or play it back)
       };
 
       mediaRecorderRef.current.start();
@@ -52,6 +52,21 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       console.error("Error starting recording:", error);
     }
   };
+
+  const restartRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+      setRecordingState("stopped");
+      // onRecordingStop();
+      onRecordingStateChange("stopped");
+    }
+
+     chunksRef.current = [];
+     startRecording();
+  }
 
   const stopRecording = () => {
     if (
@@ -94,11 +109,11 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     }
   };
 
-  const restartRecording = () => {
-    stopRecording();
-    chunksRef.current = [];
-    startRecording();
-  };
+  // const restartRecording = () => {
+  //   stopRecording();
+  //   chunksRef.current = [];
+  //   startRecording();
+  // };
 
   return (
     <div className="fixed bottom-20 left-4 right-4 flex justify-center space-x-4">

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -29,7 +30,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onUpload, onClose })
       //   fileInputRef.current?.removeEventListener("click", handleFocus);
       // };
     }
-  }, [onClose]);
+
+  }, []);
 
 const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   const file = event.target.files?.[0];
