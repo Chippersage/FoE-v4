@@ -176,7 +176,7 @@ function Dashboard() {
   }, [programInfo]);
 
   return (
-    <div className="w-full flex flex-col  md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2 pb-10">
+    <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2 pb-10">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -195,7 +195,7 @@ function Dashboard() {
       )}
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
-        <div className="sm:w-[50%]">
+        <div className="md:w-[50%] w-full">
           {/* @ts-ignore */}
           <Stages stages={programInfo?.stages} programCompletionStatus={programInfo?.programCompletionStatus}
           />
@@ -204,9 +204,9 @@ function Dashboard() {
         <StagesSkeleton />
       )}
 
-      <div className="w-full sm:w-[50%] flex flex-col">
+      <div className="w-full md:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
-          <div className="flex flex-col mb-6 mx-auto max-w-[400px] w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
+          <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
             <h3 className="text-xl font-semibold font-openSans">
               Your Progress
             </h3>
