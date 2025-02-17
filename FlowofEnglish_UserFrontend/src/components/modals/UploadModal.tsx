@@ -10,7 +10,7 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   file: File | null;
-  recordedMedia: { type: "audio" | "video"; blob: Blob } | null;
+  recordedMedia: { type: "audio" | "video" | "photo"; blob: Blob } | null;
   onUploadSuccess: () => void;
 }
 
@@ -42,7 +42,7 @@ export function UploadModal({
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-
+      console.log(recordedMedia)
        const newUrl = URL.createObjectURL(recordedMedia.blob);
        setPreviewUrl(newUrl);
       return () => URL.revokeObjectURL(newUrl); // Cleanup when component unmounts
@@ -88,7 +88,12 @@ export function UploadModal({
           }.${file.name?.split(".")?.pop()}`
         );
       } else if (recordedMedia) {
-        const extension = recordedMedia.type === "audio" ? "mp3" : "mp4";
+        const extension =
+          recordedMedia.type === "audio"
+            ? "mp3"
+            : recordedMedia.type === "video"
+            ? "mp4"
+            : "jpg"; // Default to .jpg for photos
         formData.append(
           "file",
           recordedMedia.blob,
@@ -160,7 +165,7 @@ export function UploadModal({
 
               {/* Header */}
               <h2 className="text-2xl font-bold mb-4">
-                {file ? "Upload File" : "Upload Recording"}
+                {file ? "Upload File" : `Upload ${recordedMedia?.type}`}
               </h2>
 
               {/* File Preview */}
@@ -187,11 +192,17 @@ export function UploadModal({
                       <source src={previewUrl} type={recordedMedia.blob.type} />
                       Your browser does not support the audio element.
                     </audio>
-                  ) : (
+                  ) : recordedMedia.type === "video" ? (
                     <video controls className="w-full rounded-lg">
                       <source src={previewUrl} type={recordedMedia.blob.type} />
                       Your browser does not support the video element.
                     </video>
+                  ) : (
+                    <img
+                      src={previewUrl}
+                      alt="Captured"
+                      className="w-full rounded-lg"
+                    />
                   )}
                 </div>
               )}
