@@ -6,14 +6,15 @@ import { FileUploader } from "./FileUploader";
 import { AudioRecorder } from "./AudioRecorder";
 import { VideoRecorder } from "./VideoRecorder";
 import { Preview } from "./Preview";
-import { Upload, Mic, Video } from "lucide-react";
+import { Upload, Mic, Video, Camera } from "lucide-react";
 import  UploadModal  from "./modals/UploadModal";
+import { PhotoCapture } from "./PhotoCapture";
 
 export const FileUploaderRecorder: React.FC<{
   onUploadSuccess: () => void;
 }> = ({ onUploadSuccess }) => {
   const [activeAction, setActiveAction] = useState<
-    "upload" | "audio" | "video" | null
+    "upload" | "audio" | "video" | "photo" | null
   >(null);
   const [recordingState, setRecordingState] = useState<
     "recording" | "paused" | "stopped"
@@ -27,7 +28,7 @@ export const FileUploaderRecorder: React.FC<{
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [recordedMedia, setRecordedMedia] = useState<{
-    type: "audio" | "video";
+    type: "audio" | "video" | "photo";
     blob: Blob;
   } | null>(null);
 
@@ -127,6 +128,18 @@ export const FileUploaderRecorder: React.FC<{
     }
   };
 
+    const handlePhotoCapture = (blob: Blob, type: "photo") => {
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (blob.size > maxSize) {
+        alert("File size limit exceeded! Image should not be more than 10MB.");
+        // event.target.value = ""; // Reset input
+        return;
+      }
+      setRecordedMedia({ type, blob }); // Store recorded media
+      setIsUploadModalOpen(true); // Open Upload Modal
+      setActiveAction(null);
+    };
+
   return (
     <>
       <div
@@ -152,6 +165,11 @@ export const FileUploaderRecorder: React.FC<{
             isActive={activeAction === "video"}
             activeAction={activeAction}
           />
+          <ActionButton
+            icon={<Camera />}
+            onClick={() => setActiveAction("photo")}
+            isActive={activeAction === "photo"}
+          />
         </div>
       </div>
 
@@ -173,6 +191,13 @@ export const FileUploaderRecorder: React.FC<{
           onRecordingStart={handleVideoRecordingStart}
           onRecordingStop={handleRecordingStop}
           onRecordingStateChange={handleRecordingStateChange}
+        />
+      )}
+
+      {activeAction === "photo" && (
+        <PhotoCapture
+          onCapture={handlePhotoCapture}
+          onClose={() => setActiveAction(null)}
         />
       )}
 
