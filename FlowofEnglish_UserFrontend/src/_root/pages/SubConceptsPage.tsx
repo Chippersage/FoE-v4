@@ -43,6 +43,8 @@ import Riddle from "@/components/activityIcons/Riddle";
 import Dictation from "@/components/activityIcons/Dictation";
 import Assignment from "@/components/activityIcons/Assignment";
 import Assessment from "@/components/activityIcons/Assessment";
+import RealWorld from "@/components/activityIcons/RealWorld";
+import Literature from "@/components/activityIcons/Literature";
 
 interface Subconcept {
   subconceptId: string;
@@ -77,6 +79,8 @@ const iconMap = {
   riddles: Riddle,
   dictation: Dictation,
   vocab: Spelling,
+  realworld: RealWorld,
+  literature: Literature,
 
   passage_read: Read,
   passage_jw: JumbledWords,
