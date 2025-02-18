@@ -178,11 +178,15 @@ const ProgressDashboard = () => {
       </Card>
 
       {/* Charts Section */}
-      {progressData && <LearnersProgressChart data={progressData} selectedUserId={selectedUserId} />}
+      {progressData && (
+       // <Card sx={{ padding: 3, marginBottom: 3 }}>
+          <LearnersProgressChart data={progressData} selectedUserId={selectedUserId} />
+       //   </Card>
+        )}
       {userSpecificData && (
-          
+        //  <Card sx={{ padding: 3, marginBottom: 3 }}>
           <SingleLearnerProgressChart data={userSpecificData} />
-        
+         // </Card>
       )}
     </Container>
   );
