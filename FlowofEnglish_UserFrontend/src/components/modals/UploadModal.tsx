@@ -1,77 +1,106 @@
-// @ts-nocheck
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, FileIcon } from "lucide-react";
-import { FileUpload } from "../FileUpload";
-import { MediaRecorder } from "../MediaRecorder";
 import axios from "axios";
-import { useUserContext } from "@/context/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom";
 import { SuccessModal } from "./SuccessModal";
+import { useUserContext } from "@/context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadSuccess: () => void;
   file: File | null;
+  recordedMedia: { type: "audio" | "video" | "photo"; blob: Blob } | null;
+  onUploadSuccess: () => void;
 }
 
 export function UploadModal({
   isOpen,
   onClose,
+  file,
+  recordedMedia,
   onUploadSuccess,
-  file
 }: UploadModalProps) {
-  const [activeTab, setActiveTab] = useState<
-    "upload" | "recordAudio" | "recordVideo"
-  >("upload");
-  const [hasContent, setHasContent] = useState(false);
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { user } = useUserContext();
-  const location = useLocation();
   const subconcept = location.state?.subconcept;
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isMediaRecording, setIsMediaRecording] = useState(false); // Lifted state to disable other tabs when recording is in progress
-  const navigate = useNavigate();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // URL for preview
 
-    const handleFileClick = () => {
-      const previewUrl = URL.createObjectURL(file); 
-        window.open(previewUrl, "_blank", "noopener,noreferrer"); // Open the file in a new tab
-    };
+  console.log("recordedMedia", recordedMedia);
+  console.log("file", file);
 
+
+  useEffect(() => {
+    if (recordedMedia) {
+      // Revoke the previous URL if it exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      console.log(recordedMedia)
+       const newUrl = URL.createObjectURL(recordedMedia.blob);
+       setPreviewUrl(newUrl);
+      return () => URL.revokeObjectURL(newUrl); // Cleanup when component unmounts
+    }
+    return () => { 
+      if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }};
+  }, [recordedMedia]);
+
+  const handleClose = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setErrorMessage(null)
+    onClose(); // Call the parent function
+  };
+
+  // Handle File Preview
+  const handleFileClick = () => {
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    } 
+  };
+
+  // Handle API Submit
   const handleSubmit = async () => {
-    setErrorMessage(null); // Clear previous error
+    setErrorMessage(null);
     setIsLoading(true);
+
     try {
       const formData = new FormData();
-
-      if (activeTab === "upload" && uploadedFile) {
+      if (file) {
+        console.log("file", file);
         formData.append(
           "file",
-          uploadedFile,
-          `${user?.userId}-${subconcept?.subconceptId}.${uploadedFile?.name
-            ?.split(".")
-            ?.pop()}`
+          file,
+          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${
+            subconcept?.subconceptId
+          }.${file.name?.split(".")?.pop()}`
         );
-        console.log("Uploaded file:", uploadedFile);
-      } else if (
-        (activeTab === "recordAudio" || activeTab === "recordVideo") &&
-        recordedBlob
-      ) {
+      } else if (recordedMedia) {
+        const extension =
+          recordedMedia.type === "audio"
+            ? "mp3"
+            : recordedMedia.type === "video"
+            ? "mp4"
+            : "jpg"; // Default to .jpg for photos
         formData.append(
           "file",
-          recordedBlob,
-          `${user?.userId}-${subconcept?.subconceptId}.${recordedBlob?.type}`
+          recordedMedia.blob,
+          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${subconcept?.subconceptId}.${extension}`
         );
-        console.log("Recorded blob:", recordedBlob);
       } else {
-        throw new Error("Please select a file or record media to upload.");
+        throw new Error("No file or media found for upload.");
       }
 
       formData.append("userId", user.userId);
@@ -82,24 +111,20 @@ export function UploadModal({
       formData.append("subconceptId", subconcept?.subconceptId);
 
       const response = await axios.post(
-        `${API_BASE_URL}/assignments/submit`,
+        ` ${API_BASE_URL}/assignments/submit`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
       if (response.status === 200) {
-        console.log("Upload successful");
-        onClose();
         setShowSuccessModal(true);
+        onClose(); // Close upload modal on success
       } else {
         throw new Error("Upload failed. Please try again.");
       }
     } catch (error: any) {
-      console.log("in catch block: ", error);
       setErrorMessage(
         error.response?.data || error.message || "An unknown error occurred."
       );
@@ -112,7 +137,6 @@ export function UploadModal({
     setShowSuccessModal(false); // Close child success modal
     onUploadSuccess(); // Notify parent for further processing
   };
-  console.log(file)
 
   return (
     <>
@@ -122,72 +146,97 @@ export function UploadModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 max-h-screen"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-2xl p-6 bg-white rounded-[8px] shadow-xl ml-10 mr-10"
+              className="relative w-full max-w-lg p-6 bg-white rounded-[3px] shadow-xl"
             >
+              {/* Close Button */}
               <button
-                onClick={() => {
-                  onClose();
-                  setErrorMessage(null);
-                }}
+                onClick={handleClose}
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                 disabled={isLoading}
               >
                 <X size={24} />
               </button>
-              <h2 className="text-2xl font-bold mb-4">Uploaded File</h2>
 
+              {/* Header */}
+              <h2 className="text-2xl font-bold mb-4">
+                {file ? "Upload File" : `Upload ${recordedMedia?.type}`}
+              </h2>
+
+              {/* File Preview */}
               {file && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className={`relative flex items-center p-2 rounded-md bg-gray-100`}
+                  className="flex items-center p-2 rounded-md bg-gray-100 cursor-pointer"
                   onClick={handleFileClick}
-                  style={{ cursor: "pointer" }} // Indicate that it's clickable
                 >
                   <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 truncate">
                     {file?.name}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering the file open on button click
-                      handleRemoveFile();
-                    }}
-                    className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-                    // disabled={disabled}
-                  >
-                    <X size={16} />
-                  </button>
                 </motion.div>
               )}
+
+              {/* Recorded Media Preview */}
+              {recordedMedia && previewUrl && (
+                <div className="mt-4 p-2 rounded-md bg-gray-100">
+                  {recordedMedia.type === "audio" ? (
+                    <audio controls>
+                      <source src={previewUrl} type={recordedMedia.blob.type} />
+                      Your browser does not support the audio element.
+                    </audio>
+                  ) : recordedMedia.type === "video" ? (
+                    <video controls className="w-full rounded-lg">
+                      <source src={previewUrl} type={recordedMedia.blob.type} />
+                      Your browser does not support the video element.
+                    </video>
+                  ) : (
+                    <img
+                      src={previewUrl}
+                      alt="Captured"
+                      className="w-full rounded-lg"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Error Message */}
               {errorMessage && (
                 <p className="text-sm text-red-500 mt-4">{errorMessage}</p>
               )}
+
+              {/* Submit Button */}
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSubmit}
-                  // disabled={!hasContent || isLoading}
-                  className={`flex items-center px-4 py-2 rounded-[5px] text-white bg-green-500 hover:bg-green-600 transition-colors duration-200`}
+                  disabled={isLoading}
+                  className={`flex items-center px-4 py-2 rounded-[3px] text-white ${
+                    isLoading
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600"
+                  }  transition-colors duration-200`}
                 >
                   {isLoading ? (
                     <Loader2 size={18} className="mr-2 animate-spin" />
                   ) : (
                     <Send size={18} className="mr-2" />
                   )}
-                  {isLoading ? "Uploading..." : "Submit"}
+                  {"Submit"}
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Success Modal */}
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={handleSuccessModalClose}
@@ -195,3 +244,5 @@ export function UploadModal({
     </>
   );
 }
+
+export default UploadModal

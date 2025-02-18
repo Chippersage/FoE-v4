@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import type React from "react";
@@ -7,7 +8,7 @@ import { Square, Play, Pause, RotateCcw } from "lucide-react";
 
 interface VideoRecorderProps {
   onRecordingStart: (stream: MediaStream) => void;
-  onRecordingStop: () => void;
+  onRecordingStop: (blob: Blob, type: "audio" | "video") => void; // ✅ Accepts blob & type
   onRecordingStateChange: (state: "recording" | "paused" | "stopped") => void;
 }
 
@@ -56,6 +57,24 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
     }
   };
 
+  const restartRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      setRecordingState("stopped");
+      // onRecordingStop();
+      onRecordingStateChange("stopped");
+    }
+
+    chunksRef.current = [];
+    startRecording();
+  }
+
   const stopRecording = () => {
     if (
       mediaRecorderRef.current &&
@@ -66,8 +85,13 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
       setRecordingState("stopped");
-      onRecordingStop();
+      // onRecordingStop();
       onRecordingStateChange("stopped");
+
+       mediaRecorderRef.current.onstop = () => {
+         const blob = new Blob(chunksRef.current, { type: "video/webm" });
+         onRecordingStop(blob, "video"); // Pass recorded video to parent
+       };
     }
   };
 
@@ -93,11 +117,11 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
     }
   };
 
-  const restartRecording = () => {
-    stopRecording();
-    chunksRef.current = [];
-    startRecording();
-  };
+  // const restartRecording = () => {
+  //   stopRecording();
+  //   chunksRef.current = [];
+  //   startRecording();
+  // };
 
   return (
     <div className="fixed bottom-20 left-4 right-4 flex justify-center space-x-4">
