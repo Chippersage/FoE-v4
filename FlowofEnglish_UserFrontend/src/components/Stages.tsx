@@ -49,7 +49,7 @@ export default function Stages({ stages, programCompletionStatus }) {
   };
 
   return (
-    <div className="w-full max-h-[480px] max-w-md mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]">
+    <div className="w-full max-h-[480px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]">
       {/* Fixed Title */}
       <div>
         <h3 className="text-xl font-semibold font-openSans mb-4">
