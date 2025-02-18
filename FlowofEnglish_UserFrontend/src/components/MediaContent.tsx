@@ -482,7 +482,7 @@ const MediaContent = ({ subconceptData }) => {
           )}
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
-                <FileUploaderRecorder/>
+                <FileUploaderRecorder onUploadSuccess={handleUploadSuccess}/>
             ): (
               <button
               onClick={() => {
@@ -511,7 +511,7 @@ const MediaContent = ({ subconceptData }) => {
             
             <button
               onClick={handleGoBack}
-              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
+              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-1 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[2px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
             >
               Go Back
             </button>
