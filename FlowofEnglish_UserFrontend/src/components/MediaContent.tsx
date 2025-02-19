@@ -5,8 +5,9 @@ import { UploadModal } from "./modals/UploadModal";
 import AlertModal from "./modals/AlertModal";
 import { RetryModal } from "./modals/RetryModal";
 import { FileUploaderRecorder } from "./FileUploaderRecorder";
+import ActivityCompletionModal from "./ActivityCompletionModal";
 // @ts-ignore
-const MediaContent = ({ subconceptData }) => {
+const MediaContent = ({ subconceptData, currentUnitId }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
   // @ts-ignore
   const userData = JSON.parse(localStorage.getItem("userData"));
@@ -34,6 +35,7 @@ const MediaContent = ({ subconceptData }) => {
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
+  const [scorePercentage, setScorePercentage] = useState<null | number>(null);
 
   // const handleContentLoaded = () => {
   //   setIsComplete(false); // Enable the "Complete" button when content is fully loaded
@@ -71,17 +73,23 @@ const MediaContent = ({ subconceptData }) => {
     }
   }, [isAssignmentUploadSuccesfull]);
 
-  useEffect(() => {
-    if (subconceptData?.subconceptType.startsWith("assessment")) {
-      // Show the popup after a short delay
-      const timer = setTimeout(() => setShowAlert(true), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [subconceptData]);
+  // useEffect(() => {
+  //   if (subconceptData?.subconceptType.startsWith("assessment")) {
+  //     // Show the popup after a short delay
+  //     const timer = setTimeout(() => setShowAlert(true), 500);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [subconceptData]);
 
   // Handle countdown for success overlay
   useEffect(() => {
-    if (showSuccessPopup && successCountdown > 0) {
+    if (
+      showSuccessPopup &&
+      successCountdown > 0 &&
+      ["assessment", "assignment"].some((type) =>
+        subconceptData?.subconceptType?.startsWith(type)
+      )
+    ) {
       const interval = setInterval(() => {
         setSuccessCountdown((prev) => prev - 1);
       }, 1000);
@@ -164,6 +172,8 @@ const MediaContent = ({ subconceptData }) => {
           ? subconceptData?.subconceptMaxscore
           : 0
         : subconceptData?.subconceptMaxscore;
+
+    setScorePercentage((finalScore / subconceptData?.subconceptMaxscore) * 100);
 
     const date = new Date();
     const ISTOffset = 5.5 * 60 * 60 * 1000;
@@ -415,7 +425,19 @@ const MediaContent = ({ subconceptData }) => {
           }}
         />
       )} */}
-      {showSuccessPopup && renderOverlay("success")}
+      {showSuccessPopup ? (
+        !["assessment", "assignment"].some((type) =>
+          subconceptData?.subconceptType?.startsWith(type)
+        ) ? (
+          <ActivityCompletionModal
+            countdownDuration={3}
+            onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
+            scorePercentage={scorePercentage}
+          />
+        ) : (
+          renderOverlay("success")
+        )
+      ) : null}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
       {/* @ts-ignore */}
@@ -458,7 +480,7 @@ const MediaContent = ({ subconceptData }) => {
         <div
           className={` bg-white ${
             subconceptData?.subconceptType === "pdf" ||
-            subconceptData?.subconceptType === "assignment_pdf" 
+            subconceptData?.subconceptType === "assignment_pdf"
               ? "sticky"
               : "fixed w-full"
           } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
@@ -474,7 +496,7 @@ const MediaContent = ({ subconceptData }) => {
                 }
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <label htmlFor="agreement" className="text-sm text-gray-700">
+              <label htmlFor="agreement" className="text-sm text-gray-700 py-1">
                 I agree that I have submitted the Google Form response for this
                 activity.
               </label>
@@ -482,33 +504,33 @@ const MediaContent = ({ subconceptData }) => {
           )}
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
-                <FileUploaderRecorder onUploadSuccess={handleUploadSuccess}/>
-            ): (
+              <FileUploaderRecorder onUploadSuccess={handleUploadSuccess} />
+            ) : (
               <button
-              onClick={() => {
-                subconceptData?.subconceptType.startsWith("assignment")
-                  ? setIsUploadModalOpen(true)
-                  : handleComplete();
-              }}
-              disabled={
-                subconceptData?.subconceptType.startsWith("assessment")
-                  ? !isAssessmentIntegrityChecked
-                  : isComplete
-              }
-              className={`${
-                (subconceptData?.subconceptType.startsWith("assessment") &&
-                  !isAssessmentIntegrityChecked) ||
-                isComplete
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#00A66B] hover:bg-green-600"
-              } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
-            >
-              {subconceptData?.subconceptType.startsWith("assignment")
-                ? "Upload assignment"
-                : "Complete"}
-            </button>
+                onClick={() => {
+                  subconceptData?.subconceptType.startsWith("assignment")
+                    ? setIsUploadModalOpen(true)
+                    : handleComplete();
+                }}
+                disabled={
+                  subconceptData?.subconceptType.startsWith("assessment")
+                    ? !isAssessmentIntegrityChecked
+                    : isComplete
+                }
+                className={`${
+                  (subconceptData?.subconceptType.startsWith("assessment") &&
+                    !isAssessmentIntegrityChecked) ||
+                  isComplete
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#00A66B] hover:bg-green-600"
+                } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
+              >
+                {subconceptData?.subconceptType.startsWith("assignment")
+                  ? "Upload assignment"
+                  : "Complete"}
+              </button>
             )}
-            
+
             <button
               onClick={handleGoBack}
               className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-1 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[2px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
