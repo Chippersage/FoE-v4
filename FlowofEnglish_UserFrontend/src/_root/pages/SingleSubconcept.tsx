@@ -2,99 +2,101 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 import MediaContent from "@/components/MediaContent";
+import ActivityCompletionModal from "@/components/ActivityCompletionModal";
 
 // @ts-ignore
-const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
-  const [timer, setTimer] = useState(countdown);
 
-  useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
-      return () => clearInterval(interval);
-    } else {
-      onRedirect();
-    }
-  }, [timer, onRedirect]);
+// const SuccessOverlay = ({ countdown = 3, onRedirect }) => {
+//   const [timer, setTimer] = useState(countdown);
 
-  return (
-    <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
-      <div
-        className=" text-center shadow-lg max-w-sm w-full"
-        style={{
-          backgroundColor: "#375368",
-          borderColor: "#375368",
-          minWidth: "300px",
-          minHeight: "180px",
-          borderRadius: "4px",
-          boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
-        }}
-      >
-        <p
-          className="mb-2 tracking-wide text-gray-100"
-          style={{
-            // color: "#ffffff",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-            // margin: "0px 10px",
-            padding: "15px 0px",
-            borderBottom: "1px solid #ffffff",
-            // backgroundColor: "#727887",
-          }}
-        >
-          Next Activity Unlocked
-        </p>
-        {/* <hr
-          style={{
-            borderTop: "1px solid #ffffff",
-            opacity: 0.5,
-          }}
-        /> */}
-        <h4
-          className="mt-4 tracking-wide"
-          style={{
-            color: "#90EE90", // Green shade
-            fontSize: "20px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-          }}
-        >
-          Hurrah! 😄
-        </h4>
-        <p
-          className="mt-4 text-gray-100"
-          style={{
-            // color: "#ffffff",
-            fontSize: "22px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-            padding: "0px 20px",
-          }}
-        >
-          You have unlocked the next activity.
-        </p>
-        <p
-          className="mt-2 mb-4"
-          style={{
-            color: "#B0B0B0", // Gray shade
-            fontSize: "13px",
-            fontWeight: "normal",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-          }}
-        >
-          Redirecting to activities page in{" "}
-          <span style={{ fontWeight: "bold" }}>{timer}</span> seconds.
-        </p>
-      </div>
-    </div>
-  );
-};
+//   useEffect(() => {
+//     if (timer > 0) {
+//       const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+//       return () => clearInterval(interval);
+//     } else {
+//       onRedirect();
+//     }
+//   }, [timer, onRedirect]);
+
+//   return (
+//     <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
+//       <div
+//         className=" text-center shadow-lg max-w-sm w-full"
+//         style={{
+//           backgroundColor: "#375368",
+//           borderColor: "#375368",
+//           minWidth: "300px",
+//           minHeight: "180px",
+//           borderRadius: "4px",
+//           boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
+//         }}
+//       >
+//         <p
+//           className="mb-2 tracking-wide text-gray-100"
+//           style={{
+//             // color: "#ffffff",
+//             fontSize: "16px",
+//             fontWeight: "bold",
+//             textShadow: "0 1px 0 #f3f3f3",
+//             fontFamily: "'OpenSans-Regular', sans-serif",
+//             lineHeight: "1.3",
+//             // margin: "0px 10px",
+//             padding: "15px 0px",
+//             borderBottom: "1px solid #ffffff",
+//             // backgroundColor: "#727887",
+//           }}
+//         >
+//           Next Activity Unlocked
+//         </p>
+//         {/* <hr
+//           style={{
+//             borderTop: "1px solid #ffffff",
+//             opacity: 0.5,
+//           }}
+//         /> */}
+//         <h4
+//           className="mt-4 tracking-wide"
+//           style={{
+//             color: "#90EE90", // Green shade
+//             fontSize: "20px",
+//             fontWeight: "bold",
+//             textShadow: "0 1px 0 #f3f3f3",
+//             fontFamily: "'OpenSans-Regular', sans-serif",
+//           }}
+//         >
+//           Hurrah! 😄
+//         </h4>
+//         <p
+//           className="mt-4 text-gray-100"
+//           style={{
+//             // color: "#ffffff",
+//             fontSize: "22px",
+//             fontWeight: "bold",
+//             textShadow: "0 1px 0 #f3f3f3",
+//             fontFamily: "'OpenSans-Regular', sans-serif",
+//             lineHeight: "1.3",
+//             padding: "0px 20px",
+//           }}
+//         >
+//           You have unlocked the next activity.
+//         </p>
+//         <p
+//           className="mt-2 mb-4"
+//           style={{
+//             color: "#B0B0B0", // Gray shade
+//             fontSize: "13px",
+//             fontWeight: "normal",
+//             fontFamily: "'OpenSans-Regular', sans-serif",
+//             lineHeight: "1.3",
+//           }}
+//         >
+//           Redirecting to activities page in{" "}
+//           <span style={{ fontWeight: "bold" }}>{timer}</span> seconds.
+//         </p>
+//       </div>
+//     </div>
+//   );
+// };
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -201,6 +203,7 @@ const [showSubmit, setShowSubmit] = useState(
 );
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
+  const [scorePercentage, setScorePercentage] = useState<null | number>(null);
 
   useEffect(() => {
     if (user) {
@@ -231,6 +234,11 @@ const [showSubmit, setShowSubmit] = useState(
         setShowSubmit(false);
       } else if (event.data?.type === "scoreData") {
         // Handle score data from iframe
+        setScorePercentage(
+          (event.data.payload?.userAttemptScore /
+            subconcept?.subconceptMaxscore) *
+            100
+        );
         handlePostScore(event.data.payload); // Process score data
       } else if (event.data === "confirmSubmission") {
         setSuccessOverlay(true); // Show success overlay upon confirmation
@@ -310,6 +318,12 @@ const [showSubmit, setShowSubmit] = useState(
         return response.json();
       })
       .then((data) => {
+        console.log("payload?.userAttemptScore", payload?.userAttemptScore);
+        console.log(
+          "subconcept?.subconceptMaxscore",
+          subconcept?.subconceptMaxscore
+        );
+        setScorePercentage((payload?.userAttemptScore / subconcept?.subconceptMaxscore) * 100);
         console.log("Score submitted successfully:", data);
       })
       .catch((error) => {
@@ -324,10 +338,17 @@ const [showSubmit, setShowSubmit] = useState(
 
   return (
     <>
-      {successOverlay && (
+      {/* {successOverlay && (
         <SuccessOverlay
           countdown={3}
           onRedirect={() => navigate(`/subconcepts/${currentUnitId}`)}
+        />
+      )} */}
+      {successOverlay &&  (
+        <ActivityCompletionModal
+          countdownDuration={3}
+          onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
+          scorePercentage={scorePercentage}
         />
       )}
       {errorOverlay && (
@@ -353,7 +374,7 @@ const [showSubmit, setShowSubmit] = useState(
               allow="autoplay"
             />
           ) : (
-            <MediaContent subconceptData={subconcept} />
+            <MediaContent subconceptData={subconcept} currentUnitId={currentUnitId}/>
           )}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
