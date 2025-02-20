@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom"
 import Header from "../components/Header.tsx";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner.tsx";
 import { useState } from "react";
+import { SessionProvider } from "@/context/TimerContext.tsx";
 
 const RootLayout = () => {
 
@@ -13,6 +14,7 @@ const handleOnClose = () => {
 };
 
   return (
+    <SessionProvider>
     <div className="w-full md:flex">
       {cohortReminder && cohortReminder !== null && cohortReminder !== undefined &&
         <AnnouncementBanner isVisible={true} onClose={handleOnClose} message={cohortReminder}/>
@@ -24,6 +26,7 @@ const handleOnClose = () => {
         <Outlet />
       </section>
     </div>
+    </SessionProvider>
   );
 }
 
