@@ -73,7 +73,5 @@ public class StageReportDTO {
 		public void setCompletionStatus(String completionStatus) {
 			this.completionStatus = completionStatus;
 		}
-	    
-	    
 
 }

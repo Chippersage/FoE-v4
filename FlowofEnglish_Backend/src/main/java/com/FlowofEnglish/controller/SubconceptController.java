@@ -19,6 +19,10 @@ public class SubconceptController {
     @Autowired
     private SubconceptService subconceptService;
 
+    @GetMapping("/all")
+    public List<Subconcept> getAllSubconcept() {
+        return subconceptService.getAllSubconcept();
+    }
     @GetMapping
     public List<SubconceptResponseDTO> getAllSubconcepts() {
         return subconceptService.getAllSubconcepts();

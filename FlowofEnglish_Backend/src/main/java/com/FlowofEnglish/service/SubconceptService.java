@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface SubconceptService {
+	List<Subconcept> getAllSubconcept();
     List<SubconceptResponseDTO> getAllSubconcepts();
     Optional<Subconcept> findBySubconceptId(String subconceptId);
     Optional<SubconceptResponseDTO> getSubconceptById(String subconceptId);
