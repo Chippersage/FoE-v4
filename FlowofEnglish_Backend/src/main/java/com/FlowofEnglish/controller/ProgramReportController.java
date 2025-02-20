@@ -1,13 +1,11 @@
 package com.FlowofEnglish.controller;
 
 
-import com.FlowofEnglish.dto.CohortProgressDTO;
-import com.FlowofEnglish.dto.ProgramReportDTO;
-import com.FlowofEnglish.service.ProgramReportService;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.service.*;
 
 
 import org.springframework.http.HttpHeaders;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -21,6 +19,7 @@ public class ProgramReportController {
     @Autowired
     private ProgramReportService programReportService;
     
+   
   @GetMapping("/program/{userId}/{programId}")
   public ProgramReportDTO generateProgramReport(
         @PathVariable String userId,
@@ -57,4 +56,36 @@ public class ProgramReportController {
         }
     }
 
+//    /**
+//     * Get concept summaries for a specific stage
+//     * @param userId User ID
+//     * @param stageId Stage ID
+//     * @return List of concept summaries with their associated subconcepts
+//     */
+//    @GetMapping("/stage/{userId}/{stageId}/concepts")
+//    public ResponseEntity<List<ConceptSummaryDTO>> getConceptSummariesForStage(
+//            @PathVariable String userId,
+//            @PathVariable String stageId) {
+//        List<ConceptSummaryDTO> conceptSummaries = programReportService.getConceptSummariesForStage(userId, stageId);
+//        return ResponseEntity.ok(conceptSummaries);
+//    }
+//    
+//    /**
+//     * Get concept summaries for a specific stage with detailed progress
+//     * @param userId User ID
+//     * @param stageId Stage ID
+//     * @param includeProgress Include detailed progress information
+//     * @return List of concept summaries
+//     */
+//    @GetMapping("/stage/{userId}/{stageId}/concepts/progress")
+//    public ResponseEntity<List<ConceptSummaryDTO>> getConceptSummariesWithProgress(
+//            @PathVariable String userId,
+//            @PathVariable String stageId,
+//            @RequestParam(defaultValue = "false") boolean includeProgress) {
+//        List<ConceptSummaryDTO> conceptSummaries = programReportService.getConceptSummariesForStage(userId, stageId);
+//        
+//        // You can add additional processing here if includeProgress is true
+//        
+//        return ResponseEntity.ok(conceptSummaries);
+//    }
 }
