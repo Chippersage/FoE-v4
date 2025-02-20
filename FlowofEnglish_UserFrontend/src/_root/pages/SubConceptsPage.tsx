@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
+  Clock,
   // BookOpen,
   // Mic,
   // PlayCircle,
@@ -43,6 +44,17 @@ import Riddle from "@/components/activityIcons/Riddle";
 import Dictation from "@/components/activityIcons/Dictation";
 import Assignment from "@/components/activityIcons/Assignment";
 import Assessment from "@/components/activityIcons/Assessment";
+import RealWorld from "@/components/activityIcons/RealWorld";
+import Literature from "@/components/activityIcons/Literature";
+import DialogueWriting from "@/components/activityIcons/DialogueWriting";
+import GenerateIdeaWords from "@/components/activityIcons/GenerateIdeaWords";
+import HowSentencesChange from "@/components/activityIcons/HowSentencesChange";
+import MainIdea from "@/components/activityIcons/MainIdea";
+import StoryCompletion from "@/components/activityIcons/StoryCompletion";
+import TextFromImage from "@/components/activityIcons/TextFromImage";
+import TextFromText from "@/components/activityIcons/TextFromText";
+
+import { useSession } from "@/context/TimerContext";
 
 interface Subconcept {
   subconceptId: string;
@@ -77,6 +89,15 @@ const iconMap = {
   riddles: Riddle,
   dictation: Dictation,
   vocab: Spelling,
+  realworld: RealWorld,
+  literature: Literature,
+  dialogue_writing: DialogueWriting,
+  generate_idea_words: GenerateIdeaWords,
+  how_sentences_change: HowSentencesChange,
+  main_idea: MainIdea,
+  story_completion: StoryCompletion,
+  text_from_picture: TextFromImage,
+  text_from_text: TextFromText,
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -126,6 +147,8 @@ export default function SubConceptsPage() {
   const selectedProgramId = localStorage.getItem("selectedProgramId");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [pathData, setPathData] = useState(null);
+
+  const { formattedElapsedTime } = useSession();
 
   const bounceAnimation = {
     y: [0, -20, 0],
@@ -486,7 +509,15 @@ export default function SubConceptsPage() {
             {unitDescription || "Loading description..."}
           </div>
         </div>
-
+        {/* Session Time */}
+        {formattedElapsedTime &&
+        <div className="fixed z-[10] top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
+          <Clock className="h-4 w-4 text-green-600" />
+          <span className="font-medium text-green-600 tabular-nums">
+            Session time: {formattedElapsedTime}
+          </span>
+        </div>
+        }
         {/* Scrollable SVG Container */}
         {pathData && (
           <div className="w-full min-h-full relative flex items-center justify-center ">
