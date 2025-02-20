@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
 import "../Styles/Header2.css";
+import { useSession } from "@/context/TimerContext";
 // Import the logout image
 
 const Header2 = () => {
   const { user } = useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const { resetSession } = useSession();
 
 
   const handleLogout = async () => {
@@ -36,6 +39,7 @@ const Header2 = () => {
       localStorage.removeItem("isProgramCompletionAlreadyCelebrated");
       localStorage.removeItem("userData");
       localStorage.removeItem("userId");
+      resetSession()
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
       navigate("/sign-in");
