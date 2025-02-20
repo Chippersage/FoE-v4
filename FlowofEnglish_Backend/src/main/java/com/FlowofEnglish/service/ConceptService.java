@@ -1,9 +1,9 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.Concept;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.dto.*;
+import java.util.*;
+
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,4 +14,11 @@ public interface ConceptService {
     Concept updateConcept(String conceptId, Concept concept);
     void deleteConcept(String conceptId);
     Map<String, Object> bulkUploadConcepts(MultipartFile file);
+    // New methods for concept mapping
+   // Map<ConceptDTO, List<SubconceptReportStageDTO >> groupSubconceptsByConcept(StageReportStageDTO stageReport);
+    Map<ConceptDTO, List<SubconceptReportStageDTO>> groupSubconceptsByConcept(
+            StageReportStageDTO stageReport,
+            Map<String, ConceptDTO> subconceptConceptMap);
+    List<ConceptSummaryDTO> generateConceptSummaries(Map<ConceptDTO, List<SubconceptReportDTO>> conceptMapping);
+    //List<ConceptSummaryDTO> getConceptSummariesForStage(String userId, String stageId);
 }

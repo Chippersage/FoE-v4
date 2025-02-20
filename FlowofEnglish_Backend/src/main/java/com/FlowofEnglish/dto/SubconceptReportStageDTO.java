@@ -1,10 +1,9 @@
 package com.FlowofEnglish.dto;
 
-
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public class SubconceptReportDTO {
+public class SubconceptReportStageDTO {
 	private String subconceptId;
     private String subconceptDesc;
     private boolean isCompleted;
@@ -13,12 +12,6 @@ public class SubconceptReportDTO {
     private OffsetDateTime lastAttemptDate;
     private String completionStatus;
     private List<AttemptDTO> attempts;
-    
-    private ConceptDTO concept;
- //   private ContentDTO content;
-    
- // Getters and Setters
-    
 	public String getSubconceptId() {
 		return subconceptId;
 	}
@@ -67,17 +60,6 @@ public class SubconceptReportDTO {
 	public void setAttempts(List<AttemptDTO> attempts) {
 		this.attempts = attempts;
 	}
-	public ConceptDTO getConcept() {
-		return concept;
-	}
-	public void setConcept(ConceptDTO concept) {
-		this.concept = concept;
-	}
-//	public ContentDTO getContent() {
-//		return content;
-//	}
-//	public void setContent(ContentDTO content) {
-//		this.content = content;
-//	}
+    
 
 }
