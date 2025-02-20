@@ -12,6 +12,8 @@ import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
 import KidFriendlyModal from "./modals/CongratulatoryModal";
 import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import Leaderboard from "./Leaderboard";
+import { Clock } from "lucide-react";
+import { useSession } from "@/context/TimerContext";
 
 function Dashboard() {
   const { user } = useUserContext();
@@ -29,6 +31,7 @@ function Dashboard() {
   const [completedStagesCount, setCompletedStagesCount] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [celebratedProgramName, setCelebratedProgramName] = useState("");
+  const { formattedElapsedTime } = useSession();
 
   const getProgramInfoByProgramId = async () => {
     if (user && user.userId && user.program && user.program.programId) {
@@ -197,7 +200,9 @@ function Dashboard() {
       {programInfo && programInfo.stages ? (
         <div className="md:w-[50%] w-full">
           {/* @ts-ignore */}
-          <Stages stages={programInfo?.stages} programCompletionStatus={programInfo?.programCompletionStatus}
+          <Stages
+            stages={programInfo?.stages}
+            programCompletionStatus={programInfo?.programCompletionStatus}
           />
         </div>
       ) : (
@@ -207,9 +212,21 @@ function Dashboard() {
       <div className="w-full md:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
           <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
-            <h3 className="text-xl font-semibold font-openSans">
-              Your Progress
-            </h3>
+            <div className="flex justify-between py-2">
+              <h3 className="text-xl font-semibold font-openSans">
+                Your Progress
+              </h3>
+              {formattedElapsedTime &&
+              <div className="flex items-center gap-2 rounded-full bg-green-50 px-2">
+                <Clock className="h-4 w-4 text-green-600" />
+                
+                  <span className="font-medium text-green-600 tabular-nums">
+                    Session time: {formattedElapsedTime}
+                  </span>
+                
+              </div>
+              } 
+            </div>
             <UserProgressBar userProgress={userProgress} />
             <div className="flex justify-between items-center mt-2">
               <p className="text-sm font-bold font-openSans">
