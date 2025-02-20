@@ -38,6 +38,10 @@ public class SubconceptServiceImpl implements SubconceptService {
 
    
     @Override
+    public List<Subconcept> getAllSubconcept() {
+        return subconceptRepository.findAll();
+    }
+    @Override
     public List<SubconceptResponseDTO> getAllSubconcepts() {
         return subconceptRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
