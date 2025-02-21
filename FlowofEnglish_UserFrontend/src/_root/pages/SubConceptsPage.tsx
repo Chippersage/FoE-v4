@@ -55,6 +55,7 @@ import TextFromImage from "@/components/activityIcons/TextFromImage";
 import TextFromText from "@/components/activityIcons/TextFromText";
 
 import { useSession } from "@/context/TimerContext";
+import Default from "@/components/activityIcons/Default";
 
 interface Subconcept {
   subconceptId: string;
@@ -69,6 +70,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
+  default: Default,
   html: PenNib,
   pdf: Book,
   video: Camera,
@@ -98,6 +100,7 @@ const iconMap = {
   story_completion: StoryCompletion,
   text_from_picture: TextFromImage,
   text_from_text: TextFromText,
+  
 
   passage_read: Read,
   passage_jw: JumbledWords,
