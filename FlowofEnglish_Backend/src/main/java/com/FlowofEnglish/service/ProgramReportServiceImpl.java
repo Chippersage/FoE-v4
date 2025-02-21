@@ -54,6 +54,8 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     @Autowired
     private UserAttemptsRepository userAttemptsRepository;
     
+   
+    
     public UserDTO getUserInfo(String userId) {
 	    User user = userRepository.findById(userId)
 	        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -66,7 +68,8 @@ public class ProgramReportServiceImpl implements ProgramReportService {
 
 	private static final Logger log = LoggerFactory.getLogger(ProgramReportServiceImpl.class);
 
-    
+	
+	
     @Override
     public ProgramReportDTO generateProgramReport(String userId, String programId) {
         log.info("Generating program report for user {} and program {}", userId, programId);
@@ -249,7 +252,39 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     .orElse(0));
                 subconceptReport.setLastAttemptDate(attempts.get(attempts.size() - 1).getEndTimestamp());
             }
+         // Map the Concept data from the subconcept
+            if (mapping.getSubconcept().getConcept() != null) {
+                ConceptDTO conceptDTO = new ConceptDTO();
+                conceptDTO.setConceptId(mapping.getSubconcept().getConcept().getConceptId());
+                conceptDTO.setConceptName(mapping.getSubconcept().getConcept().getConceptName());
+                conceptDTO.setConceptDesc(mapping.getSubconcept().getConcept().getConceptDesc());
+                conceptDTO.setConceptSkill1(mapping.getSubconcept().getConcept().getConceptSkill1());
+                conceptDTO.setConceptSkill2(mapping.getSubconcept().getConcept().getConceptSkill2());
+             // If the concept itself has a content object, map it too
+                if (mapping.getSubconcept().getConcept().getContent() != null) {
+                    ContentDTO conceptContentDTO = new ContentDTO();
+                    conceptContentDTO.setContentId(mapping.getSubconcept().getConcept().getContent().getContentId());
+                    conceptContentDTO.setContentName(mapping.getSubconcept().getConcept().getContent().getContentName());
+                    conceptContentDTO.setContentDesc(mapping.getSubconcept().getConcept().getContent().getContentDesc());
+                    conceptContentDTO.setContentOrigin(mapping.getSubconcept().getConcept().getContent().getContentOrigin());
+                    conceptContentDTO.setContentTopic(mapping.getSubconcept().getConcept().getContent().getContentTopic());
+                    conceptDTO.setContent(conceptContentDTO);
+                }
+                subconceptReport.setConcept(conceptDTO);
+            }
             
+//            // Map the Content data from the subconcept
+//            if (mapping.getSubconcept().getContent() != null) {
+//                ContentDTO contentDTO = new ContentDTO();
+//                contentDTO.setContentId(mapping.getSubconcept().getContent().getContentId());
+//                contentDTO.setContentName(mapping.getSubconcept().getContent().getContentName());
+//                contentDTO.setContentDesc(mapping.getSubconcept().getContent().getContentDesc());
+//                contentDTO.setContentOrigin(mapping.getSubconcept().getContent().getContentOrigin());
+//                contentDTO.setContentTopic(mapping.getSubconcept().getContent().getContentTopic());
+//                subconceptReport.setContent(contentDTO);
+//            }
+            
+            // Add the mapped DTO to your list
             subconceptReports.add(subconceptReport);
         }
         
@@ -518,7 +553,4 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         
         return cohortProgress;
     }
-
-
-
 }
