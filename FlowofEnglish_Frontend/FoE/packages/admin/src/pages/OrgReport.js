@@ -3,9 +3,55 @@ import { useState, useEffect } from 'react';
 import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import LearnersProgressChart from '../components/LearnersProgressChart';
-import SingleLearnerProgressChart from '../components/SingleLearnerProgressChart';
+import LineProgressChart from '../components/LineProgressChart';
+// import SingleLearnerProgressChart from '../components/SingleLearnerProgressChart';
 
 const apiUrl = process.env.REACT_APP_API_URL;
+
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500" />
+  </div>
+);
+
+// Define table styles
+const tableStyles = {
+  tableContainer: {
+    width: '100%',
+    overflowX: 'auto'
+  },
+  table: {
+    fontSize: '14px',
+    color: '#333333',
+    width: '100%',
+    borderWidth: '1px',
+    borderColor: '#87ceeb',
+    borderCollapse: 'collapse'
+  },
+  tableHeader: {
+    fontSize: '18px',
+    backgroundColor: '#87ceeb',
+    borderWidth: '1px',
+    padding: '8px',
+    borderStyle: 'solid',
+    borderColor: '#87ceeb',
+    textAlign: 'left'
+  },
+  tableRow: {
+    backgroundColor: '#ffffff',
+    '&:hover': {
+      backgroundColor: '#e0ffff'
+    }
+  },
+  tableCell: {
+    fontSize: '14px',
+    borderWidth: '1px',
+    padding: '8px',
+    borderStyle: 'solid',
+    borderColor: '#87ceeb'
+  }
+};
 
 const ProgressDashboard = () => {
   const [programsWithCohorts, setProgramsWithCohorts] = useState([]);
@@ -14,12 +60,15 @@ const ProgressDashboard = () => {
   const [selectedProgramId, setSelectedProgramId] = useState('');
   const [selectedCohortId, setSelectedCohortId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('All Learners');
+  const [selectedVisualization, setSelectedVisualization] = useState('barchart');
   const [progressData, setProgressData] = useState(null);
   const [userSpecificData, setUserSpecificData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { id: orgId } = useParams();
 
   // Fetch programs and cohorts
   const fetchOrgProgramsWithCohorts = async (orgId) => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/organizations/${orgId}/programs-with-cohorts`);
       const programs = response.data.programs;
@@ -35,11 +84,14 @@ const ProgressDashboard = () => {
       fetchUsers(defaultProgram.programId, defaultCohort.cohortId);
     } catch (error) {
       console.error('Error fetching programs with cohorts:', error);
+    }finally {
+      setIsLoading(false);
     }
   };
 
   // Fetch users for selected program and cohort
   const fetchUsers = async (programId, cohortId) => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/reports/program/${programId}/cohort/${cohortId}/progress`);
       const { users } = response.data;
@@ -47,6 +99,9 @@ const ProgressDashboard = () => {
       setProgressData(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,6 +126,169 @@ const ProgressDashboard = () => {
     setSelectedUserId('All Learners');
   };
 
+  // Table view component
+  const ProgressDataTable = ({ data }) => {
+    const [sortConfig, setSortConfig] = useState({ key: 'leaderboardScore', direction: 'desc' });
+    const [hoveredHeader, setHoveredHeader] = useState(null);
+
+    if (!data || !data.users || data.users.length === 0) {
+      return <Typography variant="body1">No data available</Typography>;
+    }
+// Enhanced table styles with sorting indicators
+  const enhancedTableStyles = {
+    ...tableStyles,
+    tableHeader: {
+      ...tableStyles.tableHeader,
+      cursor: 'pointer',
+      position: 'relative',
+      userSelect: 'none',
+      transition: 'background-color 0.2s ease',
+      
+    },
+    headerContent: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '8px',
+    },
+    sortIndicator: {
+      marginLeft: '8px',
+      fontSize: '14px',
+      opacity: 0.8,
+    },
+    sortActive: {
+      backgroundColor: '#5fb2d9',
+    },
+    headerHover: {
+      backgroundColor: '#a8e1fa',
+    }
+  };
+
+    // Sorting function
+  const sortedUsers = [...data.users]
+    .filter(user => user.userId !== 'All Learners')
+    .sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (typeof aValue === 'string') {
+        return sortConfig.direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      return sortConfig.direction === 'asc' 
+        ? aValue - bValue 
+        : bValue - aValue;
+    });
+ // Column configuration
+ const columns = [
+  { key: 'userId', label: 'Learner ID', sortable: true },
+  { key: 'userName', label: 'Learner Name', sortable: true },
+  { key: 'totalStages', label: 'Total Stages', sortable: true },
+  { key: 'completedStages', label: 'Completed Stages', sortable: true },
+  { key: 'totalUnits', label: 'Total Units', sortable: true },
+  { key: 'completedUnits', label: 'Completed Units', sortable: true },
+  { key: 'totalSubconcepts', label: 'Total Subconcepts', sortable: true },
+  { key: 'completedSubconcepts', label: 'Completed Subconcepts', sortable: true },
+  { key: 'leaderboardScore', label: 'Leaderboard Score', sortable: true }
+];
+
+// Handle sorting
+const handleSort = (key) => {
+  setSortConfig((prevConfig) => ({
+    key,
+    direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc',
+  }));
+};
+
+// Get sort indicator
+const getSortIndicator = (key) => {
+  if (sortConfig.key !== key) return '↕';
+  return sortConfig.direction === 'asc' ? '↑' : '↓';
+};
+
+// Get header style
+const getHeaderStyle = (key) => {
+  let style = { ...enhancedTableStyles.tableHeader };
+  
+  if (sortConfig.key === key) {
+    style = { ...style, ...enhancedTableStyles.sortActive };
+  }
+  
+  if (hoveredHeader === key) {
+    style = { ...style, ...enhancedTableStyles.headerHover };
+  }
+  
+  return style;
+};
+
+    // Function to handle row hover effect
+    const handleRowHover = (event) => {
+      event.currentTarget.style.backgroundColor = '#e0ffff';
+    };
+    
+    const handleRowLeave = (event) => {
+      event.currentTarget.style.backgroundColor = '#ffffff';
+    };
+
+    return (
+      <div style={tableStyles.tableContainer}>
+        <table style={tableStyles.table} border="1">
+          <thead>
+            <tr>
+              {columns.map(column => (
+                <th
+                  key={column.key}
+                  onClick={() => column.sortable && handleSort(column.key)}
+                  onMouseEnter={() => setHoveredHeader(column.key)}
+                  onMouseLeave={() => setHoveredHeader(null)}
+                  style={getHeaderStyle(column.key)}
+                  title={column.sortable ? `Sort by ${column.label}` : ''}
+                >
+                  <div style={enhancedTableStyles.headerContent}>
+                    {column.label}
+                    {column.sortable && (
+                      <span style={enhancedTableStyles.sortIndicator}>
+                        {getSortIndicator(column.key)}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedUsers.map((user, index) => (
+              <tr
+                key={`user-${user.userId}-${index}`}
+                style={tableStyles.tableRow}
+                onMouseEnter={handleRowHover}
+                onMouseLeave={handleRowLeave}
+              >
+                {columns.map(column => (
+                  <td key={column.key} style={tableStyles.tableCell}>
+                    {column.key === 'leaderboardScore' 
+                      ? user[column.key].toLocaleString()
+                      : user[column.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Fetch programs with cohorts on component mount
+  useEffect(() => {
+    if (!orgId) {
+      console.error('Organization ID not found.');
+      return;
+    }
+    fetchOrgProgramsWithCohorts(orgId);
+  }, [orgId]);
+
   // Fetch user-specific data when a user is selected
   useEffect(() => {
     if (selectedUserId !== 'All Learners') {
@@ -83,15 +301,6 @@ const ProgressDashboard = () => {
     }
   }, [selectedUserId, users]);
 
-  // Fetch programs with cohorts on component mount
-  useEffect(() => {
-    if (!orgId) {
-      console.error('Organization ID not found.');
-      return;
-    }
-    fetchOrgProgramsWithCohorts(orgId);
-  }, [orgId]);
-
   return (
     <Container maxWidth="lg" sx={{ marginTop: 0 }}>
       {/* Filter Section */}
@@ -100,23 +309,26 @@ const ProgressDashboard = () => {
           Filter Reports
         </Typography>
         <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
-          <FormControl fullWidth sx={{
-            '& .MuiInputLabel-root': {
-              backgroundColor: 'white', // Add background to prevent overlap
-              padding: '0 4px', // Add some padding for better appearance
-              transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
-            },
-            '& .MuiInputLabel-shrink': {
-              transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                top: 0, // Ensure the outline is aligned properly
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiInputLabel-root': {
+                backgroundColor: 'white',
+                padding: '0 4px',
+                transform: 'translate(14px, 16px) scale(1)',
               },
-            },
-          }}>
+              '& .MuiInputLabel-shrink': {
+                transform: 'translate(14px, -6px) scale(0.75)',
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  top: 0,
+                },
+              },
+            }}
+          >
             <InputLabel>Select Program</InputLabel>
-            <Select value={selectedProgramId} onChange={(e) => handleProgramChange(e.target.value)}>
+            <Select value={selectedProgramId} onChange={(e) => handleProgramChange(e.target.value)} disabled={isLoading}>
               {programsWithCohorts.map((program) => (
                 <MenuItem key={program.programId} value={program.programId}>
                   {program.programName}
@@ -125,23 +337,26 @@ const ProgressDashboard = () => {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{
-            '& .MuiInputLabel-root': {
-              backgroundColor: 'white', // Add background to prevent overlap
-              padding: '0 4px', // Add some padding for better appearance
-              transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
-            },
-            '& .MuiInputLabel-shrink': {
-              transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                top: 0, // Ensure the outline is aligned properly
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiInputLabel-root': {
+                backgroundColor: 'white',
+                padding: '0 4px',
+                transform: 'translate(14px, 16px) scale(1)',
               },
-            },
-          }}>
+              '& .MuiInputLabel-shrink': {
+                transform: 'translate(14px, -6px) scale(0.75)',
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  top: 0,
+                },
+              },
+            }}
+          >
             <InputLabel>Select Cohort</InputLabel>
-            <Select value={selectedCohortId} onChange={(e) => handleCohortChange(e.target.value)}>
+            <Select value={selectedCohortId} onChange={(e) => handleCohortChange(e.target.value)} disabled={isLoading}>
               {cohorts.map((cohort) => (
                 <MenuItem key={cohort.cohortId} value={cohort.cohortId}>
                   {cohort.cohortName}
@@ -150,43 +365,53 @@ const ProgressDashboard = () => {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{
-            '& .MuiInputLabel-root': {
-              backgroundColor: 'white', // Add background to prevent overlap
-              padding: '0 4px', // Add some padding for better appearance
-              transform: 'translate(14px, 16px) scale(1)', // Adjust for when not focused
-            },
-            '& .MuiInputLabel-shrink': {
-              transform: 'translate(14px, -6px) scale(0.75)', // Adjust for when focused/shrunk
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                top: 0, // Ensure the outline is aligned properly
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiInputLabel-root': {
+                backgroundColor: 'white',
+                padding: '0 4px',
+                transform: 'translate(14px, 16px) scale(1)',
               },
-            },
-          }}>
-            <InputLabel>Select Learner</InputLabel>
-            <Select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}>
-              {users.map((user) => (
-                <MenuItem key={user.userId} value={user.userId}>
-                  {user.userName}
-                </MenuItem>
-              ))}
+              '& .MuiInputLabel-shrink': {
+                transform: 'translate(14px, -6px) scale(0.75)',
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  top: 0,
+                },
+              },
+            }}
+          >
+           <InputLabel>Select Visualization</InputLabel>
+            <Select 
+              value={selectedVisualization} 
+              onChange={(e) => setSelectedVisualization(e.target.value)}
+            >
+              <MenuItem value="barchart">Bar Chart</MenuItem>
+              <MenuItem value="table">Table View</MenuItem>
+              <MenuItem value="linechart">Line Chart</MenuItem>
             </Select>
           </FormControl>
         </div>
       </Card>
 
-      {/* Charts Section */}
-      {progressData && (
-       // <Card sx={{ padding: 3, marginBottom: 3 }}>
-          <LearnersProgressChart data={progressData} selectedUserId={selectedUserId} />
-       //   </Card>
-        )}
-      {userSpecificData && (
-        //  <Card sx={{ padding: 3, marginBottom: 3 }}>
-          <SingleLearnerProgressChart data={userSpecificData} />
-         // </Card>
+ {/* Display loading spinner when data is being fetched */}
+ {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        // Display either the chart or table based on selection
+        progressData && (
+          <Card sx={{ padding: 3, marginBottom: 3 }}>
+            {selectedVisualization === 'barchart' ? (
+              <LearnersProgressChart data={progressData} programId={selectedProgramId} selectedUserId={selectedUserId} />
+            ) : selectedVisualization === 'linechart' ? (
+              <LineProgressChart data={progressData} />
+            ) : (
+              <ProgressDataTable data={progressData} />
+            )}
+          </Card>
+        )
       )}
     </Container>
   );
