@@ -1,10 +1,9 @@
 package com.FlowofEnglish.service;
 
 
-import com.FlowofEnglish.model.Concept;
-import com.FlowofEnglish.model.ContentMaster;
-import com.FlowofEnglish.repository.ConceptRepository;
-import com.FlowofEnglish.repository.ContentMasterRepository;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
+import com.FlowofEnglish.dto.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,14 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ConceptServiceImpl implements ConceptService {
@@ -137,4 +129,75 @@ public class ConceptServiceImpl implements ConceptService {
     public void deleteConcept(String conceptId) {
         conceptRepository.deleteById(conceptId);
     }
+    
+    /**
+     * Groups subconcepts by their parent concepts for a given stage
+     * @param stageReport The stage report containing units and their subconcepts
+     * @return Map of concepts to their associated subconcepts
+     */
+    @Override
+    public Map<ConceptDTO, List<SubconceptReportStageDTO>> groupSubconceptsByConcept(
+            StageReportStageDTO stageReport,
+            Map<String, ConceptDTO> subconceptConceptMap) {
+
+        Map<ConceptDTO, List<SubconceptReportStageDTO>> conceptMapping = new HashMap<>();
+
+        // Process each unit in the stage
+        for (UnitReportStageDTO unit : stageReport.getUnits()) {
+            // Process each subconcept in the unit
+            for (SubconceptReportStageDTO subconcept : unit.getSubconcepts()) {
+                // Retrieve the associated concept from the lookup using the subconcept ID.
+                ConceptDTO concept = subconceptConceptMap.get(subconcept.getSubconceptId());
+                if (concept == null) {
+                    // Skip if no concept is associated with this subconcept.
+                    continue;
+                }
+                // Group subconcepts under their concept.
+                conceptMapping.computeIfAbsent(concept, k -> new ArrayList<>()).add(subconcept);
+            }
+        }
+
+        return conceptMapping;
+    }
+
+    /**
+     * Creates a summary of concepts and their subconcepts with progress metrics
+     * @param conceptMapping Map of concepts to their subconcepts
+     * @return List of concept summaries with progress information
+     */
+    @Override
+    public List<ConceptSummaryDTO> generateConceptSummaries(Map<ConceptDTO, List<SubconceptReportDTO>> conceptMapping) {
+        List<ConceptSummaryDTO> summaries = new ArrayList<>();
+        
+        for (Map.Entry<ConceptDTO, List<SubconceptReportDTO>> entry : conceptMapping.entrySet()) {
+            ConceptSummaryDTO summary = new ConceptSummaryDTO();
+            ConceptDTO concept = entry.getKey();
+            List<SubconceptReportDTO> subconcepts = entry.getValue();
+            
+            summary.setConceptId(concept.getConceptId());
+            summary.setConceptName(concept.getConceptName());
+            summary.setConceptDesc(concept.getConceptDesc());
+            summary.setConceptSkills(Arrays.asList(concept.getConceptSkill1(), concept.getConceptSkill2()));
+            summary.setContent(concept.getContent());
+            summary.setTotalSubconcepts(subconcepts.size());
+            summary.setCompletedSubconcepts((int) subconcepts.stream()
+                .filter(SubconceptReportDTO::isCompleted)
+                .count());
+            summary.setAverageScore(calculateAverageScore(subconcepts));
+            summary.setSubconcepts(subconcepts);
+            
+            summaries.add(summary);
+        }
+        
+        return summaries;
+    }
+    
+    private double calculateAverageScore(List<SubconceptReportDTO> subconcepts) {
+        return subconcepts.stream()
+            .mapToDouble(SubconceptReportDTO::getHighestScore)
+            .filter(score -> score > 0)
+            .average()
+            .orElse(0.0);
+    }
+
 }
