@@ -1,13 +1,14 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.model.Program;
-import com.FlowofEnglish.service.ProgramService;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.service.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,9 @@ public class ProgramController {
 
     @Autowired
     private ProgramService programService;
+    
+    @Autowired
+    private ProgramConceptsMappingService programConceptsMappingService;
 
     @GetMapping
     public List<Program> getAllPrograms() {
@@ -67,4 +71,28 @@ public class ProgramController {
         programService.deletePrograms(ids);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/{programId}/concepts")
+    public ResponseEntity<Map<Concept, List<Subconcept>>> getConceptsAndSubconcepts(@PathVariable String programId) {
+        Map<Concept, List<Subconcept>> conceptSubconceptMap = programConceptsMappingService.getConceptsAndSubconceptsByProgram(programId);
+        return ResponseEntity.ok(conceptSubconceptMap);
+    }
+
+    @GetMapping("/{programId}/concepts/list")
+    public ResponseEntity<Map<String, Object>> getAllConceptsInProgram(@PathVariable String programId) {
+        List<Concept> concepts = programConceptsMappingService.getAllConceptsInProgram(programId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("count", concepts.size());
+        response.put("concepts", concepts);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{programId}/concepts/progress/{userId}")
+    public ResponseEntity<Map<String, Object>> getConceptsAndProgress(
+            @PathVariable String programId, 
+            @PathVariable String userId) {
+        Map<String, Object> response = programConceptsMappingService.getConceptsAndUserProgress(programId, userId);
+        return ResponseEntity.ok(response);
+    }
+
 }

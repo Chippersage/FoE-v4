@@ -4,7 +4,7 @@ import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem 
 import { useParams } from 'react-router-dom';
 import LearnersProgressChart from '../components/LearnersProgressChart';
 import LineProgressChart from '../components/LineProgressChart';
-// import SingleLearnerProgressChart from '../components/SingleLearnerProgressChart';
+import ProgressDataTable from '../components/TableView';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -15,43 +15,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Define table styles
-const tableStyles = {
-  tableContainer: {
-    width: '100%',
-    overflowX: 'auto'
-  },
-  table: {
-    fontSize: '14px',
-    color: '#333333',
-    width: '100%',
-    borderWidth: '1px',
-    borderColor: '#87ceeb',
-    borderCollapse: 'collapse'
-  },
-  tableHeader: {
-    fontSize: '18px',
-    backgroundColor: '#87ceeb',
-    borderWidth: '1px',
-    padding: '8px',
-    borderStyle: 'solid',
-    borderColor: '#87ceeb',
-    textAlign: 'left'
-  },
-  tableRow: {
-    backgroundColor: '#ffffff',
-    '&:hover': {
-      backgroundColor: '#e0ffff'
-    }
-  },
-  tableCell: {
-    fontSize: '14px',
-    borderWidth: '1px',
-    padding: '8px',
-    borderStyle: 'solid',
-    borderColor: '#87ceeb'
-  }
-};
+
 
 const ProgressDashboard = () => {
   const [programsWithCohorts, setProgramsWithCohorts] = useState([]);
@@ -126,159 +90,6 @@ const ProgressDashboard = () => {
     setSelectedUserId('All Learners');
   };
 
-  // Table view component
-  const ProgressDataTable = ({ data }) => {
-    const [sortConfig, setSortConfig] = useState({ key: 'leaderboardScore', direction: 'desc' });
-    const [hoveredHeader, setHoveredHeader] = useState(null);
-
-    if (!data || !data.users || data.users.length === 0) {
-      return <Typography variant="body1">No data available</Typography>;
-    }
-// Enhanced table styles with sorting indicators
-  const enhancedTableStyles = {
-    ...tableStyles,
-    tableHeader: {
-      ...tableStyles.tableHeader,
-      cursor: 'pointer',
-      position: 'relative',
-      userSelect: 'none',
-      transition: 'background-color 0.2s ease',
-      
-    },
-    headerContent: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '8px',
-    },
-    sortIndicator: {
-      marginLeft: '8px',
-      fontSize: '14px',
-      opacity: 0.8,
-    },
-    sortActive: {
-      backgroundColor: '#5fb2d9',
-    },
-    headerHover: {
-      backgroundColor: '#a8e1fa',
-    }
-  };
-
-    // Sorting function
-  const sortedUsers = [...data.users]
-    .filter(user => user.userId !== 'All Learners')
-    .sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-      
-      if (typeof aValue === 'string') {
-        return sortConfig.direction === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      return sortConfig.direction === 'asc' 
-        ? aValue - bValue 
-        : bValue - aValue;
-    });
- // Column configuration
- const columns = [
-  { key: 'userId', label: 'Learner ID', sortable: true },
-  { key: 'userName', label: 'Learner Name', sortable: true },
-  { key: 'totalStages', label: 'Total Stages', sortable: true },
-  { key: 'completedStages', label: 'Completed Stages', sortable: true },
-  { key: 'totalUnits', label: 'Total Units', sortable: true },
-  { key: 'completedUnits', label: 'Completed Units', sortable: true },
-  { key: 'totalSubconcepts', label: 'Total Subconcepts', sortable: true },
-  { key: 'completedSubconcepts', label: 'Completed Subconcepts', sortable: true },
-  { key: 'leaderboardScore', label: 'Leaderboard Score', sortable: true }
-];
-
-// Handle sorting
-const handleSort = (key) => {
-  setSortConfig((prevConfig) => ({
-    key,
-    direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc',
-  }));
-};
-
-// Get sort indicator
-const getSortIndicator = (key) => {
-  if (sortConfig.key !== key) return '↕';
-  return sortConfig.direction === 'asc' ? '↑' : '↓';
-};
-
-// Get header style
-const getHeaderStyle = (key) => {
-  let style = { ...enhancedTableStyles.tableHeader };
-  
-  if (sortConfig.key === key) {
-    style = { ...style, ...enhancedTableStyles.sortActive };
-  }
-  
-  if (hoveredHeader === key) {
-    style = { ...style, ...enhancedTableStyles.headerHover };
-  }
-  
-  return style;
-};
-
-    // Function to handle row hover effect
-    const handleRowHover = (event) => {
-      event.currentTarget.style.backgroundColor = '#e0ffff';
-    };
-    
-    const handleRowLeave = (event) => {
-      event.currentTarget.style.backgroundColor = '#ffffff';
-    };
-
-    return (
-      <div style={tableStyles.tableContainer}>
-        <table style={tableStyles.table} border="1">
-          <thead>
-            <tr>
-              {columns.map(column => (
-                <th
-                  key={column.key}
-                  onClick={() => column.sortable && handleSort(column.key)}
-                  onMouseEnter={() => setHoveredHeader(column.key)}
-                  onMouseLeave={() => setHoveredHeader(null)}
-                  style={getHeaderStyle(column.key)}
-                  title={column.sortable ? `Sort by ${column.label}` : ''}
-                >
-                  <div style={enhancedTableStyles.headerContent}>
-                    {column.label}
-                    {column.sortable && (
-                      <span style={enhancedTableStyles.sortIndicator}>
-                        {getSortIndicator(column.key)}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedUsers.map((user, index) => (
-              <tr
-                key={`user-${user.userId}-${index}`}
-                style={tableStyles.tableRow}
-                onMouseEnter={handleRowHover}
-                onMouseLeave={handleRowLeave}
-              >
-                {columns.map(column => (
-                  <td key={column.key} style={tableStyles.tableCell}>
-                    {column.key === 'leaderboardScore' 
-                      ? user[column.key].toLocaleString()
-                      : user[column.key]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
 
   // Fetch programs with cohorts on component mount
   useEffect(() => {
@@ -383,7 +194,7 @@ const getHeaderStyle = (key) => {
               },
             }}
           >
-           <InputLabel>Select Visualization</InputLabel>
+          <InputLabel>Select Visualization</InputLabel>
             <Select 
               value={selectedVisualization} 
               onChange={(e) => setSelectedVisualization(e.target.value)}

@@ -86,14 +86,14 @@ const LineProgressChart = ({ data }) => {
               dot={{ r: 4 }}
               activeDot={{ r: 8 }}
             />
-            <Line
+            {/* <Line
               type="monotone"
               dataKey="leaderboardScore"
               stroke="#e8c3b9"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 8 }}
-            />
+            /> */}
           </LineChart>
         </ResponsiveContainer>
       </div>
