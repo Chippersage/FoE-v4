@@ -20,4 +20,10 @@ public interface UserAttemptsRepository extends JpaRepository<UserAttempts, Long
 
      @Query("SELECT ua FROM UserAttempts ua WHERE ua.user.userId = :userId ORDER BY ua.userAttemptEndTimestamp DESC")
      List<UserAttempts> findAttemptsByUserId(@Param("userId") String userId);
+     
+     @Query("SELECT ua.subconcept.subconceptId, MAX(ua.userAttemptScore) " +
+             "FROM UserAttempts ua " +
+             "WHERE ua.user.userId = :userId " +
+             "GROUP BY ua.subconcept.subconceptId")
+      List<Object[]> findMaxScoresByUser(@Param("userId") String userId);
 }
