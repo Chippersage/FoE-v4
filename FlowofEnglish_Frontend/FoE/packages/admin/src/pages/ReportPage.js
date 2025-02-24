@@ -2,11 +2,20 @@ import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import LearnersProgressChart from '../components/LearnersProgressChart'; // LearnersProgressChart Component
-import SingleLearnerProgressChart from '../components/SingleLearnerProgressChart'; // SingleLearnerProgressChart Component
+import LearnersProgressChart from '../components/LearnersProgressChart';
+import LineProgressChart from '../components/LineProgressChart';
+import ProgressDataTable from '../components/TableView';
+
 import { getOrgs } from '../api';
 
 const apiUrl = process.env.REACT_APP_API_URL;
+
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500" />
+  </div>
+);
 
 const ProgressDashboard = () => {
   const [organizations, setOrganizations] = useState([]);
@@ -19,7 +28,8 @@ const ProgressDashboard = () => {
   const [selectedUserId, setSelectedUserId] = useState('All users');
   const [progressData, setProgressData] = useState(null);
   const [userSpecificData, setUserSpecificData] = useState(null);
-
+  const [selectedVisualization, setSelectedVisualization] = useState('barchart');
+  const [isLoading, setIsLoading] = useState(true);
   // Fetch organizations on mount
   const fetchOrganizations = async () => {
     try {
@@ -33,6 +43,7 @@ const ProgressDashboard = () => {
 
   // Fetch programs and cohorts for the selected organization
   const fetchOrgProgramsWithCohorts = async (orgId) => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/organizations/${orgId}/programs-with-cohorts`);
       const programs = response.data.programs;
@@ -48,11 +59,14 @@ const ProgressDashboard = () => {
       fetchUsers(defaultProgram.programId, defaultCohort.cohortId);
     } catch (error) {
       console.error('Error fetching programs with cohorts:', error);
+    }finally {
+      setIsLoading(false);
     }
   };
 
   // Fetch users for selected program and cohort
   const fetchUsers = async (programId, cohortId) => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${apiUrl}/reports/program/${programId}/cohort/${cohortId}/progress`);
       const { users } = response.data;
@@ -60,6 +74,9 @@ const ProgressDashboard = () => {
       setProgressData(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
@@ -242,32 +259,36 @@ const ProgressDashboard = () => {
                 },
               }}
             >
-              <InputLabel>Select User</InputLabel>
-              <Select
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                disabled={!users.length}
-              >
-                {users.map((user) => (
-                  <MenuItem key={user.userId} value={user.userId}>
-                    {user.userName}
-                  </MenuItem>
-                ))}
-              </Select>
+              <InputLabel>Select Visualization</InputLabel>
+            <Select
+              value={selectedVisualization}
+              onChange={(e) => setSelectedVisualization(e.target.value)}
+            >
+              <MenuItem value="barchart">Bar Chart</MenuItem>
+              <MenuItem value="table">Table View</MenuItem>
+              <MenuItem value="linechart">Line Chart</MenuItem>
+            </Select>
             </FormControl>
           </div>
         </Card>
       )}
 
-      {/* Charts Section */}
-      {progressData && <LearnersProgressChart data={progressData} selectedUserId={selectedUserId} />}
-      {userSpecificData && (
-        <Card sx={{ marginTop: 3, padding: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            User-Specific Report
-          </Typography>
-          <SingleLearnerProgressChart data={userSpecificData} />
-        </Card>
+     {/* Display loading spinner when data is being fetched */}
+ {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        // Display either the chart or table based on selection
+        progressData && (
+          <Card sx={{ padding: 3, marginBottom: 3 }}>
+            {selectedVisualization === 'barchart' ? (
+              <LearnersProgressChart data={progressData} programId={selectedProgramId} selectedUserId={selectedUserId} />
+            ) : selectedVisualization === 'linechart' ? (
+              <LineProgressChart data={progressData} />
+            ) : (
+              <ProgressDataTable data={progressData} />
+            )}
+          </Card>
+        )
       )}
     </Container>
   );
