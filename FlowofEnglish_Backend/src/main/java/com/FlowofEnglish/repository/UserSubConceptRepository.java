@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, Long> {
@@ -48,5 +49,8 @@ public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, 
 	        @Param("userId") String userId,
 	        @Param("stageId") String stageId
 	    );
+	    @Query("SELECT usc.subconcept.subconceptId FROM UserSubConcept usc WHERE usc.user.userId = :userId AND usc.completionDate IS NOT NULL")
+	    Set<String> findCompletedSubconceptIdsByUser_UserId(@Param("userId") String userId);
+
 }
 
