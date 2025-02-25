@@ -2,8 +2,8 @@ import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line,
-  CartesianGrid, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, CartesianGrid, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import  ExportButtons  from './ExportButtons';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -114,6 +114,10 @@ const LearnersProgressChart = ({ data, programId }) => {
   const [selectedLearner, setSelectedLearner] = useState(null);
   const [userProgressData, setUserProgressData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Refs for export functionality
+  const chartContainerRef = useRef(null);  // Ref for main chart
+  const detailContainerRef = useRef(null); // Ref for detail view
 
   // Ref to the user detail modal container
   const detailRef = useRef(null);
@@ -227,13 +231,20 @@ return (
         ✕
       </button>
     </div>
-
+ {/* Export buttons for the detailed user view */}
+ <ExportButtons
+          componentRef={detailContainerRef}
+          filename={`${userData?.name}_progress_details`}
+          exportType="user"
+          userData={userData}
+          programId={programId}
+        />
     {isLoading ? (
       <div className="flex justify-center p-12">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
       </div>
     ) : userProgressData ? (
-      <div className="space-y-8">
+      <div ref={detailContainerRef} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Skills Overview - Radar Chart */}
 
@@ -329,13 +340,14 @@ return (
                     data={skillData}
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+                    barSize={40} // This sets the maximum width of each bar
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" domain={[0, 100]} />
                     <YAxis type="category" dataKey="name" width={90} />
                     <Tooltip content={<CustomSkillTooltip />} />
                     <Legend />
-                    <Bar dataKey="score" name="Score %">
+                    <Bar dataKey="score" name="Score %" maxBarSize={40}>
                       {skillData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getSkillColor(entry.name)} />
                       ))}
@@ -358,11 +370,16 @@ return (
   return (
     <Card className="w-full max-w-[1200px] mx-auto my-6">
       <CardContent className="pt-6">
-        <div className="space-y-4">
+      <div ref={chartContainerRef} className="space-y-4">
           <h2 className="text-2xl font-bold text-center text-gray-800">
             Learners' Progress Overview
           </h2>
-          
+          {/* Add the ExportButtons component right here, after the heading */}
+  <ExportButtons
+    componentRef={chartContainerRef}
+    filename="learners_progress_overview"
+    exportType="chart"
+  />
           <div className="h-[400px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -410,12 +427,12 @@ return (
                 onMouseLeave={() => setHoveredLearner(null)}
                 onClick={() => handleLearnerClick(learner)}
                 role="button"              // Add an appropriate role
-    tabIndex={0}               // Allow keyboard focus
-    onKeyPress={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        handleLearnerClick(learner);
-      }
-    }}
+                tabIndex={0}               // Allow keyboard focus
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleLearnerClick(learner);
+                  }
+                }}
               >
                 <h3 className="font-semibold text-gray-800 truncate">
                   {learner.name}
@@ -456,7 +473,8 @@ return (
   );
 };
 LearnersProgressChart.propTypes = {
-  data: PropTypes.object.isRequired
+  data: PropTypes.object.isRequired,
+  programId: PropTypes.string.isRequired
 };
 
 export default LearnersProgressChart;
