@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-
+import ExportButtons from './ExportButtons';
 // Define table styles
 const tableStyles = {
     tableContainer: {
@@ -43,6 +43,7 @@ const tableStyles = {
    const ProgressDataTable = ({ data }) => {
     const [sortConfig, setSortConfig] = useState({ key: 'leaderboardScore', direction: 'desc' });
     const [hoveredHeader, setHoveredHeader] = useState(null);
+    const tableRef = useRef(null);
 
     if (!data || !data.users || data.users.length === 0) {
       return <Typography variant="body1">No data available</Typography>;
@@ -158,6 +159,20 @@ const getHeaderStyle = (key) => {
     
       return (
         <div className="w-full overflow-x-auto">
+           {/* Table header with export button */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">Learners Progress</h2>
+        <ExportButtons 
+          componentRef={{ tableRef}}
+          filename="learner_progress_data"
+          exportType="table"
+          allowedFormats={['csv']}
+          tableData={data}
+        />
+      </div>
+      
+      {/* Table container */}
+      <div className="w-full overflow-x-auto" ref={tableRef}>
           <table className="w-full border-collapse bg-white">
             <thead>
               <tr>
@@ -215,6 +230,7 @@ const getHeaderStyle = (key) => {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       );
     };

@@ -32,12 +32,16 @@ const ProgressDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   // Fetch organizations on mount
   const fetchOrganizations = async () => {
+    setIsLoading(true);
     try {
       const response = await getOrgs()
       setOrganizations(response);
       console.log(response)
     } catch (error) {
       console.error('Error fetching organizations:', error);
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
