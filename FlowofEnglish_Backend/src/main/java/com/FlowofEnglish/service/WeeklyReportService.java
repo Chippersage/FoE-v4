@@ -121,42 +121,27 @@ public class WeeklyReportService {
             return;
         }
 
-        String subject = "To Our Super Teacher! 🌟 Taking a Break While Making Future Leaders? We Get It! 😊";
+        String subject = "Exam Duty Superhero! 🦸‍♀️ How's Your Secret Teacher Life Going?";
         StringBuilder emailBody = new StringBuilder()
             .append("Dear ").append(user.getUserName()).append(",\n\n")
-            .append("We heard you're in the midst of Uttarakhand Board exam duties (Feb 21 - Mar 11)! ")
-            .append("Bet you're giving your best 'stern exam supervisor' look right now, aren't you? 😄\n\n")
-            .append("🎭 Your Current Roles:\n")
-            .append("• Exam Supervisor Extraordinaire 👮‍♂️\n")
-            .append("• Answer Sheet Guardian 📝\n")
-            .append("• Silent Footstep Master in the Exam Hall 🤫\n")
-            .append("• Professional 'No Mobile Phones' Reminder 📱❌\n")
-            .append("• Expert at Spotting Hidden Cheat Sheets 🔍 (We know you have superpowers!)\n\n")
-            .append("We totally understand that you're busy ensuring fair exams - probably getting more steps on your pedometer ")
-            .append("walking up and down those exam halls than a fitness instructor! 🚶‍♂️💨\n\n")
-            .append("👩‍🏫 Message for Your Students:\n")
-            .append("Please tell them the Chippersage Team is sending tons of good wishes! ")
-            .append("We hope they're writing answers as brilliant as their smiles. No pressure, but we're expecting future ")
-            .append("Einstein-level stuff! 🧠✨\n\n")
-            .append("🎯 Quick Reminders (because we know you're pro at giving these!):\n")
-            .append("• Your Flow of English progress is safely paused (no exam anxiety here!)\n")
-            .append("• We're keeping your learning streak warm and cozy\n")
-            .append("• Your virtual classroom is missing its favorite teacher\n\n")
-            .append("Need a laugh during your exam duty breaks? Here's a teacher joke:\n")
-            .append("Why did the teacher wear sunglasses in the exam hall?\n")
-            .append("Because their students were so bright! ✨😎\n\n")
-            .append("Remember:\n")
-            .append("• Stay hydrated (coffee counts, we won't judge! ☕)\n")
-            .append("• Take mini-breaks (yes, you're allowed!)\n")
-            .append("• Keep that awesome smile (it scares away exam stress!)\n\n")
-            .append("Got exam duty stories or just need to share a laugh?\n")
-            .append("Drop us a line at support@thechippersage.com - we love teacher tales! 📬\n\n")
-            .append("Cheering for you and your students,\n")
+            .append("Quick check-in on our favorite exam supervisor! Still rocking those silent footsteps in the exam hall? 🤫\n\n")
+            .append("🏆 Your Superhero Stats This Week:\n")
+            .append("• Hours spent giving 'the look': Countless 👀\n")
+            .append("• Hidden cheat sheets spotted: Too many to count 🕵️\n")
+            .append("• Coffee consumed: Probably not enough ☕\n\n")
+            .append("Here's today's teacher joke to brighten your exam duty:\n")
+            .append("What do you call a teacher who doesn't fart in public?\n")
+            .append("A private tutor! 😂\n\n")
+            .append("Your Flow of English progress is still safely paused, and we're keeping your spot warm. ")
+            .append("Your virtual classroom sends its regards (it's been suspiciously quiet without you!).\n\n")
+            .append("Quick Teacher Survival Tips:\n")
+            .append("• Those confiscated phones make great paperweights\n")
+            .append("• Blinking is optional, but recommended\n")
+            .append("• Your 'I saw that' radar is probably at 200% capacity by now\n\n")
+            .append("Got funny exam stories? We're all ears at support@thechippersage.com!\n\n")
+            .append("Rooting for you,\n")
             .append("The Chippersage Team 🌟\n\n")
-            .append("P.S. When the exam marathon is over and you're ready to return to your own learning journey, ")
-            .append("we'll be waiting at https://flowofenglish.thechippersage.com\n\n")
-            .append("P.P.S. You're doing an amazing job! And yes, we saw that yawn - maybe time for another coffee? ☕😄");
-
+            .append("P.S. We'll be here when you're ready: https://flowofenglish.thechippersage.com");
         // Send to teacher
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getUserEmail());
@@ -223,36 +208,28 @@ public class WeeklyReportService {
         if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
             return;
         }
-        String subject = "Hey " + user.getUserName() + "! 🌟 Your English Learning Adventure Misses You! 😊";
+        
+        String subject = "Missing Your English Adventures! 🚀 Your Learning Path is Getting Lonely!";
+        
         StringBuilder emailBody = new StringBuilder()
-            .append("Hello ").append(user.getUserName()).append("! 👋\n\n")
-            .append("We noticed you haven't been practicing lately, and guess what? We really miss your presence! ")
-            .append("Your smile and enthusiasm make our learning community special. 😊\n\n")
-            .append("🌈 Quick Updates:\n")
-            .append("• Your progress is safely saved\n")
-            .append("• New fun activities are waiting for you\n")
-            .append("• Your learning streak is ready to be continued\n\n")
-            .append("💡 Did You Know?\n")
-            .append("Just 15 minutes of daily practice (that's shorter than a TV commercial break!) ")
-            .append("can boost your English skills significantly. And the best part? ")
-            .append("You can do it while having fun! 🎮\n\n")
-            .append("🎯 Ready to Jump Back In?\n")
-            .append("→ Visit: https://flowofenglish.thechippersage.com\n")
-            .append("→ Login with your usual details\n")
-            .append("→ Pick up right where you left off!\n\n")
-            .append("👋 Need Help or Have Ideas?\n")
-            .append("• Technical issues? We're here to help!\n")
-            .append("• Have suggestions? We'd love to hear them!\n")
-            .append("• Just want to chat? That's cool too!\n\n")
-            .append("Contact us anytime:\n")
-            .append("📧 Email: support@thechippersage.com\n")
-            .append("Or reply to this email - we read every message! 📬\n\n")
-            .append("Remember: Learning English is like collecting smiles - ")
-            .append("the more you practice, the bigger your collection grows! 😊\n\n")
-            .append("Can't wait to see you back in action!\n\n")
-            .append("Keep smiling and learning,\n")
+            .append("Dear ").append(user.getUserName()).append(",\n\n")
+            .append("**Guess what?** Your virtual English learning space has been sending us sad emojis! 😢 ")
+            .append("It misses the sound of your clicks and the brilliance of your answers!\n\n")
+            .append("## 🎬 What's Been Happening While You Were Away:\n")
+            .append("Remember those challenging words you were mastering? They've been hanging out together, ")
+            .append("planning a surprise quiz party for your return! (Don't worry - they're friendly quizzes with extra hints!)\n\n")
+            .append("## 🔮 Fun Prediction:\n")
+            .append("If you spend just 10 minutes today on Flow of English (yes, that's shorter than scrolling through ")
+            .append("social media during breakfast!), your confidence meter will jump up by at least 17.5% ")
+            .append("(our very scientific calculation)!\n\n")
+            .append("🧠 Fun Fact:\n")
+            .append("Did you know? Learners who return after a break often progress FASTER! ")
+            .append("Your brain has been secretly processing everything behind the scenes.\n\n")
+            .append("Ready to jump back in? → https://flowofenglish.thechippersage.com\n\n")
+            .append("Need help? Questions? Just reply to this email or reach us at support@thechippersage.com\n\n")
+            .append("Can't wait to see your progress!\n\n")
             .append("The Chippersage Team 🌟\n\n")
-            .append("P.S. Want to know a secret? Your brain does a little happy dance 🕺💃 every time you learn something new!");
+            .append("P.S. Just 10 minutes today will make tomorrow's English SO much easier! ✨");
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getUserEmail());
