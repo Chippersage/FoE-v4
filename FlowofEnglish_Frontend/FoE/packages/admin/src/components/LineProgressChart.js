@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useRef } from 'react';
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const LineProgressChart = ({ data }) => {
-  const learners = data?.users?.filter(user => user.userId !== 'All Learners') || [];
+import ExportButtons from './ExportButtons';
 
+const LineProgressChart = ({ data }) => {
+  
+  const learners = data?.users?.filter(user => user.userId !== 'All Learners') || [];
+  const chartContainerRef = useRef(null);
   const processedData = learners.map(user => ({
     name: user.userName || user.userId,
     completedStages: user.completedStages,
@@ -33,10 +37,15 @@ const LineProgressChart = ({ data }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full"ref={chartContainerRef}>
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         Progress Overview Timeline
       </h2>
+      <ExportButtons
+        componentRef={chartContainerRef}
+        filename="progress_timeline"
+        exportType="chart"
+      />
       <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -86,14 +95,14 @@ const LineProgressChart = ({ data }) => {
               dot={{ r: 4 }}
               activeDot={{ r: 8 }}
             />
-            <Line
+            {/* <Line
               type="monotone"
               dataKey="leaderboardScore"
               stroke="#e8c3b9"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 8 }}
-            />
+            /> */}
           </LineChart>
         </ResponsiveContainer>
       </div>

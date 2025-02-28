@@ -1,9 +1,7 @@
 package com.FlowofEnglish.service;
 
 import java.time.OffsetDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserCohortMapping;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 import org.slf4j.Logger;
@@ -22,8 +19,6 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class WeeklyReportService {
-    @Autowired
-    private UserSessionMappingRepository userSessionMappingRepository;
     
     @Autowired
     private UserAttemptsRepository userAttemptsRepository;
@@ -35,6 +30,8 @@ public class WeeklyReportService {
     private JavaMailSender mailSender;
     
     private static final Logger logger = LoggerFactory.getLogger(WeeklyReportService.class);
+    
+    private static final String TEAM_ORG_ID = "TEAM";
 
     @Transactional
     public List<User> getInactiveUsers(int inactivityDays) {
@@ -63,10 +60,6 @@ public class WeeklyReportService {
      // Get inactive users from attempts instead of session mapping
         List<User> inactiveUsers = getInactiveUsers(5);
         logger.info("Fetched {} inactive users since {}", inactiveUsers.size(), fiveDaysAgo);
-
-//        // Fetch all users inactive for more than 5 days
-//        List<User> inactiveUsers = userSessionMappingRepository.findInactiveUsersSince(fiveDaysAgo);
-//        logger.info("Fetched {} inactive users since {}", inactiveUsers.size(), fiveDaysAgo);
 
         // Separate users with valid emails
         List<User> usersWithEmails = inactiveUsers.stream()
@@ -102,11 +95,15 @@ public class WeeklyReportService {
                 logger.info("Processed cohort {} in organization {}, sent {} admin emails.", cohortId, orgId, 1);
 
 
-                // Send individual emails to users
-                usersWithEmails.forEach(user ->{
-                	try {
-                sendInactiveUserEmail(user, topper);
-                logger.info("Email sent successfully to user: {}", user.getUserEmail());
+             // Send individual emails to users based on their organization
+                usersWithEmails.forEach(user -> {
+                    try {
+                        if (TEAM_ORG_ID.equals(user.getOrganization().getOrganizationId())) {
+                            sendBoardExamUserEmail(user);
+                        } else {
+                            sendInactiveUserEmail(user, topper);
+                        }
+                        logger.info("Email sent successfully to user: {}", user.getUserEmail());
                     } catch (Exception e) {
                         logger.error("Failed to send email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
                     }
@@ -115,10 +112,62 @@ public class WeeklyReportService {
                 logger.error("Error processing cohort {} in organization {}. Error: {}", cohortId, orgId, e.getMessage(), e);
             }
         });
-    });
-
+        });
     logger.info("Completed weekly email report process.");
 }
+    
+    private void sendBoardExamUserEmail(User user) {
+        if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
+            return;
+        }
+
+        String subject = "Exam Duty Superhero! 🦸‍♀️ How's Your Secret Teacher Life Going?";
+        StringBuilder emailBody = new StringBuilder()
+            .append("Dear ").append(user.getUserName()).append(",\n\n")
+            .append("Quick check-in on our favorite exam supervisor! Still rocking those silent footsteps in the exam hall? 🤫\n\n")
+            .append("🏆 Your Superhero Stats This Week:\n")
+            .append("• Hours spent giving 'the look': Countless 👀\n")
+            .append("• Hidden cheat sheets spotted: Too many to count 🕵️\n")
+            .append("• Coffee consumed: Probably not enough ☕\n\n")
+            .append("Here's today's teacher joke to brighten your exam duty:\n")
+            .append("What do you call a teacher who doesn't fart in public?\n")
+            .append("A private tutor! 😂\n\n")
+            .append("Your Flow of English progress is still safely paused, and we're keeping your spot warm. ")
+            .append("Your virtual classroom sends its regards (it's been suspiciously quiet without you!).\n\n")
+            .append("Quick Teacher Survival Tips:\n")
+            .append("• Those confiscated phones make great paperweights\n")
+            .append("• Blinking is optional, but recommended\n")
+            .append("• Your 'I saw that' radar is probably at 200% capacity by now\n\n")
+            .append("Got funny exam stories? We're all ears at support@thechippersage.com!\n\n")
+            .append("Rooting for you,\n")
+            .append("The Chippersage Team 🌟\n\n")
+            .append("P.S. We'll be here when you're ready: https://flowofenglish.thechippersage.com");
+        // Send to teacher
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getUserEmail());
+        message.setSubject(subject);
+        message.setText(emailBody.toString());
+        mailSender.send(message);
+
+        // Send copy to admin and support
+        SimpleMailMessage adminCopy = new SimpleMailMessage();
+        adminCopy.setTo(new String[]{
+            user.getOrganization().getOrganizationAdminEmail(),
+            "support@thechippersage.com"
+        });
+        adminCopy.setSubject("Teacher on Exam Duty - " + user.getUserName());
+        adminCopy.setText(
+            "Exam duty notification sent to:\n" +
+            "Teacher: " + user.getUserName() + "\n" +
+            "Email: " + user.getUserEmail() + "\n" +
+            "Organization: " + user.getOrganization().getOrganizationId() + "\n" +
+            "Status: On Board Exam Duty (Feb 21 - Mar 11)\n\n" +
+            "Original email content:\n" +
+            "------------------------\n" +
+            emailBody.toString()
+        );
+        mailSender.send(adminCopy);
+    }
 
     private void sendEmailToOrganizationAdmin(String orgId, String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
         if (inactiveUsers == null || inactiveUsers.isEmpty()) {
@@ -159,33 +208,29 @@ public class WeeklyReportService {
         if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
             return;
         }
-
-//        String subject = "We've Missed You! 🥺 Time to Get Back in the Game! 🎉";
-//        StringBuilder emailBody = new StringBuilder()
-//            .append("Hello ").append(user.getUserName()).append(",\n\n")
-//            .append("We’ve noticed you've been taking a little break from us since ")
-//            .append("5 days ago").append(". It’s been 5 days without your amazing presence, ")
-//            .append("and we’re starting to feel like our favorite TV show got canceled mid-season! 📺🥺\n\n")
-//            .append("Your learning journey awaits, and we can’t wait to see you back in action. Think of all the new things you can discover, the skills you can master, and the fun you can have!\n\n")
-//            .append("Click here to pick up where you left off and dive back into the world of learning: https://flowofenglish.thechippersage.com\n\n")
-//            .append("Remember, every great adventure begins with a single step, and we’re here to make every step count!\n\n")
-//            .append("Looking forward to seeing you soon.\n\n")
-//            .append("Happy Learning!\n\n")
-//            .append("Thank you,\nChippersage Team");
-        String subject = "Missing Your Awesome Progress! 🌟 Ready to Continue Your Learning Journey? 💪";
+        
+        String subject = "Missing Your English Adventures! 🚀 Your Learning Path is Getting Lonely!";
+        
         StringBuilder emailBody = new StringBuilder()
-        .append("Hello ").append(user.getUserName()).append(",\n\n")
-        .append("We've been thinking about you! Your unique perspective and enthusiasm always make our learning community brighter. ")
-        .append("The journey of learning is more exciting when you're here with us! 🌈\n\n")
-        .append("Did you know that consistent learning, even just 15 minutes a day, can lead to amazing breakthroughs? ")
-        .append("Your potential is limitless, and we're here to support you every step of the way. 🚀\n\n")
-        .append("Ready to jump back in? Your personalized learning path is waiting for you: https://flowofenglish.thechippersage.com\n\n")
-        .append("Remember, every champion has faced pauses in their journey. What matters is coming back stronger! ")
-        .append("We've got some exciting new content that we think you'll love. 💡\n\n")
-        .append("Can't wait to see your next breakthrough!\n\n")
-        .append("Cheering you on,\n")
-        .append("The Chippersage Team")
-        .append("\n\nP.S. We've saved your progress exactly where you left off - just one click and you're back on track! 🎯");
+            .append("Dear ").append(user.getUserName()).append(",\n\n")
+            .append("**Guess what?** Your virtual English learning space has been sending us sad emojis! 😢 ")
+            .append("It misses the sound of your clicks and the brilliance of your answers!\n\n")
+            .append("## 🎬 What's Been Happening While You Were Away:\n")
+            .append("Remember those challenging words you were mastering? They've been hanging out together, ")
+            .append("planning a surprise quiz party for your return! (Don't worry - they're friendly quizzes with extra hints!)\n\n")
+            .append("## 🔮 Fun Prediction:\n")
+            .append("If you spend just 10 minutes today on Flow of English (yes, that's shorter than scrolling through ")
+            .append("social media during breakfast!), your confidence meter will jump up by at least 17.5% ")
+            .append("(our very scientific calculation)!\n\n")
+            .append("🧠 Fun Fact:\n")
+            .append("Did you know? Learners who return after a break often progress FASTER! ")
+            .append("Your brain has been secretly processing everything behind the scenes.\n\n")
+            .append("Ready to jump back in? → https://flowofenglish.thechippersage.com\n\n")
+            .append("Need help? Questions? Just reply to this email or reach us at support@thechippersage.com\n\n")
+            .append("Can't wait to see your progress!\n\n")
+            .append("The Chippersage Team 🌟\n\n")
+            .append("P.S. Just 10 minutes today will make tomorrow's English SO much easier! ✨");
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getUserEmail());
         message.setSubject(subject);
