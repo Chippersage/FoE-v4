@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface ProgramConceptsMappingRepository extends JpaRepository<ProgramConceptsMapping, Long> {
 	// Custom query method to find mappings by unitId
     List<ProgramConceptsMapping> findByUnit_UnitId(String unitId);
+    List<ProgramConceptsMapping> findByProgram_ProgramId(String programId);
 	
 	// Custom query methods can be added here
     @Query("SELECT pcm FROM ProgramConceptsMapping pcm WHERE pcm.unit.unitId = :unitId ORDER BY pcm.position ASC")
