@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
@@ -344,7 +345,7 @@ const [showSubmit, setShowSubmit] = useState(
           onRedirect={() => navigate(`/subconcepts/${currentUnitId}`)}
         />
       )} */}
-      {successOverlay &&  (
+      {successOverlay && (
         <ActivityCompletionModal
           countdownDuration={3}
           onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
@@ -362,7 +363,9 @@ const [showSubmit, setShowSubmit] = useState(
             <iframe
               id="embeddedContent"
               src={subconcept.subconceptLink}
-              // src={"/cloze_paragraph/cloze_paragraph_practice_stg1_articles.html"}
+              // src={
+              //   "/reader2/resources/books/reader2/vol1/Reader2_Book_1/book1_story.html"
+              // }
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
               title="Embedded Content"
@@ -374,7 +377,10 @@ const [showSubmit, setShowSubmit] = useState(
               allow="autoplay"
             />
           ) : (
-            <MediaContent subconceptData={subconcept} currentUnitId={currentUnitId}/>
+            <MediaContent
+              subconceptData={subconcept}
+              currentUnitId={currentUnitId}
+            />
           )}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
