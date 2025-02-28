@@ -2,9 +2,7 @@ package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.ProgramResponseDTO;
 import com.FlowofEnglish.model.Cohort;
-import com.FlowofEnglish.model.ErrorResponse;
-import com.FlowofEnglish.model.Organization;
-import com.FlowofEnglish.model.Program;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.service.OrganizationService;
 
 import jakarta.persistence.EntityNotFoundException;

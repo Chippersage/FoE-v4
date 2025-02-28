@@ -48,6 +48,12 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     @Autowired
     private SubconceptRepository subconceptRepository;
     
+    @Autowired
+    private ConceptRepository conceptRepository;
+    
+    @Autowired
+    private UserAttemptsRepository  userAttemptsRepository;
+    
     @Override
     public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
         return programConceptsMappingRepository.findAll();
@@ -363,4 +369,122 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     public void deleteProgramConceptsMapping(Long programConceptId) {
         programConceptsMappingRepository.deleteById(programConceptId);
     }
+    
+    @Override
+    public Map<Concept, List<Subconcept>> getConceptsAndSubconceptsByProgram(String programId) {
+        // Step 1: Retrieve all ProgramConceptsMapping entries for the given programId
+        List<ProgramConceptsMapping> programMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
+
+        // Step 2: Extract all unique subconcepts from the mappings
+        Set<String> subconceptIds = programMappings.stream()
+            .map(mapping -> mapping.getSubconcept().getSubconceptId())
+            .collect(Collectors.toSet());
+
+        // Step 3: Retrieve all subconcepts by their IDs
+        List<Subconcept> subconcepts = subconceptRepository.findAllById(subconceptIds);
+
+        // Step 4: Group subconcepts by their parent concepts
+        Map<Concept, List<Subconcept>> conceptSubconceptMap = new HashMap<>();
+        for (Subconcept subconcept : subconcepts) {
+            Concept concept = subconcept.getConcept();
+            conceptSubconceptMap.computeIfAbsent(concept, k -> new ArrayList<>()).add(subconcept);
+        }
+
+        return conceptSubconceptMap;
+    }
+
+    @Override
+    public List<Concept> getAllConceptsInProgram(String programId) {
+        // Step 1: Retrieve all ProgramConceptsMapping entries for the given programId
+        List<ProgramConceptsMapping> programMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
+
+        // Step 2: Extract all unique subconcepts from the mappings
+        Set<String> subconceptIds = programMappings.stream()
+            .map(mapping -> mapping.getSubconcept().getSubconceptId())
+            .collect(Collectors.toSet());
+
+        // Step 3: Retrieve all subconcepts by their IDs
+        List<Subconcept> subconcepts = subconceptRepository.findAllById(subconceptIds);
+
+        // Step 4: Extract all unique concepts from the subconcepts
+        Set<Concept> concepts = subconcepts.stream()
+            .map(Subconcept::getConcept)
+            .collect(Collectors.toSet());
+
+        return new ArrayList<>(concepts);
+    }
+    
+    @Override
+    public Map<String, Object> getConceptsAndUserProgress(String programId, String userId) {
+        // Step 1: Retrieve all ProgramConceptsMapping entries for the given programId
+        List<ProgramConceptsMapping> programMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
+
+        // Step 2: Extract all unique subconcepts from the mappings
+        Set<String> subconceptIds = programMappings.stream()
+            .map(mapping -> mapping.getSubconcept().getSubconceptId())
+            .collect(Collectors.toSet());
+
+        // Step 3: Retrieve all subconcepts by their IDs
+        List<Subconcept> subconcepts = subconceptRepository.findAllById(subconceptIds);
+
+        // Step 4: Retrieve user’s completed subconcepts
+        Set<String> completedSubconceptIds = userSubConceptRepository.findCompletedSubconceptIdsByUser_UserId(userId);
+
+     // Step 5: Retrieve user's best scores for each subconcept
+        List<Object[]> userScoresList = userAttemptsRepository.findMaxScoresByUser(userId);
+        Map<String, Integer> userMaxScoreMap = new HashMap<>();
+        for (Object[] row : userScoresList) {
+            String subId = (String) row[0];
+            Integer maxScore = ((Number) row[1]).intValue();
+            userMaxScoreMap.put(subId, maxScore);
+        }
+        
+        // Prepare response list
+        Map<String, Object> response = new HashMap<>();
+        List<Map<String, Object>> conceptList = new ArrayList<>();
+        
+     // Step 6: Group subconcepts by concept
+        Map<Concept, List<Subconcept>> conceptSubconceptMap = new HashMap<>();
+        for (Subconcept subconcept : subconcepts) {
+            Concept concept = subconcept.getConcept();
+            conceptSubconceptMap.computeIfAbsent(concept, k -> new ArrayList<>()).add(subconcept);
+        }
+        
+     // Step 7: Build concept data with score aggregation
+        for (Map.Entry<Concept, List<Subconcept>> entry : conceptSubconceptMap.entrySet()) {
+            Concept concept = entry.getKey();
+            List<Subconcept> subconceptsInConcept = entry.getValue();
+
+            int totalSubconcepts = subconceptsInConcept.size();
+            int completedSubconcepts = (int) subconceptsInConcept.stream()
+                .filter(sub -> completedSubconceptIds.contains(sub.getSubconceptId()))
+                .count();
+            
+            // Sum the maximum possible score from each subconcept (if available)
+            int totalMaxScore = subconceptsInConcept.stream()
+                    .map(sub -> sub.getSubconceptMaxscore() != null ? sub.getSubconceptMaxscore() : 0)
+                    .reduce(0, Integer::sum);
+
+            // Sum the user's score across the subconcepts; if user didn't attempt, score is 0
+            int userTotalScore = subconceptsInConcept.stream()
+                    .mapToInt(sub -> userMaxScoreMap.getOrDefault(sub.getSubconceptId(), 0))
+                    .sum();
+
+            Map<String, Object> conceptData = new HashMap<>();
+            conceptData.put("conceptId", concept.getConceptId());
+            conceptData.put("conceptName", concept.getConceptName());
+            conceptData.put("conceptSkill-1", concept.getConceptSkill1());
+            conceptData.put("conceptSkill-2", concept.getConceptSkill2());
+            conceptData.put("totalSubconcepts", totalSubconcepts);
+            conceptData.put("completedSubconcepts", completedSubconcepts);
+            conceptData.put("totalMaxScore", totalMaxScore);
+            conceptData.put("userTotalScore", userTotalScore);
+
+            conceptList.add(conceptData);
+        }
+
+        response.put("concepts", conceptList);
+        return response;
+    }
+
 }
