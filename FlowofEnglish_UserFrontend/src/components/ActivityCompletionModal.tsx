@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import {
   Star,
@@ -8,7 +9,7 @@ import {
   ArrowRight,
   Timer,
 } from "lucide-react";
-import EmojiBubbles from "./EmojiBubbles";
+// import EmojiBubbles from "./EmojiBubbles";
 
 interface ActivityCompletionModal {
 //   isOpen: boolean;
@@ -35,10 +36,10 @@ export default function ActivityCompletionModal({
       // Set audio source based on scorePercentage
       audio.src =
         scorePercentage > 75
-          ? "/kids-cheering-sound-effect.mp3"
+          ? "/high-score.mp3"
           : scorePercentage >= 50
-          ? "/good.mp3"
-          : "/aww.mp3";
+          ? "/medium-score.mp3"
+          : "/low-score.mp3";
 
       audio.play();
 
@@ -96,16 +97,16 @@ export default function ActivityCompletionModal({
     } else {
       return {
         icon: (
-          <Star className="w-24 h-24 text-orange-400 animate-[float_3s_ease-in-out_infinite]" />
+          <img src="/icons/User-icons/confused.png" className="w-24 h-24 text-orange-400 animate-[float_3s_ease-in-out_infinite]" />
         ),
-        title: "Keep Going! ⭐",
+        title: "Keep Going!",
         message:
           "You can do better! Come back anytime and try again. Meanwhile, unlocking the next activity for you.",
         bgColor: "bg-slate-700",
         textColor: "text-orange-400",
         buttonColor: "bg-orange-500 hover:bg-orange-600",
         extraIcon: (
-          <ArrowRight className="absolute -right-2 top-1/2 w-8 h-8 text-orange-400 animate-pulse" />
+          <ArrowRight className="absolute -right-2 top-1/2 w-8 h-8 text-orange-400 animate-pulse hidden" />
         ),
       };
     }
@@ -115,7 +116,7 @@ export default function ActivityCompletionModal({
 
   return (
     <>
-      <EmojiBubbles
+      {/* <EmojiBubbles
         emoji={
           scorePercentage > 75
             ? "🤩"
@@ -125,7 +126,7 @@ export default function ActivityCompletionModal({
         }
         count={30}
         interval={50}
-      />
+      /> */}
 
       <div className="fixed inset-0 flex backdrop-blur-0 items-center justify-center z-50">
         <div
@@ -142,7 +143,7 @@ export default function ActivityCompletionModal({
               <div className="flex justify-center mb-6 relative">
                 <div className="relative">
                   {content.icon}
-                  <Sparkles className="absolute -top-2 -left-2 w-6 h-6 text-yellow-400 animate-pulse" />
+                  <Sparkles className={`absolute -top-2 -left-2 w-6 h-6 text-yellow-400 animate-pulse ${scorePercentage < 50 ? "hidden" : ""}`} />
                   {content.extraIcon}
                 </div>
               </div>
