@@ -17,7 +17,8 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       subconceptData?.subconceptType?.startsWith("assignment_image") ||
       subconceptData?.subconceptType?.startsWith("pdf") ||
       subconceptData?.subconceptType?.startsWith("assignment_pdf") ||
-      subconceptData?.subconceptType?.startsWith("image")
+      subconceptData?.subconceptType?.startsWith("image") ||
+      subconceptData?.subconceptType?.startsWith("youtube")
     )
   );
   const contentRef = useRef(null);
@@ -360,6 +361,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
         );
       case "pdf":
       case "assignment_pdf":
+      case "youtube":
         return (
           <div
             onContextMenu={(e) => e.preventDefault()} // Disable right-click
