@@ -56,6 +56,7 @@ import TextFromText from "@/components/activityIcons/TextFromText";
 
 import { useSession } from "@/context/TimerContext";
 import Default from "@/components/activityIcons/Default";
+import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSentences";
 
 interface Subconcept {
   subconceptId: string;
@@ -70,7 +71,7 @@ interface SubconceptData {
 }
 
 const iconMap = {
-  default: Default,
+  youtube: Camera,
   html: PenNib,
   pdf: Book,
   video: Camera,
@@ -100,6 +101,7 @@ const iconMap = {
   story_completion: StoryCompletion,
   text_from_picture: TextFromImage,
   text_from_text: TextFromText,
+  writer_general_sentences: WriterGeneralSentences,
   
 
   passage_read: Read,
@@ -150,6 +152,8 @@ export default function SubConceptsPage() {
   const selectedProgramId = localStorage.getItem("selectedProgramId");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [pathData, setPathData] = useState(null);
+    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+    const [screenHeight, setScreenHeight] = useState(window.innerHeight);
 
   const { formattedElapsedTime } = useSession();
 
@@ -169,9 +173,26 @@ export default function SubConceptsPage() {
     { x: number; y: number }[]
   >([]);
 
+  // Detect orientation changes
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+      setScreenHeight(window.innerHeight);
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
+
+  // Update path data when totalSteps, path size, or screen size changes
   useEffect(() => {
     if (totalSteps) {
-      if (totalSteps < 5 && window.innerWidth >= 640) {
+      if (totalSteps < 5 && screenWidth >= 640) {
         const calculatedPath = getSinglePath();
         setPathData(calculatedPath);
       } else {
@@ -181,38 +202,32 @@ export default function SubConceptsPage() {
         setPathData(calculatedPath);
       }
     }
+
     const timer = setTimeout(() => {
       const newPoints = [...Array(totalSteps)].map((_, index) =>
         getPointOnPath(index / (totalSteps - 1))
       );
       setDelayedPoints(newPoints);
-    }, 300); // Adjust delay as needed
+    }, 300);
 
-    return () => clearTimeout(timer); // Cleanup timeout
-  }, [totalSteps, pathWidth, pathHeight]); // Run effect when dependencies change
+    return () => clearTimeout(timer);
+  }, [totalSteps, screenWidth, screenHeight, pathWidth, pathHeight]); // Trigger on orientation change
 
+  // Update path dimensions when totalSteps or screen size changes
   useLayoutEffect(() => {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-
-    // Adjust pathWidth based on screen size
     if (screenWidth < 768) {
-      // For mobile devices
       setPathWidth(300);
     } else if (screenWidth >= 768 && screenWidth < 1024) {
-      // For tablets
       setPathWidth(800);
     } else {
-      // For desktops
       setPathWidth(1000);
     }
 
-    // Adjust pathHeight based on totalSteps to avoid dense population of icons
-    const baseHeight = 400; // Base height for 2 steps
-    const heightIncrement = 50; // Additional height for each extra step
+    const baseHeight = 400;
+    const heightIncrement = 50;
     const newHeight = baseHeight + (totalSteps - 2) * heightIncrement;
     setPathHeight(newHeight);
-  }, [totalSteps]); // Recalculate when totalSteps changes
+  }, [totalSteps, screenWidth, screenHeight]); // Recalculate on orientation change
 
   useEffect(() => {
     const selectedProgramId = localStorage.getItem("selectedProgramId");
@@ -513,14 +528,14 @@ export default function SubConceptsPage() {
           </div>
         </div>
         {/* Session Time */}
-        {formattedElapsedTime &&
-        <div className="fixed z-[10] top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
-          <Clock className="h-4 w-4 text-green-600" />
-          <span className="font-medium text-green-600 tabular-nums">
-            Session time: {formattedElapsedTime}
-          </span>
-        </div>
-        }
+        {formattedElapsedTime && (
+          <div className="fixed z-[10] top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
+            <Clock className="h-4 w-4 text-green-600" />
+            <span className="font-medium text-green-600 tabular-nums">
+              Session time: {formattedElapsedTime}
+            </span>
+          </div>
+        )}
         {/* Scrollable SVG Container */}
         {pathData && (
           <div className="w-full min-h-full relative flex items-center justify-center ">
