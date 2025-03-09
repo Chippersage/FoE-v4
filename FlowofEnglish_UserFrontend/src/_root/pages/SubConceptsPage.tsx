@@ -529,7 +529,7 @@ export default function SubConceptsPage() {
         </div>
         {/* Session Time */}
         {formattedElapsedTime && (
-          <div className="fixed z-[10] top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
+          <div className="fixed z-[10] top-[200px] sm:top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
             <Clock className="h-4 w-4 text-green-600" />
             <span className="font-medium text-green-600 tabular-nums">
               Session time: {formattedElapsedTime}
