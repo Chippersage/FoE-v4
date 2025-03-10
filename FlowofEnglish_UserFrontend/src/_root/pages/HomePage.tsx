@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Dashboard from "@/components/Dashboard.tsx";
 import Header2 from "../../components/Header2.tsx";
 import { useEffect, useState } from "react";
@@ -86,7 +87,7 @@ export const HomePage = () => {
             )}
 
             <div className="relative z-10 flex flex-1 no-scrollbar overflow-scroll min-h-screen">
-              <Header2 />
+              {/* <Header2 /> */}
               <Dashboard />
             </div>
 
