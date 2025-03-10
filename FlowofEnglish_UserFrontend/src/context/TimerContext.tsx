@@ -1,11 +1,18 @@
 // @ts-nocheck
 import { createContext, useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 const SessionContext = createContext();
 
 export const SessionProvider = ({ children }) => {
   const [sessionStartTime, setSessionStartTime] = useState(null);
-  const [formattedElapsedTime, setFormattedElapsedTime] = useState(null);
+  const [formattedElapsedTime, setFormattedElapsedTime] = useState("00:00:00");
+  const location = useLocation();
+
+  // Detect if we are inside private routes
+  const isPrivateRoute =
+    location.pathname.startsWith("/home") ||
+    location.pathname.startsWith("/subconcept");
 
   // Function to check if the page was refreshed
   const isPageRefresh = () => {
@@ -18,16 +25,20 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     const savedStartTime = localStorage.getItem("sessionStartTime");
 
-    if (savedStartTime && isPageRefresh()) {
-      // If page was refreshed, continue the session
-      setSessionStartTime(parseInt(savedStartTime, 10));
+    if (isPrivateRoute) {
+      if (savedStartTime && isPageRefresh()) {
+        setSessionStartTime(parseInt(savedStartTime, 10)); // Continue session after refresh
+      } else {
+        const newStartTime = Date.now();
+        localStorage.setItem("sessionStartTime", newStartTime);
+        setSessionStartTime(newStartTime);
+      }
     } else {
-      // If it's a new session or tab was closed, start a fresh session
-      const newStartTime = Date.now();
-      localStorage.setItem("sessionStartTime", newStartTime);
-      setSessionStartTime(newStartTime);
+      // Reset the session if user is outside private routes
+      setSessionStartTime(null);
+      setFormattedElapsedTime("00:00:00");
     }
-  }, []);
+  }, [isPrivateRoute]);
 
   useEffect(() => {
     if (!sessionStartTime) return;
