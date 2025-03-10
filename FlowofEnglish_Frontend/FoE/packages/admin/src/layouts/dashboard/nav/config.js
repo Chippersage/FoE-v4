@@ -38,7 +38,7 @@ const getNavConfig = () => {
         icon: icon('Pro2Coh'),
       },
       {
-        title: 'Report',
+        title: 'Reports',
         path: '/dashboard/superreport',
         icon: icon('report'),
       },
@@ -79,7 +79,7 @@ const getNavConfig = () => {
         //   icon: icon('program'),
         // },
       {
-        title: 'Organisation Reports',
+        title: 'Reports',
         path: `/org-dashboards/${orgId}/orgreport`,
         icon: icon('report'),
       },

@@ -37,8 +37,9 @@ const LineProgressChart = ({ data }) => {
   };
 
   return (
-    <div className="w-full"ref={chartContainerRef}>
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+    <div className="w-full" ref={chartContainerRef}>
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-2xl font-bold text-gray-800">
         Progress Overview Timeline
       </h2>
       <ExportButtons
@@ -46,6 +47,7 @@ const LineProgressChart = ({ data }) => {
         filename="progress_timeline"
         exportType="chart"
       />
+    </div>
       <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
