@@ -2,6 +2,26 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+type UserCohort = {
+  cohortId: string;
+  cohortName: string;
+  cohortStartDate: number;
+  cohortEndDate: number;
+  program: INITIAL_USER_PROGRAM_STATE,
+};
+
+type INITIAL_USER_PROGRAM_STATE = {
+  programId: "";
+  programName: "";
+  programDesc: "";
+  stagesCount: "";
+  unitCount: "";
+  stages: "";
+  programCompletionStatus: "";
+};
+
+export const INITIAL_USER_PROGRAM_STATE: INITIAL_USER_PROGRAM_STATE = {};
+
 // Define initial states
 export const INITIAL_USER_ORGANISATION_STATE = {
   organizationId: "",
@@ -11,16 +31,7 @@ export const INITIAL_USER_ORGANISATION_STATE = {
   organizationAdminPhone: "",
 };
 
-export const INITIAL_USER_COHORT_STATE = {
-  cohortId: "",
-  cohortName: "",
-};
-
-export const INITIAL_USER_PROGRAM_STATE = {
-  programId: "",
-  programName: "",
-  programDesc: "",
-};
+export const INITIAL_USER_COHORTS_STATE: UserCohort[] = [];
 
 export const INITIAL_USER_STATE = {
   userId: "",
@@ -29,7 +40,7 @@ export const INITIAL_USER_STATE = {
   userName: "",
   userPhoneNumber: "",
   organization: INITIAL_USER_ORGANISATION_STATE,
-  cohort: INITIAL_USER_COHORT_STATE,
+  cohorts: INITIAL_USER_COHORTS_STATE,
   program: INITIAL_USER_PROGRAM_STATE,
 };
 
@@ -52,6 +63,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(INITIAL_USER_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedCohort, setSelectedCohort] = useState(null);
 
   // Function to check if the user is authenticated
   const checkAuthUser = async () => {
@@ -68,8 +80,8 @@ export const AuthProvider = ({ children }) => {
           userName: currentUser.userName,
           userPhoneNumber: currentUser.userPhoneNumber,
           organization: currentUser.organization,
-          cohort: currentUser.cohort,
-          program: currentUser.program,
+          cohorts: currentUser.allCohortsWithPrograms,
+          // program: currentUser.program,
         });
 
         setIsAuthenticated(true);
@@ -85,13 +97,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Check authentication on mount
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (!user) {
-      navigate("/sign-in");
-    }
+useEffect(() => {
+  const user = localStorage.getItem("user");
+  if (!user) {
+    navigate("/sign-in");
+  } else {
     checkAuthUser();
-  }, [navigate]);
+    // After successful authentication, redirect to cohort selection
+    navigate("/select-cohort");
+  }
+}, [navigate]);
 
   // Value to be provided by the context
   const value = {
@@ -101,6 +116,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     setIsAuthenticated,
     checkAuthUser,
+    selectedCohort,
+    setSelectedCohort,
   };
   // @ts-ignore
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

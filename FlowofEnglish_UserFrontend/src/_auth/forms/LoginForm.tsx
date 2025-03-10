@@ -44,11 +44,11 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const login = await axios.post(
-        `${API_BASE_URL}/users/login`,
+        `${API_BASE_URL}/users/signin`,
         {
           userId: userId,
           userPassword: password,
-          programId: selectedProgramId, // Send the selected program ID
+          // programId: selectedProgramId, // Send the selected program ID
           userType: userRole,
         },
         {
@@ -67,18 +67,19 @@ export default function LoginPage() {
 
       console.log("User data from backend", login.data);
 
-      const { sessionId, userType, userDetails, cohortReminder } = login.data;
+      // const { sessionId, userType, userDetails, cohortReminder } = login.data;
+      const { tempSessionId, userType, userDetails } = login.data;
 
-      localStorage.setItem("authToken", sessionId);
+      localStorage.setItem("authToken", tempSessionId);
       localStorage.setItem("userType", userType);
-      (cohortReminder && cohortReminder !== null && cohortReminder !== undefined) && localStorage.setItem("cohortReminder", cohortReminder);
+      // (cohortReminder && cohortReminder !== null && cohortReminder !== undefined) && localStorage.setItem("cohortReminder", cohortReminder);
       localStorage.setItem("user", JSON.stringify(userDetails));
 
       const isLoggedIn = await checkAuthUser();
 
       if (isLoggedIn) {
         // console.log("Signin Successful!");
-        navigate("/");
+        navigate("/select-cohort");
       } else {
         setError("Oops!, Login failed. Please try again.");
         // console.log("Oops!, Login failed. Please try again.");
@@ -141,7 +142,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="relative">
+          {/* <div className="relative">
             <button
               type="button"
               onClick={() => {
@@ -169,13 +170,12 @@ export default function LoginPage() {
                       setIsProgramsOpen(false);
                     }}
                   >
-                    {/* @ts-ignore */}
                     {program?.programName}
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           <div className="flex justify-between items-center text-sm text-gray-600 px-4">
             <label className="font-medium">Sign in as:</label>
