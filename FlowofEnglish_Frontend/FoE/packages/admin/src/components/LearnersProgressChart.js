@@ -219,26 +219,31 @@ const conceptData = userProgressData?.concepts?.map(concept => ({
 })) || [];
 
 return (
-  <div ref={detailRef} className="mt-8 border-t pt-8">
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold text-gray-800">
-        Progress Details for {userData?.name}
-      </h2>
-      <button 
-        onClick={onClose}
-        className="text-gray-500 hover:text-gray-700"
-      >
-        ✕
-      </button>
+<div ref={detailRef} className="mt-8 border-t pt-8">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-2xl font-bold text-gray-800">
+      Progress Details for {userData?.name}
+    </h2>
+    <div className="flex items-center">
+      {/* Export buttons placed here next to the close button */}
+      <ExportButtons
+        componentRef={detailContainerRef}
+        filename={`${userData?.name}_progress_details`}
+        exportType="user"
+        userData={userData}
+        programId={programId}
+      />
+      {/* Small margin between export buttons and close button */}
+      <div className="ml-4">
+        <button 
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
     </div>
- {/* Export buttons for the detailed user view */}
- <ExportButtons
-          componentRef={detailContainerRef}
-          filename={`${userData?.name}_progress_details`}
-          exportType="user"
-          userData={userData}
-          programId={programId}
-        />
+  </div>
     {isLoading ? (
       <div className="flex justify-center p-12">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
@@ -371,15 +376,18 @@ return (
     <Card className="w-full max-w-[1200px] mx-auto my-6">
       <CardContent className="pt-6">
       <div ref={chartContainerRef} className="space-y-4">
-          <h2 className="text-2xl font-bold text-center text-gray-800">
+           {/* Create a flex container for the heading and buttons */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800">
             Learners' Progress Overview
           </h2>
-          {/* Add the ExportButtons component right here, after the heading */}
-  <ExportButtons
-    componentRef={chartContainerRef}
-    filename="learners_progress_overview"
-    exportType="chart"
-  />
+          {/* ExportButtons aligned to the right */}
+          <ExportButtons
+            componentRef={chartContainerRef}
+            filename="learners_progress_overview"
+            exportType="chart"
+          />
+        </div>
           <div className="h-[400px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
