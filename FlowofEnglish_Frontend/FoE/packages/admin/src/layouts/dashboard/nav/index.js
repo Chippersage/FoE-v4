@@ -18,6 +18,9 @@ import getNavConfig from './config';
 // ----------------------------------------------------------------------
 
 const NAV_WIDTH = 280;
+// Very light teal color
+const LIGHT_TEAL = '#e6f5f5'; // Very light teal hex color
+
 // eslint-disable-next-line
 const StyledAccount = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -79,7 +82,8 @@ export default function Nav({ openNav, onCloseNav }) {
           PaperProps={{
             sx: {
               width: NAV_WIDTH,
-              bgcolor: 'background.default',
+              bgcolor: LIGHT_TEAL, // Set the very light teal color
+            //  bgcolor: 'background.default',
               borderRightStyle: 'dashed',
             },
           }}
@@ -94,7 +98,9 @@ export default function Nav({ openNav, onCloseNav }) {
             keepMounted: true,
           }}
           PaperProps={{
-            sx: { width: NAV_WIDTH },
+            sx: { width: NAV_WIDTH,
+              bgcolor: LIGHT_TEAL, // Set the very light teal color for mobile drawer too
+             },
           }}
         >
           {renderContent}
