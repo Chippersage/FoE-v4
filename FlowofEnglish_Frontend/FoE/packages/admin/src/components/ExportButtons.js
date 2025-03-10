@@ -91,7 +91,19 @@ const ExportButtons = ({
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const componentNode = componentRef.current;
-      
+      // Temporarily hide export buttons within the component being exported
+    const exportButtons = componentNode.querySelectorAll('.export-buttons-container');
+    const hiddenButtons = [];
+    
+    // Store original display style and hide buttons
+    exportButtons.forEach(button => {
+      hiddenButtons.push({
+        element: button,
+        display: button.style.display
+      });
+      button.style.display = 'none';
+    });
+
       // Use html2canvas to render the component
       const canvas = await html2canvas(componentNode, {
         scale: 2, // Higher quality
@@ -468,7 +480,7 @@ const ExportButtons = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 my-4">
+    <div className="flex flex-wrap gap-2 my-4 export-buttons-container">
       {exportType === 'user' && (
         <button
           onClick={exportUserReport}
