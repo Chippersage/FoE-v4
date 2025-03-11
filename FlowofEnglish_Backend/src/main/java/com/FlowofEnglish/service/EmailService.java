@@ -3,9 +3,20 @@ package com.FlowofEnglish.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
@@ -16,6 +27,63 @@ public class EmailService {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
 
 
+    public void sendEmailWithAttachment(String to, String mentorName, String cohortName, Path filePath) {
+        try {
+            logger.info("Sending email with assignment attachment to {}", to);
+
+            String subject = "Assignments for Cohort " + cohortName + " – Please Review and Provide Feedback";
+
+            String body = "<html><body style='font-family: Arial, sans-serif; line-height: 1.6;'>" +
+                    "<p>Dear " + mentorName + ",</p>" +
+                    "<p>I hope this email finds you well.</p>" +
+                    "<p>Please find attached a ZIP file containing the assignments submitted by learners from the cohort <b>" + cohortName + "</b>. " +
+                    "The ZIP file includes individual assignment files as well as a CSV file (assignments-details.csv) with relevant details.</p>" +
+                    "<p><b>Instructions for Review:</b></p>" +
+                    "<ol>" +
+                    "<li>Extract the ZIP File: Use any standard extraction tool to open the ZIP file.</li>" +
+                    "<li>Review Assignments: Evaluate each assignment based on the given criteria.</li>" +
+                    "<li>Update the CSV File:" +
+                    "<ul>" +
+                    "<li>Enter the score for each learner in the 'Score' column.</li>" +
+                    "<li>Provide any necessary feedback in the 'Remarks' column.</li>" +
+                    "</ul></li>" +
+                    "<li>Send Back the Reviewed Assignments: Reply to this email with the updated CSV file and any additional comments.</li>" +
+                    "</ol>" +
+                    "<p><b>Submission Deadline:</b></p>" +
+                    "<p>Kindly complete the review and return the corrected assignments within 5 days from the date of this email.</p>" +
+                    "<p>If you have any questions or require assistance, feel free to reach out.</p>" +
+                    "<p>Thank you for your time and support in guiding the learners.</p>" +
+                    "<p>Best regards,<br>" +
+                    "Team Chippersage<br>" +
+                    "support@thechippersage.com</p>" +
+                    "</body></html>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, true); // Set true to enable HTML formatting
+
+            // Attach the file
+            FileSystemResource file = new FileSystemResource(filePath.toFile());
+            helper.addAttachment(file.getFilename(), file);
+
+            mailSender.send(message);
+
+            logger.info("Email with attachment sent successfully to {}", to);
+        } catch (MessagingException e) {
+            logger.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
+            throw new RuntimeException("Failed to send email with attachment", e);
+        } finally {
+            try {
+                Files.deleteIfExists(filePath);
+                logger.info("Temporary zip file deleted: {}", filePath);
+            } catch (IOException e) {
+                logger.error("Failed to delete temporary zip file: " + filePath, e);
+            }
+        }
+    }
+    
     public void sendEmail(String to, String subject, String body) {
         logger.info("Attempting to send email to: {}", to);
         System.out.println("Attempting to send email to: " + to);

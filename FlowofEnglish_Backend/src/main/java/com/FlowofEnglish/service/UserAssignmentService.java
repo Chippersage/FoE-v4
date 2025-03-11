@@ -32,7 +32,8 @@ UserAssignment submitCorrectedAssignment(String assignmentId, Integer score,
     MediaFile getCorrectedFile(String assignmentId);
     
     Resource downloadAllAssignments(String cohortId) throws IOException;
-
-    void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores,
+    Resource downloadAllAssignmentsSendEmail(String cohortId) throws IOException;
+    void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores, List<String> remarks,
                                      List<String> assignmentIds) throws IOException;
+
 }

@@ -553,4 +553,80 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         
         return cohortProgress;
     }
+    @Override
+    public UserProgressDTO getUserProgress(String programId, String userId) {
+        // Fetch the program
+        Program program = programRepository.findById(programId)
+            .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+
+        // Fetch the user
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Fetch the cohort for this user in the given program
+        UserCohortMapping userCohortMapping = userCohortMappingRepository
+            .findByUserUserIdAndProgramId(userId, programId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not enrolled in any cohort for this program"));
+        // Fetch stages for the program
+        List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
+        int totalStages = stages.size();
+        int completedStages = 0;
+        int totalUnits = 0;
+        int completedUnits = 0;
+        int totalSubconcepts = 0;
+        int completedSubconcepts = 0;
+
+        // Process each stage
+        boolean previousStageCompleted = true;
+        for (Stage stage : stages) {
+            List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
+            totalUnits += units.size();
+
+            boolean stageCompleted = true;
+            boolean previousUnitCompleted = true;
+
+            for (Unit unit : units) {
+                List<ProgramConceptsMapping> subconcepts = 
+                    programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
+                totalSubconcepts += subconcepts.size();
+
+                List<UserSubConcept> completedSubconceptsList = userSubConceptRepository
+                    .findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
+                completedSubconcepts += completedSubconceptsList.size();
+
+                boolean unitCompleted = previousUnitCompleted &&
+                    completedSubconceptsList.size() == subconcepts.size();
+
+                if (unitCompleted) {
+                    completedUnits++;
+                }
+
+                previousUnitCompleted = unitCompleted;
+                if (!unitCompleted) {
+                    stageCompleted = false;
+                }
+            }
+
+            if (stageCompleted && previousStageCompleted) {
+                completedStages++;
+            }
+
+            previousStageCompleted = stageCompleted;
+        }
+
+        // Prepare response DTO
+        UserProgressDTO userProgress = new UserProgressDTO();
+        userProgress.setUserId(user.getUserId());
+        userProgress.setUserName(user.getUserName());
+        userProgress.setTotalStages(totalStages);
+        userProgress.setCompletedStages(completedStages);
+        userProgress.setTotalUnits(totalUnits);
+        userProgress.setCompletedUnits(completedUnits);
+        userProgress.setTotalSubconcepts(totalSubconcepts);
+        userProgress.setCompletedSubconcepts(completedSubconcepts);
+        userProgress.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
+
+        return userProgress;
+    }
+
 }
