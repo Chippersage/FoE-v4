@@ -91,14 +91,14 @@ const ErrorOverlay = ({ countdown = 5, onClose }) => {
 
 const SingleSubconcept = () => {
   console.log("rendered");
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [showGoBack, setShowGoBack] = useState(false); // State to control Submit button visibility
   const [successOverlay, setSuccessOverlay] = useState(false);
   const [errorOverlay, setErrorOverlay] = useState(false);
   const [onFrameLoad, setOnFrameLoad] = useState(false);
-  const sessionId = localStorage.getItem("authToken");
+  const sessionId = localStorage.getItem("sessionId");
   const subconcept = location.state?.subconcept;
   // @ts-ignore
   const [showIframe, setShowIframe] = useState(
@@ -164,14 +164,14 @@ useEffect(() => {
       const userData = {
         userAttemptStartTimestamp: new Date().toISOString(),
         unitId: currentUnitId,
-        programId: user.program.programId,
+        programId: selectedCohortWithProgram?.program?.programId,
         stageId: stageId,
         userId: user.userId,
         sessionId: sessionId,
         subconceptId: subconcept?.subconceptId,
         subconceptMaxscore: subconcept?.subconceptMaxscore,
         API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-        cohortId: user.cohort.cohortId,
+        cohortId: selectedCohortWithProgram?.cohortId,
       };
       localStorage.setItem("userData", JSON.stringify(userData));
     }

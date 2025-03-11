@@ -70,7 +70,7 @@ export default function LoginPage() {
       // const { sessionId, userType, userDetails, cohortReminder } = login.data;
       const { tempSessionId, userType, userDetails } = login.data;
 
-      localStorage.setItem("authToken", tempSessionId);
+      localStorage.setItem("tempSessionId", tempSessionId);
       localStorage.setItem("userType", userType);
       // (cohortReminder && cohortReminder !== null && cohortReminder !== undefined) && localStorage.setItem("cohortReminder", cohortReminder);
       localStorage.setItem("user", JSON.stringify(userDetails));
