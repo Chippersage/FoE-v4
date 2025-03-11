@@ -33,6 +33,14 @@ public class ProgramReportController {
       CohortProgressDTO progress = programReportService.getCohortProgress(programId, cohortId);
       return ResponseEntity.ok(progress);
   }
+  @GetMapping("/program/{programId}/user/{userId}/progress")
+  public ResponseEntity<UserProgressDTO> getUserProgress(
+      @PathVariable String programId,
+      @PathVariable String userId) {
+      
+      UserProgressDTO progress = programReportService.getUserProgress(programId, userId);
+      return ResponseEntity.ok(progress);
+  }
 
     @GetMapping("/program/{userId}/{programId}/download")
     public ResponseEntity<?> downloadProgramReport(
