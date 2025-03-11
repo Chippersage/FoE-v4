@@ -8,7 +8,7 @@ import { useSession } from "@/context/TimerContext";
 // Import the logout image
 
 const Header2 = () => {
-  const { user } = useUserContext();
+  const { user, selectedCohort, setIsAuthenticated } = useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -27,9 +27,10 @@ const Header2 = () => {
           },
         }
       );
-
+      
+      setIsAuthenticated(false);
       // Clear user info and setUser to null after logout
-      localStorage.removeItem("authToken");
+      localStorage.removeItem("tempSessionId");
       localStorage.removeItem("userType");
       localStorage.removeItem("user");
       localStorage.removeItem("hasSeenWelcome");
@@ -70,13 +71,18 @@ const Header2 = () => {
       </div>
       <div className="sm:flex flex-1 hidden">
         <h3 className="hellohead mx-auto text-white font-openSans">
-          {user ? `${user?.program?.programName}` : "Continue as Guest"}{" "}
+          {selectedCohort
+            ? `${user?.program?.programName}`
+            : ""}
           {/* Show "Continue as Guest" if user is null */}
         </h3>
       </div>
       <div className="logout-button flex-1 flex justify-end">
         {user && (
-          <span onClick={handleLogout} className="text-white cursor-pointer font-openSans">
+          <span
+            onClick={handleLogout}
+            className="text-white cursor-pointer font-openSans"
+          >
             Logout
           </span>
 
