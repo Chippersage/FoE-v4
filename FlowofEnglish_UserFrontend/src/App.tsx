@@ -14,7 +14,7 @@ import { SessionProvider } from "./context/TimerContext.tsx";
 
 export default function App() {
   
-  const { isAuthenticated } = useUserContext();
+  const { isAuthenticated, selectedCohortWithProgram } = useUserContext();
 
   useEffect(() => {
     // @ts-ignore
@@ -62,7 +62,11 @@ return (
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to="/select-cohort" />
+              selectedCohortWithProgram ? (
+                <Navigate to="/home" />
+              ) : (
+                <Navigate to="/select-cohort" />
+              )
             ) : (
               <Navigate to="/sign-in" />
             )
