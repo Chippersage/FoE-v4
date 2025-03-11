@@ -319,8 +319,11 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         dto.setCohortId(userCohortMapping.getCohort().getCohortId());
         dto.setUserId(userCohortMapping.getUser().getUserId());
         dto.setUserName(userCohortMapping.getUser().getUserName());
+        dto.setUserType(userCohortMapping.getUser().getUserType());
+        dto.setUserEmail(userCohortMapping.getUser().getUserEmail());
         dto.setCohortName(userCohortMapping.getCohort().getCohortName());
         dto.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
+        
         return dto;
     }
 }

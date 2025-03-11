@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { CSVLink } from 'react-csv';
 import { filter } from 'lodash';
+import axios from 'axios';
 
 import { Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Typography, Paper, Grid, Card, TableBody, TableCell, TableHead, TableRow,
   TableSortLabel, CircularProgress, IconButton, Menu, MenuItem, Stack, TablePagination, TableContainer, Container, FormControl, InputLabel,
@@ -16,15 +17,12 @@ import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 
-import {
-  getOrgUsers,
-  getCohortMapping,
-  createUserCohortMapping,
-  updateUserCohortMapping,
-  deleteUserCohortMapping,
-  importUserCohortMappings,
-} from '../api';
+import { getOrgUsers, getCohortMapping, createUserCohortMapping, updateUserCohortMapping, deleteUserCohortMapping, importUserCohortMappings,
+  downloadAllAssignments, } from '../api';
+import BulkUploadCorrectedAssignments from './BulkUploadCorrectedAssignments';
+import AssignmentsTable from './AssignmentsTable';
 
+const apiUrl = process.env.REACT_APP_API_URL;
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
@@ -103,6 +101,8 @@ const UserCohortPage = () => {
   const [selected, setSelected] = useState([]);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
+  const [isEmailSending, setIsEmailSending] = useState(false);
+  const [showAssignmentsTable, setShowAssignmentsTable] = useState(false);
   const [formValues, setFormValues] = useState({
     userId: '',
     cohortId: '',
@@ -251,29 +251,46 @@ const UserCohortPage = () => {
     setResponse(response);
   };
 
-  // const handleDelete = async (userCohortId) => {
-  //   if (window.confirm('Are you sure you want to delete this record?')) {
-  //     try {
-  //       await deleteUserCohortMapping(userCohortId);
-  //       showSnackbar('Record deleted successfully');
-  //       fetchUserCohortData();
-  //     } catch (error) {
-  //       showSnackbar('Error deleting data', 'error');
-  //     }
-  //   }
-  // };
-
-  // const handleEdit = (record) => {
-  //   console.log(record);
-  //   setCurrentRecord(record);
-  //   setFormValues({
-  //     userId: record.userId,
-  //     cohortId,
-  //     leaderboardScore: record.leaderboardScore || '',
-  //   });
-  //   setIsModalOpen(true);
-  // };
-
+  
+// Then, modify the handleDownloadAssignments function
+const handleDownloadAssignments = async () => {
+  try {
+    setIsEmailSending(true);
+    showSnackbar('Processing assignments and preparing email...', 'info');
+    
+    // First API call - download assignments
+    try {
+      await axios.get(`${apiUrl}/assignments/bulk-download`, {
+        params: { cohortId }
+      });
+      
+      // If we get here, it means the first call was successful
+      // Now make the second API call to send email
+      try {
+        const emailResponse = await axios.get(`${apiUrl}/assignments/bulk-download-send`, {
+          params: { cohortId }
+        });
+        
+        if (emailResponse.status === 200) {
+          showSnackbar('Assignments downloaded and email sent to mentor', 'success');
+        } else {
+          showSnackbar('Assignments downloaded but email status unknown', 'warning');
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        showSnackbar('Assignments downloaded but failed to send email', 'warning');
+      }
+    } catch (downloadError) {
+      console.error('Error downloading assignments:', downloadError);
+      showSnackbar('Failed to download assignments', 'error');
+    }
+  } catch (error) {
+    console.error('General error:', error);
+    showSnackbar('An unexpected error occurred', 'error');
+  } finally {
+    setIsEmailSending(false);
+  }
+};
   const handleOpenModal = () => {
     resetForm();
     setIsModalOpen(true);
@@ -356,7 +373,41 @@ const UserCohortPage = () => {
             Upload CSV
             <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
           </Button>
-
+{/* Add the new download assignments button here */}
+<Button 
+  variant="contained" 
+  onClick={handleDownloadAssignments}
+  startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
+  disabled={isEmailSending}
+  sx={{
+    bgcolor: '#5bc3cd',
+    color: 'white',
+    fontWeight: 'bold',
+    '&:hover': {
+      bgcolor: '#DB5788',
+    },
+    py: 1.5,
+    px: 2,
+    borderRadius: '8px',
+  }}
+>
+  {isEmailSending ? 'Sending email...' : 'Download Assignments'}
+</Button>
+<Button
+  variant="contained"
+  onClick={() => setShowAssignmentsTable(true)}
+  sx={{
+    bgcolor: '#5bc3cd',
+    color: 'white',
+    fontWeight: 'bold',
+    '&:hover': { bgcolor: '#DB5788' },
+    py: 1.5,
+    px: 2,
+    borderRadius: '8px',
+  }}
+>
+  View Assignments
+</Button>
           <CSVLink data={userCohortData} filename="users.csv" className="btn btn-primary">
           <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
             sx={{
@@ -405,18 +456,6 @@ const UserCohortPage = () => {
           <TableCell>{row.userId}</TableCell>
           <TableCell>{row.userName}</TableCell>
           <TableCell>{row.leaderboardScore}</TableCell>
-          {/* <TableCell align="right">
-          <IconButton onClick={(e) => openMenu(e, row.userCohortId)}>
-          <MoreVertIcon />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
-          <MenuItem onClick={() => handleEdit(row)}>Update</MenuItem> 
-          <MenuItem onClick={() => handleDelete(row.userCohortId)}>
-          <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
-          Delete
-          </MenuItem>
-          </Menu>
-          </TableCell>  */}
           </TableRow>
           );
           })}
