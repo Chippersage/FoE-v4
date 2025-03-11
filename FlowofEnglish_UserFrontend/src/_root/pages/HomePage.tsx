@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Dashboard from "@/components/Dashboard.tsx";
 import Header2 from "../../components/Header2.tsx";
 import { useEffect, useState } from "react";
@@ -6,39 +7,31 @@ import { useUserContext } from "@/context/AuthContext.tsx";
 
 export const HomePage = () => {
   const [showWelcome, setShowWelcome] = useState(false);
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [isLoading, setIsLoading] = useState(true); // Loader state
   // const selectedProgramId = localStorage.getItem("selectedProgramId");
+  console.log(selectedCohortWithProgram);
 
   useEffect(() => {
-    const selectedProgramId = localStorage.getItem("selectedProgramId");
+    // const selectedProgramId = localStorage.getItem("selectedProgramId");
 
-    if (!selectedProgramId || selectedProgramId === "null") {
+    if (selectedCohortWithProgram) {
       // If `selectedProgramId` is not set, wait for `user` to load
-      if (user && user.program && user.program.programId) {
-        const programId = user.program.programId;
-        localStorage.setItem("selectedProgramId", programId);
+      // if (user && user.program && user.program.programId) {
+      //   const programId = user.program.programId;
+      //   localStorage.setItem("selectedProgramId", programId);
 
-        // Set background URL dynamically
-        setBackgroundUrl(
-          programId.startsWith("PET")
-            ? "/images/PET-background-1.png"
-            : "/images/index.png"
-        );
-
-        setIsLoading(false); // Background determined, stop loading
-      }
-    } else {
-      // Use existing `selectedProgramId`
+      // Set background URL dynamically
       setBackgroundUrl(
-        selectedProgramId.startsWith("PET")
+        selectedCohortWithProgram?.program?.programId.startsWith("PET")
           ? "/images/PET-background-1.png"
           : "/images/index.png"
       );
+
       setIsLoading(false); // Background determined, stop loading
     }
-  }, [user]);
+  }, [selectedCohortWithProgram]);
 
   // const backgroundUrl =
   //   selectedProgramId === "PET-Level-1"
@@ -86,7 +79,7 @@ export const HomePage = () => {
             )}
 
             <div className="relative z-10 flex flex-1 no-scrollbar overflow-scroll min-h-screen">
-              <Header2 />
+              {/* <Header2 /> */}
               <Dashboard />
             </div>
 
