@@ -76,15 +76,25 @@ public class UserAssignmentController {
                 .body(zipResource);
     }
     
+    @GetMapping("/bulk-download-send")
+    public ResponseEntity<Resource> downloadAllAssignmentsSendEmail(
+            @RequestParam("cohortId") String cohortId) throws IOException {
+    	Resource zipResource = userAssignmentService.downloadAllAssignmentsSendEmail(cohortId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"assignments.zip\"")
+                .body(zipResource);
+    }
+    
     @PostMapping("/bulk-upload-corrected")
     public ResponseEntity<String> uploadCorrectedAssignments(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("scores") List<Integer> scores,
+            @RequestParam("remarks") List<String> remarks,
             @RequestParam("assignmentIds") List<String> assignmentIds) throws IOException {
-        if (files.size() != scores.size() || scores.size() != assignmentIds.size()) {
-            return ResponseEntity.badRequest().body("Mismatched number of files, scores, and assignment IDs.");
+        if (files.size() != scores.size() || scores.size() != remarks.size() || remarks.size() != assignmentIds.size()) {
+            return ResponseEntity.badRequest().body("Mismatched number of files, scores, remarks, and assignment IDs.");
         }
-        userAssignmentService.uploadCorrectedAssignments(files, scores, assignmentIds);
+        userAssignmentService.uploadCorrectedAssignments(files, scores, remarks, assignmentIds);
         return ResponseEntity.ok("Corrected assignments uploaded successfully.");
     }
 
