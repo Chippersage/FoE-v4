@@ -129,7 +129,7 @@ export default function SubConceptsPage() {
   // const nextUnitId = location.state?.nextUnitId;
   const { unitId } = useParams();
   const [nextUnitId, setNextUnitId] = useState(null);
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
   // const [started, setStarted] = useState(true);
   const [animationTrigger, setAnimationTrigger] = useState(false);
@@ -152,8 +152,9 @@ export default function SubConceptsPage() {
   const selectedProgramId = localStorage.getItem("selectedProgramId");
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [pathData, setPathData] = useState(null);
-    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-    const [screenHeight, setScreenHeight] = useState(window.innerHeight);
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
+
 
   const { formattedElapsedTime } = useSession();
 
@@ -230,30 +231,24 @@ export default function SubConceptsPage() {
   }, [totalSteps, screenWidth, screenHeight]); // Recalculate on orientation change
 
   useEffect(() => {
-    const selectedProgramId = localStorage.getItem("selectedProgramId");
+    // const selectedProgramId = localStorage.getItem("selectedProgramId");
 
-    if (!selectedProgramId || selectedProgramId === "null") {
+    if (selectedCohortWithProgram) {
       // If `selectedProgramId` is not set, wait for `user` to load
-      if (user && user.program && user.program.programId) {
-        const programId = user.program.programId;
-        localStorage.setItem("selectedProgramId", programId);
+      // if (user && user.program && user.program.programId) {
+      //   const programId = user.program.programId;
+      //   localStorage.setItem("selectedProgramId", programId);
 
-        // Set background URL dynamically
-        setBackgroundUrl(
-          programId.startsWith("PET")
-            ? "/images/PET-background-1.png"
-            : "/images/index.png"
-        );
-      }
-    } else {
-      // Use existing `selectedProgramId`
+      // Set background URL dynamically
       setBackgroundUrl(
-        selectedProgramId.startsWith("PET")
+        selectedCohortWithProgram?.program?.programId.startsWith("PET")
           ? "/images/PET-background-1.png"
           : "/images/index.png"
       );
+
+      // setIsLoading(false); // Background determined, stop loading
     }
-  }, [user]);
+  }, [selectedCohortWithProgram]);
 
   const [targetIndex, setTargetIndex] = useState(null);
   const scrollableDivRef = useRef(null);

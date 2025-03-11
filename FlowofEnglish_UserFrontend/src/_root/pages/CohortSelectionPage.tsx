@@ -1,18 +1,77 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Clock, LogIn, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ScrollBar } from "@/components/ui/scroll-area";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// import { ScrollBar } from "@/components/ui/scroll-area";
+// import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUserContext } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Dashboard() {
-  // Scroll state and handlers remain the same but won't be visible with only one item
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false); // Will be false with only one item
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const { user, setSelectedCohortWithProgram } = useUserContext();
+  const [progressData, setProgressData] = useState({}); // Store progress per programId
+  const [loading, setLoading] = useState({}); // Track loading state for each programId
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const navigate = useNavigate()
+  const tempSessionId = localStorage.getItem("tempSessionId");
+
+    useEffect(() => {
+      if (!user?.cohorts) return;
+
+      user.cohorts.forEach((cohort) => {
+        const programId = cohort?.program?.programId;
+        const userId = user?.userId;
+        if (!programId || !userId) return;
+
+        // Set loading state
+        setLoading((prev) => ({ ...prev, [programId]: true }));
+
+        // Fetch progress data
+        fetch(`${API_BASE_URL}/reports/program/${programId}/user/${userId}/progress`)
+          .then((res) => res.json())
+          .then((data) => {
+            const { completedSubconcepts, totalSubconcepts } = data;
+            const progress =
+              totalSubconcepts > 0
+                ? (completedSubconcepts / totalSubconcepts) * 100
+                : 0;
+
+            // Update progress state
+            setProgressData((prev) => ({ ...prev, [programId]: progress }));
+          })
+          .catch((error) => console.error("Error fetching progress:", error))
+          .finally(() => {
+            setLoading((prev) => ({ ...prev, [programId]: false }));
+          });
+      });
+    }, [user?.cohorts]);
+
+const handleResume = async (cohortWithProgram: string) => {
+  setSelectedCohortWithProgram(cohortWithProgram);
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
+      userId: user?.userId,
+      cohortId: cohortWithProgram?.cohortId,
+      tempSessionId,
+    });
+
+    localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
+
+    navigate("/home"); // Navigate after session ID is set
+  } catch (error) {
+    console.error("Error fetching session ID:", error);
+  }
+};
+
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;
@@ -38,7 +97,6 @@ export default function Dashboard() {
     }
   };
 
-  // Only one course in the array
   const courses = [
     {
       id: 1,
@@ -49,6 +107,31 @@ export default function Dashboard() {
       id: 2,
       title: "AIF Grade 6",
       progress: 50,
+    },
+    {
+      id: 3,
+      title: "Business English Communication",
+      progress: 25,
+    },
+    {
+      id: 4,
+      title: "English Grammar Masterclass",
+      progress: 75,
+    },
+    {
+      id: 5,
+      title: "English Grammar Masterclass",
+      progress: 75,
+    },
+    {
+      id: 6,
+      title: "English Grammar Masterclass",
+      progress: 75,
+    },
+    {
+      id: 7,
+      title: "English Grammar Masterclass",
+      progress: 75,
     },
   ];
 
@@ -66,7 +149,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans w-full mt-[120px]">
+    <div className="min-h-screen bg-slate-100 font-sans">
       {/* Header */}
       {/* <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-4">
         <div className="flex items-center gap-2">
@@ -79,7 +162,7 @@ export default function Dashboard() {
         </Button>
       </header> */}
 
-      <main className="container mx-auto max-w-6xl p-4">
+      <main className="container mx-auto max-w-6xl p-4 mt-[120px]">
         {/* Welcome Banner */}
         {/* <div className="mb-6 rounded-lg bg-emerald-500 p-4 text-white">
           <h1 className="text-xl font-medium">Welcome Nalini!</h1>
@@ -89,13 +172,12 @@ export default function Dashboard() {
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">Continue Learning</h2>
-            {/* Navigation buttons are hidden when there's only one item */}
-            <div className="flex gap-2 invisible">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={scrollLeft}
-                disabled={true}
+                disabled={!canScrollLeft}
                 className="h-8 w-8 rounded-full"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -105,7 +187,7 @@ export default function Dashboard() {
                 variant="outline"
                 size="icon"
                 onClick={scrollRight}
-                disabled={true}
+                disabled={!canScrollRight}
                 className="h-8 w-8 rounded-full"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -114,21 +196,26 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* With only one item, the ScrollArea will still be present but won't be scrollable */}
-          <ScrollArea className="w-full">
-            <div
-              ref={scrollContainerRef}
-              onScroll={handleScroll}
-              className="flex gap-4 pb-4"
-            >
-              {courses.map((course) => (
+          {/* <ScrollArea className="w-full"> */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex gap-4 pb-4 w-full overflow-x-auto custom-scrollbar-2"
+
+            // style={{ width: "max-content" }}
+          >
+            {user?.cohorts?.map((cohortWithProgram) => {
+              const programId = cohortWithProgram?.program?.programId;
+              const progress = progressData[programId];
+              const isLoading = loading[programId];
+              return (
                 <Card
-                  key={course.id}
-                  className="min-w-[280px] border border-gray-200 md:min-w-[320px] w-full md:w-auto"
+                  key={cohortWithProgram?.program?.programId}
+                  className="min-w-[280px] border border-gray-200 md:min-w-[400px] bg-gradient-to-b from-[#CAF2BC] to-white"
                 >
                   <CardContent className="p-4">
                     <h3 className="mb-2 line-clamp-2 min-h-[48px] font-medium">
-                      {course.title}
+                      {cohortWithProgram?.program?.programName}
                     </h3>
                     <Button
                       variant="link"
@@ -138,33 +225,40 @@ export default function Dashboard() {
                     </Button>
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm text-gray-600">
-                        {course.progress}% complete
+                        {isLoading
+                          ? "Loading..."
+                          : `${progress?.toFixed(1)}% complete`}
                       </span>
                     </div>
-                    <Progress value={course.progress} className="h-2" />
+                    {isLoading ? (
+                      <Skeleton className="h-2 w-full" />
+                    ) : (
+                      <Progress value={progress} className="h-2" />
+                    )}
                   </CardContent>
                   <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
                     <Button
                       size="sm"
-                      className="bg-emerald-500 hover:bg-emerald-600"
+                      className="bg-[#64CE80] hover:bg-emerald-600"
+                      onClick={() => handleResume(cohortWithProgram)}
                     >
                       Resume
                     </Button>
                   </CardFooter>
                 </Card>
-              ))}
-            </div>
-            {/* ScrollBar will be present but not visible/functional with only one item */}
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+              );
+            })}
+          </div>
+          {/* <ScrollBar orientation="horizontal" />
+          </ScrollArea> */}
         </section>
 
-        {/* Bottom Sections remain the same */}
+        {/* Bottom Sections */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Daily Challenge */}
           <section>
             <h2 className="mb-4 text-xl font-bold">Daily Challenge</h2>
-            <Card>
+            <Card className="bg-gradient-to-b from-[#CAF2BC] to-white">
               <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   {challenges.map((challenge) => (
@@ -194,7 +288,7 @@ export default function Dashboard() {
           {/* Your Activity */}
           <section>
             <h2 className="mb-4 text-xl font-bold">Your Activity</h2>
-            <Card>
+            <Card className="bg-gradient-to-b from-[#CAF2BC] to-white">
               <CardContent className="p-4">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">

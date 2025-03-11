@@ -30,7 +30,7 @@ const Header2 = () => {
       
       setIsAuthenticated(false);
       // Clear user info and setUser to null after logout
-      localStorage.removeItem("authToken");
+      localStorage.removeItem("tempSessionId");
       localStorage.removeItem("userType");
       localStorage.removeItem("user");
       localStorage.removeItem("hasSeenWelcome");

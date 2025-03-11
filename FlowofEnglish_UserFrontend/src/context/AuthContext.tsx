@@ -42,6 +42,7 @@ export const INITIAL_USER_STATE = {
   organization: INITIAL_USER_ORGANISATION_STATE,
   cohorts: INITIAL_USER_COHORTS_STATE,
   program: INITIAL_USER_PROGRAM_STATE,
+  selectedCohortWithProgram: null, // Add this
 };
 
 /// Define initial state for AuthContext
@@ -52,6 +53,8 @@ export const INITIAL_STATE = {
   setUser: () => {},
   setIsAuthenticated: () => {},
   checkAuthUser: async () => false,
+  selectedCohortWithProgram: null, // Add this
+  setSelectedCohortWithProgram: () => {}, // Add this
 };
 
 // Create AuthContext
@@ -63,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(INITIAL_USER_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedCohort, setSelectedCohort] = useState(null);
+  const [selectedCohortWithProgram, setSelectedCohortWithProgram] = useState(null);
 
   // Function to check if the user is authenticated
   const checkAuthUser = async () => {
@@ -103,10 +106,13 @@ useEffect(() => {
     navigate("/sign-in");
   } else {
     checkAuthUser();
-    // After successful authentication, redirect to cohort selection
-    navigate("/select-cohort");
+    // Navigate to cohort selection ONLY IF no cohort is selected
+    if (!selectedCohortWithProgram) {
+      navigate("/select-cohort");
+    }
   }
-}, [navigate]);
+}, [navigate, selectedCohortWithProgram]);
+
 
   // Value to be provided by the context
   const value = {
@@ -116,8 +122,8 @@ useEffect(() => {
     isAuthenticated,
     setIsAuthenticated,
     checkAuthUser,
-    selectedCohort,
-    setSelectedCohort,
+    selectedCohortWithProgram,
+    setSelectedCohortWithProgram,
   };
   // @ts-ignore
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
