@@ -17,7 +17,7 @@ import { Clock } from "lucide-react";
 import { useSession } from "@/context/TimerContext";
 
 function Dashboard() {
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
   const [programInfo, setProgramInfo] = useState(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [currentUserLeaderBoardInfo, setCurrentUserLeaderBoardInfo] =
@@ -35,8 +35,8 @@ function Dashboard() {
   const { formattedElapsedTime } = useSession();
 
   const getProgramInfoByProgramId = async () => {
-    if (user && user.userId && user.program && user.program.programId) {
-      const programId = encodeURIComponent(user.program.programId);
+    if (user && user.userId && selectedCohortWithProgram) {
+      const programId = encodeURIComponent(selectedCohortWithProgram?.program?.programId);
       const userId = encodeURIComponent(user.userId); // Extract userId here
       try {
         const response = await axios.get(
@@ -54,7 +54,7 @@ function Dashboard() {
   const getLeaderBoardInfo = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/user-cohort-mappings/cohort/${user?.cohort?.cohortId}/learner`
+        `${API_BASE_URL}/user-cohort-mappings/cohort/${selectedCohortWithProgram?.cohortId}/learner`
       );
       return response.data;
     } catch (error) {
@@ -64,7 +64,7 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    if (user?.cohort?.cohortId) {
+    if (user && selectedCohortWithProgram) {
       const fetchAndSetLeaderBoardInfo = async () => {
         try {
           const result = await getLeaderBoardInfo();
@@ -93,7 +93,7 @@ function Dashboard() {
     const fetchUserProgress = async () => {
       try {
         const res = await axios.get(
-          `${API_BASE_URL}/reports/program/${user?.userId}/${user?.program?.programId}`
+          `${API_BASE_URL}/reports/program/${user?.userId}/${selectedCohortWithProgram?.program?.programId}`
         );
         setUserProgress(res.data);
         setCompletedStagesCount(res.data?.completedStages);
@@ -103,13 +103,13 @@ function Dashboard() {
       }
     };
 
-    if (user && user.userId && user.program && user.program.programId) {
+    if (user && user.userId && selectedCohortWithProgram) {
       fetchUserProgress();
     }
-  }, [user]);
+  }, [user, selectedCohortWithProgram]);
 
   useEffect(() => {
-    if (user) {
+    if (user && selectedCohortWithProgram) {
       // console.log(user)
       const fetchAndSetProgramInfo = async () => {
         try {
@@ -125,7 +125,7 @@ function Dashboard() {
 
       fetchAndSetProgramInfo();
     }
-  }, [user]);
+  }, [user, selectedCohortWithProgram]);
 
   const openModal = () => {
     // @ts-ignore
