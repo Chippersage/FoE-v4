@@ -13,7 +13,7 @@ const AssignmentsTable = ({ cohortId }) => {
     const [updating, setUpdating] = useState(false);
     const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
     const [editedAssignments, setEditedAssignments] = useState({});
-  
+    const LIGHT_TEAL = '#e6f5f5';
     useEffect(() => {
       fetchAssignments();
     }, [cohortId]);
@@ -22,8 +22,8 @@ const AssignmentsTable = ({ cohortId }) => {
       setLoading(true);
       try {
         const response = await axios.get(`${apiUrl}/assignments/cohort/${cohortId}`);
-        setAssignments(response.data);
-  
+        const sortedAssignments = response.data.sort((a, b) => (a.correctedDate ? 1 : -1));
+        setAssignments(sortedAssignments);
         // Initialize editedAssignments with current values
         const initialEdits = {};
         response.data.forEach((assignment) => {
@@ -75,7 +75,15 @@ const AssignmentsTable = ({ cohortId }) => {
         },
       }));
     };
-  
+    const handleCorrectedDateChange = (assignmentId, date) => {
+      setEditedAssignments((prev) => ({
+        ...prev,
+        [assignmentId]: {
+          ...prev[assignmentId],
+          correctedDate: date,
+        },
+      }));
+    };
     const handleSubmitCorrection = async (assignmentId) => {
       const editedData = editedAssignments[assignmentId];
   
@@ -96,7 +104,12 @@ const AssignmentsTable = ({ cohortId }) => {
       }
   
       formData.append('score', editedData.score);
-  
+      formData.append('remarks', editedData.remarks);
+      if (editedData.correctedDate) {
+        const correctedDateTime = new Date(editedData.correctedDate).toISOString();
+        formData.append('correctedDate', correctedDateTime);
+      }
+      
       try {
         const response = await axios.post(
           `${apiUrl}/assignments/${assignmentId}/correct`,
@@ -172,12 +185,17 @@ const AssignmentsTable = ({ cohortId }) => {
               </TableHead>
               <TableBody>
                 {assignments.map((assignment) => (
-                  <TableRow key={assignment.assignmentId}>
+                  <TableRow key={assignment.assignmentId}
+                  sx={{
+                    backgroundColor: assignment.correctedDate ? LIGHT_TEAL : 'inherit',
+                    color: assignment.correctedDate ? 'black' : 'inherit',
+                  }}
+                  >
                     <TableCell>{assignment.assignmentId}</TableCell>
                     <TableCell>{assignment.user.userName} ({assignment.user.userId})</TableCell>
-                    <TableCell>{assignment.program.programName}</TableCell>
-                    <TableCell>{assignment.stage.stageName}</TableCell>
-                    <TableCell>{assignment.unit.unitName}</TableCell>
+                    <TableCell>{assignment.program.programId}</TableCell>
+                    <TableCell>{assignment.stage.stageId}</TableCell>
+                    <TableCell>{assignment.unit.unitId}</TableCell>
                     <TableCell title={assignment.subconcept.subconceptDesc}>
                       {assignment.subconcept.subconceptId}
                     </TableCell>
@@ -230,11 +248,29 @@ const AssignmentsTable = ({ cohortId }) => {
     <CloudUploadIcon />
   </IconButton>
 </label>
-
+{/* <TableCell>
+  <TextField
+    type="date"
+    size="small"
+    value={editedAssignments[assignment.assignmentId]?.correctedDate || ''}
+    onChange={(e) => handleCorrectedDateChange(assignment.assignmentId, e.target.value)}
+  />
+</TableCell> */}
                       {editedAssignments[assignment.assignmentId]?.file?.name ||
                         (assignment.correctedFile ? assignment.correctedFile.fileName : '')}
                     </TableCell>
-                    <TableCell>{formatDateTime(assignment.correctedDate)}</TableCell>
+                    <TableCell>
+    {assignment.correctedDate ? (
+      formatDateTime(assignment.correctedDate)
+    ) : (
+      <TextField
+        type="date"
+        size="small"
+        value={editedAssignments[assignment.assignmentId]?.correctedDate || ''}
+        onChange={(e) => handleCorrectedDateChange(assignment.assignmentId, e.target.value)}
+      />
+    )}
+  </TableCell>
                     <TableCell>
                       <Button
                         variant="contained"

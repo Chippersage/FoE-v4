@@ -163,21 +163,25 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     
     @Override
     public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
-                                                  MultipartFile correctedFile) throws IOException {
+                                                   MultipartFile correctedFile, 
+                                                   String remarks, OffsetDateTime correctedDate) throws IOException {
         UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
             .orElseThrow(() -> new RuntimeException("Assignment not found"));
 
-        validateFileSize(correctedFile);
+        if (correctedFile != null && !correctedFile.isEmpty()) {
+            validateFileSize(correctedFile);
+            String filePath = saveFileToSystem(correctedFile);
+            MediaFile mediaFile = saveFileMetadata(correctedFile, filePath, assignment.getUser());
+            assignment.setCorrectedFile(mediaFile);
+        }
 
-        String filePath = saveFileToSystem(correctedFile);
-        MediaFile mediaFile = saveFileMetadata(correctedFile, filePath, assignment.getUser());
-
-        assignment.setCorrectedFile(mediaFile);
-        assignment.setCorrectedDate(OffsetDateTime.now(ZoneOffset.UTC));
+        assignment.setCorrectedDate(correctedDate != null ? correctedDate : OffsetDateTime.now(ZoneOffset.UTC));
         assignment.setScore(score);
+        assignment.setRemarks(remarks);  // Save remarks
 
         return userAssignmentRepository.save(assignment);
     }
+
     
  // Helper method to validate file size based on type
     private void validateFileSize(MultipartFile file) {

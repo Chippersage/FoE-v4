@@ -5,6 +5,8 @@ import com.FlowofEnglish.model.UserAssignment;
 import com.FlowofEnglish.service.UserAssignmentService;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 //import jakarta.annotation.Resource;
 
@@ -45,11 +47,20 @@ public class UserAssignmentController {
     @PostMapping("/{assignmentId}/correct")
     public ResponseEntity<UserAssignment> submitCorrectedAssignment(
             @PathVariable String assignmentId,
-            @RequestParam("score") Integer score,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam(value = "score", required = false) Integer score,
+            @RequestParam(value = "remarks", required = false) String remarks,
+            @RequestParam(value = "correctedDate", required = false) String correctedDateStr,
+            @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+
+    	DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+    	OffsetDateTime correctedDate = (correctedDateStr != null) 
+    	    ? OffsetDateTime.parse(correctedDateStr, formatter) 
+    	    : null;
+
         return ResponseEntity.ok(userAssignmentService.submitCorrectedAssignment(
-            assignmentId, score, file));
+            assignmentId, score, file, remarks, correctedDate));
     }
+
     
     
     @GetMapping("/user/{userId}")
