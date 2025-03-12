@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface UserAssignmentService {
@@ -24,9 +25,9 @@ public interface UserAssignmentService {
             String stageId, String unitId, String subconceptId, 
             MultipartFile file) throws IOException;
 
-UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
-                  MultipartFile correctedFile) throws IOException;
-
+    UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
+            MultipartFile correctedFile, 
+            String remarks, OffsetDateTime correctedDate) throws IOException;
     UserAssignment getAssignmentById(String assignmentId);
     MediaFile getSubmittedFile(String assignmentId); // Add this line
     MediaFile getCorrectedFile(String assignmentId);
