@@ -316,7 +316,10 @@ const handleDownloadAssignments = async () => {
     setFormValues({ userId: '', cohortId: '', leaderboardScore: '' });
     setIsModalOpen(true);
   };
-
+// Toggle function for assignments table view
+const toggleAssignmentsTable = () => {
+  setShowAssignmentsTable(!showAssignmentsTable);
+};
   const filteredUserCohortData = applySortFilter(userCohortData, getComparator(order, orderBy), filterName);
   const isNotFound = !filteredUserCohortData.length && !!filterName;
 
@@ -331,83 +334,102 @@ const handleDownloadAssignments = async () => {
           <Typography variant="h4" gutterBottom>
             {cohortName}
           </Typography>
+          {showAssignmentsTable && (
+            <Button 
+              variant="outlined" 
+              onClick={toggleAssignmentsTable}
+              sx={{
+                color: '#5bc3cd',
+                borderColor: '#5bc3cd',
+                '&:hover': { bgcolor: '#f0f9fa', borderColor: '#DB5788' },
+              }}
+            >
+              Back to Learners
+            </Button>
+          )}
         </Stack>
+        {showAssignmentsTable ? (
+          <Box sx={{ mt: 3 }}>
+            <AssignmentsTable cohortId={cohortId} />
+          </Box>
+        ) : (
+          <>
+            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+              <Button
+                variant="contained"
+                onClick={handleOpenModal}
+                startIcon={<Iconify icon="eva:plus-fill" />}
+                sx={{
+                  bgcolor: '#5bc3cd',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    bgcolor: '#DB5788',
+                  },
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                Add Learner to Cohort
+              </Button>
 
-        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-          <Button
-            variant="contained"
-            onClick={handleOpenModal}
-            startIcon={<Iconify icon="eva:plus-fill" />}
-            sx={{
-              bgcolor: '#5bc3cd', // Default background color
-              color: 'white', // Text color
-              fontWeight: 'bold', // Font weight
-              '&:hover': {
-                bgcolor: '#DB5788', // Hover background color
-              },
-              py: 1.5, // Padding Y
-              px: 2, // Padding X
-              borderRadius: '8px', // Border radius
-            }}
-          >
-            Add Learner to Cohort
-          </Button>
-
-          <Button
-            variant="contained"
-            component="label"
-            style={{ marginRight: '10px' }}
-            startIcon={<Iconify icon="eva:upload-fill" />}
-            sx={{
-              bgcolor: '#5bc3cd', // Default background color
-              color: 'white', // Text color
-              fontWeight: 'bold', // Font weight
-              '&:hover': {
-                bgcolor: '#DB5788', // Hover background color
-              },
-              py: 1.5, // Padding Y
-              px: 2, // Padding X
-              borderRadius: '8px', // Border radius
-            }}
-          >
-            Upload CSV
-            <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
-          </Button>
-{/* Add the new download assignments button here */}
-<Button 
-  variant="contained" 
-  onClick={handleDownloadAssignments}
-  startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
-  disabled={isEmailSending}
-  sx={{
-    bgcolor: '#5bc3cd',
-    color: 'white',
-    fontWeight: 'bold',
-    '&:hover': {
-      bgcolor: '#DB5788',
-    },
-    py: 1.5,
-    px: 2,
-    borderRadius: '8px',
-  }}
->
-  {isEmailSending ? 'Sending email...' : 'Download Assignments'}
-</Button>
-<Button
-  variant="contained"
-  onClick={() => setShowAssignmentsTable(true)}
-  sx={{
-    bgcolor: '#5bc3cd',
-    color: 'white',
-    fontWeight: 'bold',
-    '&:hover': { bgcolor: '#DB5788' },
-    py: 1.5,
-    px: 2,
-    borderRadius: '8px',
-  }}
->
-  View Assignments
-</Button>
+              <Button
+                variant="contained"
+                component="label"
+                style={{ marginRight: '10px' }}
+                startIcon={<Iconify icon="eva:upload-fill" />}
+                sx={{
+                  bgcolor: '#5bc3cd',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    bgcolor: '#DB5788',
+                  },
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                Upload CSV
+                <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
+              </Button>
+              
+              <Button 
+                variant="contained" 
+                onClick={handleDownloadAssignments}
+                startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
+                disabled={isEmailSending}
+                sx={{
+                  bgcolor: '#5bc3cd',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    bgcolor: '#DB5788',
+                  },
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                {isEmailSending ? 'Sending email...' : 'Download Assignments'}
+              </Button>
+              
+              <Button
+                variant="contained"
+                onClick={toggleAssignmentsTable}
+                sx={{
+                  bgcolor: '#5bc3cd',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  '&:hover': { bgcolor: '#DB5788' },
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                View Assignments
+              </Button>
           <CSVLink data={userCohortData} filename="users.csv" className="btn btn-primary">
           <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
             sx={{
@@ -496,6 +518,8 @@ const handleDownloadAssignments = async () => {
   }}
           />
         </Card>
+        </>
+        )}
       </Container>
 
       

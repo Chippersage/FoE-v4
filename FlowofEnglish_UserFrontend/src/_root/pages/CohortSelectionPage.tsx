@@ -62,7 +62,7 @@ const handleResume = async (cohortWithProgram: string) => {
       userId: user?.userId,
       cohortId: cohortWithProgram?.cohortId,
       tempSessionId,
-    });
+    }, { withCredentials: true });
 
     localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
 
