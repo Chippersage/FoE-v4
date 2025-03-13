@@ -26,7 +26,7 @@ export function UploadModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
   const subconcept = location.state?.subconcept;
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
@@ -83,7 +83,7 @@ export function UploadModal({
         formData.append(
           "file",
           file,
-          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${
+          `${user?.userId}-${selectedCohortWithProgram?.cohortId}-${selectedCohortWithProgram?.program?.programId}-${
             subconcept?.subconceptId
           }.${file.name?.split(".")?.pop()}`
         );
@@ -97,15 +97,18 @@ export function UploadModal({
         formData.append(
           "file",
           recordedMedia.blob,
-          `${user?.userId}-${user?.cohort?.cohortId}-${user?.program?.programId}-${subconcept?.subconceptId}.${extension}`
+          `${user?.userId}-${selectedCohortWithProgram?.cohortId}-${selectedCohortWithProgram?.program?.programId}-${subconcept?.subconceptId}.${extension}`
         );
       } else {
         throw new Error("No file or media found for upload.");
       }
 
       formData.append("userId", user.userId);
-      formData.append("cohortId", user?.cohort?.cohortId);
-      formData.append("programId", user?.program?.programId);
+      formData.append("cohortId", selectedCohortWithProgram?.cohortId);
+      formData.append(
+        "programId",
+        selectedCohortWithProgram?.program?.programId
+      );
       formData.append("stageId", stageId);
       formData.append("unitId", currentUnitId);
       formData.append("subconceptId", subconcept?.subconceptId);
