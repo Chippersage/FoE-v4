@@ -12,4 +12,5 @@ public interface ProgramReportService {
     
     byte[] generatePdfReport(String userId, String programId); 
     byte[] generateCsvReport(String userId, String programId);
+	UserProgressDTO getUserProgress(String programId, String userId);
 }
