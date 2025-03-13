@@ -5,6 +5,8 @@ import com.FlowofEnglish.model.UserAssignment;
 import com.FlowofEnglish.service.UserAssignmentService;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 //import jakarta.annotation.Resource;
 
@@ -45,11 +47,20 @@ public class UserAssignmentController {
     @PostMapping("/{assignmentId}/correct")
     public ResponseEntity<UserAssignment> submitCorrectedAssignment(
             @PathVariable String assignmentId,
-            @RequestParam("score") Integer score,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam(value = "score", required = false) Integer score,
+            @RequestParam(value = "remarks", required = false) String remarks,
+            @RequestParam(value = "correctedDate", required = false) String correctedDateStr,
+            @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+
+    	DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+    	OffsetDateTime correctedDate = (correctedDateStr != null) 
+    	    ? OffsetDateTime.parse(correctedDateStr, formatter) 
+    	    : null;
+
         return ResponseEntity.ok(userAssignmentService.submitCorrectedAssignment(
-            assignmentId, score, file));
+            assignmentId, score, file, remarks, correctedDate));
     }
+
     
     
     @GetMapping("/user/{userId}")
@@ -76,15 +87,25 @@ public class UserAssignmentController {
                 .body(zipResource);
     }
     
+    @GetMapping("/bulk-download-send")
+    public ResponseEntity<Resource> downloadAllAssignmentsSendEmail(
+            @RequestParam("cohortId") String cohortId) throws IOException {
+    	Resource zipResource = userAssignmentService.downloadAllAssignmentsSendEmail(cohortId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"assignments.zip\"")
+                .body(zipResource);
+    }
+    
     @PostMapping("/bulk-upload-corrected")
     public ResponseEntity<String> uploadCorrectedAssignments(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("scores") List<Integer> scores,
+            @RequestParam("remarks") List<String> remarks,
             @RequestParam("assignmentIds") List<String> assignmentIds) throws IOException {
-        if (files.size() != scores.size() || scores.size() != assignmentIds.size()) {
-            return ResponseEntity.badRequest().body("Mismatched number of files, scores, and assignment IDs.");
+        if (files.size() != scores.size() || scores.size() != remarks.size() || remarks.size() != assignmentIds.size()) {
+            return ResponseEntity.badRequest().body("Mismatched number of files, scores, remarks, and assignment IDs.");
         }
-        userAssignmentService.uploadCorrectedAssignments(files, scores, assignmentIds);
+        userAssignmentService.uploadCorrectedAssignments(files, scores, remarks, assignmentIds);
         return ResponseEntity.ok("Corrected assignments uploaded successfully.");
     }
 

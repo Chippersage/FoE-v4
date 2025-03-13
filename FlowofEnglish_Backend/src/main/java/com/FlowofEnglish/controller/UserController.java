@@ -48,7 +48,8 @@ public class UserController {
     @Autowired
     private UserCohortMappingService userCohortMappingService; 
 
-    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
+
     @GetMapping
     public List<UserGetDTO> getAllUsers() {
         return userService.getAllUsers();
@@ -242,7 +243,10 @@ public class UserController {
     public ResponseEntity<?> selectCohort(@RequestBody Map<String, String> cohortData) {
         String serverStoredTempSessionId = (String) session.getAttribute("tempSessionId");
         String serverStoredUserId = (String) session.getAttribute("tempUserId");
-        
+        logger.info("Session ID: {}", session.getId());
+        logger.info("Stored tempSessionId: {}", session.getAttribute("tempSessionId"));
+        logger.info("Stored tempUserId: {}", session.getAttribute("tempUserId"));
+
         // Get values from request body
         String selectedCohortId = cohortData.get("cohortId");
         String requestUserId = cohortData.get("userId");
