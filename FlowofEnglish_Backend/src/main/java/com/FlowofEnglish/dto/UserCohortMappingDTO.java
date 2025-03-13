@@ -5,6 +5,8 @@ public class UserCohortMappingDTO {
     private String cohortId;
     private String userId;
     private String userName;
+    private String userType;
+    private String userEmail;
     private String cohortName;
     private int leaderboardScore; 
     
@@ -41,5 +43,22 @@ public class UserCohortMappingDTO {
 	}
 	public void setCohortName(String cohortName) {
 		this.cohortName = cohortName;
+	}
+
+	public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	public String getUserEmail() {
+		return userEmail;
+	}
+
+	public void setUserEmail(String userEmail) {
+		this.userEmail = userEmail;
 	} 
+	
 }
