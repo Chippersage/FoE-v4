@@ -25,7 +25,7 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
 }) => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [confettiActive, setConfettiActive] = useState(false);
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram } = useUserContext();
 
   useEffect(() => {
     const handleResize = () => {
@@ -164,11 +164,11 @@ const KidFriendlyModal: React.FC<KidFriendlyModalProps> = ({
                   generateCertificate({
                     userName: user?.userName || "",
                     programName:
-                      user?.program?.programName || "",
+                      selectedCohortWithProgram?.program?.programName || "",
                     cohortStartDate:
-                      user?.cohort?.cohortStartDate || "",
+                      selectedCohortWithProgram?.cohortStartDate || "",
                     cohortEndDate:
-                      user?.cohort?.cohortEndDate || "",
+                      selectedCohortWithProgram?.cohortEndDate || "",
                   });
                 onClose();
               }}
