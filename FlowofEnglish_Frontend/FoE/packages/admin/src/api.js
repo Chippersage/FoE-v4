@@ -409,6 +409,275 @@ export async function deleteUserCohortMapping(userId) {
   return null;
 }
 
+// // Submit a new assignment
+// export const submitAssignment = async (userId, cohortId, programId, stageId, unitId, subconceptId, file) => {
+//   try {
+//     const formData = new FormData();
+//     formData.append('userId', userId);
+//     formData.append('cohortId', cohortId);
+//     formData.append('programId', programId);
+//     formData.append('stageId', stageId);
+//     formData.append('unitId', unitId);
+//     formData.append('subconceptId', subconceptId);
+//     formData.append('file', file);
+
+//     const response = await axios.post(`${apiUrl}/assignments/submit`, formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       },
+//     });
+//     console.log('Assignment submission successful:', response.data);
+//     return {
+//       success: true,
+//       data: response.data,
+//       message: 'Assignment submitted successfully'
+//     };
+//   } catch (error) {
+//     console.error('Error submitting assignment:', error);
+//     return {
+//       success: false,
+//       message: error.response?.data?.message || 'Failed to submit assignment. Please try again.'
+//     };
+//   }
+// };
+
+// Submit a corrected assignment
+export const submitCorrectedAssignment = async (assignmentId, score, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('score', score);
+    formData.append('file', file);
+
+    const response = await axios.post(`${apiUrl}/assignments/${assignmentId}/correct`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return {
+      success: true,
+      data: response.data,
+      message: 'Corrected assignment submitted successfully'
+    };
+  } catch (error) {
+    console.error('Error submitting corrected assignment:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to submit corrected assignment. Please try again.'
+    };
+  }
+};
+
+// Get assignments by user ID
+export const getAssignmentsByUserId = async (userId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/user/${userId}`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Error fetching user assignments:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch user assignments.'
+    };
+  }
+};
+
+// Get assignments by cohort ID
+export const getAssignmentsByCohortId = async (cohortId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/cohort/${cohortId}`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Error fetching cohort assignments:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch cohort assignments.'
+    };
+  }
+};
+
+// Get assignments by cohort ID and user ID
+export const getAssignmentsByCohortIdAndUserId = async (cohortId, userId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/cohort/${cohortId}/user/${userId}`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Error fetching assignments for user and cohort:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch user and cohort assignments.'
+    };
+  }
+};
+
+// Download all assignments for a cohort
+export const downloadAllAssignments = async (cohortId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/bulk-download?cohortId=${cohortId}`, {
+      responseType: 'blob', // Important for file downloads
+    });
+    
+    // Create a download link and trigger it
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'assignments.zip');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return {
+      success: true,
+      message: 'Download successful'
+    };
+  } catch (error) {
+    console.error('Error downloading assignments:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to download assignments.'
+    };
+  }
+};
+
+// Upload multiple corrected assignments
+export const uploadCorrectedAssignments = async (files, scores, assignmentIds) => {
+  try {
+    const formData = new FormData();
+    
+    // Ensure we have matching counts
+    if (files.length !== scores.length || scores.length !== assignmentIds.length) {
+      return {
+        success: false,
+        message: 'Mismatched number of files, scores, and assignment IDs.'
+      };
+    }
+    
+    // Append all files, scores, and assignment IDs to the form data
+    files.forEach(file => formData.append('files', file));
+    scores.forEach(score => formData.append('scores', score));
+    assignmentIds.forEach(id => formData.append('assignmentIds', id));
+    
+    const response = await axios.post(`${apiUrl}/assignments/bulk-upload-corrected`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return {
+      success: true,
+      message: response.data || 'Corrected assignments uploaded successfully'
+    };
+  } catch (error) {
+    console.error('Error uploading corrected assignments:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to upload corrected assignments.'
+    };
+  }
+};
+
+// Get submitted file for an assignment
+export const getSubmittedFile = async (assignmentId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/${assignmentId}/file`, {
+      responseType: 'blob',
+    });
+    
+    // Extract filename from content disposition header if available
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'assignment-file';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch && filenameMatch.length === 2) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    // Create a download link and trigger it
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return {
+      success: true,
+      message: 'File downloaded successfully'
+    };
+  } catch (error) {
+    console.error('Error downloading submitted file:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to download submitted file.'
+    };
+  }
+};
+
+// Get corrected file for an assignment
+export const getCorrectedFile = async (assignmentId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/${assignmentId}/corrected-file`, {
+      responseType: 'blob',
+    });
+    
+    // Extract filename from content disposition header if available
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'corrected-assignment';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch && filenameMatch.length === 2) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    // Create a download link and trigger it
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return {
+      success: true,
+      message: 'Corrected file downloaded successfully'
+    };
+  } catch (error) {
+    console.error('Error downloading corrected file:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to download corrected file.'
+    };
+  }
+};
+
+// Get assignment by ID
+export const getAssignmentById = async (assignmentId) => {
+  try {
+    const response = await axios.get(`${apiUrl}/assignments/${assignmentId}`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Error fetching assignment details:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch assignment details.'
+    };
+  }
+};
 
 // Programs API calls
 
