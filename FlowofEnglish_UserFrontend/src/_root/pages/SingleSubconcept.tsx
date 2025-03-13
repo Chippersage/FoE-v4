@@ -332,7 +332,7 @@ useEffect(() => {
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
               title="Embedded Content"
-              className={`w-full h-[800px] mt-[65px] ${onFrameLoad && ""}`}
+              className={`w-full h-[800px] mt-[100px] ${onFrameLoad && ""}`}
               onLoad={() => {
                 setShowGoBack(true);
                 setOnFrameLoad(true);

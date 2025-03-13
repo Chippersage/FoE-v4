@@ -477,7 +477,7 @@ export default function SubConceptsPage() {
         className="relative w-full h-auto sm:mt-[200px] mt-[220px] md:mt-[200px] overflow-y-auto"
       >
         <div
-          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-28 sm:top-0`}
+          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-24 sm:top-0`}
           style={{
             backgroundImage: `url(${backgroundUrl})`,
           }}

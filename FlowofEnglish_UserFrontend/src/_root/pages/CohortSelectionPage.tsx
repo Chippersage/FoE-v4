@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({}); // Track loading state for each programId
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate()
-  const tempSessionId = localStorage.getItem("tempSessionId");
+  // const tempSessionId = localStorage.getItem("tempSessionId");
 
     useEffect(() => {
       if (!user?.cohorts) return;
@@ -61,7 +61,7 @@ const handleResume = async (cohortWithProgram: string) => {
     const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
       userId: user?.userId,
       cohortId: cohortWithProgram?.cohortId,
-      tempSessionId,
+      // tempSessionId,
     });
 
     localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
@@ -96,44 +96,6 @@ const handleResume = async (cohortWithProgram: string) => {
       container.scrollBy({ left: 300, behavior: "smooth" });
     }
   };
-
-  const courses = [
-    {
-      id: 1,
-      title: "Professional English for Teachers - Level 1",
-      progress: 10,
-    },
-    {
-      id: 2,
-      title: "AIF Grade 6",
-      progress: 50,
-    },
-    {
-      id: 3,
-      title: "Business English Communication",
-      progress: 25,
-    },
-    {
-      id: 4,
-      title: "English Grammar Masterclass",
-      progress: 75,
-    },
-    {
-      id: 5,
-      title: "English Grammar Masterclass",
-      progress: 75,
-    },
-    {
-      id: 6,
-      title: "English Grammar Masterclass",
-      progress: 75,
-    },
-    {
-      id: 7,
-      title: "English Grammar Masterclass",
-      progress: 75,
-    },
-  ];
 
   const challenges = [
     {
