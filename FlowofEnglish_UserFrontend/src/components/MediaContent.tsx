@@ -6,6 +6,9 @@ import AlertModal from "./modals/AlertModal";
 import { RetryModal } from "./modals/RetryModal";
 import { FileUploaderRecorder } from "./FileUploaderRecorder";
 import ActivityCompletionModal from "./ActivityCompletionModal";
+import AssignmentStatusModal from "./modals/AssignmentStatusModal";
+import axios from "axios";
+import { Button } from "./ui/button";
 // @ts-ignore
 const MediaContent = ({ subconceptData, currentUnitId }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -37,6 +40,15 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
   const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const [scorePercentage, setScorePercentage] = useState<null | number>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [assignmentData, setAssignmentData] = useState<{
+    not_corrected?: any;
+    corrected?: any;
+    corrected_with_file?: any;
+  }>({});
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null);
+  const [isAssignmentStatusModalOpen, setIsAssignmentStatusModalOpen] =
+    useState(false);
 
   // const handleContentLoaded = () => {
   //   setIsComplete(false); // Enable the "Complete" button when content is fully loaded
@@ -67,6 +79,62 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       "_blank"
     );
   };
+
+useEffect(() => {
+  const fetchAssignment = async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
+      );
+
+      const data = response.data;
+
+      const formattedData = {
+        status: data.status, // "not_corrected" | "corrected"
+        submittedFile: {
+          name: data.submittedFile.fileName,
+          downloadUrl: data.submittedFile.downloadUrl,
+        },
+        correctedFile: data.correctedFile
+          ? {
+              name: data.correctedFile.fileName,
+              downloadUrl: data.correctedFile.downloadUrl,
+            }
+          : undefined,
+        score: data.score,
+        remarks: data.remarks,
+      };
+
+      // Categorize the data based on its status
+      if (data.status === "not_corrected") {
+        setAssignmentData((prev) => ({
+          ...prev,
+          not_corrected: formattedData,
+        }));
+        setCurrentStatus("not_corrected");
+      } else if (data.status === "corrected" && data.correctedFile) {
+        setAssignmentData((prev) => ({
+          ...prev,
+          corrected_with_file: formattedData,
+        }));
+        setCurrentStatus("corrected_with_file");
+      } else if (data.status === "corrected") {
+        setAssignmentData((prev) => ({
+          ...prev,
+          corrected: formattedData,
+        }));
+        setCurrentStatus("corrected");
+      }
+      setIsAssignmentStatusModalOpen(true); // Open modal when data is ready
+    } catch (error) {
+      console.error("Error fetching assignment:", error);
+    }
+  };
+
+  if(userData?.userId)
+    fetchAssignment();
+
+}, [userData?.userId]);
 
   useEffect(() => {
     if (isAssignmentUploadSuccesfull) {
@@ -414,19 +482,19 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
 
   return (
     <>
-      {/* <RetryModal
-        isOpen={isRetryPopupOpen}
-        onClose={() => setIsRetryPopupOpen(false)}
-        onRetry={handleComplete}
-      /> */}
-      {/* {showAlert && (
-        <AlertModal
-          onAlertClose={() => {
-            setShowAlert(false);
-            setAlertDismissed(true);
-          }}
-        />
-      )} */}
+      <AssignmentStatusModal
+        isOpen={isAssignmentStatusModalOpen}
+        onClose={() => setIsAssignmentStatusModalOpen(false)}
+        assignment={
+          currentStatus === "not_corrected"
+            ? assignmentData.not_corrected
+            : currentStatus === "corrected"
+            ? assignmentData.corrected
+            : assignmentData.corrected_with_file
+        }
+        subconceptMaxscore={subconceptData?.subconceptMaxscore}
+      />
+
       {showSuccessPopup ? (
         !["assessment", "assignment"].some((type) =>
           subconceptData?.subconceptType?.startsWith(type)
@@ -444,7 +512,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       {/* Rest of the component */}
       {/* @ts-ignore */}
       <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full">
-        <h1 className="mt-12 pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
+        <h1 className="mt-24 pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
           {subconceptData?.subconceptType === "video"
             ? "Watch the video"
             : subconceptData?.subconceptType === "audio"
@@ -488,7 +556,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
           } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
         >
           {subconceptData?.subconceptType === "assessment" && (
-            <div className="flex justify-center items-center space-x-2">
+            <div className="flex justify-center items-center space-x-2 py-1">
               <input
                 type="checkbox"
                 id="agreement"
@@ -506,9 +574,19 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
           )}
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
-              <FileUploaderRecorder onUploadSuccess={handleUploadSuccess} />
+              subconceptData?.completionStatus === "ignored" ? (
+                <FileUploaderRecorder onUploadSuccess={handleUploadSuccess} />
+              ) : (
+                <Button
+                  onClick={() => setIsAssignmentStatusModalOpen(true)}
+                  disabled={isAssignmentStatusModalOpen}
+                  className="bg-[#00A66B] hover:bg-green-600 text-white"
+                >
+                  View Assignment status
+                </Button>
+              )
             ) : (
-              <button
+              <Button
                 onClick={() => {
                   subconceptData?.subconceptType.startsWith("assignment")
                     ? setIsUploadModalOpen(true)
@@ -530,15 +608,21 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
                 {subconceptData?.subconceptType.startsWith("assignment")
                   ? "Upload assignment"
                   : "Complete"}
-              </button>
+              </Button>
             )}
 
-            <button
+            {/* <button
               onClick={handleGoBack}
               className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-1 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[2px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
             >
               Go Back
-            </button>
+            </button> */}
+            <Button
+              onClick={handleGoBack}
+              className="bg-[#00A66B] hover:bg-green-600 text-white"
+            >
+              Go Back
+            </Button>
           </div>
         </div>
       </div>
