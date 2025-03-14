@@ -56,6 +56,11 @@ export default function Dashboard() {
 
 const handleResume = async (cohortWithProgram: string) => {
   setSelectedCohortWithProgram(cohortWithProgram);
+  // When setting the cohort
+  localStorage.setItem(
+    "selectedCohortWithProgram",
+    JSON.stringify(cohortWithProgram)
+  );
 
   try {
     const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {

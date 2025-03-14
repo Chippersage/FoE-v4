@@ -11,6 +11,7 @@ import CohortSelectionPage from "./_root/pages/CohortSelectionPage.tsx";
 import Header from "./components/Header.tsx";
 import Header2 from "./components/Header2.tsx";
 import { SessionProvider } from "./context/TimerContext.tsx";
+import NotFoundPage from "./components/NotFoundPage.tsx";
 
 export default function App() {
   
@@ -82,6 +83,8 @@ return (
             element={<SingleSubconcept />}
           />
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </main>
   </SessionProvider>
