@@ -56,7 +56,7 @@ const Header2 = () => {
         <img
           src={"/icons/User-icons/home-icon.png"}
           alt="Home"
-          onClick={() => navigate("/select-cohort")}
+          onClick={() => navigate("/home")}
           style={{
             width: "25px",
             height: "25px",
