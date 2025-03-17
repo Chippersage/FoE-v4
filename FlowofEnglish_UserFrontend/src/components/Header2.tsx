@@ -30,7 +30,7 @@ const Header2 = () => {
       
       setIsAuthenticated(false);
       // Clear user info and setUser to null after logout
-      localStorage.removeItem("tempSessionId");
+      // localStorage.removeItem("tempSessionId");
       localStorage.removeItem("userType");
       localStorage.removeItem("user");
       localStorage.removeItem("hasSeenWelcome");
@@ -51,12 +51,12 @@ const Header2 = () => {
   };
 
   return (
-    <div className="header2 mt-[66px]">
+    <div className="header2 mt-[55px]">
       <div className="flex items-center justify-start flex-1 text-nowrap">
         <img
           src={"/icons/User-icons/home-icon.png"}
           alt="Home"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           style={{
             width: "25px",
             height: "25px",
@@ -65,9 +65,9 @@ const Header2 = () => {
           }}
           title="Go to Home"
         />
-        <h3 className="hellohead text-white font-openSans">
+        <h2 className="hellohead text-md text-white font-openSans">
           {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
-        </h3>
+        </h2>
       </div>
       <div className="sm:flex flex-1 hidden">
         <h3 className="hellohead mx-auto text-white font-openSans">
@@ -81,7 +81,7 @@ const Header2 = () => {
         {user && (
           <span
             onClick={handleLogout}
-            className="text-white cursor-pointer font-openSans"
+            className="text-md text-white cursor-pointer font-openSans"
           >
             Logout
           </span>
