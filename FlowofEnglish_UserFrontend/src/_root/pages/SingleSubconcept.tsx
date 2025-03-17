@@ -105,7 +105,7 @@ const SingleSubconcept = () => {
     !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image", "assessment", "youtube"].includes(subconcept?.subconceptType)
   );
 const [showSubmit, setShowSubmit] = useState(
-  subconcept?.subconceptType?.startsWith('passage')
+  subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
   // true
 );
   const currentUnitId = location.state?.currentUnitId;
@@ -325,7 +325,7 @@ useEffect(() => {
           {showIframe ? (
             <iframe
               id="embeddedContent"
-              src={subconcept.subconceptLink}
+              src={subconcept?.subconceptLink}
               // src={
               //   "/reader2/resources/books/reader2/vol1/Reader2_Book_1/book1_story.html"
               // }
