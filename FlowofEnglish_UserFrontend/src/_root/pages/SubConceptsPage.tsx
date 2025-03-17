@@ -559,11 +559,22 @@ export default function SubConceptsPage() {
                     ? subconcepts[index - 1]
                     : null;
 
+                const normalizedIconMap = Object.keys(iconMap).reduce(
+                  (acc, key) => {
+                    acc[key.toLowerCase()] = iconMap[key]; // Converting keys to lowercase
+                    return acc;
+                  },
+                  {} as Record<string, (typeof iconMap)[keyof typeof iconMap]>
+                );
+
                 const Icon = subconcept
-                  ? iconMap[subconcept.subconceptType as keyof typeof iconMap]
+                  ? normalizedIconMap[
+                      subconcept.subconceptType.toLowerCase() as keyof typeof normalizedIconMap
+                    ]
                   : index === 0
                   ? Start
                   : Finish;
+
 
                 const isCompleted =
                   subconcept && subconcept.completionStatus === "yes";

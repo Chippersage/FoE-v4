@@ -131,7 +131,10 @@ useEffect(() => {
     }
   };
 
-  if(userData?.userId)
+  if (
+    userData?.userId &&
+    subconceptData?.subconceptType?.toLowerCase().startsWith("assignment")
+  )
     fetchAssignment();
 
 }, [userData?.userId]);
@@ -605,7 +608,9 @@ useEffect(() => {
                     : "bg-[#00A66B] hover:bg-green-600"
                 } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
               >
-                {subconceptData?.subconceptType.startsWith("assignment")
+                {subconceptData?.subconceptType
+                  ?.toLowerCase()
+                  .startsWith("assignment")
                   ? "Upload assignment"
                   : "Complete"}
               </Button>
@@ -619,7 +624,7 @@ useEffect(() => {
             </button> */}
             <Button
               onClick={handleGoBack}
-              className="bg-[#00A66B] hover:bg-green-600 text-white"
+              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg max-w-[150px] sm:max-w-[200px]"
             >
               Go Back
             </Button>
