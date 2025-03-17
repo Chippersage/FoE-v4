@@ -327,7 +327,7 @@ useEffect(() => {
               id="embeddedContent"
               src={subconcept?.subconceptLink}
               // src={
-              //   "/reader2/resources/books/reader2/vol1/Reader2_Book_1/book1_story.html"
+              //   "/reader2/resources/books/reader2/vol4/Reader2_Book_13/book13_story.html"
               // }
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
@@ -350,7 +350,7 @@ useEffect(() => {
 
         {/* Buttons Container */}
         {showIframe && (
-          <div className="sticky border-t-2 border-t-white bg-[#D5DEE7] h-[865px] bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-center p-1 md:mr-0 gap-10 w-auto md:w-[100px] ">
+          <div className="fixed border-t-2 border-t-white bg-[#D5DEE7] h-auto bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-center p-1 md:mr-0 gap-10 w-full md:w-[100px] ">
             {/* Go Back Button */}
             {showGoBack && (
               <button

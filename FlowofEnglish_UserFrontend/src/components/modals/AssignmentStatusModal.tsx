@@ -129,45 +129,46 @@ const determineFileExtension = async (blob: Blob): Promise<string> => {
 };
 
 
-const handleDownload = async (fullEndpoint: string, filename: string) => {
+const handleDownload = async (fileLink: string, filename: string) => {
   try {
-    const strippedEndpoint = fullEndpoint.replace(/^.*\/api\/v1\//, "");
-    const fullUrl = `${API_BASE_URL}/${strippedEndpoint}`;
-    console.log("Downloading file from:", fullUrl);
+    window.open(fileLink, "_blank");
+    // const strippedEndpoint = fullEndpoint.replace(/^.*\/api\/v1\//, "");
+    // const fullUrl = `${API_BASE_URL}/${strippedEndpoint}`;
+    // console.log("Downloading file from:", fullUrl);
 
-    const response = await fetch(fullUrl, { method: "GET" });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch file. Status: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    console.log("Blob size:", blob.size);
-    console.log("Blob type (from server):", blob.type);
-
-    // let filename = strippedEndpoint.split("/").pop() || "downloaded-file";
-    // const contentDisposition = response.headers.get("Content-Disposition");
-    // if (contentDisposition) {
-    //   const match = contentDisposition.match(/filename="?([^"]+)"?/);
-    //   if (match && match[1]) {
-    //     filename = match[1];
-    //   }
+    // const response = await fetch(fullUrl, { method: "GET" });
+    // if (!response.ok) {
+    //   throw new Error(`Failed to fetch file. Status: ${response.status}`);
     // }
 
-    if (!filename.includes(".")) {
-      const ext = await determineFileExtension(blob);
-      filename += ext || "";
-    }
-    console.log("Final filename:", filename);
+    // const blob = await response.blob();
+    // console.log("Blob size:", blob.size);
+    // console.log("Blob type (from server):", blob.type);
 
-    // Create a blob URL and trigger a download
-    const fileURL = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = fileURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(fileURL);
+    // // let filename = strippedEndpoint.split("/").pop() || "downloaded-file";
+    // // const contentDisposition = response.headers.get("Content-Disposition");
+    // // if (contentDisposition) {
+    // //   const match = contentDisposition.match(/filename="?([^"]+)"?/);
+    // //   if (match && match[1]) {
+    // //     filename = match[1];
+    // //   }
+    // // }
+
+    // if (!filename.includes(".")) {
+    //   const ext = await determineFileExtension(blob);
+    //   filename += ext || "";
+    // }
+    // console.log("Final filename:", filename);
+
+    // // Create a blob URL and trigger a download
+    // const fileURL = window.URL.createObjectURL(blob);
+    // const a = document.createElement("a");
+    // a.href = fileURL;
+    // a.download = filename;
+    // document.body.appendChild(a);
+    // a.click();
+    // document.body.removeChild(a);
+    // window.URL.revokeObjectURL(fileURL);
   } catch (error) {
     console.error("Download error:", error);
   }
