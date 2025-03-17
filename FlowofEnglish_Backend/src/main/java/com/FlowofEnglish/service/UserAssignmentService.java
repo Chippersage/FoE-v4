@@ -31,6 +31,7 @@ public interface UserAssignmentService {
     UserAssignment getAssignmentById(String assignmentId);
     MediaFile getSubmittedFile(String assignmentId); // Add this line
     MediaFile getCorrectedFile(String assignmentId);
+    UserAssignment getAssignmentByUserIdAndSubconceptId(String userId, String subconceptId);
     
     Resource downloadAllAssignments(String cohortId) throws IOException;
     Resource downloadAllAssignmentsSendEmail(String cohortId) throws IOException;

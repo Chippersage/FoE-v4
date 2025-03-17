@@ -20,8 +20,10 @@ import org.springframework.http.HttpHeaders;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 // import java.net.http.HttpHeaders;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/assignments")
@@ -134,5 +136,56 @@ public class UserAssignmentController {
     @GetMapping("/{assignmentId}")
     public ResponseEntity<UserAssignment> getAssignmentById(@PathVariable String assignmentId) {
         return ResponseEntity.ok(userAssignmentService.getAssignmentById(assignmentId));
+    }
+    
+    @GetMapping("/user-assignment")
+    public ResponseEntity<Map<String, Object>> getAssignmentByUserAndSubconcept(
+            @RequestParam("userId") String userId,
+            @RequestParam("subconceptId") String subconceptId) {
+        
+        UserAssignment assignment = userAssignmentService.getAssignmentByUserIdAndSubconceptId(userId, subconceptId);
+        Map<String, Object> response = new HashMap<>();
+        
+        if (assignment == null) {
+            response.put("status", "not_found");
+            response.put("message", "No assignment found for this user and subconcept");
+            return ResponseEntity.ok(response);
+        }
+        
+        // Basic assignment details
+        response.put("assignmentId", assignment.getAssignmentId());
+        response.put("submittedDate", assignment.getSubmittedDate());
+        
+        // Add submitted file info if available
+        if (assignment.getSubmittedFile() != null) {
+            Map<String, Object> submittedFileInfo = new HashMap<>();
+            submittedFileInfo.put("fileId", assignment.getSubmittedFile().getFileId());
+            submittedFileInfo.put("fileName", assignment.getSubmittedFile().getFileName());
+            submittedFileInfo.put("fileType", assignment.getSubmittedFile().getFileType());
+            submittedFileInfo.put("downloadUrl", "/api/v1/assignments/" + assignment.getAssignmentId() + "/file");
+            response.put("submittedFile", submittedFileInfo);
+        }
+        
+        // Check if assignment is corrected
+        if (assignment.getCorrectedDate() != null) {
+            response.put("status", "corrected");
+            response.put("correctedDate", assignment.getCorrectedDate());
+            response.put("score", assignment.getScore());
+            response.put("remarks", assignment.getRemarks());
+            
+            // Add corrected file info if available
+            if (assignment.getCorrectedFile() != null) {
+                Map<String, Object> correctedFileInfo = new HashMap<>();
+                correctedFileInfo.put("fileId", assignment.getCorrectedFile().getFileId());
+                correctedFileInfo.put("fileName", assignment.getCorrectedFile().getFileName());
+                correctedFileInfo.put("fileType", assignment.getCorrectedFile().getFileType());
+                correctedFileInfo.put("downloadUrl", "/api/v1/assignments/" + assignment.getAssignmentId() + "/corrected-file");
+                response.put("correctedFile", correctedFileInfo);
+            }
+        } else {
+            response.put("status", "not_corrected");
+        }
+        
+        return ResponseEntity.ok(response);
     }
 }
