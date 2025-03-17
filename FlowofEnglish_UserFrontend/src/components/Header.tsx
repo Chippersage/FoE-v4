@@ -9,7 +9,7 @@ const Header = () => {
   return (
     <div>
       <div className="header">
-        <Link to={"/select-cohort"}>
+        <Link to={"/home"}>
           <img src={main_logo} alt="" className="company-logo" />
         </Link>
         

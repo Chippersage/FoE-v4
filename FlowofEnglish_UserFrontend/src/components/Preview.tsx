@@ -31,7 +31,7 @@ export const Preview: React.FC<PreviewProps> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-20 right-4 bg-white rounded-lg shadow-lg z-50 p-2"
+          className="fixed top-28 right-4 bg-white rounded-[8px] shadow-lg z-50 p-2"
         >
           <div className="flex items-center gap-2">
             {children}
