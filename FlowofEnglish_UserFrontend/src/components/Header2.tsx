@@ -8,7 +8,7 @@ import { useSession } from "@/context/TimerContext";
 // Import the logout image
 
 const Header2 = () => {
-  const { user, selectedCohort, setIsAuthenticated } = useUserContext();
+  const { user, selectedCohortWithProgram, setIsAuthenticated } = useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -71,8 +71,8 @@ const Header2 = () => {
       </div>
       <div className="sm:flex flex-1 hidden">
         <h3 className="hellohead mx-auto text-white font-openSans">
-          {selectedCohort
-            ? `${user?.program?.programName}`
+          {selectedCohortWithProgram
+            ? `${selectedCohortWithProgram?.program?.programName}`
             : ""}
           {/* Show "Continue as Guest" if user is null */}
         </h3>
