@@ -11,7 +11,7 @@ import { useUserContext } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+axios.defaults.withCredentials = true;
 export default function Dashboard() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -54,23 +54,28 @@ export default function Dashboard() {
       });
     }, [user?.cohorts]);
 
-const handleResume = async (cohortWithProgram: string) => {
-  setSelectedCohortWithProgram(cohortWithProgram);
-
-  try {
-    const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
-      userId: user?.userId,
-      cohortId: cohortWithProgram?.cohortId,
-      tempSessionId,
-    }, { withCredentials: true });
-
-    localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
-
-    navigate("/home"); // Navigate after session ID is set
-  } catch (error) {
-    console.error("Error fetching session ID:", error);
-  }
-};
+    const handleResume = async (cohortWithProgram) => {
+      setSelectedCohortWithProgram(cohortWithProgram);
+    
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/users/select-cohort`, 
+          {
+            userId: user?.userId,
+            cohortId: cohortWithProgram?.cohortId,
+            tempSessionId: localStorage.getItem("tempSessionId"),
+          }, 
+          { 
+            withCredentials: true 
+          }
+        );
+    
+        localStorage.setItem("sessionId", response.data.sessionId);
+        navigate("/home");
+      } catch (error) {
+        console.error("Error selecting cohort:", error);
+      }
+    };
 
 
   const handleScroll = () => {
