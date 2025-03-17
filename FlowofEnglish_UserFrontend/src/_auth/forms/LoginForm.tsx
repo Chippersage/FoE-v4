@@ -68,9 +68,9 @@ export default function LoginPage() {
       console.log("User data from backend", login.data);
 
       // const { sessionId, userType, userDetails, cohortReminder } = login.data;
-      const { tempSessionId, userType, userDetails } = login.data;
+      const { userType, userDetails } = login.data;
 
-      localStorage.setItem("tempSessionId", tempSessionId);
+      // localStorage.setItem("tempSessionId", tempSessionId);
       localStorage.setItem("userType", userType);
       // (cohortReminder && cohortReminder !== null && cohortReminder !== undefined) && localStorage.setItem("cohortReminder", cohortReminder);
       localStorage.setItem("user", JSON.stringify(userDetails));

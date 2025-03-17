@@ -66,7 +66,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(INITIAL_USER_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedCohortWithProgram, setSelectedCohortWithProgram] = useState(null);
+  const [selectedCohortWithProgram, setSelectedCohortWithProgram] = useState(
+    () => {
+      const saved = localStorage.getItem("selectedCohortWithProgram");
+      return saved ? JSON.parse(saved) : null;
+    }
+  );
+
 
   // Function to check if the user is authenticated
   const checkAuthUser = async () => {
@@ -98,6 +104,14 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const savedCohort = localStorage.getItem("selectedCohortWithProgram");
+    if (savedCohort) {
+      setSelectedCohortWithProgram(JSON.parse(savedCohort));
+    }
+  }, []);
+
 
   // Check authentication on mount
 useEffect(() => {
