@@ -2,7 +2,7 @@ package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.model.MediaFile;
 import com.FlowofEnglish.model.UserAssignment;
-import com.FlowofEnglish.service.UserAssignmentService;
+import com.FlowofEnglish.service.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -17,9 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 // import java.net.http.HttpHeaders;
 import java.util.List;
@@ -31,6 +32,9 @@ public class UserAssignmentController {
 
     @Autowired
     private UserAssignmentService userAssignmentService;
+    
+    @Autowired
+    private S3StorageService s3StorageService;
 
     @PostMapping("/submit")
     public ResponseEntity<UserAssignment> submitAssignment(
@@ -70,9 +74,95 @@ public class UserAssignmentController {
         return ResponseEntity.ok(userAssignmentService.getAssignmentsByUserId(userId));
     }
 
+//    @GetMapping("/cohort/{cohortId}")
+//    public ResponseEntity<List<UserAssignment>> getAssignmentsByCohortId(@PathVariable String cohortId) {
+//        return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortId(cohortId));
+//    }
     @GetMapping("/cohort/{cohortId}")
-    public ResponseEntity<List<UserAssignment>> getAssignmentsByCohortId(@PathVariable String cohortId) {
-        return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortId(cohortId));
+    public ResponseEntity<List<Map<String, Object>>> getAssignmentsByCohortId(@PathVariable String cohortId) {
+        List<UserAssignment> assignments = userAssignmentService.getAssignmentsByCohortId(cohortId);
+        List<Map<String, Object>> response = new ArrayList<>();
+        
+        for (UserAssignment assignment : assignments) {
+            Map<String, Object> assignmentData = new HashMap<>();
+            
+            // Add basic assignment info
+            assignmentData.put("assignmentId", assignment.getAssignmentId());
+            assignmentData.put("submittedDate", assignment.getSubmittedDate());
+            assignmentData.put("correctedDate", assignment.getCorrectedDate());
+            assignmentData.put("score", assignment.getScore());
+            assignmentData.put("remarks", assignment.getRemarks());
+            
+            // Add user info
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("userId", assignment.getUser().getUserId());
+            userData.put("userName", assignment.getUser().getUserName());
+            assignmentData.put("user", userData);
+            
+            // Add program info
+            Map<String, Object> programData = new HashMap<>();
+            programData.put("programId", assignment.getProgram().getProgramId());
+            programData.put("programName",assignment.getProgram().getProgramName());
+            assignmentData.put("program", programData);
+            
+            // Add stage info
+            Map<String, Object> stageData = new HashMap<>();
+            stageData.put("stageId", assignment.getStage().getStageId());
+            stageData.put("stageName", assignment.getStage().getStageName());
+            assignmentData.put("stage", stageData);
+            
+            // Add unit info
+            Map<String, Object> unitData = new HashMap<>();
+            unitData.put("unitId", assignment.getUnit().getUnitId());
+            assignmentData.put("unit", unitData);
+            
+            // Add subconcept info
+            Map<String, Object> subconceptData = new HashMap<>();
+            subconceptData.put("subconceptId", assignment.getSubconcept().getSubconceptId());
+            subconceptData.put("subconceptDesc", assignment.getSubconcept().getSubconceptDesc());
+            subconceptData.put("subconceptMaxscore", assignment.getSubconcept().getSubconceptMaxscore());
+            assignmentData.put("subconcept", subconceptData);
+            
+            // Add submitted file info with public S3 URL
+            if (assignment.getSubmittedFile() != null) {
+                MediaFile submittedFile = assignment.getSubmittedFile();
+                // Ensure file is publicly accessible
+                s3StorageService.makeFilePublic(submittedFile.getFilePath());
+                // Generate public URL
+                String publicUrl = s3StorageService.generatePublicUrl(submittedFile.getFilePath());
+                
+                Map<String, Object> fileData = new HashMap<>();
+                fileData.put("fileId", submittedFile.getFileId());
+                fileData.put("fileName", submittedFile.getFileName());
+                fileData.put("fileType", submittedFile.getFileType());
+                fileData.put("fileSize", submittedFile.getFileSize());
+                fileData.put("downloadUrl", publicUrl);
+                
+                assignmentData.put("submittedFile", fileData);
+            }
+            
+            // Add corrected file info with public S3 URL if available
+            if (assignment.getCorrectedFile() != null) {
+                MediaFile correctedFile = assignment.getCorrectedFile();
+                // Ensure file is publicly accessible
+                s3StorageService.makeFilePublic(correctedFile.getFilePath());
+                // Generate public URL
+                String publicUrl = s3StorageService.generatePublicUrl(correctedFile.getFilePath());
+                
+                Map<String, Object> fileData = new HashMap<>();
+                fileData.put("fileId", correctedFile.getFileId());
+                fileData.put("fileName", correctedFile.getFileName());
+                fileData.put("fileType", correctedFile.getFileType());
+                fileData.put("fileSize", correctedFile.getFileSize());
+                fileData.put("downloadUrl", publicUrl);
+                
+                assignmentData.put("correctedFile", fileData);
+            }
+            
+            response.add(assignmentData);
+        }
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/cohort/{cohortId}/user/{userId}")
@@ -96,6 +186,19 @@ public class UserAssignmentController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"assignments.zip\"")
                 .body(zipResource);
+    }
+    
+    @GetMapping("/send-csv-report")
+    public ResponseEntity<String> sendAssignmentsCSVByEmail(
+            @RequestParam("cohortId") String cohortId) throws IOException {
+        try {
+            // Call a new service method that generates and emails only the CSV
+            userAssignmentService.generateAndEmailAssignmentsCSV(cohortId);
+            return ResponseEntity.ok("Assignments CSV report has been sent successfully to the mentor's email.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send assignments CSV: " + e.getMessage());
+        }
     }
     
     @PostMapping("/bulk-upload-corrected")
@@ -132,6 +235,15 @@ public class UserAssignmentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFileName() + "\"")
                 .body(resource);
     }
+    @GetMapping("/{assignmentId}/submitted-file-details")
+    public ResponseEntity<Map<String, Object>> getSubmittedFileDetails(@PathVariable String assignmentId) {
+        return ResponseEntity.ok(userAssignmentService.getSubmittedFileDetails(assignmentId));
+    }
+
+    @GetMapping("/{assignmentId}/corrected-file-details")
+    public ResponseEntity<Map<String, Object>> getCorrectedFileDetails(@PathVariable String assignmentId) {
+        return ResponseEntity.ok(userAssignmentService.getCorrectedFileDetails(assignmentId));
+    }
 
     @GetMapping("/{assignmentId}")
     public ResponseEntity<UserAssignment> getAssignmentById(@PathVariable String assignmentId) {
@@ -158,11 +270,16 @@ public class UserAssignmentController {
         
         // Add submitted file info if available
         if (assignment.getSubmittedFile() != null) {
+        	MediaFile submittedFile = assignment.getSubmittedFile();   
+            // Ensure file is publicly accessible
+            s3StorageService.makeFilePublic(submittedFile.getFilePath()); 
+            // Generate public S3 URL
+            String publicUrl = s3StorageService.generatePublicUrl(submittedFile.getFilePath());
             Map<String, Object> submittedFileInfo = new HashMap<>();
             submittedFileInfo.put("fileId", assignment.getSubmittedFile().getFileId());
             submittedFileInfo.put("fileName", assignment.getSubmittedFile().getFileName());
             submittedFileInfo.put("fileType", assignment.getSubmittedFile().getFileType());
-            submittedFileInfo.put("downloadUrl", "/api/v1/assignments/" + assignment.getAssignmentId() + "/file");
+            submittedFileInfo.put("downloadUrl", publicUrl);
             response.put("submittedFile", submittedFileInfo);
         }
         
@@ -175,11 +292,18 @@ public class UserAssignmentController {
             
             // Add corrected file info if available
             if (assignment.getCorrectedFile() != null) {
+            	 MediaFile correctedFile = assignment.getCorrectedFile();
+                 
+                 // Ensure file is publicly accessible
+                 s3StorageService.makeFilePublic(correctedFile.getFilePath());
+                 
+                 // Generate public S3 URL
+                 String publicUrl = s3StorageService.generatePublicUrl(correctedFile.getFilePath());
                 Map<String, Object> correctedFileInfo = new HashMap<>();
                 correctedFileInfo.put("fileId", assignment.getCorrectedFile().getFileId());
                 correctedFileInfo.put("fileName", assignment.getCorrectedFile().getFileName());
                 correctedFileInfo.put("fileType", assignment.getCorrectedFile().getFileType());
-                correctedFileInfo.put("downloadUrl", "/api/v1/assignments/" + assignment.getAssignmentId() + "/corrected-file");
+                correctedFileInfo.put("downloadUrl", publicUrl);
                 response.put("correctedFile", correctedFileInfo);
             }
         } else {

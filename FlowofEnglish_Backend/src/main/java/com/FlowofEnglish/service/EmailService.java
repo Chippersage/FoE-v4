@@ -9,6 +9,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +26,12 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    
+ //   private static final String LOGO_IMAGE = "images/ChipperSageLogo.png";
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
 
@@ -109,6 +118,69 @@ public class EmailService {
         }
     }
 
+    
+    public void sendEmailWithCSVAttachment(String recipientEmail, String recipientName, String cohortName, Path csvFilePath) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            
+            helper.setTo(recipientEmail);
+            helper.setSubject("Assignment Review Instructions for Cohort: " + cohortName);
+            
+            // Get organization admin email from the mentor's organization
+            String orgAdminEmail = getUserOrganizationAdminEmail(recipientEmail);
+            
+            String emailBody = 
+                "Dear " + recipientName + ",\n\n" +
+                "Attached is the assignments CSV file for cohort: " + cohortName + ". Please follow these instructions for reviewing:\n\n" +
+                "1. Open the attached CSV file to view all learner assignments\n" +
+                "2. Click on the FileDownloadLink for each submission to access the learner's work\n" +
+                "3. Review each assignment carefully based on our assessment rubric\n" +
+                "4. When scoring, please note the MaxScore column and ensure scores do not exceed this value\n" +
+                "5. For each assignment, provide detailed feedback in the Remarks column addressing:\n" +
+                "   - Strengths of the submission\n" +
+                "   - Areas needing improvement\n" +
+                "   - Specific suggestions for growth\n\n" +
+                "6. If you need to provide corrected files or additional resources, please:\n" +
+                "   - Save the file with naming format: [UserID]_[AssignmentId]_corrected\n" +
+                "   - Update the Score and Remarks columns in the CSV\n" +
+                "   - Send the completed CSV file and any corrected files to: " + orgAdminEmail + "\n\n" +
+                "Please complete your reviews within 3 business days. Your thoughtful feedback is essential to our learners' growth and success.\n\n" +
+                "Thank you for your dedication to our learners' development.\n\n" +
+                "Best regards,\nFlow of English Team";
+            
+            helper.setText(emailBody);
+            
+            // Attach the CSV file
+            FileSystemResource file = new FileSystemResource(csvFilePath.toFile());
+            helper.addAttachment("assignments-details.csv", file);
+            
+            mailSender.send(message);
+            logger.info("Email with CSV attachment and instructions sent successfully to {}", recipientEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send email with CSV attachment: {}", e.getMessage(), e);
+            throw new RuntimeException("Error sending email", e);
+        }
+    }
+    
+    // New helper method to get organization admin email for a user
+    private String getUserOrganizationAdminEmail(String userEmail) {
+        try {
+            // This would need to be implemented based on your repository structure
+            // Example implementation:
+            User user = userRepository.findByUserEmail(userEmail);
+            if (user != null && user.getOrganization() != null) {
+                return user.getOrganization().getOrganizationAdminEmail();
+            }
+            // Default fallback email if needed
+            return "support@thechippersage.com";
+        } catch (Exception e) {
+            logger.error("Error fetching organization admin email: {}", e.getMessage());
+            // Return a default admin email as fallback
+            return "support@thechippersage.com";
+        }
+    }
+    
     public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
     		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) { 
     	
