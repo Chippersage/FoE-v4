@@ -583,7 +583,7 @@ useEffect(() => {
                 <Button
                   onClick={() => setIsAssignmentStatusModalOpen(true)}
                   disabled={isAssignmentStatusModalOpen}
-                  className="bg-[#00A66B] hover:bg-green-600 text-white"
+                  className="bg-[#00A66B] hover:bg-green-600 text-white rounded-[5px]"
                 >
                   View Assignment status
                 </Button>
@@ -606,7 +606,7 @@ useEffect(() => {
                   isComplete
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#00A66B] hover:bg-green-600"
-                } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-md text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
+                } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[5px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
               >
                 {subconceptData?.subconceptType
                   ?.toLowerCase()
@@ -624,7 +624,7 @@ useEffect(() => {
             </button> */}
             <Button
               onClick={handleGoBack}
-              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg max-w-[150px] sm:max-w-[200px]"
+              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg max-w-[150px] sm:max-w-[200px] rounded-[5px]"
             >
               Go Back
             </Button>
