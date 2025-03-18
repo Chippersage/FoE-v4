@@ -84,9 +84,12 @@ const AssignmentsTable = ({ cohortId }) => {
         },
       }));
     };
+
+
     const handleSubmitCorrection = async (assignmentId) => {
       const editedData = editedAssignments[assignmentId];
-  
+      const assignment = assignments.find(a => a.assignmentId === assignmentId);
+
       if (!editedData.score && !editedData.file) {
         setAlert({
           open: true,
@@ -95,7 +98,32 @@ const AssignmentsTable = ({ cohortId }) => {
         });
         return;
       }
-  
+  // Validate score against max score
+  if (editedData.score && assignment.subconcept && assignment.subconcept.subconceptMaxscore) {
+    const maxScore = assignment.subconcept.subconceptMaxscore;
+    if (parseInt(editedData.score, 10) > maxScore)  {
+      setAlert({
+        open: true,
+        message: `Score cannot exceed the maximum score of ${maxScore}`,
+        severity: 'error',
+      });
+      return;
+    }
+  }
+
+  // Validate correction date
+  if (editedData.correctedDate && assignment.submittedDate) {
+    const correctedDate = new Date(editedData.correctedDate);
+    const submittedDate = new Date(assignment.submittedDate);
+    if (correctedDate < submittedDate) {
+      setAlert({
+        open: true,
+        message: 'Correction date cannot be earlier than submission date',
+        severity: 'error',
+      });
+      return;
+    }
+  }
       setUpdating(true);
       const formData = new FormData();
   
@@ -203,11 +231,11 @@ const AssignmentsTable = ({ cohortId }) => {
                     <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
                     <TableCell>
                       {assignment.submittedFile && (
-                        <a
-                          href={`${apiUrl}/files/${assignment.submittedFile.fileId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                      <a
+                      href={assignment.submittedFile.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                           {assignment.submittedFile.fileName}
                         </a>
                       )}
@@ -248,21 +276,13 @@ const AssignmentsTable = ({ cohortId }) => {
     <CloudUploadIcon />
   </IconButton>
 </label>
-{/* <TableCell>
-  <TextField
-    type="date"
-    size="small"
-    value={editedAssignments[assignment.assignmentId]?.correctedDate || ''}
-    onChange={(e) => handleCorrectedDateChange(assignment.assignmentId, e.target.value)}
-  />
-</TableCell> */}
-                      {editedAssignments[assignment.assignmentId]?.file?.name ||
-                        (assignment.correctedFile ? assignment.correctedFile.fileName : '')}
-                    </TableCell>
-                    <TableCell>
-    {assignment.correctedDate ? (
-      formatDateTime(assignment.correctedDate)
-    ) : (
+{editedAssignments[assignment.assignmentId]?.file?.name ||
+(assignment.correctedFile ? assignment.correctedFile.fileName : '')}
+</TableCell>
+<TableCell>
+{assignment.correctedDate ? (
+formatDateTime(assignment.correctedDate)
+) : (
       <TextField
         type="date"
         size="small"

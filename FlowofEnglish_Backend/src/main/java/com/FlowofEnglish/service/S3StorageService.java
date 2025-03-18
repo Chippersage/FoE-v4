@@ -65,6 +65,7 @@ public class S3StorageService {
                 .bucket(bucketName)
                 .key(s3Key)
                 .contentType(file.getContentType())
+                .acl(ObjectCannedACL.PUBLIC_READ)  // Make the object publicly readable
                 .build();
         
         s3Client.putObject(putObjRequest, RequestBody.fromBytes(file.getBytes()));
@@ -86,6 +87,15 @@ public class S3StorageService {
         
         return s3Client.getObject(getObjectRequest);
     }
+    
+ // Generate a direct public URL instead of a presigned URL with credentials
+    public String generatePublicUrl(String s3Key) {
+        // Construct a direct URL to the public object
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", 
+                bucketName, 
+                region.toString(), 
+                s3Key);
+    }
 
     /**
      * Generate a presigned URL for a file in S3
@@ -106,14 +116,25 @@ public class S3StorageService {
                 .key(s3Key)
                 .build();
         
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(expirationMinutes))
-                .getObjectRequest(getObjectRequest)
+        software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest presignRequest = 
+                software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest.builder()
+                    .signatureDuration(java.time.Duration.ofMinutes(expirationMinutes))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+            
+            return presigner.presignGetObject(presignRequest).url();
+        }
+        
+ // Method to update an existing object's ACL to public-read
+    public void makeFilePublic(String s3Key) {
+        PutObjectAclRequest aclRequest = PutObjectAclRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
         
-        return presigner.presignGetObject(presignRequest).url();
+        s3Client.putObjectAcl(aclRequest);
     }
-    
     /**
      * Delete a file from S3
      * 

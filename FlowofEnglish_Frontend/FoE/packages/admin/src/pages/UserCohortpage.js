@@ -251,7 +251,29 @@ const UserCohortPage = () => {
     setResponse(response);
   };
 
-  
+  const handleDownloadAssignmentsCSV = async () => {
+    try {
+      setIsEmailSending(true);
+      showSnackbar('Processing assignments and preparing email...', 'info');
+      
+      // Call only the new API endpoint that sends CSV by email
+      const response = await axios.get(`${apiUrl}/assignments/send-csv-report`, {
+        params: { cohortId }
+      });
+      
+      if (response.status === 200) {
+        showSnackbar('Assignment report has been sent to mentor\'s email', 'success');
+      } else {
+        showSnackbar('Something went wrong when sending the report', 'warning');
+      }
+    } catch (error) {
+      console.error('Error sending CSV report:', error);
+      const errorMessage = error.response?.data || 'Failed to send assignment report';
+      showSnackbar(errorMessage, 'error');
+    } finally {
+      setIsEmailSending(false);
+    }
+  };
 // Then, modify the handleDownloadAssignments function
 const handleDownloadAssignments = async () => {
   try {
@@ -395,7 +417,7 @@ const toggleAssignmentsTable = () => {
                 <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
               </Button>
               
-              <Button 
+              {/* <Button 
                 variant="contained" 
                 onClick={handleDownloadAssignments}
                 startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
@@ -413,8 +435,26 @@ const toggleAssignmentsTable = () => {
                 }}
               >
                 {isEmailSending ? 'Sending email...' : 'Download Assignments'}
+              </Button> */}
+              <Button 
+                variant="contained" 
+                onClick={handleDownloadAssignmentsCSV}
+                startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
+                disabled={isEmailSending}
+                sx={{
+                  bgcolor: '#5bc3cd',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    bgcolor: '#DB5788',
+                  },
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                {isEmailSending ? 'Sending email...' : 'Download Assignments CSV'}
               </Button>
-              
               <Button
                 variant="contained"
                 onClick={toggleAssignmentsTable}
