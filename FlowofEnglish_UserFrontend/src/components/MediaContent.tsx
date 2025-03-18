@@ -409,7 +409,7 @@ useEffect(() => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            className="border-2 border-black rounded-md shadow-md max-h-[70vh]"
+            className="border-2 border-black rounded-md shadow-md max-h-[60vh]"
           >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
@@ -436,14 +436,18 @@ useEffect(() => {
         return (
           <div
             onContextMenu={(e) => e.preventDefault()} // Disable right-click
-            className="iframe-wrapper"
+            className={`${
+              subconceptData?.subconceptType?.toLowerCase() === "youtube" &&
+              "w-11/12"
+            } iframe-wrapper`}
             style={{ position: "relative" }}
           >
             <iframe
               // onLoad={handleContentLoaded}
+              className="h-[calc(100vh-300px)]"
               src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
               width="100%"
-              height="500px"
+              // height=""
               title="PDF Document"
               style={{
                 borderRadius: "10px",
@@ -540,13 +544,13 @@ useEffect(() => {
         /> */}
         <div
           id="contentArea"
-          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 ${
-            ["assessment", "video", "assignment_video"].includes(
+          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:pb-24 ${
+            ["assessment", "video", "assignment_video", "youtube"].includes(
               subconceptData?.subconceptType
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          } bg-white rounded-lg overflow-y-auto max-h-[80vh] no-scrollbar`}
+          }  rounded-lg overflow-y-auto no-scrollbar`}
         >
           {renderContent()}
         </div>
