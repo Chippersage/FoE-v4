@@ -201,7 +201,7 @@ const handleResume = async (cohortWithProgram: string) => {
                   <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
                     <Button
                       size="sm"
-                      className="bg-[#64CE80] hover:bg-emerald-600"
+                      className="bg-[#64CE80] hover:bg-emerald-600 rounded-[5px]"
                       onClick={() => handleResume(cohortWithProgram)}
                     >
                       Resume
