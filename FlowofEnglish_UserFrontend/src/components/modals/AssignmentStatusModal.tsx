@@ -359,7 +359,7 @@ const handleDownload = async (fileLink: string, filename: string) => {
                   }
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download Submission
+                  View Submission
                 </Button>
 
                 {/* <Button
@@ -394,7 +394,7 @@ const handleDownload = async (fileLink: string, filename: string) => {
                         }
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Download Corrected File
+                        View Corrected File
                       </Button>
                     </motion.div>
                   )}

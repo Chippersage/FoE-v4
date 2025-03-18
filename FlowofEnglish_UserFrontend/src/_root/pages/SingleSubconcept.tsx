@@ -332,7 +332,7 @@ useEffect(() => {
               // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
               // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
               title="Embedded Content"
-              className={`w-full h-[800px] mt-[100px] ${onFrameLoad && ""}`}
+              className={`w-full min-h-[500px] sm:min-h-[800px] mt-[100px] ${onFrameLoad && ""}`}
               onLoad={() => {
                 setShowGoBack(true);
                 setOnFrameLoad(true);
@@ -350,7 +350,7 @@ useEffect(() => {
 
         {/* Buttons Container */}
         {showIframe && (
-          <div className="fixed border-t-2 border-t-white bg-[#D5DEE7] h-auto bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-center p-1 md:mr-0 gap-10 w-full md:w-[100px] ">
+          <div className="fixed md:sticky border-t-2 border-t-white bg-[#D5DEE7] h-auto bottom-0 flex md:flex-col flex-row items-center md:justify-start justify-center p-1 md:mr-0 gap-10 w-full md:w-[100px] ">
             {/* Go Back Button */}
             {showGoBack && (
               <button
