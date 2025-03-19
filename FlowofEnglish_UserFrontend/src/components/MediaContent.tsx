@@ -154,22 +154,22 @@ useEffect(() => {
   // }, [subconceptData]);
 
   // Handle countdown for success overlay
-  useEffect(() => {
-    if (
-      showSuccessPopup &&
-      successCountdown > 0 &&
-      ["assessment", "assignment"].some((type) =>
-        subconceptData?.subconceptType?.startsWith(type)
-      )
-    ) {
-      const interval = setInterval(() => {
-        setSuccessCountdown((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else if (successCountdown <= 0) {
-      navigate(`/subconcepts/${userData?.unitId}`);
-    }
-  }, [showSuccessPopup, successCountdown]);
+  // useEffect(() => {
+  //   if (
+  //     showSuccessPopup &&
+  //     successCountdown > 0 &&
+  //     ["assessment", "assignment"].some((type) =>
+  //       subconceptData?.subconceptType?.startsWith(type)
+  //     )
+  //   ) {
+  //     const interval = setInterval(() => {
+  //       setSuccessCountdown((prev) => prev - 1);
+  //     }, 1000);
+  //     return () => clearInterval(interval);
+  //   } else if (successCountdown <= 0) {
+  //     navigate(`/subconcepts/${userData?.unitId}`);
+  //   }
+  // }, [showSuccessPopup, successCountdown]);
 
   // Handle countdown for error overlay
   useEffect(() => {
@@ -245,7 +245,16 @@ useEffect(() => {
           : 0
         : subconceptData?.subconceptMaxscore;
 
-    setScorePercentage((finalScore / subconceptData?.subconceptMaxscore) * 100);
+    // checking if subconceptMaxscore is 0 and setting scorePercentage to 100 otherwise low score variant of activity completion modal will be shown which is not correct
+
+    setScorePercentage(
+      (subconceptData?.subconceptMaxscore == 0 ||
+        ["assignment", "assessment"].some((type) =>
+          subconceptData?.subconceptType?.toLowerCase().startsWith(type)
+        ))
+        ? 100
+        : (finalScore / subconceptData?.subconceptMaxscore) * 100
+    );
 
     const date = new Date();
     const ISTOffset = 5.5 * 60 * 60 * 1000;
@@ -502,7 +511,7 @@ useEffect(() => {
         subconceptMaxscore={subconceptData?.subconceptMaxscore}
       />
 
-      {showSuccessPopup ? (
+      {/* {showSuccessPopup ? (
         !["assessment", "assignment"].some((type) =>
           subconceptData?.subconceptType?.startsWith(type)
         ) ? (
@@ -514,7 +523,17 @@ useEffect(() => {
         ) : (
           renderOverlay("success")
         )
-      ) : null}
+      ) : null} */}
+      {showSuccessPopup ? (
+          <ActivityCompletionModal
+            countdownDuration={3}
+            onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
+            scorePercentage={scorePercentage}
+            subconceptType={subconceptData?.subconceptType}
+          />
+        ) : (
+          null
+        )}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
       {/* @ts-ignore */}
