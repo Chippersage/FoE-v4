@@ -84,8 +84,6 @@ const AssignmentsTable = ({ cohortId }) => {
         },
       }));
     };
-
-
     const handleSubmitCorrection = async (assignmentId) => {
       const editedData = editedAssignments[assignmentId];
       const assignment = assignments.find(a => a.assignmentId === assignmentId);
@@ -235,8 +233,9 @@ const AssignmentsTable = ({ cohortId }) => {
                       href={assignment.submittedFile.downloadUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+    style={{ color: '#0066cc', textDecoration: 'underline' }}
                     >
-                          {assignment.submittedFile.fileName}
+    View File
                         </a>
                       )}
                     </TableCell>
@@ -277,7 +276,16 @@ const AssignmentsTable = ({ cohortId }) => {
   </IconButton>
 </label>
 {editedAssignments[assignment.assignmentId]?.file?.name ||
-(assignment.correctedFile ? assignment.correctedFile.fileName : '')}
+          (assignment.correctedFile  ? (
+          <a
+          href={assignment.correctedFile.downloadUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#0066cc', textDecoration: 'underline' }}
+          >
+          View File
+          </a>
+          ) : '')}
 </TableCell>
 <TableCell>
 {assignment.correctedDate ? (

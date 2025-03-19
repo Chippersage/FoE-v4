@@ -267,7 +267,13 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         if (score != null) {
             updateLeaderboardScore(assignment.getUser().getUserId(), assignment.getCohort().getCohortId(), score);
         }
-        
+        // Send notification email to the user
+        try {
+            emailService.sendAssignmentCorrectionEmail(assignmentId);
+        } catch (Exception e) {
+            logger.warn("Failed to send correction notification email: {}", e.getMessage());
+            // Don't throw exception to prevent disrupting the main process
+        }
         return savedAssignment;
     }
     private void updateLeaderboardScore(String userId, String cohortId, Integer score) {
@@ -604,7 +610,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             
             // Write data rows
-            for (UserAssignment assignment : allAssignments) {
+            for (UserAssignment assignment : uncorrectedAssignments) {
                 String submittedDate = assignment.getSubmittedDate() != null ? 
                     assignment.getSubmittedDate().format(formatter) : "";
                 String fileName = assignment.getSubmittedFile() != null ? 
