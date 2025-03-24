@@ -150,6 +150,7 @@ public class EmailService {
                 "   - Save the file with naming format: [UserID]_[AssignmentId]_corrected\n" +
                 "   - Update the Score and Remarks columns in the CSV\n" +
                 "   - Send the completed CSV file and any corrected files to: " + orgAdminEmail + "\n\n" +
+                "7. **Important:** In the **'CorrectedFileAttached'** column, mark **'YES'** if a corrected file is attached, otherwise mark **'NO'**.\n\n" +
                 "Please complete your reviews within 3 business days. Your thoughtful feedback is essential to our learners' growth and success.\n\n" +
                 "Thank you for your dedication to our learners' development.\n\n" +
                 "Best regards,\nChippersage Team";
