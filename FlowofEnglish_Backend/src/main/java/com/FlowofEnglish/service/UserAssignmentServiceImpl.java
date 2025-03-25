@@ -9,13 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+//import software.amazon.awssdk.core.ResponseInputStream;
+//import software.amazon.awssdk.services.s3.S3Client;
+//import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+//import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.*;
-import java.net.URL;
+//import java.net.URL;
 import java.nio.file.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -62,9 +62,9 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     @Autowired
     private S3StorageService s3StorageService;
     
-    @Autowired
-    private S3Client s3Client;
-    
+//    @Autowired
+//    private S3Client s3Client;
+  
     private static final String BUCKET_NAME = "foe-learner-files";
 
  //   private static final String UPLOAD_DIR = "/var/app/uploads/";
