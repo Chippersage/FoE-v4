@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface UserAssignmentService {
 
@@ -31,10 +32,15 @@ public interface UserAssignmentService {
     UserAssignment getAssignmentById(String assignmentId);
     MediaFile getSubmittedFile(String assignmentId); // Add this line
     MediaFile getCorrectedFile(String assignmentId);
+    UserAssignment getAssignmentByUserIdAndSubconceptId(String userId, String subconceptId);
     
     Resource downloadAllAssignments(String cohortId) throws IOException;
     Resource downloadAllAssignmentsSendEmail(String cohortId) throws IOException;
     void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores, List<String> remarks,
                                      List<String> assignmentIds) throws IOException;
 
+    Map<String, Object> getSubmittedFileDetails(String assignmentId);
+
+    Map<String, Object> getCorrectedFileDetails(String assignmentId);
+    void generateAndEmailAssignmentsCSV(String cohortId) throws IOException;
 }

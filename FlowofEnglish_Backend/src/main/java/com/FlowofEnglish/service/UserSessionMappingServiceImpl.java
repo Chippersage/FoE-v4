@@ -30,21 +30,42 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     public List<UserSessionMapping> getUserSessionMappingsByUserId(String userId) {
         return userSessionMappingRepository.findByUser_UserId(userId);
     }
+//    @Override
+//    public Optional<UserSessionMapping> findActiveSessionByUserIdAndCohortId(String userId, String cohortId) {
+//        return userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(
+//            userId, cohortId);
+//    }
+//    
+//    @Override
+//    public void invalidateSession(String sessionId) {
+//        userSessionMappingRepository.findBySessionId(sessionId)
+//            .ifPresent(session -> {
+//                session.setSessionEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+//                userSessionMappingRepository.save(session);
+//            });
+//    }
     @Override
-    public Optional<UserSessionMapping> findActiveSessionByUserIdAndCohortId(String userId, String cohortId) {
-        return userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(
-            userId, cohortId);
+    public List<UserSessionMapping> findActiveSessionsByUserIdAndCohortId(String userId, String cohortId) {
+        // This should return all active sessions for the given userId and cohortId
+        return userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(userId, cohortId);
     }
-    
     @Override
     public void invalidateSession(String sessionId) {
-        userSessionMappingRepository.findBySessionId(sessionId)
-            .ifPresent(session -> {
-                session.setSessionEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
-                userSessionMappingRepository.save(session);
-            });
+        Optional<UserSessionMapping> sessionOpt = userSessionMappingRepository.findById(sessionId);
+        if (sessionOpt.isPresent()) {
+            UserSessionMapping session = sessionOpt.get();
+            session.setSessionEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+            userSessionMappingRepository.save(session);
+        }
     }
-
+    @Override
+    public void invalidateAllActiveSessions(String userId, String cohortId) {
+        List<UserSessionMapping> activeSessions = findActiveSessionsByUserIdAndCohortId(userId, cohortId);
+        for (UserSessionMapping session : activeSessions) {
+            session.setSessionEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+            userSessionMappingRepository.save(session);
+        }
+    }
     @Override
     public UserSessionMapping createUserSessionMapping(UserSessionMapping userSessionMapping) {
         return userSessionMappingRepository.save(userSessionMapping);

@@ -5,6 +5,9 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+// import jakarta.servlet.http.HttpServletResponse;
 
 import com.FlowofEnglish.service.*;
 import com.opencsv.CSVReader;
@@ -155,7 +158,7 @@ public class UserController {
 
    // Signin Method
      @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData) {
+    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData ) {
         String userId = loginData.get("userId");
         String userPassword = loginData.get("userPassword");
         String expectedUserType = loginData.get("userType");
@@ -190,17 +193,23 @@ public class UserController {
             System.out.println("User Type: " + user.getUserType());
 
             if (userService.verifyPassword(userPassword, user.getUserPassword())) {
-            	// Set temporary session attribute
-                session.setAttribute("tempUserId", userId);
-                
-                // Generate temporary session ID
-                String tempSessionId = UUID.randomUUID().toString();
-                session.setAttribute("tempSessionId", tempSessionId);
+//            	// Set temporary session attribute
+//                session.setAttribute("tempUserId", userId);
+//                
+//                // Generate temporary session ID
+//                String tempSessionId = UUID.randomUUID().toString();
+//                session.setAttribute("tempSessionId", tempSessionId);
+//                // Set a cookie as well for redundancy
+//                Cookie tempSessionCookie = new Cookie("tempSessionId", tempSessionId);
+//                tempSessionCookie.setPath("/");
+//                tempSessionCookie.setHttpOnly(true);
+//                tempSessionCookie.setMaxAge(3600); // 1 hour expiration
+//                httpServletResponse.addCookie(tempSessionCookie);
                 // Fetch user details with cohorts and programs
                 UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
 
                 response.put("message", "Successfully logged in as " + user.getUserType() + ".");
-                response.put("tempSessionId", tempSessionId); // Add session ID to response
+              //  response.put("tempSessionId", tempSessionId); // Add session ID to response
                 response.put("userType", user.getUserType());
                 response.put("userDetails", userDetailsDTO); 
                 
@@ -241,24 +250,62 @@ public class UserController {
     }
     @PostMapping("/select-cohort")
     public ResponseEntity<?> selectCohort(@RequestBody Map<String, String> cohortData) {
-        String serverStoredTempSessionId = (String) session.getAttribute("tempSessionId");
-        String serverStoredUserId = (String) session.getAttribute("tempUserId");
-        logger.info("Session ID: {}", session.getId());
-        logger.info("Stored tempSessionId: {}", session.getAttribute("tempSessionId"));
-        logger.info("Stored tempUserId: {}", session.getAttribute("tempUserId"));
-
+//        String serverStoredTempSessionId = (String) session.getAttribute("tempSessionId");
+//        String serverStoredUserId = (String) session.getAttribute("tempUserId");
+//        // Also check for the tempSessionId in cookies
+//        String cookieTempSessionId = null;
+//        if (request.getCookies() != null) {
+//            for (Cookie cookie : request.getCookies()) {
+//                if ("tempSessionId".equals(cookie.getName())) {
+//                    cookieTempSessionId = cookie.getValue();
+//                    break;
+//                }
+//            }
+//        }
+//        
+//        logger.info("Session ID: {}", session.getId());
+//        logger.info("Stored tempSessionId: {}", serverStoredTempSessionId);
+//        logger.info("Cookie tempSessionId: {}", cookieTempSessionId);
+//        logger.info("Stored tempUserId: {}", serverStoredUserId);
         // Get values from request body
         String selectedCohortId = cohortData.get("cohortId");
-        String requestUserId = cohortData.get("userId");
-        String requestTempSessionId = cohortData.get("tempSessionId");
+        String userId = cohortData.get("userId");
+//        String requestTempSessionId = cohortData.get("tempSessionId");
+//        
+//        logger.info("Request tempSessionId: {}", requestTempSessionId);
+        logger.info("Request userId: {}", userId);
         
         Map<String, Object> response = new HashMap<>();
         
-        // Comprehensive validation
-        if (serverStoredTempSessionId == null || serverStoredUserId == null) {
-            response.put("error", "No active login session found");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
+//        // Use the tempSessionId from any source (session, cookie, or request)
+//        boolean hasValidSession = serverStoredTempSessionId != null || 
+//                                 cookieTempSessionId != null || 
+//                                 (requestTempSessionId != null && requestUserId != null);
+//        
+//        if (!hasValidSession) {
+//            response.put("error", "No active login session found");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//        
+//        // Use the best available information
+//        String effectiveUserId = serverStoredUserId != null ? serverStoredUserId : requestUserId;
+//        String effectiveTempSessionId = serverStoredTempSessionId != null ? 
+//                                       serverStoredTempSessionId : 
+//                                       (cookieTempSessionId != null ? cookieTempSessionId : requestTempSessionId);
+//        
+//        // Restore session if needed
+//        if (serverStoredTempSessionId == null && effectiveTempSessionId != null) {
+//            session.setAttribute("tempSessionId", effectiveTempSessionId);
+//        }
+//        
+//        if (serverStoredUserId == null && effectiveUserId != null) {
+//            session.setAttribute("tempUserId", effectiveUserId);
+//        }
+//        // Comprehensive validation
+//        if (serverStoredTempSessionId == null || serverStoredUserId == null) {
+//            response.put("error", "No active login session found");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
         
         // Validate cohortId
         if (selectedCohortId == null || selectedCohortId.trim().isEmpty()) {
@@ -266,20 +313,20 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
-        // Validate userId if provided in request
-        if (requestUserId != null && !requestUserId.equals(serverStoredUserId)) {
-            response.put("error", "UserId mismatch with session");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-        
-        // Validate tempSessionId if provided in request
-        if (requestTempSessionId != null && !requestTempSessionId.equals(serverStoredTempSessionId)) {
-            response.put("error", "Invalid session ID");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
+//        // Validate userId if provided in request
+//        if (requestUserId != null && !requestUserId.equals(serverStoredUserId)) {
+//            response.put("error", "UserId mismatch with session");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//        
+//        // Validate tempSessionId if provided in request
+//        if (requestTempSessionId != null && !requestTempSessionId.equals(serverStoredTempSessionId)) {
+//            response.put("error", "Invalid session ID");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
         
         // Fetch user and validate cohort assignment
-        Optional<User> userOpt = userRepository.findByUserId(serverStoredUserId);
+        Optional<User> userOpt = userRepository.findByUserId(userId);
         if (!userOpt.isPresent()) {
             response.put("error", "User not found");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -289,7 +336,7 @@ public class UserController {
         
         // Fetch user's cohorts to validate if the selected cohort is assigned to the user
         UserDetailsWithCohortsAndProgramsDTO userDetails = 
-            userService.getUserDetailsWithCohortsAndPrograms(serverStoredUserId);
+            userService.getUserDetailsWithCohortsAndPrograms(userId);
         
         boolean cohortFound = false;
         if (userDetails.getAllCohortsWithPrograms() != null) {
@@ -313,13 +360,14 @@ public class UserController {
         
         try {
             // Check for existing active session
-            Optional<UserSessionMapping> existingSession = 
-                userSessionMappingService.findActiveSessionByUserIdAndCohortId(serverStoredUserId, selectedCohortId);
-            
-            if (existingSession.isPresent()) {
-                // Invalidate existing session
-                userSessionMappingService.invalidateSession(existingSession.get().getSessionId());
-            }
+        	userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+//            Optional<UserSessionMapping> existingSession = 
+//                userSessionMappingService.findActiveSessionByUserIdAndCohortId(userId, selectedCohortId);
+//            
+//            if (existingSession.isPresent()) {
+//                // Invalidate existing session
+//                userSessionMappingService.invalidateSession(existingSession.get().getSessionId());
+//            }
             
             // Create new session
             UserSessionMapping userSession = new UserSessionMapping();
@@ -334,16 +382,16 @@ public class UserController {
             userSessionMappingService.createUserSessionMapping(userSession);
             
             // Update session attributes
-            session.setAttribute("userId", serverStoredUserId);
+            session.setAttribute("userId", userId);
             session.setAttribute("cohortId", selectedCohortId);
             session.setAttribute("sessionId", newSessionId);
-            session.removeAttribute("tempSessionId");
-            session.removeAttribute("tempUserId");
+//            session.removeAttribute("tempSessionId");
+//            session.removeAttribute("tempUserId");
             
             response.put("message", "Cohort selected successfully");
             response.put("sessionId", newSessionId);
             response.put("cohortId", selectedCohortId);
-            response.put("userId", serverStoredUserId);
+            response.put("userId", userId);
             
             return ResponseEntity.ok(response);
             
