@@ -441,7 +441,8 @@ public class UnitServiceImpl implements UnitService {
             	// Format the cohort start date for the first stage
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                 String formattedStartDate = cohortStartDate.format(formatter);
-                stageResponse.setNextStageAvailableDate(formattedStartDate);
+                stageResponse.setStageAvailableDate(formattedStartDate);
+
                 
                 logger.info("First stage {} is always enabled, available from {}", stage.getStageId(), formattedStartDate);
             } else {
@@ -543,8 +544,8 @@ public class UnitServiceImpl implements UnitService {
                     logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", 
                         stage.getStageId(), currentDate, expectedUnlockDate);
                    // Set the formatted date in the response
-                    stageResponse.setNextStageAvailableDate(formattedUnlockDate);
-                    
+                    stageResponse.setStageAvailableDate(formattedUnlockDate);
+
                     if (currentDate.isBefore(expectedUnlockDate)) {
                         // We're before the planned unlock date
                         stageResponse.setStageEnabled(false);
@@ -583,8 +584,8 @@ public class UnitServiceImpl implements UnitService {
                     OffsetDateTime potentialUnlockDate = cohortStartDate.plusDays(i * delayInDays);
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                     String formattedPotentialDate = potentialUnlockDate.format(formatter);
-                    stageResponse.setNextStageAvailableDate(formattedPotentialDate);
-                    
+                    stageResponse.setStageAvailableDate(formattedPotentialDate);
+
                     if (previousStageDTO != null) {
                         String previousStageStatus = previousStageDTO.getStageCompletionStatus();
                         boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
