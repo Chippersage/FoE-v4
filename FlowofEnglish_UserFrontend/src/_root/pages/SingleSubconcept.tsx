@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 import MediaContent from "@/components/MediaContent";
 import ActivityCompletionModal from "@/components/ActivityCompletionModal";
+import VocabularyActivity from "@/components/activityComponents/VocabularyActivity";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -322,7 +323,8 @@ useEffect(() => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
-          {showIframe ? (
+          <VocabularyActivity/>
+          {/* {showIframe ? (
             <iframe
               id="embeddedContent"
               src={subconcept?.subconceptLink}
@@ -344,7 +346,7 @@ useEffect(() => {
               subconceptData={subconcept}
               currentUnitId={currentUnitId}
             />
-          )}
+          )} */}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
 
