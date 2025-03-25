@@ -11,7 +11,8 @@ import { useUserContext } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-axios.defaults.withCredentials = true;
+import WordOfTheDay from "@/components/WordADay";
+
 export default function Dashboard() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -56,13 +57,18 @@ export default function Dashboard() {
 
 const handleResume = async (cohortWithProgram: string) => {
   setSelectedCohortWithProgram(cohortWithProgram);
+  // When setting the cohort
+  localStorage.setItem(
+    "selectedCohortWithProgram",
+    JSON.stringify(cohortWithProgram)
+  );
 
   try {
     const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
       userId: user?.userId,
       cohortId: cohortWithProgram?.cohortId,
-      tempSessionId,
-    }, { withCredentials: true });
+      // tempSessionId,
+    });
 
     localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
 
@@ -218,11 +224,29 @@ const handleResume = async (cohortWithProgram: string) => {
         {/* Bottom Sections */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Daily Challenge */}
+          {/* Daily Challenge */}
           <section>
             <h2 className="mb-4 text-xl font-bold">Daily Challenge</h2>
             <Card className="bg-gradient-to-b from-[#CAF2BC] to-white">
               <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Word of the Day Challenge */}
+                  <div className="flex flex-col items-center justify-center rounded-lg p-2 text-center transition-all hover:bg-gray-100">
+                    <div className="mb-2 overflow-hidden rounded-full">
+                      <img
+                        src="/dictionary-icon.svg" // Replace with appropriate icon
+                        alt="Word of the Day"
+                        width={100}
+                        height={100}
+                        className="h-24 w-24 object-cover"
+                      />
+                    </div>
+                    <span className="text-sm font-medium">Word of the Day</span>
+                    <div className="mt-2 w-full">
+                      <WordOfTheDay />
+                    </div>
+                  </div>
+                  {/* Other challenges */}
                   {challenges.map((challenge) => (
                     <div
                       key={challenge.id}
