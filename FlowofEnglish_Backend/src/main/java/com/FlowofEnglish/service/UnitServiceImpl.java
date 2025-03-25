@@ -15,6 +15,7 @@ import com.FlowofEnglish.exception.ResourceNotFoundException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -212,6 +213,8 @@ public class UnitServiceImpl implements UnitService {
         // Retrieve delayed stage unlock settings
         boolean delayedStageUnlock = cohort.isDelayedStageUnlock();
         int delayInDays = cohort.getDelayInDays();
+     // Fetch cohort start date
+        OffsetDateTime cohortStartDate = cohort.getCohortStartDate();  // Assuming cohort has a start date field
         OffsetDateTime currentDate = OffsetDateTime.now();
         logger.info("Cohort settings - delayedStageUnlock: {}, delayInDays: {}", delayedStageUnlock, delayInDays);
 
@@ -238,9 +241,7 @@ public class UnitServiceImpl implements UnitService {
 
         boolean previousStageCompleted = true;  
         boolean programCompleted = true;
-     // Track the earliest completion date of the previous stage
-        OffsetDateTime previousStageCompletionDate = null;
-        
+     
         // Iterate through stages and build the stage map
         for (int i = 0; i < stages.size(); i++) {
             Stage stage = stages.get(i);
@@ -262,6 +263,9 @@ public class UnitServiceImpl implements UnitService {
             stageResponse.setStageDesc(stage.getStageDesc());
             System.out.println("Processing Stage: " + stage.getStageId());
             logger.info("Processing stage {} with name: {}", stage.getStageId(), stage.getStageName());
+            
+         // Determine when the stage should be unlocked
+            OffsetDateTime expectedStageStartDate = cohortStartDate.plusDays(i * delayInDays);
 
             // Fetch units for each stage
          //   List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
@@ -276,6 +280,7 @@ public class UnitServiceImpl implements UnitService {
             List<UserSubConcept> stageSubConcepts = userSubConcepts.stream()
                 .filter(usc -> usc.getStage().getStageId().equals(stage.getStageId()))
                 .collect(Collectors.toList());
+            
          // Fetch the latest completion date for the current stage
             Optional<OffsetDateTime> latestStageCompletion = userSubConceptRepository
                 .findLatestCompletionDateByUserIdAndStageId(userId, stage.getStageId());
@@ -430,105 +435,182 @@ public class UnitServiceImpl implements UnitService {
                 }
             }
             
+            
             if (i == 0) {
                 // First stage is always enabled
-                stageResponse.setStageEnabled(true);
-            } else {
-                // Apply delay unlock for subsequent stages
-            	if (delayedStageUnlock) {
-            		logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());
-                    logger.info("Previous stage completion date: {}", previousStageCompletionDate);
-                    
-            		System.out.println("Delayed stage unlock is enabled");
-            		if (previousStageCompletionDate != null)
-            		{
-            	        if (delayInDays == 0) {
-            	        	System.out.println("No delay configured (0 days) - enabling stage immediately");
-            	            logger.info("Stage {} enabled immediately due to 0 delay days", stage.getStageId());
-            	            
-            	            // If delay is 0, enable immediately if previous stage is complete
-            	            stageResponse.setStageEnabled(true);
-            	            stageResponse.setDaysUntilNextStageEnabled(0);
-            	        } else {
-            	            OffsetDateTime unlockDate = previousStageCompletionDate.plusDays(delayInDays);
-            	            long daysRemaining = ChronoUnit.DAYS.between(currentDate, unlockDate);
-            	            long hoursRemaining = ChronoUnit.HOURS.between(currentDate, unlockDate);
-            	           
-            	            System.out.println("Current date: " + currentDate);
-            	            System.out.println("Unlock date: " + unlockDate);
-            	            System.out.println("Days remaining: " + daysRemaining);
-            	            System.out.println("Hours remaining: " + hoursRemaining);
-            	            logger.info("Stage {} delay calculation - Current date: {}, Unlock date: {}", 
-            	            		stage.getStageId(), currentDate, unlockDate);
-            	            logger.info("Time remaining for stage {} - Days: {}, Hours: {}", 
-            	                stage.getStageId(), daysRemaining, hoursRemaining);
-
-            	            if (currentDate.isBefore(unlockDate)) {
-            	                stageResponse.setStageEnabled(false);
-            	                stageResponse.setDaysUntilNextStageEnabled((int) daysRemaining);
-            	                System.out.println("Stage is locked - " + daysRemaining + " days remaining");
-            	                logger.info("Stage {} is locked with {} days and {} hours remaining", 
-            	                    stage.getStageId(), daysRemaining, hoursRemaining);
-            	                stageResponse.setDaysUntilNextStageEnabled((int) daysRemaining);
-            	            } else {
-            	                stageResponse.setStageEnabled(true);
-            	                stageResponse.setDaysUntilNextStageEnabled(0);
-            	                System.out.println("Stage is unlocked - delay period has passed");
-            	                logger.info("Stage {} is unlocked - delay period has passed", stage.getStageId());
-            	            }
-            	        }
-            	    } else {
-            	    	logger.warn("No completion date found for previous stage {}", stages.get(i-1).getStageId());
-                        StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
-                        String previousStageStatus = previousStage.getStageCompletionStatus();
-                        boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
-                                                       "Stage Completed without Assignments".equals(previousStageStatus);
-                        
-            	    	System.out.println("No completion date found for previous stage");
-            	        // Handle legacy data with no completion dates
-            	        if (delayInDays == 0) {
-            	            System.out.println("Previous stage status: " + previousStageStatus);
-            	            System.out.println("Previous stage completed: " + isPreviousStageCompleted);
-            	            
-            	            logger.info("Stage {} - Previous stage status: {}, completed: {}", 
-            	                stage.getStageId(), previousStageStatus, isPreviousStageCompleted);
-
-            	            stageResponse.setStageEnabled(isPreviousStageCompleted);
-            	        } else {
-            	            stageResponse.setStageEnabled(false);
-            	            stageResponse.setDaysUntilNextStageEnabled(delayInDays);
-            	            System.out.println("Stage locked - no completion date, using default delay: " + delayInDays);
-            	            logger.warn("Stage {} locked - no completion date found, using default delay: {}", 
-            	                stage.getStageId(), delayInDays);
-            	        }
-            	    }
-            	} else {
-            	    // Non-delayed stage logic
-            	    StageDTO previousStage = stageMap.get(String.valueOf(i - 1));
-            	    String previousStageStatus = previousStage.getStageCompletionStatus();
-            	    boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
-            	                                     "Stage Completed without Assignments".equals(previousStageStatus);
-            	    System.out.println("Non-delayed stage unlock logic");
-            	    System.out.println("Previous stage status: " + previousStageStatus);
-            	    System.out.println("Previous stage completed: " + isPreviousStageCompleted);
-            	    
-            	    logger.info("Stage {} non-delayed unlock - Previous stage status: {}, completed: {}", 
-            	        stage.getStageId(), previousStageStatus, isPreviousStageCompleted);
-            	    stageResponse.setStageEnabled(isPreviousStageCompleted && !units.isEmpty());
-            	}
-            	// Update previous stage completion date for next iteration
-                previousStageCompletionDate = currentStageCompletionDate;
+            	// Format the cohort start date for the first stage
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+                String formattedStartDate = cohortStartDate.format(formatter);
+                stageResponse.setNextStageAvailableDate(formattedStartDate);
                 
-            	// After setting stage status
-            	logger.info("Stage {} final status - Enabled: {}, Days until next stage: {}", 
-            	    stage.getStageId(), 
-            	    stageResponse.isStageEnabled(), 
-            	    stageResponse.getDaysUntilNextStageEnabled());
-           }
+                logger.info("First stage {} is always enabled, available from {}", stage.getStageId(), formattedStartDate);
+            } else {
+            	
+            	// Commenting out delayed stage unlock logic
+                /*
+                // Process stages after the first one
+                if (delayedStageUnlock) {
+                    logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());
+                    
+                 // Get the previous stage
+                    Stage previousStage = stages.get(i - 1);
+                    
+                    // Fetch the completion date for the previous stage (IMPORTANT FIX)
+                    Optional<OffsetDateTime> previousStageCompletion = userSubConceptRepository
+                        .findLatestCompletionDateByUserIdAndStageId(userId, previousStage.getStageId());
+                    OffsetDateTime previousStageCompletionDate = previousStageCompletion.orElse(null);
+                    logger.info("Previous stage {} completion date: {}", previousStage.getStageId(), previousStageCompletionDate);
+                    
+                    if (previousStageCompletionDate != null) {
+                        // Previous stage has a completion date, apply delay logic
+                        if (delayInDays == 0) {
+                            // No delay configured - enable immediately
+                            logger.info("Stage {} enabled immediately due to 0 delay days", stage.getStageId());
+                            stageResponse.setStageEnabled(true);
+                            stageResponse.setDaysUntilNextStageEnabled(0);
+                        } else {
+                            // Calculate unlock date based on previous stage completion
+                            OffsetDateTime unlockDate = previousStageCompletionDate.plusDays(delayInDays);
+                            long daysRemaining = ChronoUnit.DAYS.between(currentDate, unlockDate);
+                            
+                            logger.info("Stage {} delay calculation - Current: {}, Unlock: {}", 
+                                stage.getStageId(), currentDate, unlockDate);
+                            
+                            if (currentDate.isBefore(unlockDate)) {
+                                // Still in delay period, stage locked
+                                stageResponse.setStageEnabled(false);
+                                stageResponse.setDaysUntilNextStageEnabled(Math.max(0, (int)daysRemaining));
+                                logger.info("Stage {} is locked with {} days remaining", 
+                                    stage.getStageId(), daysRemaining);
+                            } else {
+                                // Delay period has passed, enable stage
+                                stageResponse.setStageEnabled(true);
+                                stageResponse.setDaysUntilNextStageEnabled(0);
+                                logger.info("Stage {} is unlocked - delay period passed", stage.getStageId());
+                            }
+                        }
+                    } else {
+                    
+                        // Previous stage has no completion date, check completion status
+                        StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
+                        
+                        if (previousStageDTO != null) {
+                            String previousStageStatus = previousStageDTO.getStageCompletionStatus();
+                            boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                          "Stage Completed without Assignments".equals(previousStageStatus);
+                            
+                            logger.info("No completion date found for previous stage {}. Status: {}", 
+                                previousStage.getStageId(), previousStageStatus);
+                            
+                            if (isPreviousStageCompleted) {
+                                // Previous stage is marked complete but has no recorded date (legacy data)
+                                if (delayInDays == 0) {
+                                    stageResponse.setStageEnabled(true);
+                                    stageResponse.setDaysUntilNextStageEnabled(0);
+                                    logger.info("Stage {} enabled - previous completed with 0 delay", stage.getStageId());
+                                } else {
+                                    stageResponse.setStageEnabled(false);
+                                    stageResponse.setDaysUntilNextStageEnabled(delayInDays);
+                                    logger.warn("Stage {} locked - using default delay: {}", 
+                                        stage.getStageId(), delayInDays);
+                                }
+                            } else {
+                                // Previous stage not completed, this stage should be locked
+                                stageResponse.setStageEnabled(false);
+                                stageResponse.setDaysUntilNextStageEnabled(null); // null means locked due to prerequisite
+                                logger.info("Stage {} locked - previous stage not completed", stage.getStageId());
+                            }
+                        } else {
+                            // Previous stage was skipped (no units)
+                            stageResponse.setStageEnabled(true);
+                            logger.info("Stage {} enabled - previous stage skipped (no units)", stage.getStageId());
+                        }
+                    }
+                } else {
+                */
+            	 // Process stages after the first one
+                if (delayedStageUnlock) {
+                    logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());
+                    
+                    // Calculate expected unlock date based on cohort start date and stage index
+                    OffsetDateTime expectedUnlockDate = cohortStartDate.plusDays(i * delayInDays);
+                    long daysRemaining = ChronoUnit.DAYS.between(currentDate, expectedUnlockDate);
+                    
+                 // Format the expected unlock date for human readability
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+                    String formattedUnlockDate = expectedUnlockDate.format(formatter);
+                    
+                    logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", 
+                        stage.getStageId(), currentDate, expectedUnlockDate);
+                   // Set the formatted date in the response
+                    stageResponse.setNextStageAvailableDate(formattedUnlockDate);
+                    
+                    if (currentDate.isBefore(expectedUnlockDate)) {
+                        // We're before the planned unlock date
+                        stageResponse.setStageEnabled(false);
+                        stageResponse.setDaysUntilNextStageEnabled(Math.max(0, (int)daysRemaining));
+                        logger.info("Stage {} is locked with {} days remaining", 
+                            stage.getStageId(), daysRemaining, formattedUnlockDate);
+                    } else {
+                        // Current date is past the unlock date, check previous stage completion
+                        StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
+                        if (previousStageDTO != null) {
+                            String previousStageStatus = previousStageDTO.getStageCompletionStatus();
+                            boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                      "Stage Completed without Assignments".equals(previousStageStatus);
+                            
+                            // Only enable if previous stage is completed
+                            stageResponse.setStageEnabled(isPreviousStageCompleted);
+                            stageResponse.setDaysUntilNextStageEnabled(0);
+                            logger.info("Stage {} is {} - delay period passed, previous stage completion: {}", 
+                                stage.getStageId(), 
+                                isPreviousStageCompleted ? "unlocked" : "locked",
+                                isPreviousStageCompleted,
+                                formattedUnlockDate);
+                        } else {
+                            // Previous stage was skipped (no units)
+                            stageResponse.setStageEnabled(true);
+                            stageResponse.setDaysUntilNextStageEnabled(0);
+                            logger.info("Stage {} enabled - previous stage skipped (no units), available from {}", 
+                                    stage.getStageId(), formattedUnlockDate);
+                        }
+                    }
+                } else {
+                    // Non-delayed unlock logic - based only on completion status
+                    StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
+                 // For non-delayed unlock, calculate what the date would be if it were enabled
+                    // This helps show what the date would be if delayedStageUnlock were true
+                    OffsetDateTime potentialUnlockDate = cohortStartDate.plusDays(i * delayInDays);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+                    String formattedPotentialDate = potentialUnlockDate.format(formatter);
+                    stageResponse.setNextStageAvailableDate(formattedPotentialDate);
+                    
+                    if (previousStageDTO != null) {
+                        String previousStageStatus = previousStageDTO.getStageCompletionStatus();
+                        boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
+                                                      "Stage Completed without Assignments".equals(previousStageStatus);
+                        
+                        logger.info("Non-delayed unlock for stage {} - Previous status: {}, would be available on {} if delayed", 
+                                stage.getStageId(), previousStageStatus, formattedPotentialDate);
+                        
+                        stageResponse.setStageEnabled(isPreviousStageCompleted);
+                        stageResponse.setDaysUntilNextStageEnabled(isPreviousStageCompleted ? 0 : null);
+                    } else {
+                        // Previous stage was skipped (no units)
+                        stageResponse.setStageEnabled(true);
+                        stageResponse.setDaysUntilNextStageEnabled(0);
+                        logger.info("Stage {} enabled - previous stage skipped (no units), would be available on {} if delayed", 
+                            stage.getStageId(), formattedPotentialDate);
+                        }
+                }
+            }
             
-         // Update previousStageCompleted for the next iteration
-            previousStageCompleted = "yes".equals(stageResponse.getStageCompletionStatus());
-
+            // After setting stage status
+            logger.info("Stage {} final status - Enabled: {}, Days until next stage: {}", 
+                stage.getStageId(), 
+                stageResponse.isStageEnabled(), 
+                stageResponse.getDaysUntilNextStageEnabled());
+            
             // Add the stage to the response
             stageMap.put(String.valueOf(i), stageResponse);
             stagesCount++;
@@ -542,7 +624,6 @@ public class UnitServiceImpl implements UnitService {
 
         return programResponse;
     }
-    
     
     
     /**
@@ -564,18 +645,5 @@ public class UnitServiceImpl implements UnitService {
     private int getTotalSubConceptCount(String unitId) {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
         return subconcepts.size();
-    }
- // Helper to determine if a stage is enabled
-    private boolean determineStageEnabled(int stageIndex, boolean delayedStageUnlock, int delayInDays, OffsetDateTime currentDate, OffsetDateTime previousStageCompletionDate, String stageCompletionStatus) {
-        if (stageIndex == 0) {
-            return true; // First stage is always enabled
-        }
-
-        if (delayedStageUnlock && previousStageCompletionDate != null) {
-            OffsetDateTime unlockDate = previousStageCompletionDate.plusDays(delayInDays);
-            return !currentDate.isBefore(unlockDate);
-        }
-
-        return "yes".equals(stageCompletionStatus);
     }
 }

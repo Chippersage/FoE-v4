@@ -9,6 +9,7 @@ public class StageDTO {
     private String stageCompletionStatus;
     private boolean stageEnabled;
     private Integer daysUntilNextStageEnabled;
+    private String nextStageAvailableDate;
     private Map<String, UnitResponseDTO> units; // Use a Map for dynamic keys
     
     // Getters and Setters  
@@ -55,6 +56,12 @@ public class StageDTO {
 		this.daysUntilNextStageEnabled = daysUntilNextStageEnabled;
 	}
     
+	public String getNextStageAvailableDate() {
+        return nextStageAvailableDate;
+    }
     
+    public void setNextStageAvailableDate(String nextStageAvailableDate) {
+        this.nextStageAvailableDate = nextStageAvailableDate;
+    }
    
 }
