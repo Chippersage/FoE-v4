@@ -9,22 +9,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-//import software.amazon.awssdk.core.ResponseInputStream;
-//import software.amazon.awssdk.services.s3.S3Client;
-//import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-//import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.net.URL;
+import java.nio.file.*;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -58,15 +54,20 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     private UserCohortMappingService userCohortMappingService;
     
     @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Autowired
     private SubconceptRepository subconceptRepository;
 
-//    @Autowired
-//    private S3StorageService s3StorageService;
-//    @Autowired
-//    private S3Client s3Client;  
-//    private static final String BUCKET_NAME = "your-s3-bucket-name";
+    @Autowired
+    private S3StorageService s3StorageService;
+    
+    @Autowired
+    private S3Client s3Client;
+    
+    private static final String BUCKET_NAME = "foe-learner-files";
 
-    private static final String UPLOAD_DIR = "/var/app/uploads/";
+ //   private static final String UPLOAD_DIR = "/var/app/uploads/";
     private static final long MAX_PDF_SIZE = 1 * 1024 * 1024; // 1MB
     private static final long MAX_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB
     private static final long MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
@@ -119,12 +120,12 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         // Validate file size
         validateFileSize(file);
         
-        String filePath = saveFileToSystem(file);
-        MediaFile mediaFile = saveFileMetadata(file, filePath, user);
+//        String filePath = saveFileToSystem(file);
+//        MediaFile mediaFile = saveFileMetadata(file, filePath, user);
 
-//     // Upload to S3 and save metadata
-//        String s3Key = s3StorageService.uploadFile(file, "assignments");
-//        MediaFile mediaFile = saveFileMetadata(file, s3Key, user);
+     // Upload to S3 and save metadata
+        String s3Key = s3StorageService.uploadFile(file, cohortId, userId, programId, stageId, unitId, subconceptId, "submitted");
+        MediaFile mediaFile = saveFileMetadata(file, s3Key, user);
        
         // Create new assignment
         UserAssignment assignment = new UserAssignment();
@@ -141,6 +142,56 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return userAssignmentRepository.save(assignment);
     }
 
+ // Updated method to get file details including presigned URL
+    public Map<String, Object> getSubmittedFileDetails(String assignmentId) {
+        Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
+        if (assignmentOpt.isPresent()) {
+            MediaFile file = assignmentOpt.get().getSubmittedFile();
+            // Ensure the file is publicly accessible
+            s3StorageService.makeFilePublic(file.getFilePath());  
+            // Get public URL without credentials
+            String publicUrl = s3StorageService.generatePublicUrl(file.getFilePath());
+
+            
+            Map<String, Object> fileDetails = new HashMap<>();
+            fileDetails.put("fileId", file.getFileId());
+            fileDetails.put("fileName", file.getFileName());
+            fileDetails.put("fileType", file.getFileType());
+            fileDetails.put("fileSize", file.getFileSize());
+            fileDetails.put("downloadUrl", publicUrl);
+            
+            return fileDetails;
+        } else {
+            throw new RuntimeException("Assignment not found");
+        }
+    }
+
+    // Updated method to get file details including presigned URL
+    public Map<String, Object> getCorrectedFileDetails(String assignmentId) {
+        Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
+        if (assignmentOpt.isPresent()) {
+            MediaFile file = assignmentOpt.get().getCorrectedFile();
+            if (file == null) {
+                throw new RuntimeException("Corrected file not found");
+            }
+            // Ensure the file is publicly accessible
+            s3StorageService.makeFilePublic(file.getFilePath());
+            // Get public URL without credentials
+            String publicUrl = s3StorageService.generatePublicUrl(file.getFilePath());
+            Map<String, Object> fileDetails = new HashMap<>();
+            fileDetails.put("fileId", file.getFileId());
+            fileDetails.put("fileName", file.getFileName());
+            fileDetails.put("fileType", file.getFileType());
+            fileDetails.put("fileSize", file.getFileSize());
+            fileDetails.put("downloadUrl",  publicUrl);
+            
+            return fileDetails;
+        } else {
+            throw new RuntimeException("Assignment not found");
+        }
+    }
+            		
+            		
     public MediaFile getSubmittedFile(String assignmentId) {
         Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
         if (assignmentOpt.isPresent()) {
@@ -154,12 +205,16 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     public MediaFile getCorrectedFile(String assignmentId) {
         Optional<UserAssignment> assignmentOpt = userAssignmentRepository.findById(assignmentId);
         if (assignmentOpt.isPresent()) {
-            MediaFile file = assignmentOpt.get().getSubmittedFile();
+            MediaFile file = assignmentOpt.get().getCorrectedFile();
+            if (file == null) {
+                throw new RuntimeException("Corrected file not found for assignment: " + assignmentId);
+            }
             return file;
         } else {
             throw new RuntimeException("Assignment not found");
         }
     }
+
     
     @Override
     public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
@@ -167,11 +222,37 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                                                    String remarks, OffsetDateTime correctedDate) throws IOException {
         UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
             .orElseThrow(() -> new RuntimeException("Assignment not found"));
+        
+     // Check if score exceeds max score
+        if (score != null && assignment.getSubconcept() != null) {
+            Integer maxScore = assignment.getSubconcept().getSubconceptMaxscore();
+            if (maxScore != null && score > maxScore) {
+                throw new IllegalArgumentException("Score cannot exceed the maximum score of " + maxScore);
+            }
+        }
+
+        // Validate corrected date is not earlier than submitted date
+        if (correctedDate != null && assignment.getSubmittedDate() != null) {
+            if (correctedDate.isBefore(assignment.getSubmittedDate())) {
+                throw new IllegalArgumentException("Correction date cannot be earlier than submission date");
+            }
+        }
 
         if (correctedFile != null && !correctedFile.isEmpty()) {
             validateFileSize(correctedFile);
-            String filePath = saveFileToSystem(correctedFile);
-            MediaFile mediaFile = saveFileMetadata(correctedFile, filePath, assignment.getUser());
+         // Upload corrected file to S3
+            String s3Key = s3StorageService.uploadFile(
+                correctedFile, 
+                assignment.getCohort().getCohortId(), 
+                assignment.getUser().getUserId(),
+                assignment.getProgram().getProgramId(),
+                assignment.getStage().getStageId(),
+                assignment.getUnit().getUnitId(),
+                assignment.getSubconcept().getSubconceptId(),
+                "corrected"
+            );
+            
+            MediaFile mediaFile = saveFileMetadata(correctedFile, s3Key, assignment.getUser());
             assignment.setCorrectedFile(mediaFile);
         }
 
@@ -179,9 +260,34 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         assignment.setScore(score);
         assignment.setRemarks(remarks);  // Save remarks
 
-        return userAssignmentRepository.save(assignment);
+     // Save the assignment
+        UserAssignment savedAssignment = userAssignmentRepository.save(assignment);
+        
+        // Update leaderboard score in UserCohortMapping
+        if (score != null) {
+            updateLeaderboardScore(assignment.getUser().getUserId(), assignment.getCohort().getCohortId(), score);
+        }
+        // Send notification email to the user
+        try {
+            emailService.sendAssignmentCorrectionEmail(assignmentId);
+        } catch (Exception e) {
+            logger.warn("Failed to send correction notification email: {}", e.getMessage());
+            // Don't throw exception to prevent disrupting the main process
+        }
+        return savedAssignment;
     }
-
+    private void updateLeaderboardScore(String userId, String cohortId, Integer score) {
+        // Find the UserCohortMapping entry
+        UserCohortMapping mapping = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId)
+            .orElseThrow(() -> new RuntimeException("User-Cohort mapping not found"));
+        
+        // Update the leaderboard score
+        int currentScore = mapping.getLeaderboardScore();
+        mapping.setLeaderboardScore(currentScore + score);
+        
+        // Save the updated mapping
+        userCohortMappingRepository.save(mapping);
+    }
     
  // Helper method to validate file size based on type
     private void validateFileSize(MultipartFile file) {
@@ -205,7 +311,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
 
     private String saveFileToSystem(MultipartFile file) throws IOException {
         // Define the directory path where the files will be saved
-        String directory = UPLOAD_DIR + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "/";
+        String directory = BUCKET_NAME + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "/";
         String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
         Path path = Paths.get(directory + filename);
      // Ensure the directory exists
@@ -218,18 +324,19 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return path.toString(); // Return the file path for database storage
     }
 
-
-    private MediaFile saveFileMetadata(MultipartFile file, String filePath, User user) {
+    private MediaFile saveFileMetadata(MultipartFile file, String s3Key, User user) {
         MediaFile mediaFile = new MediaFile();
         mediaFile.setFileName(file.getOriginalFilename());
         mediaFile.setFileType(file.getContentType());
         mediaFile.setFileSize(file.getSize());
-      //  mediaFile.setFilePath(s3Key);  // Store S3 key instead of local path
-        mediaFile.setFilePath(filePath); // Save the local path
+        mediaFile.setFilePath(s3Key);
         mediaFile.setUuid(UUID.randomUUID().toString());
         mediaFile.setUser(user);
+        
         return mediaFileRepository.save(mediaFile);
     }
+
+
     
     @Override
     public UserAssignment getAssignmentById(String assignmentId) {
@@ -250,12 +357,21 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             for (UserAssignment assignment : assignments) {
                 MediaFile file = assignment.getSubmittedFile();
 
-                // Get the file from the EC2 file system
-                Path filePath = Paths.get(file.getFilePath());
-                if (Files.exists(filePath)) {
-                    zipOut.putNextEntry(new ZipEntry(file.getFileName()));
-                    Files.copy(filePath, zipOut); // Copy file content directly into zip
-                    zipOut.closeEntry();
+                if (file != null) {
+                    // Download the file from S3
+                    try (InputStream fileStream = s3StorageService.downloadFile(file.getFilePath())) {
+                        if (fileStream != null) {
+                            zipOut.putNextEntry(new ZipEntry(assignment.getUser().getUserId() + "_" + file.getFileName()));
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = fileStream.read(buffer)) > 0) {
+                                zipOut.write(buffer, 0, length);
+                            }
+                            zipOut.closeEntry();
+                        } else {
+                            logger.warn("File not found in S3: {}", file.getFilePath());
+                        }
+                    }
                 }
             }
         }
@@ -264,26 +380,44 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     }
     
     public Resource generateAssignmentsCSV(String cohortId) throws IOException {
-        List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
+        List<UserAssignment> allAssignments = userAssignmentRepository.findByCohortCohortId(cohortId);
         
+        // Filter out corrected assignments
+        List<UserAssignment> uncorrectedAssignments = allAssignments.stream()
+        		.filter(assignment -> assignment.getScore() == null && assignment.getCorrectedDate() == null)
+                .collect(Collectors.toList());
+        
+        if (uncorrectedAssignments.isEmpty()) {
+            throw new RuntimeException("No uncorrected assignments found for the cohort.");
+        }
         Path tempDir = Files.createTempDirectory("csv_export");
         Path csvFile = tempDir.resolve("assignments-details.csv");
+        
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile.toFile()))) {
             // Write CSV header
             writer.println("AssignmentId,Username,UserId,SubconceptId,SubmittedFileId,SubmittedDate," +
-                          "ProgramId,StageId,UnitId,MaxScore,Score,Remarks,FileName");
+                          "ProgramId,StageId,UnitId,MaxScore,Score,Remarks,FileName,FileDownloadLink");
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             
             // Write data rows
-            for (UserAssignment assignment : assignments) {
+            for (UserAssignment assignment : uncorrectedAssignments) {
                 String submittedDate = assignment.getSubmittedDate() != null ? 
                     assignment.getSubmittedDate().format(formatter) : "";
                 String fileName = assignment.getSubmittedFile() != null ? 
                     assignment.getSubmittedFile().getFileName() : "";
                 Integer maxScore = assignment.getSubconcept() != null ? 
                     assignment.getSubconcept().getSubconceptMaxscore() : null;
+                // Generate public URL for the submitted file if it exists
+                String fileDownloadLink = "";
+                if (assignment.getSubmittedFile() != null) {
+                    MediaFile file = assignment.getSubmittedFile();
+                    // Ensure the file is publicly accessible
+                    s3StorageService.makeFilePublic(file.getFilePath());
+                    // Get public URL without credentials
+                    fileDownloadLink = s3StorageService.generatePublicUrl(file.getFilePath());
+                }
                 
                 writer.println(String.join(",",
                     safeString(assignment.getAssignmentId()),
@@ -298,7 +432,8 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     maxScore != null ? maxScore.toString() : "",
                     assignment.getScore() != null ? assignment.getScore().toString() : "",
                     safeString(assignment.getRemarks()),
-                    safeString(fileName)
+                    safeString(fileName),
+                    safeString(fileDownloadLink)
                 ));
             }
         }
@@ -314,101 +449,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         }
         return value;
     }
-//    @Override
-//    public Resource downloadAllAssignmentsSendEmail(String cohortId) throws IOException {
-//        List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
-//
-//        if (assignments.isEmpty()) {
-//            throw new RuntimeException("No assignments found for the cohort.");
-//        }
-//        // Get the cohort name
-//        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
-//        if (!cohortOpt.isPresent()) {
-//            throw new RuntimeException("Cohort not found.");
-//        }
-//        String cohortName = cohortOpt.get().getCohortName();
-//
-//     // Get the mentor's email
-//        List<UserCohortMappingDTO> cohortMappings;
-//        try {
-//            cohortMappings = userCohortMappingService.getUserCohortMappingsCohortId(cohortId);
-//            logger.info("Fetched cohort mappings: {}", cohortMappings);
-//        } catch (Exception e) {
-//            logger.error("Error fetching cohort mappings: {}", e.getMessage());
-//            throw new RuntimeException("Failed to fetch mentor information", e);
-//        }
-//        
-//        Optional<UserCohortMappingDTO> mentorMapping = cohortMappings.stream()
-//                .filter(mapping -> "mentor".equalsIgnoreCase(mapping.getUserType()))
-//                .findFirst();
-//                
-//        if (!mentorMapping.isPresent()) {
-//            logger.error("No mentor found for cohort {}", cohortId);
-//            throw new RuntimeException("Mentor not found in the cohort.");
-//        }
-//        
-//        String mentorEmail = mentorMapping.get().getUserEmail();
-//        String mentorName = mentorMapping.get().getUserName();
-//        
-//        // Create a temporary zip file
-//        Path tempZipPath = Files.createTempFile("assignments_" + cohortId, ".zip");
-//        try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(tempZipPath))) {
-//            // Generate CSV file
-//            Resource csvResource = generateAssignmentsCSV(cohortId);
-//            Path csvPath = csvResource.getFile().toPath();
-//
-//            // Add CSV to ZIP
-//            zipOut.putNextEntry(new ZipEntry("assignments-details.csv"));
-//            Files.copy(csvPath, zipOut);
-//            zipOut.closeEntry();
-//
-//            // Add assignment files to ZIP
-//            for (UserAssignment assignment : assignments) {
-//                MediaFile file = assignment.getSubmittedFile();
-//
-//                if (file != null) {
-//                    Path filePath = Paths.get(file.getFilePath());
-//                    if (Files.exists(filePath)) {
-//                        zipOut.putNextEntry(new ZipEntry(file.getFileName()));
-//                        Files.copy(filePath, zipOut);
-//                        zipOut.closeEntry();
-//                    } else {
-//                        logger.warn("File not found: {}", filePath);
-//                    }
-//                }
-//            }
-//        } catch (IOException e) {
-//            logger.error("Error creating ZIP file for cohort {}: {}", cohortId, e.getMessage());
-//            throw e;
-//        }
-//
-//     // Send ZIP file via email
-//        try {
-//            sendEmailWithAttachment(mentorEmail, mentorName, cohortName, tempZipPath);
-//            logger.info("Assignments ZIP sent successfully to {}", mentorEmail);
-//        } catch (Exception e) {
-//            logger.error("Failed to send email to {}: {}", mentorEmail, e.getMessage());
-//            throw new RuntimeException("Error sending email with attachments", e);
-//        } finally {
-//            try {
-//                Files.deleteIfExists(tempZipPath);
-//                logger.info("Temporary ZIP file deleted: {}", tempZipPath);
-//            } catch (IOException e) {
-//                logger.warn("Failed to delete temporary ZIP file: {}", tempZipPath);
-//            }
-//        }
-//
-//        return new FileSystemResource(tempZipPath);
-//    }
-//
-//    private void sendEmailWithAttachment(String mentorEmail, String mentorName, String cohortName, Path filePath) {
-//        emailService.sendEmailWithAttachment(mentorEmail, mentorName, cohortName, filePath);
-//        try {
-//            Files.deleteIfExists(filePath);
-//        } catch (IOException e) {
-//            logger.error("Failed to delete temporary zip file: " + filePath, e);
-//        }
-//    }
+
     @Override
     public Resource downloadAllAssignmentsSendEmail(String cohortId) throws IOException {
         List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
@@ -469,7 +510,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     if (file != null) {
                         Path filePath = Paths.get(file.getFilePath());
                         if (Files.exists(filePath)) {
-                            zipOut.putNextEntry(new ZipEntry(file.getFileName()));
+                        	zipOut.putNextEntry(new ZipEntry(assignment.getUser().getUserId() + "_" + file.getFileName()));
                             Files.copy(filePath, zipOut);
                             zipOut.closeEntry();
                         } else {
@@ -513,6 +554,130 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     }
     
     @Override
+    public void generateAndEmailAssignmentsCSV(String cohortId) throws IOException {
+        List<UserAssignment> allAssignments = userAssignmentRepository.findByCohortCohortId(cohortId);
+        // Filter out corrected assignments
+        List<UserAssignment> uncorrectedAssignments = allAssignments.stream()
+        		.filter(assignment -> assignment.getScore() == null && assignment.getCorrectedDate() == null)
+                .collect(Collectors.toList());
+        
+        if (uncorrectedAssignments.isEmpty()) {
+            throw new RuntimeException("No uncorrected assignments found for the cohort.");
+        }
+        
+        if (allAssignments.isEmpty()) {
+            throw new RuntimeException("No assignments found for the cohort.");
+        }
+        
+        // Get the cohort name
+        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
+        if (!cohortOpt.isPresent()) {
+            throw new RuntimeException("Cohort not found.");
+        }
+        String cohortName = cohortOpt.get().getCohortName();
+
+        // Get the mentor's email
+        List<UserCohortMappingDTO> cohortMappings;
+        try {
+            cohortMappings = userCohortMappingService.getUserCohortMappingsCohortId(cohortId);
+            logger.info("Fetched cohort mappings: {}", cohortMappings);
+        } catch (Exception e) {
+            logger.error("Error fetching cohort mappings: {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch mentor information", e);
+        }
+
+        Optional<UserCohortMappingDTO> mentorMapping = cohortMappings.stream()
+                .filter(mapping -> "mentor".equalsIgnoreCase(mapping.getUserType()))
+                .findFirst();
+                
+        if (!mentorMapping.isPresent()) {
+            logger.error("No mentor found for cohort {}", cohortId);
+            throw new RuntimeException("Mentor not found in the cohort.");
+        }
+        
+        String mentorEmail = mentorMapping.get().getUserEmail();
+        String mentorName = mentorMapping.get().getUserName();
+        
+        // Generate CSV file with S3 links
+        Path tempDir = Files.createTempDirectory("csv_export");
+        Path csvFile = tempDir.resolve("assignments-details.csv");
+        
+        try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile.toFile()))) {
+            // Write CSV header
+            writer.println("AssignmentId,Username,UserId,SubconceptId,SubmittedFileId,SubmittedDate," +
+                          "ProgramId,StageId,UnitId,MaxScore,Score,Remarks,FileName,FileDownloadLink,CorrectionDate,CorrectedFileAttached");
+            
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            
+            // Write data rows
+            for (UserAssignment assignment : uncorrectedAssignments) {
+                String submittedDate = assignment.getSubmittedDate() != null ? 
+                    assignment.getSubmittedDate().format(formatter) : "";
+                String fileName = assignment.getSubmittedFile() != null ? 
+                    assignment.getSubmittedFile().getFileName() : "";
+                Integer maxScore = assignment.getSubconcept() != null ? 
+                    assignment.getSubconcept().getSubconceptMaxscore() : null;
+                
+                // Generate public URL for the submitted file if it exists
+                String fileDownloadLink = "";
+                if (assignment.getSubmittedFile() != null) {
+                    MediaFile file = assignment.getSubmittedFile();
+                    // Ensure the file is publicly accessible
+                    s3StorageService.makeFilePublic(file.getFilePath());
+                    // Get public URL without credentials
+                    fileDownloadLink = s3StorageService.generatePublicUrl(file.getFilePath());
+                }
+                
+                writer.println(String.join(",",
+                    safeString(assignment.getAssignmentId()),
+                    safeString(assignment.getUser().getUserName()),
+                    safeString(assignment.getUser().getUserId()),
+                    safeString(assignment.getSubconcept().getSubconceptId()),
+                    assignment.getSubmittedFile() != null ? safeString(assignment.getSubmittedFile().getFileId()) : "",
+                    safeString(submittedDate),
+                    safeString(assignment.getProgram().getProgramId()),
+                    safeString(assignment.getStage().getStageId()),
+                    safeString(assignment.getUnit().getUnitId()),
+                    maxScore != null ? maxScore.toString() : "",
+                    assignment.getScore() != null ? assignment.getScore().toString() : "",
+                    safeString(assignment.getRemarks()),
+                    safeString(fileName),
+                    safeString(fileDownloadLink),
+                    "", // Empty column for CorrectedFileAttached flag
+                    ""  // Empty column for CorrectionDate
+                ));
+            }
+        }
+        
+        // Send CSV file via email
+        try {
+            sendEmailWithCSVAttachment(mentorEmail, mentorName, cohortName, csvFile);
+            logger.info("Assignments CSV sent successfully to {}", mentorEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send email to {}: {}", mentorEmail, e.getMessage());
+            throw new RuntimeException("Error sending email with CSV attachment", e);
+        } finally {
+            // Clean up temp file after sending
+            try {
+                Files.deleteIfExists(csvFile);
+                Files.deleteIfExists(tempDir);
+            } catch (IOException e) {
+                logger.warn("Failed to delete temporary CSV file: {}", e.getMessage());
+            }
+        }
+    }
+
+    // Helper method to send only CSV file by email
+    private void sendEmailWithCSVAttachment(String mentorEmail, String mentorName, String cohortName, Path csvFilePath) {
+        try {
+            emailService.sendEmailWithCSVAttachment(mentorEmail, mentorName, cohortName, csvFilePath);
+        } catch (Exception e) {
+            logger.error("Error sending email with CSV attachment: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+    
+    @Override
     public void uploadCorrectedAssignments(List<MultipartFile> files, List<Integer> scores, List<String> remarks, List<String> assignmentIds) throws IOException {
         if (files.size() != scores.size() || scores.size() != remarks.size() || remarks.size() != assignmentIds.size()) {
             throw new IllegalArgumentException("Mismatched number of files, scores, remarks, and assignment IDs.");
@@ -541,7 +706,28 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         }
     }
 
+    @Override
+    public UserAssignment getAssignmentByUserIdAndSubconceptId(String userId, String subconceptId) {
+        Optional<UserAssignment> assignmentOptional = userAssignmentRepository
+            .findByUserUserIdAndSubconceptSubconceptId(userId, subconceptId);
+        
+        // Return null if not found (to be handled in controller)
+        return assignmentOptional.orElse(null);
+    }
 }
+
+
+
+//private MediaFile saveFileMetadata(MultipartFile file, String filePath, User user) {
+//MediaFile mediaFile = new MediaFile();
+//mediaFile.setFileName(file.getOriginalFilename());
+//mediaFile.setFileType(file.getContentType());
+//mediaFile.setFileSize(file.getSize());
+//mediaFile.setFilePath(filePath); // Save the local path
+//mediaFile.setUuid(UUID.randomUUID().toString());
+//mediaFile.setUser(user);
+//return mediaFileRepository.save(mediaFile);
+//}
 
 
 
@@ -553,33 +739,21 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
 //      throw new RuntimeException("No assignments found for the cohort.");
 //  }
 //
-//// Create a temporary zip file
+//  // Create a temporary zip file
 //  Path tempZipPath = Files.createTempFile("assignments_" + cohortId, ".zip");
 //  try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(tempZipPath))) {
 //      for (UserAssignment assignment : assignments) {
 //          MediaFile file = assignment.getSubmittedFile();
-//          
-//          // Download from S3 and add to zip
-//          try (ResponseInputStream<GetObjectResponse> s3Object = 
-//                  s3StorageService.downloadFile(file.getFilePath())) {
-//              zipOut.putNextEntry(new ZipEntry(file.getFileName()));
-//              s3Object.transferTo(zipOut);
+//
+//          // Get the file from the EC2 file system
+//          Path filePath = Paths.get(file.getFilePath());
+//          if (Files.exists(filePath)) {
+//          	zipOut.putNextEntry(new ZipEntry(assignment.getUser().getUserId() + "_" + file.getFileName()));
+//              Files.copy(filePath, zipOut); // Copy file content directly into zip
 //              zipOut.closeEntry();
 //          }
 //      }
 //  }
-//  
-//  return new FileSystemResource(tempZipPath);
-//}
 
-//private String uploadFileToS3(MultipartFile file) throws IOException {
-//  String fileKey = LocalDate.now() + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-//  s3Client.putObject(
-//      PutObjectRequest.builder()
-//          .bucket(BUCKET_NAME)
-//          .key(fileKey)
-//          .build(),
-//      Paths.get(file.getOriginalFilename()) // Save the file locally temporarily
-//  );
-//  return fileKey; // Return the S3 key for the file
+//  return new FileSystemResource(tempZipPath);
 //}

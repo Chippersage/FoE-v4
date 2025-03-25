@@ -9,6 +9,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +26,17 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private UserAssignmentRepository userAssignmentRepository;
+    
+    @Autowired
+    private S3StorageService s3StorageService;
+    
+ //   private static final String LOGO_IMAGE = "images/ChipperSageLogo.png";
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
 
@@ -109,6 +123,69 @@ public class EmailService {
         }
     }
 
+    
+    public void sendEmailWithCSVAttachment(String recipientEmail, String recipientName, String cohortName, Path csvFilePath) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            
+            helper.setTo(recipientEmail);
+            helper.setSubject("Assignment Review Instructions for Cohort: " + cohortName);
+            
+            // Get organization admin email from the mentor's organization
+            String orgAdminEmail = getUserOrganizationAdminEmail(recipientEmail);
+            
+            String emailBody = 
+                "Dear " + recipientName + ",\n\n" +
+                "Attached is the assignments CSV file for cohort: " + cohortName + ". Please follow these instructions for reviewing:\n\n" +
+                "1. Open the attached CSV file to view all learner assignments\n" +
+                "2. Click on the FileDownloadLink for each submission to access the learner's work\n" +
+                "3. Review each assignment carefully based on our assessment rubric\n" +
+                "4. When scoring, please note the MaxScore column and ensure scores do not exceed this value\n" +
+                "5. For each assignment, provide detailed feedback in the Remarks column addressing:\n" +
+                "   - Strengths of the submission\n" +
+                "   - Areas needing improvement\n" +
+                "   - Specific suggestions for growth\n\n" +
+                "6. If you need to provide corrected files or additional resources, please:\n" +
+                "   - Save the file with naming format: [UserID]_[AssignmentId]_corrected\n" +
+                "   - Update the Score and Remarks columns in the CSV\n" +
+                "   - Send the completed CSV file and any corrected files to: " + orgAdminEmail + "\n\n" +
+                "Please complete your reviews within 3 business days. Your thoughtful feedback is essential to our learners' growth and success.\n\n" +
+                "Thank you for your dedication to our learners' development.\n\n" +
+                "Best regards,\nChippersage Team";
+            
+            helper.setText(emailBody);
+            
+            // Attach the CSV file
+            FileSystemResource file = new FileSystemResource(csvFilePath.toFile());
+            helper.addAttachment("assignments-details.csv", file);
+            
+            mailSender.send(message);
+            logger.info("Email with CSV attachment and instructions sent successfully to {}", recipientEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send email with CSV attachment: {}", e.getMessage(), e);
+            throw new RuntimeException("Error sending email", e);
+        }
+    }
+    
+    // New helper method to get organization admin email for a user
+    private String getUserOrganizationAdminEmail(String userEmail) {
+        try {
+            // This would need to be implemented based on your repository structure
+            // Example implementation:
+            User user = userRepository.findByUserEmail(userEmail);
+            if (user != null && user.getOrganization() != null) {
+                return user.getOrganization().getOrganizationAdminEmail();
+            }
+            // Default fallback email if needed
+            return "support@thechippersage.com";
+        } catch (Exception e) {
+            logger.error("Error fetching organization admin email: {}", e.getMessage());
+            // Return a default admin email as fallback
+            return "support@thechippersage.com";
+        }
+    }
+    
     public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
     		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) { 
     	
@@ -174,6 +251,82 @@ public class EmailService {
             logger.error("Failed to send cohort assignment email. User: {}, Error: {}", userName, e.getMessage());
             System.err.println("Failed to send cohort assignment email. User: " + userName + ", Error: " + e.getMessage());
             throw e;
+        }
+    }
+    
+    public void sendAssignmentCorrectionEmail(String assignmentId) {
+        try {
+            // Fetch the assignment
+            UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + assignmentId));
+            
+            // Check if user email is available
+            User user = assignment.getUser();
+            if (user == null || user.getUserEmail() == null || user.getUserEmail().trim().isEmpty()) {
+                logger.info("Skipping correction email for assignment {} - user email not available", assignmentId);
+                return;
+            }
+            
+            // Get all relevant details
+            String userName = user.getUserName();
+            String userEmail = user.getUserEmail();
+            String programName = assignment.getProgram().getProgramName();
+            String stageName = assignment.getStage().getStageName();
+            String unitName = assignment.getUnit().getUnitName();
+            String subconceptDesc = assignment.getSubconcept().getSubconceptDesc();
+            Integer maxScore = assignment.getSubconcept().getSubconceptMaxscore();
+            Integer actualScore = assignment.getScore();
+            String remarks = assignment.getRemarks();
+            
+            // Generate download link if corrected file exists
+            String correctedFileLink = "";
+            boolean hasCorrectedFile = assignment.getCorrectedFile() != null;
+            if (hasCorrectedFile) {
+                MediaFile file = assignment.getCorrectedFile();
+                // Ensure the file is publicly accessible
+                s3StorageService.makeFilePublic(file.getFilePath());
+                // Get public URL without credentials
+                correctedFileLink = s3StorageService.generatePublicUrl(file.getFilePath());
+            }
+            
+            // Create email subject
+            String subject = "Your Assignment for " + programName + " Has Been Evaluated";
+            
+            // Build email body
+            StringBuilder bodyBuilder = new StringBuilder();
+            bodyBuilder.append("Dear ").append(userName).append(",\n\n");
+            bodyBuilder.append("Great news! Your assignment has been reviewed by your mentor. Here are the details:\n\n");
+            bodyBuilder.append("Assignment ID: ").append(assignmentId).append("\n");
+            bodyBuilder.append("Program: ").append(programName).append("\n");
+            bodyBuilder.append("Stage: ").append(stageName).append("\n");
+            bodyBuilder.append("Unit: ").append(unitName).append("\n");
+            bodyBuilder.append("Topic: ").append(subconceptDesc).append("\n\n");
+            bodyBuilder.append("Evaluation Results:\n");
+            bodyBuilder.append("Score: ").append(actualScore).append(" out of ").append(maxScore).append("\n\n");
+            
+            if (remarks != null && !remarks.trim().isEmpty()) {
+                bodyBuilder.append("Mentor's Feedback:\n").append(remarks).append("\n\n");
+            }
+            
+            if (hasCorrectedFile) {
+                bodyBuilder.append("Your mentor has also provided a corrected version of your assignment. ")
+                        .append("You can access it using the link below:\n")
+                        .append(correctedFileLink).append("\n\n");
+            }
+            
+            bodyBuilder.append("Keep up the great work! Your dedication to learning is commendable.\n\n");
+            bodyBuilder.append("If you have any questions about your evaluation, please feel free to reach out to your mentor.\n\n");
+            bodyBuilder.append("Best regards,\n");
+            bodyBuilder.append("Team Chippersage");
+            
+            // Send the email
+            sendEmail(userEmail, subject, bodyBuilder.toString());
+            logger.info("Assignment correction notification email sent successfully to {}", userEmail);
+            
+        } catch (Exception e) {
+            logger.error("Failed to send assignment correction email for assignment {}: {}", 
+                    assignmentId, e.getMessage(), e);
+            // Don't throw exception to prevent disrupting the main correction flow
         }
     }
 }
