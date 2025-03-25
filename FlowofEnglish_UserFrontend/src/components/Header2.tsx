@@ -69,8 +69,8 @@ const Header2 = () => {
           {user ? `Welcome, ${user.userName}` : "Welcome, Guest"}
         </h2>
       </div>
-      <div className="sm:flex flex-1 hidden">
-        <h3 className="hellohead mx-auto text-white font-openSans">
+      <div className="md:flex flex-1 hidden">
+        <h3 className="hellohead mx-auto text-white font-openSans text-nowrap">
           {selectedCohortWithProgram
             ? `${selectedCohortWithProgram?.program?.programName}`
             : ""}

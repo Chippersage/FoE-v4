@@ -154,22 +154,22 @@ useEffect(() => {
   // }, [subconceptData]);
 
   // Handle countdown for success overlay
-  useEffect(() => {
-    if (
-      showSuccessPopup &&
-      successCountdown > 0 &&
-      ["assessment", "assignment"].some((type) =>
-        subconceptData?.subconceptType?.startsWith(type)
-      )
-    ) {
-      const interval = setInterval(() => {
-        setSuccessCountdown((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else if (successCountdown <= 0) {
-      navigate(`/subconcepts/${userData?.unitId}`);
-    }
-  }, [showSuccessPopup, successCountdown]);
+  // useEffect(() => {
+  //   if (
+  //     showSuccessPopup &&
+  //     successCountdown > 0 &&
+  //     ["assessment", "assignment"].some((type) =>
+  //       subconceptData?.subconceptType?.startsWith(type)
+  //     )
+  //   ) {
+  //     const interval = setInterval(() => {
+  //       setSuccessCountdown((prev) => prev - 1);
+  //     }, 1000);
+  //     return () => clearInterval(interval);
+  //   } else if (successCountdown <= 0) {
+  //     navigate(`/subconcepts/${userData?.unitId}`);
+  //   }
+  // }, [showSuccessPopup, successCountdown]);
 
   // Handle countdown for error overlay
   useEffect(() => {
@@ -245,7 +245,16 @@ useEffect(() => {
           : 0
         : subconceptData?.subconceptMaxscore;
 
-    setScorePercentage((finalScore / subconceptData?.subconceptMaxscore) * 100);
+    // checking if subconceptMaxscore is 0 and setting scorePercentage to 100 otherwise low score variant of activity completion modal will be shown which is not correct
+
+    setScorePercentage(
+      (subconceptData?.subconceptMaxscore == 0 ||
+        ["assignment", "assessment"].some((type) =>
+          subconceptData?.subconceptType?.toLowerCase().startsWith(type)
+        ))
+        ? 100
+        : (finalScore / subconceptData?.subconceptMaxscore) * 100
+    );
 
     const date = new Date();
     const ISTOffset = 5.5 * 60 * 60 * 1000;
@@ -409,7 +418,7 @@ useEffect(() => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            className="border-2 border-black rounded-md shadow-md max-h-[70vh]"
+            className="border-2 border-black rounded-md shadow-md max-h-[60vh]"
           >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
@@ -436,14 +445,18 @@ useEffect(() => {
         return (
           <div
             onContextMenu={(e) => e.preventDefault()} // Disable right-click
-            className="iframe-wrapper"
+            className={`${
+              subconceptData?.subconceptType?.toLowerCase() === "youtube" &&
+              "w-11/12"
+            } iframe-wrapper`}
             style={{ position: "relative" }}
           >
             <iframe
               // onLoad={handleContentLoaded}
+              className="h-[calc(100vh-300px)]"
               src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
               width="100%"
-              height="500px"
+              // height=""
               title="PDF Document"
               style={{
                 borderRadius: "10px",
@@ -498,7 +511,7 @@ useEffect(() => {
         subconceptMaxscore={subconceptData?.subconceptMaxscore}
       />
 
-      {showSuccessPopup ? (
+      {/* {showSuccessPopup ? (
         !["assessment", "assignment"].some((type) =>
           subconceptData?.subconceptType?.startsWith(type)
         ) ? (
@@ -510,7 +523,17 @@ useEffect(() => {
         ) : (
           renderOverlay("success")
         )
-      ) : null}
+      ) : null} */}
+      {showSuccessPopup ? (
+          <ActivityCompletionModal
+            countdownDuration={3}
+            onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
+            scorePercentage={scorePercentage}
+            subconceptType={subconceptData?.subconceptType}
+          />
+        ) : (
+          null
+        )}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
       {/* @ts-ignore */}
@@ -540,13 +563,13 @@ useEffect(() => {
         /> */}
         <div
           id="contentArea"
-          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:p-8 ${
-            ["assessment", "video", "assignment_video"].includes(
+          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:pb-24 ${
+            ["assessment", "video", "assignment_video", "youtube"].includes(
               subconceptData?.subconceptType
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          } bg-white rounded-lg overflow-y-auto max-h-[80vh] no-scrollbar`}
+          }  rounded-lg overflow-y-auto no-scrollbar`}
         >
           {renderContent()}
         </div>
