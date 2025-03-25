@@ -5,7 +5,7 @@ import com.FlowofEnglish.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -13,13 +13,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class AssignmentNotificationService {
 
     @Autowired
     private UserAssignmentRepository userAssignmentRepository;
-
+    
+    @Autowired
+    private UserAssignmentService userAssignmentService;
+    
     @Autowired
     private CohortRepository cohortRepository;
 
@@ -28,8 +33,10 @@ public class AssignmentNotificationService {
 
     @Autowired
     private EmailService emailService;
+    
+    private static final Logger logger = LoggerFactory.getLogger(AssignmentNotificationService.class);
 
-    @Scheduled(cron = "0 0 21 * * ?") // Every day at 9 PM
+    @Scheduled(cron = "0 0 21 * * ?", zone = "Asia/Kolkata") // Every day at 9:00 PM IST
     public void notifyMentorsAndAdmins() {
         LocalDate today = LocalDate.now();
         OffsetDateTime startOfDay = today.atStartOfDay().atOffset(ZoneOffset.UTC);
@@ -71,9 +78,17 @@ public class AssignmentNotificationService {
             for (UserAssignment assignment : cohortAssignments) {
                 body.append("- ").append(assignment.getUser().getUserName()).append(" (Assignment ID: ").append(assignment.getUuid()).append(")\n");
             }
+            body.append("\nA detailed CSV report of assignments is attached to this email.\n");
             body.append("\nBest regards,\nTeam Chippersage");
          // Send email to mentor if exists
             if (mentor != null) {
+            	try {
+                    // Generate and email CSV for the specific cohort
+                    userAssignmentService.generateAndEmailAssignmentsCSV(cohort.getCohortId());
+                } catch (IOException e) {
+                    logger.error("Failed to generate CSV for cohort {}: {}", cohort.getCohortId(), e.getMessage());
+                    // Continue with email sending even if CSV generation fails
+                }
                 emailService.sendEmail(mentor.getUserEmail(), subject, "Dear " + mentor.getUserName() + ",\n\n" + body.toString());
             }
 
@@ -83,4 +98,6 @@ public class AssignmentNotificationService {
             }
         }
     }
+    
+
 }
