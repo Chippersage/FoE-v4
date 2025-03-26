@@ -142,6 +142,11 @@ public class OrganizationController {
             response.put("message", "Login successful");
             response.put("organizationId", organization.getOrganizationId());
             response.put("organizationName", organization.getOrganizationName());
+            response.put("userType", "orgAdmin");
+            
+//            // Generate a secure JWT token
+//            String token = jwtTokenUtil.generateToken(organization);
+//            response.put("token", token);
             
          // Fetch cohorts and check for reminders
             List<Cohort> cohorts = organizationService.getCohortsByOrganizationId(organization.getOrganizationId());
