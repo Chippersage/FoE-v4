@@ -323,7 +323,7 @@ useEffect(() => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
-          <VocabularyActivity/>
+          <VocabularyActivity xmlUrl={subconcept?.subconceptLink} />
           {/* {showIframe ? (
             <iframe
               id="embeddedContent"
