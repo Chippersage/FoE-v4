@@ -438,6 +438,8 @@ public class UnitServiceImpl implements UnitService {
             
             if (i == 0) {
                 // First stage is always enabled
+                stageResponse.setStageEnabled(true);  
+                stageResponse.setDaysUntilNextStageEnabled(0);
             	// Format the cohort start date for the first stage
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                 String formattedStartDate = cohortStartDate.format(formatter);
