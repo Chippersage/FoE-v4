@@ -59,6 +59,7 @@ public class AssignmentNotificationService {
             Cohort cohort = entry.getKey();
             List<UserAssignment> cohortAssignments = entry.getValue();
             Organization org = cohort.getOrganization();
+            String orgAdminEmail = org.getOrganizationAdminEmail();
 
             // Fetch mentor for the cohort
             User mentor = userRepository.findByUserTypeAndCohort("mentor", cohort)
@@ -95,6 +96,9 @@ public class AssignmentNotificationService {
          // Send email to all organization admins
             for (User admin : orgAdmins) {
                 emailService.sendEmail(admin.getUserEmail(), subject, "Dear " + admin.getUserName() + ",\n\n" + body.toString());
+            }
+            if (orgAdminEmail != null && !orgAdminEmail.isEmpty()) {
+                emailService.sendEmail(orgAdminEmail, subject, "Dear" + org.getOrganizationAdminName() + ",\n\n" + body.toString());
             }
         }
     }

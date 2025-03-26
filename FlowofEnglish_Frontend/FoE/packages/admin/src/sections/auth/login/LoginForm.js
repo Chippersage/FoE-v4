@@ -37,7 +37,9 @@ export default function LoginForm() {
       const data = await response.json();
       if (data.token) {
         localStorage.setItem('token', data.token);
-        setUserType(data.userType);
+        // setUserType(data.userType);
+        setUserType('superAdmin');
+        localStorage.removeItem('orgId'); // Clear org-specific data
         navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid credentials');
