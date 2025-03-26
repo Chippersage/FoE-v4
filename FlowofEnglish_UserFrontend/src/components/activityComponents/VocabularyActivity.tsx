@@ -14,8 +14,44 @@ import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 // import Image from "next/image";
-import { ArrowLeft, ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Volume2, VolumeX } from "lucide-react";
 import { questionsData } from "@/constants/questions";
+
+// XML parser types
+interface XMLQuestion {
+  id: string
+  word: string
+  correctOption: string
+}
+
+interface XMLActivity {
+  activityid: string
+  questions: XMLQuestion[]
+}
+
+interface XMLData {
+  headertext: string
+  activities: XMLActivity[]
+}
+
+// Transformed question types for our component
+interface Keyword {
+  id: string
+  content: string
+}
+
+interface Definition {
+  id: string
+  text: string
+  correctKeywordId: string
+}
+
+interface Question {
+  id: string
+  time: string
+  keywords: Keyword[]
+  definitions: Definition[]
+}
 
 // Sound effects hook
 const useSoundEffects = () => {
@@ -37,11 +73,11 @@ const useSoundEffects = () => {
     if (typeof window !== "undefined") {
       // Set sources
       if (dragStartSound.current)
-        dragStartSound.current.src = "/sounds/drag-start.mp3";
-      if (dropSound.current) dropSound.current.src = "/sounds/drop.mp3";
+        dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
+      if (dropSound.current) dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
       if (correctSound.current)
-        correctSound.current.src = "/sounds/correct.mp3";
-      if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.mp3";
+        correctSound.current.src = "/sounds/correct.ogg";
+      if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
 
       // Preload sounds
       const loadPromises = [
@@ -104,6 +140,93 @@ const useSoundEffects = () => {
   return { playSound, toggleSound, isSoundEnabled };
 };
 
+// XML parser function
+const parseXML = async (xmlUrl: string): Promise<XMLData> => {
+  try {
+    const response = await fetch(xmlUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch XML: ${response.status} ${response.statusText}`)
+    }
+
+    const xmlText = await response.text()
+    const parser = new DOMParser()
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml")
+
+    // Parse the header text
+    const activitiesElement = xmlDoc.getElementsByTagName("activities")[0]
+    const headerText = activitiesElement.getAttribute("headertext") || "Vocabulary Activity"
+
+    // Parse activities
+    const activityElements = xmlDoc.getElementsByTagName("activity")
+    const activities: XMLActivity[] = []
+
+    for (let i = 0; i < activityElements.length; i++) {
+      const activityElement = activityElements[i]
+      const activityId = activityElement.getAttribute("activityid") || `activity-${i + 1}`
+
+      // Parse questions
+      const questionElements = activityElement.getElementsByTagName("question")
+      const questions: XMLQuestion[] = []
+
+      for (let j = 0; j < questionElements.length; j++) {
+        const questionElement = questionElements[j]
+        questions.push({
+          id: questionElement.getAttribute("id") || `question-${j + 1}`,
+          word: questionElement.getAttribute("word") || "",
+          correctOption: questionElement.getAttribute("correctOption") || "",
+        })
+      }
+
+      activities.push({
+        activityid: activityId,
+        questions: questions,
+      })
+    }
+
+    return {
+      headertext: headerText,
+      activities: activities,
+    }
+  } catch (error) {
+    console.error("Error parsing XML:", error)
+    throw error
+  }
+}
+
+// Transform XML data to our component format
+const transformXMLToQuestions = (xmlData: XMLData): Question[] => {
+  return xmlData.activities.map((activity, activityIndex) => {
+    const keywords: Keyword[] = []
+    const definitions: Definition[] = []
+
+    // Create keywords and definitions from questions
+    activity.questions.forEach((question, questionIndex) => {
+      const keywordId = `keyword-${activity.activityid}-${question.id}`
+
+      // Add keyword
+      keywords.push({
+        id: keywordId,
+        content: question.word,
+      })
+
+      // Add definition
+      definitions.push({
+        id: `def-${activity.activityid}-${question.id}`,
+        text: question.correctOption,
+        correctKeywordId: keywordId,
+      })
+    })
+
+    // Create a question object
+    return {
+      id: `question-${activity.activityid}`,
+      time: `${activityIndex + 1}:00`, // Simple time format for each activity
+      keywords: keywords,
+      definitions: definitions,
+    }
+  })
+}
+
 // Draggable keyword component
 const DraggableKeyword = ({
   id,
@@ -135,29 +258,25 @@ const DraggableKeyword = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`bg-white rounded-xl shadow-md p-3 flex items-center justify-center cursor-grab active:cursor-grabbing border-2 border-white ${
+      className={`relative flex items-center justify-center cursor-grab active:cursor-grabbing ${
         isDisabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      {content.includes("/images/") ? (
-        <div className="flex items-center gap-2">
-          <img
-            src={content || "/placeholder.svg"}
-            width={32}
-            height={32}
-            alt="Punctuation mark"
-            className="object-contain"
-          />
-          <span className="font-semibold text-gray-800">
-            {id.split("-")[0]}
-          </span>
-        </div>
-      ) : (
-        <span className="font-semibold text-gray-800">{content}</span>
-      )}
+      {/* Cloud Image as Background */}
+      <img
+        src="/images/cloud_bg.webp" // Adjust this to your responsive cloud images
+        alt="Cloud"
+        className="w-full h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[200px] object-contain"
+      />
+
+      {/* Content on top of Cloud */}
+      <span className="absolute text-gray-800 font-semibold text-center px-2">
+        {content}
+      </span>
     </div>
   );
 };
+
 
 // Droppable zone component
 const DroppableZone = ({
@@ -182,34 +301,48 @@ const DroppableZone = ({
       <div
         ref={setNodeRef}
         className={`w-48 h-14 rounded-full flex items-center justify-center transition-colors 
-          ${
-            isOver
-              ? "bg-green-200 border-2 border-green-400"
-              : "bg-gray-300 opacity-50 border-2 border-transparent"
-          } 
-          ${
-            isSubmitted && isCorrect !== null && showResult
-              ? isCorrect
-                ? "bg-green-100"
-                : "bg-red-100"
-              : ""
-          }`}
+      ${
+        placedKeyword
+          ? isOver
+            ? "bg-green-200 border-2 border-green-400"
+            : ""
+          : "bg-gray-200 border-2 border-transparent"
+      }
+      ${
+        placedKeyword && isSubmitted && isCorrect !== null && showResult
+          ? isCorrect
+            ? "bg-green-100"
+            : "bg-red-100"
+          : ""
+      }`}
       >
         {placedKeyword && (
-          <div className="flex items-center gap-2">
-            {placedKeyword.content.includes("/images/") ? (
-              <img
-                src={placedKeyword.content || "/placeholder.svg"}
-                width={32}
-                height={32}
-                alt="Punctuation mark"
-              />
-            ) : (
-              <span className="font-semibold">{placedKeyword.content}</span>
-            )}
-            {isSubmitted && isCorrect !== null && showResult && (
-              <span className="ml-1 text-xl">{isCorrect ? "✅" : "❌"}</span>
-            )}
+          <div className="relative flex items-center justify-center">
+            {/* Background Image */}
+            <img
+              src="/images/cloud_bg.webp" // Adjust to the correct path of your cloud image
+              alt="Cloud Background"
+              className="w-full h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[200px] object-contain"
+            />
+
+            {/* Content on top of the image */}
+            <div className="absolute flex items-center gap-2">
+              {placedKeyword.content.includes("/images/") ? (
+                <img
+                  src={placedKeyword.content || "/placeholder.svg"}
+                  width={32}
+                  height={32}
+                  alt="Punctuation mark"
+                />
+              ) : (
+                <span className="font-semibold">{placedKeyword.content}</span>
+              )}
+
+              {/* Show result only if submitted and evaluated */}
+              {isSubmitted && isCorrect !== null && showResult && (
+                <span className="ml-1 text-xl">{isCorrect ? "✅" : "❌"}</span>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -227,8 +360,40 @@ const Timer = ({ time }: { time: string }) => {
   );
 };
 
+// Loading component
+const LoadingState = ({ headerText }: { headerText: string }) => {
+  return (
+    <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+      <h2 className="text-2xl font-bold text-white mb-8">{headerText}</h2>
+      <div className="flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 text-white animate-spin mb-4" />
+        <p className="text-white text-lg">Loading questions...</p>
+      </div>
+    </div>
+  )
+}
+
+// Error component
+const ErrorState = ({ message }: { message: string }) => {
+  return (
+    <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+      <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-md">
+        <h3 className="text-2xl font-bold text-center text-red-600 mb-4">Error</h3>
+        <p className="text-center text-gray-600 mb-8">{message}</p>
+        <Button className="w-full" onClick={() => window.location.reload()}>
+          Try Again
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface VocabularyActivityProps {
+  xmlUrl: string;
+}
+
 // Main component
-export default function VocabularyActivity() {
+export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [placedKeywords, setPlacedKeywords] = useState<
@@ -244,6 +409,12 @@ export default function VocabularyActivity() {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [showResults, setShowResults] = useState<Record<string, boolean>>({});
 
+  // XML data state
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [headerText, setHeaderText] = useState<string>("Vocabulary Activity");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Use the sound effects hook
   const { playSound, toggleSound, isSoundEnabled } = useSoundEffects();
 
@@ -255,7 +426,41 @@ export default function VocabularyActivity() {
     })
   );
 
+  // Fetch and parse XML data
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const xmlData = await parseXML(xmlUrl);
+        setHeaderText(xmlData.headertext);
+
+        const transformedQuestions = transformXMLToQuestions(xmlData);
+        setQuestions(transformedQuestions);
+
+        // Calculate total questions
+        let total = 0;
+        transformedQuestions.forEach((question) => {
+          total += question.definitions.length;
+        });
+        setTotalQuestions(total);
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching or parsing XML:", error);
+        setError(
+          "Failed to load questions. Please check the XML URL and try again."
+        );
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [xmlUrl]);
+
+  useEffect(() => {
+    if (questions.length === 0) return;
     // Initialize placedKeywords and keywordPositions for the current question
     const initialPlacedKeywords: Record<
       string,
@@ -264,12 +469,12 @@ export default function VocabularyActivity() {
     const initialKeywordPositions: Record<string, string | null> = {};
     const initialShowResults: Record<string, boolean> = {};
 
-    questionsData[currentQuestionIndex].definitions.forEach((def) => {
+    questions[currentQuestionIndex].definitions.forEach((def) => {
       initialPlacedKeywords[def.id] = null;
       initialShowResults[def.id] = false;
     });
 
-    questionsData[currentQuestionIndex].keywords.forEach((keyword) => {
+    questions[currentQuestionIndex].keywords.forEach((keyword) => {
       initialKeywordPositions[keyword.id] = "keywordArea";
     });
 
@@ -278,16 +483,7 @@ export default function VocabularyActivity() {
     setIsSubmitted(false);
     setResults({});
     setShowResults(initialShowResults);
-  }, [currentQuestionIndex]);
-
-  useEffect(() => {
-    // Calculate total questions across all pages
-    let total = 0;
-    questionsData.forEach((question) => {
-      total += question.definitions.length;
-    });
-    setTotalQuestions(total);
-  }, []);
+  }, [currentQuestionIndex, questions]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -368,6 +564,7 @@ export default function VocabularyActivity() {
   };
 
   const handleSubmit = () => {
+    if (questions.length === 0) return;
     // Check if all definitions have a keyword placed
     const allPlaced = Object.values(placedKeywords).every(
       (value) => value !== null
@@ -382,7 +579,7 @@ export default function VocabularyActivity() {
     const newResults: Record<string, boolean> = {};
     let correctCount = 0;
 
-    questionsData[currentQuestionIndex].definitions.forEach((def) => {
+    questions[currentQuestionIndex].definitions.forEach((def) => {
       const placedKeyword = placedKeywords[def.id];
       const correctKeywordId = def.correctKeywordId;
 
@@ -398,7 +595,7 @@ export default function VocabularyActivity() {
     setIsSubmitted(true);
 
     // Reveal results one by one with animation
-    const definitionIds = questionsData[currentQuestionIndex].definitions.map(
+    const definitionIds = questions[currentQuestionIndex].definitions.map(
       (def) => def.id
     );
 
@@ -421,7 +618,7 @@ export default function VocabularyActivity() {
           setScore((prev) => prev + correctCount);
 
           // If this is the last question, show the final score
-          if (currentQuestionIndex === questionsData.length - 1) {
+          if (currentQuestionIndex === questions.length - 1) {
             setTimeout(() => {
               setShowFinalScore(true);
               // Submit score to API
@@ -434,7 +631,7 @@ export default function VocabularyActivity() {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < questionsData.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     }
   };
@@ -468,8 +665,23 @@ export default function VocabularyActivity() {
     }
   };
 
+  // Show loading state
+  if (isLoading) {
+    return <LoadingState headerText={headerText} />;
+  }
+
+  // Show error state
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
+  // If no questions loaded
+  if (questions.length === 0) {
+    return <ErrorState message="No questions found in the XML file." />;
+  }
+
   // Current question data
-  const currentQuestion = questionsData[currentQuestionIndex];
+  const currentQuestion = questions[currentQuestionIndex];
 
   if (showFinalScore) {
     return (
@@ -502,6 +714,9 @@ export default function VocabularyActivity() {
 
   return (
     <div className="relative w-full max-w-[90%] mx-auto h-[600px] bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 mt-[120px]">
+      <h2 className="text-xl font-bold text-white mb-4 text-center">
+        {headerText}
+      </h2>
       <Timer time={currentQuestion.time} />
 
       <DndContext
@@ -565,11 +780,11 @@ export default function VocabularyActivity() {
           }
         >
           {isSubmitted
-            ? currentQuestionIndex === questionsData.length - 1
+            ? currentQuestionIndex === questions.length - 1
               ? "Finish"
               : "Next"
             : "Submit Answers"}
-          {isSubmitted && currentQuestionIndex !== questionsData.length - 1 && (
+          {isSubmitted && currentQuestionIndex !== questions.length - 1 && (
             <ArrowRight className="ml-2 h-4 w-4" />
           )}
         </Button>
