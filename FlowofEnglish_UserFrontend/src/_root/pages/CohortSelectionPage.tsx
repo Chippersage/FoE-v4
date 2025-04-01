@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Clock, LogIn, Save } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  BookOpen,
+  Brain,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import WordOfTheDay from "@/components/WordADay";
+import { motion } from "framer-motion";
 
 export default function Dashboard() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -21,63 +29,64 @@ export default function Dashboard() {
   const [progressData, setProgressData] = useState({}); // Store progress per programId
   const [loading, setLoading] = useState({}); // Track loading state for each programId
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   // const tempSessionId = localStorage.getItem("tempSessionId");
 
-    useEffect(() => {
-      if (!user?.cohorts) return;
+  useEffect(() => {
+    if (!user?.cohorts) return;
 
-      user.cohorts.forEach((cohort) => {
-        const programId = cohort?.program?.programId;
-        const userId = user?.userId;
-        if (!programId || !userId) return;
+    user.cohorts.forEach((cohort) => {
+      const programId = cohort?.program?.programId;
+      const userId = user?.userId;
+      if (!programId || !userId) return;
 
-        // Set loading state
-        setLoading((prev) => ({ ...prev, [programId]: true }));
+      // Set loading state
+      setLoading((prev) => ({ ...prev, [programId]: true }));
 
-        // Fetch progress data
-        fetch(`${API_BASE_URL}/reports/program/${programId}/user/${userId}/progress`)
-          .then((res) => res.json())
-          .then((data) => {
-            const { completedSubconcepts, totalSubconcepts } = data;
-            const progress =
-              totalSubconcepts > 0
-                ? (completedSubconcepts / totalSubconcepts) * 100
-                : 0;
+      // Fetch progress data
+      fetch(
+        `${API_BASE_URL}/reports/program/${programId}/user/${userId}/progress`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const { completedSubconcepts, totalSubconcepts } = data;
+          const progress =
+            totalSubconcepts > 0
+              ? (completedSubconcepts / totalSubconcepts) * 100
+              : 0;
 
-            // Update progress state
-            setProgressData((prev) => ({ ...prev, [programId]: progress }));
-          })
-          .catch((error) => console.error("Error fetching progress:", error))
-          .finally(() => {
-            setLoading((prev) => ({ ...prev, [programId]: false }));
-          });
-      });
-    }, [user?.cohorts]);
-
-const handleResume = async (cohortWithProgram: string) => {
-  setSelectedCohortWithProgram(cohortWithProgram);
-  // When setting the cohort
-  localStorage.setItem(
-    "selectedCohortWithProgram",
-    JSON.stringify(cohortWithProgram)
-  );
-
-  try {
-    const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
-      userId: user?.userId,
-      cohortId: cohortWithProgram?.cohortId,
-      // tempSessionId,
+          // Update progress state
+          setProgressData((prev) => ({ ...prev, [programId]: progress }));
+        })
+        .catch((error) => console.error("Error fetching progress:", error))
+        .finally(() => {
+          setLoading((prev) => ({ ...prev, [programId]: false }));
+        });
     });
+  }, [user?.cohorts]);
 
-    localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
+  const handleResume = async (cohortWithProgram: string) => {
+    setSelectedCohortWithProgram(cohortWithProgram);
+    // When setting the cohort
+    localStorage.setItem(
+      "selectedCohortWithProgram",
+      JSON.stringify(cohortWithProgram)
+    );
 
-    navigate("/home"); // Navigate after session ID is set
-  } catch (error) {
-    console.error("Error fetching session ID:", error);
-  }
-};
+    try {
+      const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
+        userId: user?.userId,
+        cohortId: cohortWithProgram?.cohortId,
+        // tempSessionId,
+      });
 
+      localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
+
+      navigate("/home"); // Navigate after session ID is set
+    } catch (error) {
+      console.error("Error fetching session ID:", error);
+    }
+  };
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;
@@ -103,18 +112,23 @@ const handleResume = async (cohortWithProgram: string) => {
     }
   };
 
-  const challenges = [
-    {
-      id: 1,
-      title: "Daily English Words",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 2,
-      title: "My Quick One Sentence A Day Journal",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-  ];
+  // Daily challenge data
+  const wordOfDay = {
+    word: "Serendipity",
+    partOfSpeech: "noun",
+    definition:
+      "The occurrence and development of events by chance in a happy or beneficial way.",
+    example:
+      "A fortunate stroke of serendipity came my way when I met my business partner at a conference.",
+    pronunciation: "/ˌsɛr(ə)nˈdɪpɪti/",
+  };
+
+  const riddle = {
+    question:
+      "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
+    answer: "An echo",
+    hint: "Think about what happens when you shout in a canyon.",
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans">
@@ -139,7 +153,7 @@ const handleResume = async (cohortWithProgram: string) => {
         {/* Continue Learning Section */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">Continue Learning</h2>
+            <h2 className="text-2xl font-bold text-emerald-700">Continue Learning</h2>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -179,7 +193,7 @@ const handleResume = async (cohortWithProgram: string) => {
               return (
                 <Card
                   key={cohortWithProgram?.program?.programId}
-                  className="min-w-[280px] border border-gray-200 md:min-w-[400px] bg-gradient-to-b from-[#CAF2BC] to-white"
+                  className="min-w-[280px] border border-gray-200 md:min-w-[400px] bg-gradient-to-b from-[#CAF2BC] to-white rounded-xl shadow-lg"
                 >
                   <CardContent className="p-4">
                     <h3 className="mb-2 line-clamp-2 min-h-[48px] font-medium">
@@ -221,107 +235,159 @@ const handleResume = async (cohortWithProgram: string) => {
           </ScrollArea> */}
         </section>
 
-        {/* Bottom Sections */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Daily Challenge */}
-          {/* Daily Challenge */}
-          <section>
-            <h2 className="mb-4 text-xl font-bold">Daily Challenge</h2>
-            <Card className="bg-gradient-to-b from-[#CAF2BC] to-white">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Word of the Day Challenge */}
-                  <div className="flex flex-col items-center justify-center rounded-lg p-2 text-center transition-all hover:bg-gray-100">
-                    <div className="mb-2 overflow-hidden rounded-full">
-                      <img
-                        src="/dictionary-icon.svg" // Replace with appropriate icon
-                        alt="Word of the Day"
-                        width={100}
-                        height={100}
-                        className="h-24 w-24 object-cover"
-                      />
-                    </div>
-                    <span className="text-sm font-medium">Word of the Day</span>
-                    <div className="mt-2 w-full">
-                      <WordOfTheDay />
-                    </div>
-                  </div>
-                  {/* Other challenges */}
-                  {challenges.map((challenge) => (
-                    <div
-                      key={challenge.id}
-                      className="flex flex-col items-center justify-center rounded-lg p-2 text-center transition-all hover:bg-gray-100"
-                    >
-                      <div className="mb-2 overflow-hidden rounded-full">
-                        <img
-                          src={challenge.image || "/placeholder.svg"}
-                          alt={challenge.title}
-                          width={100}
-                          height={100}
-                          className="h-24 w-24 object-cover"
-                        />
-                      </div>
-                      <span className="text-sm font-medium">
-                        {challenge.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+        {/* Daily Challenge Section - Redesigned */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-8"
+        >
+          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-emerald-700 to-blue-700 bg-clip-text text-transparent">
+            Daily Challenge
+          </h2>
 
-          {/* Your Activity */}
-          <section>
-            <h2 className="mb-4 text-xl font-bold">Your Activity</h2>
-            <Card className="bg-gradient-to-b from-[#CAF2BC] to-white">
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <LogIn className="h-5 w-5 text-emerald-600" />
-                    <div>
-                      <p className="text-sm font-medium">Last login:</p>
-                      <p className="text-sm text-gray-600">
-                        March 10, 2025, 2:30 PM
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-emerald-600" />
-                    <div>
-                      <p className="text-sm font-medium">Total time spent:</p>
-                      <p className="text-sm text-gray-600">12h 45m</p>
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <h3 className="mb-2 text-sm font-medium">
-                      Weekly progress
-                    </h3>
-                    <div className="grid grid-cols-7 gap-1">
-                      {[70, 45, 80, 30, 60, 20, 50].map((value, i) => (
-                        <div key={i} className="flex flex-col items-center">
-                          <div className="h-16 w-full">
-                            <div
-                              className="bg-emerald-500"
-                              style={{
-                                height: `${value}%`,
-                                width: "100%",
-                                marginTop: "auto",
-                              }}
-                            ></div>
-                          </div>
-                          <span className="mt-1 text-xs text-gray-500">
-                            {["M", "T", "W", "T", "F", "S", "S"][i]}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Word of the Day */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="rounded-2xl overflow-hidden bg-gradient-to-b from-[#CAF2BC] to-white shadow-lg border border-emerald-100 relative"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24">
+                <div className="absolute transform rotate-45 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-medium py-1 text-xs text-center w-36 top-6 -right-10">
+                  Word of Day
                 </div>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
+              </div>
+              <div className="p-6 pt-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-full bg-emerald-100 text-emerald-600">
+                    <BookOpen className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-bold">Word of the Day</h3>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="text-2xl font-bold text-emerald-700">
+                      {wordOfDay.word}
+                    </h4>
+                    <span className="text-sm text-gray-500 italic">
+                      {wordOfDay.pronunciation}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500 italic">
+                    {wordOfDay.partOfSpeech}
+                  </span>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-gray-700">{wordOfDay.definition}</p>
+                </div>
+
+                <div className="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
+                  <p className="text-emerald-800 italic">
+                    "{wordOfDay.example}"
+                  </p>
+                </div>
+
+                {/* <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Practice
+                  </Button>
+                </div> */}
+              </div>
+            </motion.div>
+
+            {/* Riddle */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="rounded-2xl overflow-hidden bg-gradient-to-b from-[#CAF2BC] to-white shadow-lg border border-blue-100 relative"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24">
+                <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium py-1 text-xs text-center w-36 top-6 -right-10">
+                  Brain Teaser
+                </div>
+              </div>
+              <div className="p-6 pt-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <Brain className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-bold">Daily Riddle</h3>
+                </div>
+
+                <div className="bg-blue-50 p-5 rounded-lg mb-6">
+                  <p className="text-blue-800 text-lg font-medium">
+                    {riddle.question}
+                  </p>
+                </div>
+
+                <details className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg bg-blue-100 px-4 py-2 text-blue-700 hover:bg-blue-200">
+                    <span className="font-medium">Reveal Hint</span>
+                    <span className="shrink-0 transition duration-300 group-open:rotate-180">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </span>
+                  </summary>
+                  <div className="mt-2 rounded-lg bg-blue-50 p-4 text-blue-700">
+                    <p>{riddle.hint}</p>
+                  </div>
+                </details>
+
+                <details className="group mt-3">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg bg-indigo-100 px-4 py-2 text-indigo-700 hover:bg-indigo-200">
+                    <span className="font-medium">Reveal Answer</span>
+                    <span className="shrink-0 transition duration-300 group-open:rotate-180">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </span>
+                  </summary>
+                  <div className="mt-2 rounded-lg bg-indigo-50 p-4 text-indigo-700 font-medium">
+                    <p>{riddle.answer}</p>
+                  </div>
+                </details>
+
+                {/* <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    New Riddle
+                  </Button>
+                </div> */}
+              </div>
+            </motion.div>
+          </div>
+        </motion.section>
       </main>
     </div>
   );
