@@ -1,6 +1,6 @@
 // @ts-nocheck
 // import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
 import "../Styles/Header2.css";
@@ -11,6 +11,8 @@ const Header2 = () => {
   const { user, selectedCohortWithProgram, setIsAuthenticated } = useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const location = useLocation();
+  const isSelectCohortPage = location.pathname === "/select-cohort";
 
   const { resetSession } = useSession();
 
@@ -41,6 +43,7 @@ const Header2 = () => {
       localStorage.removeItem("isProgramCompletionAlreadyCelebrated");
       localStorage.removeItem("userData");
       localStorage.removeItem("userId");
+      localStorage.removeItem("selectedCohortWithProgram");
       resetSession()
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
@@ -71,9 +74,11 @@ const Header2 = () => {
       </div>
       <div className="md:flex flex-1 hidden">
         <h3 className="hellohead mx-auto text-white font-openSans text-nowrap">
-          {selectedCohortWithProgram
+          {isSelectCohortPage
+            ? "Let's get started!"
+            : selectedCohortWithProgram
             ? `${selectedCohortWithProgram?.program?.programName}`
-            : ""}
+            : "Let's get started!"}
           {/* Show "Continue as Guest" if user is null */}
         </h3>
       </div>

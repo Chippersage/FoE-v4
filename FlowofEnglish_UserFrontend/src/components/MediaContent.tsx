@@ -539,14 +539,14 @@ useEffect(() => {
       {/* @ts-ignore */}
       <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full">
         <h1 className="mt-24 pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
-          {subconceptData?.subconceptType === "video"
+          {(subconceptData?.subconceptType === "video" || subconceptData?.subconceptType === "youtube")
             ? "Watch the video"
             : subconceptData?.subconceptType === "audio"
             ? "Listen to the audio"
             : subconceptData?.subconceptType === "pdf"
             ? "Read the PDF"
             : subconceptData?.subconceptType === "image"
-            ? "See the image"
+            ? "Observe the image"
             : `Complete ${
                 subconceptData?.subconceptType.startsWith("assignment")
                   ? "your assignment"

@@ -106,8 +106,8 @@ const SingleSubconcept = () => {
     !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image", "assessment", "youtube"].includes(subconcept?.subconceptType)
   );
 const [showSubmit, setShowSubmit] = useState(
-  subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
-  // true
+  // subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
+  true
 );
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
@@ -227,7 +227,7 @@ useEffect(() => {
     }
   };
 
-  const handlePostScore = (payload: any) => {
+  const  handlePostScore = (payload: any) => {
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
     if (!userData) {
@@ -323,8 +323,11 @@ useEffect(() => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
-          <VocabularyActivity xmlUrl={subconcept?.subconceptLink} />
-          {/* {showIframe ? (
+          {/* <VocabularyActivity
+            xmlUrl={subconcept?.subconceptLink}
+            onSubmitScore={handlePostScore}
+          /> */}
+          {showIframe ? (
             <iframe
               id="embeddedContent"
               src={subconcept?.subconceptLink}
@@ -346,7 +349,7 @@ useEffect(() => {
               subconceptData={subconcept}
               currentUnitId={currentUnitId}
             />
-          )} */}
+          )}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
 
