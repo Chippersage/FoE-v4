@@ -12,6 +12,7 @@ import Header from "./components/Header.tsx";
 import Header2 from "./components/Header2.tsx";
 import { SessionProvider } from "./context/TimerContext.tsx";
 import NotFoundPage from "./components/NotFoundPage.tsx";
+import { Toaster } from "react-hot-toast"; // Import Toaster component
 
 export default function App() {
   
@@ -34,6 +35,7 @@ export default function App() {
 return (
   <SessionProvider>
     <main className="flex h-screen flex-col">
+      <Toaster position="bottom-center" reverseOrder={false} />
       {/* Show headers only when user is authenticated */}
       {isAuthenticated && (
         <>
