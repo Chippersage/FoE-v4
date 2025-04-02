@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 // import Image from "next/image";
 import { ArrowLeft, ArrowRight, Loader2, Volume2, VolumeX } from "lucide-react";
-import { questionsData } from "@/constants/questions";
+// import { questionsData } from "@/constants/questions";
+import toast from "react-hot-toast";
 
 // XML parser types
 interface XMLQuestion {
@@ -67,6 +68,9 @@ const useSoundEffects = () => {
     typeof Audio !== "undefined" ? new Audio() : null
   );
   const wrongSound = useRef(typeof Audio !== "undefined" ? new Audio() : null);
+  const allCorrectSound = useRef(
+    typeof Audio !== "undefined" ? new Audio() : null
+  );
 
   // Initialize sounds
   useEffect(() => {
@@ -78,6 +82,8 @@ const useSoundEffects = () => {
       if (correctSound.current)
         correctSound.current.src = "/sounds/correct.ogg";
       if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
+      if (allCorrectSound.current)
+        allCorrectSound.current.src = "/sounds/correct.ogg";
 
       // Preload sounds
       const loadPromises = [
@@ -85,6 +91,7 @@ const useSoundEffects = () => {
         dropSound.current?.load(),
         correctSound.current?.load(),
         wrongSound.current?.load(),
+        allCorrectSound.current?.load(),
       ];
 
       // Mark sounds as loaded
@@ -94,20 +101,24 @@ const useSoundEffects = () => {
 
       // Clean up
       return () => {
-        [dragStartSound, dropSound, correctSound, wrongSound].forEach(
-          (sound) => {
-            if (sound.current) {
-              sound.current.pause();
-              sound.current.src = "";
-            }
+        [
+          dragStartSound,
+          dropSound,
+          correctSound,
+          wrongSound,
+          allCorrectSound,
+        ].forEach((sound) => {
+          if (sound.current) {
+            sound.current.pause();
+            sound.current.src = "";
           }
-        );
+        });
       };
     }
   }, []);
 
   // Play sound function
-  const playSound = (type: "dragStart" | "drop" | "correct" | "wrong") => {
+  const playSound = (type: "dragStart" | "drop" | "correct" | "wrong" | "allCorrect") => {
     if (!isSoundEnabled || !soundsLoaded) return;
 
     let sound;
@@ -123,6 +134,9 @@ const useSoundEffects = () => {
         break;
       case "wrong":
         sound = wrongSound.current;
+        break;
+      case "allCorrect":
+        sound = allCorrectSound.current;
         break;
     }
 
@@ -227,6 +241,16 @@ const transformXMLToQuestions = (xmlData: XMLData): Question[] => {
   })
 }
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+
 // Draggable keyword component
 const DraggableKeyword = ({
   id,
@@ -258,8 +282,8 @@ const DraggableKeyword = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`relative flex items-center justify-center cursor-grab active:cursor-grabbing ${
-        isDisabled ? "opacity-50 cursor-not-allowed" : ""
+      className={`relative flex items-center justify-center cursor-grab active:cursor-grabbing transition-transform duration-300 ease-out ${
+        isDisabled ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-2"
       }`}
     >
       {/* Cloud Image as Background */}
@@ -326,7 +350,7 @@ const DroppableZone = ({
             />
 
             {/* Content on top of the image */}
-            <div className="absolute flex items-center gap-2">
+            <div className="absolute flex items-center justify-around w-full px-2">
               {placedKeyword.content.includes("/images/") ? (
                 <img
                   src={placedKeyword.content || "/placeholder.svg"}
@@ -352,26 +376,48 @@ const DroppableZone = ({
 };
 
 // Timer component
-const Timer = ({ time }: { time: string }) => {
+// const Timer = ({ time }: { time: string }) => {
+//   return (
+//     <div className="absolute top-4 left-4 text-4xl font-bold text-white">
+//       {time}
+//     </div>
+//   );
+// };
+
+// Page score indicator component
+const PageScoreIndicator = ({
+  isAllCorrect,
+  questionsCount,
+  score,
+}: {
+  isAllCorrect: boolean | null;
+  questionsCount: number;
+  score: number;
+}) => {
   return (
-    <div className="absolute top-4 left-4 text-4xl font-bold text-white">
-      {time}
+    <div className="absolute top-4 right-4 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-md">
+      <span className="font-bold text-lg">Score:</span>
+      <span className="text-xl">
+        {score}/{questionsCount}{" "}
+        {isAllCorrect !== null && (isAllCorrect ? "✅" : "❌")}
+      </span>
     </div>
   );
 };
 
+
 // Loading component
-const LoadingState = ({ headerText }: { headerText: string }) => {
-  return (
-    <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
-      <h2 className="text-2xl font-bold text-white mb-8">{headerText}</h2>
-      <div className="flex flex-col items-center justify-center">
-        <Loader2 className="h-12 w-12 text-white animate-spin mb-4" />
-        <p className="text-white text-lg">Loading questions...</p>
-      </div>
-    </div>
-  )
-}
+// const LoadingState = ({ headerText }: { headerText: string }) => {
+//   return (
+//     <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+//       <h2 className="text-2xl font-bold text-white mb-8">{headerText}</h2>
+//       <div className="flex flex-col items-center justify-center">
+//         <Loader2 className="h-12 w-12 text-white animate-spin mb-4" />
+//         <p className="text-white text-lg">Loading questions...</p>
+//       </div>
+//     </div>
+//   )
+// }
 
 // Error component
 const ErrorState = ({ message }: { message: string }) => {
@@ -390,10 +436,27 @@ const ErrorState = ({ message }: { message: string }) => {
 
 interface VocabularyActivityProps {
   xmlUrl: string;
+  // onSubmitScore?: (payload: {
+  //   userAttemptFlag: boolean;
+  //   userAttemptScore: number;
+  // }) => void;
+  setShowSubmit: React.Dispatch<React.SetStateAction<boolean>>;
+  setSubmissionPayload?: React.Dispatch<
+    React.SetStateAction<{
+      userAttemptFlag: boolean;
+      userAttemptScore: number;
+    } | null>
+  >;
 }
 
+
 // Main component
-export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) {
+export default function VocabularyActivity({
+  xmlUrl,
+  // onSubmitScore,
+  setShowSubmit,
+  setSubmissionPayload,
+}: VocabularyActivityProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [placedKeywords, setPlacedKeywords] = useState<
@@ -404,16 +467,23 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
   >({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [results, setResults] = useState<Record<string, boolean>>({});
+  const [pageResults, setPageResults] = useState<boolean[]>([]);
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [showResults, setShowResults] = useState<Record<string, boolean>>({});
+  const [isPageCorrect, setIsPageCorrect] = useState<boolean | null>(null);
 
   // XML data state
   const [questions, setQuestions] = useState<Question[]>([]);
   const [headerText, setHeaderText] = useState<string>("Vocabulary Activity");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentKeywords, setCurrentKeywords] = useState<Keyword[]>([]);
+  const [currentDefinitions, setCurrentDefinitions] = useState<Definition[]>(
+    []
+  );
+
 
   // Use the sound effects hook
   const { playSound, toggleSound, isSoundEnabled } = useSoundEffects();
@@ -439,12 +509,11 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
         const transformedQuestions = transformXMLToQuestions(xmlData);
         setQuestions(transformedQuestions);
 
-        // Calculate total questions
-        let total = 0;
-        transformedQuestions.forEach((question) => {
-          total += question.definitions.length;
-        });
-        setTotalQuestions(total);
+        // Initialize page results array
+        setPageResults(new Array(transformedQuestions.length).fill(false));
+
+        // Set total questions to the number of pages/activities
+        setTotalQuestions(transformedQuestions.length);
 
         setIsLoading(false);
       } catch (error) {
@@ -459,31 +528,45 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
     fetchData();
   }, [xmlUrl]);
 
-  useEffect(() => {
-    if (questions.length === 0) return;
-    // Initialize placedKeywords and keywordPositions for the current question
-    const initialPlacedKeywords: Record<
-      string,
-      { id: string; content: string } | null
-    > = {};
-    const initialKeywordPositions: Record<string, string | null> = {};
-    const initialShowResults: Record<string, boolean> = {};
+useEffect(() => {
+  if (questions.length === 0) return;
 
-    questions[currentQuestionIndex].definitions.forEach((def) => {
-      initialPlacedKeywords[def.id] = null;
-      initialShowResults[def.id] = false;
-    });
+  // Shuffle keywords and definitions for the current question
+  const shuffledKeywords = shuffleArray(
+    questions[currentQuestionIndex].keywords
+  );
+  const shuffledDefinitions = shuffleArray(
+    questions[currentQuestionIndex].definitions
+  );
 
-    questions[currentQuestionIndex].keywords.forEach((keyword) => {
-      initialKeywordPositions[keyword.id] = "keywordArea";
-    });
+  setCurrentKeywords(shuffledKeywords);
+  setCurrentDefinitions(shuffledDefinitions);
 
-    setPlacedKeywords(initialPlacedKeywords);
-    setKeywordPositions(initialKeywordPositions);
-    setIsSubmitted(false);
-    setResults({});
-    setShowResults(initialShowResults);
-  }, [currentQuestionIndex, questions]);
+  // Initialize placed keywords and keyword positions using the shuffled definitions and keywords
+  const initialPlacedKeywords: Record<
+    string,
+    { id: string; content: string } | null
+  > = {};
+  const initialKeywordPositions: Record<string, string | null> = {};
+  const initialShowResults: Record<string, boolean> = {};
+
+  shuffledDefinitions.forEach((def) => {
+    initialPlacedKeywords[def.id] = null;
+    initialShowResults[def.id] = false;
+  });
+
+  shuffledKeywords.forEach((keyword) => {
+    initialKeywordPositions[keyword.id] = "keywordArea";
+  });
+
+  setPlacedKeywords(initialPlacedKeywords);
+  setKeywordPositions(initialKeywordPositions);
+  setIsSubmitted(false);
+  setResults({});
+  setShowResults(initialShowResults);
+  setIsPageCorrect(null);
+}, [currentQuestionIndex, questions]);
+
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -571,13 +654,14 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
     );
 
     if (!allPlaced) {
-      alert("Please place all keywords before submitting.");
+      toast.error("Please place all keywords before submitting.");
+      // alert("Please place all keywords before submitting.");
       return;
     }
 
     // Check correctness and update results
     const newResults: Record<string, boolean> = {};
-    let correctCount = 0;
+    let allCorrect = true;
 
     questions[currentQuestionIndex].definitions.forEach((def) => {
       const placedKeyword = placedKeywords[def.id];
@@ -586,13 +670,26 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
       const isCorrect = placedKeyword?.id === correctKeywordId;
       newResults[def.id] = isCorrect;
 
-      if (isCorrect) {
-        correctCount++;
+      // If any placement is incorrect, the whole page is incorrect
+      if (!isCorrect) {
+        allCorrect = false;
       }
     });
 
     setResults(newResults);
     setIsSubmitted(true);
+
+    setIsPageCorrect(allCorrect);
+
+    // Update page results
+    const newPageResults = [...pageResults];
+    newPageResults[currentQuestionIndex] = allCorrect;
+    setPageResults(newPageResults);
+
+    // Only increment score if all placements on the page are correct
+    if (allCorrect) {
+      setScore((prev) => prev + 1);
+    }
 
     // Reveal results one by one with animation
     const definitionIds = questions[currentQuestionIndex].definitions.map(
@@ -613,21 +710,54 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
           playSound("wrong");
         }
 
-        // If this is the last result, update the score
-        if (index === definitionIds.length - 1) {
-          setScore((prev) => prev + correctCount);
+        // If this is the last result, play the all correct sound if applicable
+        if (index === definitionIds.length - 1 && allCorrect) {
+          setTimeout(() => {
+            playSound("allCorrect");
+          }, 500);
 
-          // If this is the last question, show the final score
-          if (currentQuestionIndex === questions.length - 1) {
-            setTimeout(() => {
-              setShowFinalScore(true);
-              // Submit score to API
-              submitScore(score + correctCount, totalQuestions);
-            }, 1500);
-          }
+          
+            if (currentQuestionIndex === questions.length - 1) {
+              // If this is the last question, show the final score
+              setTimeout(() => {
+                setShowFinalScore(true);
+                // Submit score to API
+                // Calculate final score based on page results
+                const finalScore = newPageResults.filter(
+                  (result) => result
+                ).length;
+
+                // Send the payload to the parent via setSubmissionPayload
+                setSubmissionPayload?.({
+                  userAttemptFlag: true,
+                  userAttemptScore: finalScore,
+                });
+              }, 1500);
+            }
+        } else if (
+          index === definitionIds.length - 1 &&
+          currentQuestionIndex === questions.length - 1
+        ) {
+          // If this is the last question but not all correct
+          setTimeout(() => {
+            setShowFinalScore(true);
+            // Submit score to API
+            // Calculate final score based on page results
+            const finalScore = newPageResults.filter((result) => result).length;
+
+            // Send the payload to the parent via setSubmissionPayload
+            setSubmissionPayload?.({
+              userAttemptFlag: true,
+              userAttemptScore: finalScore,
+            });
+          }, 1500);
         }
       }, index * 800); // Show each result with a 800ms delay
     });
+
+    if (currentQuestionIndex === questions.length - 1) {
+      setShowSubmit(true);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -642,33 +772,33 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
     }
   };
 
-  const submitScore = async (finalScore: number, totalQuestions: number) => {
-    try {
-      const response = await fetch("/api/submit-score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          total_score: finalScore,
-          total_questions: totalQuestions,
-        }),
-      });
+  // const submitScore = async (finalScore: number, totalQuestions: number) => {
+  //   try {
+  //     const response = await fetch("/api/submit-score", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         total_score: finalScore,
+  //         total_questions: totalQuestions,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error("Failed to submit score");
-      }
+  //     if (!response.ok) {
+  //       throw new Error("Failed to submit score");
+  //     }
 
-      console.log("Score submitted successfully");
-    } catch (error) {
-      console.error("Error submitting score:", error);
-    }
-  };
+  //     console.log("Score submitted successfully");
+  //   } catch (error) {
+  //     console.error("Error submitting score:", error);
+  //   }
+  // };
 
   // Show loading state
-  if (isLoading) {
-    return <LoadingState headerText={headerText} />;
-  }
+  // if (isLoading) {
+  //   return <LoadingState headerText={headerText} />;
+  // }
 
   // Show error state
   if (error) {
@@ -676,48 +806,56 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
   }
 
   // If no questions loaded
-  if (questions.length === 0) {
-    return <ErrorState message="No questions found in the XML file." />;
-  }
+  // if (questions.length === 0) {
+  //   return <ErrorState message="No questions found in the XML file." />;
+  // }
 
   // Current question data
   const currentQuestion = questions[currentQuestionIndex];
 
-  if (showFinalScore) {
-    return (
-      <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
-        <h2 className="text-3xl font-bold text-white mb-8">
-          Activity Complete!
-        </h2>
-        <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-md">
-          <h3 className="text-2xl font-bold text-center mb-4">Your Score</h3>
-          <div className="text-5xl font-bold text-center text-blue-600 mb-6">
-            {score} / {totalQuestions}
-          </div>
-          <p className="text-center text-gray-600 mb-8">
-            You got {score} out of {totalQuestions} correct!
-          </p>
-          <Button
-            className="w-full"
-            onClick={() => {
-              setCurrentQuestionIndex(0);
-              setScore(0);
-              setShowFinalScore(false);
-            }}
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // if (showFinalScore) {
+  //   // Calculate final score based on page results
+  //   const finalScore = pageResults.filter((result) => result).length;
+  //   return (
+  //     <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+  //       <h2 className="text-3xl font-bold text-white mb-8">
+  //         Activity Complete!
+  //       </h2>
+  //       <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-md">
+  //         <h3 className="text-2xl font-bold text-center mb-4">Your Score</h3>
+  //         <div className="text-5xl font-bold text-center text-blue-600 mb-6">
+  //           {finalScore} / {totalQuestions}
+  //         </div>
+  //         <p className="text-center text-gray-600 mb-8">
+  //           You got {finalScore} out of {totalQuestions} pages correct!
+  //         </p>
+  //         <Button
+  //           className="w-full"
+  //           onClick={() => {
+  //             setCurrentQuestionIndex(0);
+  //             setScore(0);
+  //             setPageResults(new Array(questions.length).fill(false));
+  //             setShowFinalScore(false);
+  //           }}
+  //         >
+  //           Try Again
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="relative w-full max-w-[90%] mx-auto h-[600px] bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 mt-[120px]">
-      <h2 className="text-xl font-bold text-white mb-4 text-center">
+    <div className="relative w-full  mx-auto md:min-h-[calc(100vh-100px)]  bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 mt-[100px]">
+      <h2 className="text-xl font-bold text-black mb-4 text-center">
         {headerText}
       </h2>
-      <Timer time={currentQuestion.time} />
+      {/* <Timer time={currentQuestion.time} /> */}
+      <PageScoreIndicator
+        isAllCorrect={isPageCorrect}
+        questionsCount={questions.length}
+        score={score}
+      />
 
       <DndContext
         sensors={sensors}
@@ -732,7 +870,7 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
               id="keywordArea"
               className="grid grid-cols-3 md:grid-cols-5 gap-3"
             >
-              {currentQuestion.keywords.map(
+              {currentKeywords.map(
                 (keyword) =>
                   keywordPositions[keyword.id] === "keywordArea" && (
                     <DraggableKeyword
@@ -747,8 +885,8 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
           </Card>
         </div>
 
-        <div className="space-y-4">
-          {currentQuestion.definitions.map((definition) => (
+        <div className="space-y-4 mb-11 sm:px-10">
+          {currentDefinitions.map((definition) => (
             <DroppableZone
               key={definition.id}
               id={definition.id}
@@ -766,36 +904,34 @@ export default function VocabularyActivity({ xmlUrl }: VocabularyActivityProps) 
         <Button
           variant="outline"
           onClick={handlePrevQuestion}
-          disabled={currentQuestionIndex === 0 || isSubmitted}
+          disabled={currentQuestionIndex === 0}
           className="bg-white"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Previous
         </Button>
 
-        <Button
-          onClick={isSubmitted ? handleNextQuestion : handleSubmit}
-          className="px-8"
-          disabled={
-            isSubmitted && Object.values(showResults).some((value) => !value)
-          }
-        >
-          {isSubmitted
-            ? currentQuestionIndex === questions.length - 1
-              ? "Finish"
-              : "Next"
-            : "Submit Answers"}
-          {isSubmitted && currentQuestionIndex !== questions.length - 1 && (
-            <ArrowRight className="ml-2 h-4 w-4" />
-          )}
-        </Button>
+        {!(isSubmitted && currentQuestionIndex === questions.length - 1) && (
+          <Button
+            onClick={isSubmitted ? handleNextQuestion : handleSubmit}
+            className="px-8 bg-[#45b162] rounded-[5px] hover:bg-[#64CE80]"
+            disabled={
+              isSubmitted && Object.values(showResults).some((value) => !value)
+            }
+          >
+            {isSubmitted ? "Next" : "Check"}
+            {isSubmitted && currentQuestionIndex !== questions.length - 1 && (
+              <ArrowRight className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        )}
 
-        <Button variant="outline" className="bg-white" onClick={toggleSound}>
+        {/* <Button variant="outline" className="bg-white" onClick={toggleSound}>
           {isSoundEnabled ? (
             <Volume2 className="h-4 w-4" />
           ) : (
             <VolumeX className="h-4 w-4" />
           )}
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

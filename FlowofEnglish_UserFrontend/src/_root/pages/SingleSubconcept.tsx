@@ -95,20 +95,29 @@ const SingleSubconcept = () => {
   const { user, selectedCohortWithProgram } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const [showGoBack, setShowGoBack] = useState(false); // State to control Submit button visibility
+   // State to control Submit button visibility
   const [successOverlay, setSuccessOverlay] = useState(false);
   const [errorOverlay, setErrorOverlay] = useState(false);
   const [onFrameLoad, setOnFrameLoad] = useState(false);
   const sessionId = localStorage.getItem("sessionId");
   const subconcept = location.state?.subconcept;
+  const [showGoBack, setShowGoBack] = useState(
+    subconcept?.subconceptType?.toLowerCase() === "vocab"
+  );
   // @ts-ignore
   const [showIframe, setShowIframe] = useState(
     !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image", "assessment", "youtube"].includes(subconcept?.subconceptType)
   );
 const [showSubmit, setShowSubmit] = useState(
-  subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
-  // true
+  true
 );
+
+const [submissionPayload, setSubmissionPayload] = useState<{
+  userAttemptFlag: boolean;
+  userAttemptScore: number;
+} | null>(null);
+
+
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
   const [scorePercentage, setScorePercentage] = useState<null | number>(null);
@@ -117,43 +126,52 @@ const [showSubmit, setShowSubmit] = useState(
     );
     const [modalVisible, setModalVisible] = useState(false);
 
-useEffect(() => {
-  // Clear sessionStorage when the component mounts to show modal again on revisit
-  sessionStorage.removeItem("orientationModalDismissed");
-
-  // Function to check and update orientation
-  const handleOrientationChange = () => {
-    const portraitMode = window.innerWidth < window.innerHeight;
-    setIsPortrait(portraitMode);
-
-    // If device is in portrait mode and hasn't been dismissed, show modal
-    const link = subconcept.subconceptLink.toUpperCase();
-    if (
-      (link.includes("MTF".toUpperCase()) ||
-      link.includes("VOCABULARY".toUpperCase()) && showIframe)
-    ) {
-      const hasDismissed = sessionStorage.getItem("orientationModalDismissed");
-      if (portraitMode && !hasDismissed) {
-        setModalVisible(true);
+    useEffect(() => {
+      // Only set showSubmit to false if it's a vocabulary activity
+      if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
+        setShowSubmit(false);
       } else {
-        setModalVisible(false); // Auto dismiss when in landscape
+        setShowSubmit(true);
       }
-    }
+    }, [subconcept]);
 
-  };
+// useEffect(() => {
+//   // Clear sessionStorage when the component mounts to show modal again on revisit
+//   sessionStorage.removeItem("orientationModalDismissed");
 
-  // Initial check
-  handleOrientationChange();
+//   // Function to check and update orientation
+//   const handleOrientationChange = () => {
+//     const portraitMode = window.innerWidth < window.innerHeight;
+//     setIsPortrait(portraitMode);
 
-  // Listen for orientation changes
-  window.addEventListener("resize", handleOrientationChange);
-  window.addEventListener("orientationchange", handleOrientationChange);
+//     // If device is in portrait mode and hasn't been dismissed, show modal
+//     const link = subconcept.subconceptLink.toUpperCase();
+//     if (
+//       (link.includes("MTF".toUpperCase()) ||
+//       link.includes("VOCABULARY".toUpperCase()) && showIframe)
+//     ) {
+//       const hasDismissed = sessionStorage.getItem("orientationModalDismissed");
+//       if (portraitMode && !hasDismissed) {
+//         setModalVisible(true);
+//       } else {
+//         setModalVisible(false); // Auto dismiss when in landscape
+//       }
+//     }
 
-  return () => {
-    window.removeEventListener("resize", handleOrientationChange);
-    window.removeEventListener("orientationchange", handleOrientationChange);
-  };
-}, [subconcept.subconceptLink]);
+//   };
+
+//   // Initial check
+//   handleOrientationChange();
+
+//   // Listen for orientation changes
+//   window.addEventListener("resize", handleOrientationChange);
+//   window.addEventListener("orientationchange", handleOrientationChange);
+
+//   return () => {
+//     window.removeEventListener("resize", handleOrientationChange);
+//     window.removeEventListener("orientationchange", handleOrientationChange);
+//   };
+// }, [subconcept.subconceptLink]);
 
     const dismissModal = () => {
       setModalVisible(false);
@@ -217,17 +235,20 @@ useEffect(() => {
   // };
 
   const handleSubmit = () => {
+    if(subconcept?.subconceptType?.toLowerCase() === "vocab") handlePostScore(submissionPayload);
     // Send a message to the iframe when Submit is clicked
-    const iframe = document.getElementById("embeddedContent");
-    if (iframe && iframe.tagName === "IFRAME") {
-      (iframe as HTMLIFrameElement).contentWindow?.postMessage(
-        "submitClicked",
-        "*"
-      );
+    else{
+      const iframe = document.getElementById("embeddedContent");
+      if (iframe && iframe.tagName === "IFRAME") {
+        (iframe as HTMLIFrameElement).contentWindow?.postMessage(
+          "submitClicked",
+          "*"
+        );
+      }
     }
   };
 
-  const handlePostScore = (payload: any) => {
+  const  handlePostScore = (payload: any) => {
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
     if (!userData) {
@@ -266,6 +287,8 @@ useEffect(() => {
           ) as HTMLIFrameElement;
           if (iframe && iframe.tagName === "IFRAME") {
             iframe.contentWindow?.postMessage("postSuccess", "*");
+          }else if(subconcept?.subconceptType === "vocab"){
+            setSuccessOverlay(true);
           }
         } else {
           setErrorOverlay(true); // Show error overlay on failure
@@ -323,18 +346,21 @@ useEffect(() => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
-          <VocabularyActivity xmlUrl={subconcept?.subconceptLink} />
-          {/* {showIframe ? (
+          {subconcept?.subconceptType === "vocab" ? (
+            <VocabularyActivity
+              setShowSubmit={setShowSubmit}
+              xmlUrl={subconcept?.subconceptLink}
+              // onSubmitScore={handlePostScore}
+              setSubmissionPayload={setSubmissionPayload}
+            />
+          ) : showIframe ? (
             <iframe
               id="embeddedContent"
               src={subconcept?.subconceptLink}
-              // src={
-              //   "/reader2/resources/books/reader2/vol4/Reader2_Book_13/book13_story.html"
-              // }
-              // src={"/Learner-v4/Sentences/readAndRespond/stage0/bird.html"}
-              // src={"/Learner-v4/Passages/Being-Sick-Vocabulary.html"}
               title="Embedded Content"
-              className={`w-full min-h-[500px] sm:min-h-[800px] mt-[100px] ${onFrameLoad && ""}`}
+              className={`w-full min-h-[500px] sm:min-h-[800px] mt-[100px] ${
+                onFrameLoad && ""
+              }`}
               onLoad={() => {
                 setShowGoBack(true);
                 setOnFrameLoad(true);
@@ -346,7 +372,7 @@ useEffect(() => {
               subconceptData={subconcept}
               currentUnitId={currentUnitId}
             />
-          )} */}
+          )}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
 
