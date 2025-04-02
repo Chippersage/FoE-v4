@@ -12,10 +12,13 @@ import Header from "./components/Header.tsx";
 import Header2 from "./components/Header2.tsx";
 import { SessionProvider } from "./context/TimerContext.tsx";
 import NotFoundPage from "./components/NotFoundPage.tsx";
+import { Toaster } from "react-hot-toast"; // Import Toaster component
 
 export default function App() {
   
-  const { isAuthenticated, selectedCohortWithProgram } = useUserContext();
+  const { isAuthenticated } = useUserContext();
+  const selectedCohortWithProgram = localStorage.getItem("selectedCohortWithProgram");
+  const user = localStorage.getItem("user");
 
   useEffect(() => {
     // @ts-ignore
@@ -32,6 +35,7 @@ export default function App() {
 return (
   <SessionProvider>
     <main className="flex h-screen flex-col">
+      <Toaster position="bottom-center" reverseOrder={false} />
       {/* Show headers only when user is authenticated */}
       {isAuthenticated && (
         <>
@@ -43,15 +47,30 @@ return (
       <Routes>
         {/* Public routes (no headers here) */}
         <Route element={<AuthLayout />}>
-          <Route path="/sign-in" element={<LoginForm />} />
+          <Route
+            path="/sign-in"
+            element={
+              user ? (
+                <Navigate
+                  to={selectedCohortWithProgram ? "/home" : "/select-cohort"}
+                />
+              ) : (
+                <LoginForm />
+              )
+            }
+          />
         </Route>
 
         {/* Cohort selection page (headers should appear) */}
         <Route
           path="/select-cohort"
           element={
-            isAuthenticated ? (
-              <CohortSelectionPage />
+            user ? (
+              selectedCohortWithProgram ? (
+                <Navigate to="/home" />
+              ) : (
+                <CohortSelectionPage />
+              )
             ) : (
               <Navigate to="/sign-in" />
             )
@@ -62,7 +81,7 @@ return (
         <Route
           path="/"
           element={
-            isAuthenticated ? (
+            user ? (
               selectedCohortWithProgram ? (
                 <Navigate to="/home" />
               ) : (
