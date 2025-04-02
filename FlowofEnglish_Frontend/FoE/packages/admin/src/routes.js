@@ -23,7 +23,7 @@ import UserCreate from './pages/UserCreate';
 import UserCohortpage from './pages/UserCohortpage';
 import OrgUserCreate from './pages/OrgUserCreate';
 import DashboardOrgClientPage from './pages/DashboardOrgClientPage';
-import ForgotPassword from './pages/ForgotPassword';
+import ForgotPasswordx from './components/ForgotPasswordx';
 import OrgCourses from './pages/OrgReport';
 import SuperAdminCreate from './pages/SuperAdminCreate';
 import UserPassword from './pages/UserPassword';
@@ -106,7 +106,7 @@ export default function Router() {
     },
     {
       path: 'forgot',
-      element: <ForgotPassword />,
+      element: <ForgotPasswordx />,
     },
     {
       path: 'superadmincreate',
