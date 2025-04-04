@@ -503,54 +503,58 @@ const handleCloseDialogs = () => {
             }
           }}
     />
-    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="show-leaderboard-label" sx={{ fontSize: '16px' }}>Show Leaderboard</InputLabel>
+    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+      <InputLabel id="show-leaderboard-label" >Show Leaderboard</InputLabel>
       <Select
         labelId="show-leaderboard-label"
         id="show-leaderboard"
         name="showLeaderboard"
-        InputLabelProps={{ shrink: true }}
-        value={formData.showLeaderboard}
+        value={formData.showLeaderboard ? 'true' : 'false'}
+        label="Show Leaderboard" // Added label prop
         onChange={(e) =>
           setFormData((prevData) => ({
             ...prevData,
             showLeaderboard: e.target.value === 'true',
           }))
         }
+        sx={{ minHeight: '45px' }} // Set minimum height
       >
         <MenuItem value="true">True</MenuItem>
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
-    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="DelayedStageUnlock-label" sx={{ fontSize: '16px' }}>DelayedStageUnlock</InputLabel>
+    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+      <InputLabel id="DelayedStageUnlock-label" >DelayedStageUnlock</InputLabel>
       <Select
         labelId="DelayedStageUnlock-label"
         id="DelayedStageUnlock"
         name="DelayedStageUnlock"
-        InputLabelProps={{ shrink: true }}
-        value={formData.delayedStageUnlock}
+        value={formData.delayedStageUnlock ? 'true' : 'false'}
+        label="DelayedStageUnlock" // Added label prop
         onChange={(e) =>
           setFormData((prevData) => ({
             ...prevData,
             delayedStageUnlock: e.target.value === 'true',
           }))
         }
+        sx={{ minHeight: '45px' }} // Set minimum height
       >
         <MenuItem value="true">True</MenuItem>
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
     {formData.delayedStageUnlock && (
-      <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-        <InputLabel id="delay-in-days-label" sx={{ fontSize: '16px' }}>Delay in Days</InputLabel>
+      <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+        <InputLabel id="delay-in-days-label" >Delay in Days</InputLabel>
         <Select
           labelId="delay-in-days-label"
           id="delay-in-days"
           name="delayInDays"
           value={formData.delayInDays}
+          label="Delay in Days"
           onChange={handleFormChange}
           error={!!formErrors.delayInDays}
+          sx={{ minHeight: '45px' }}
         >
           {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
             <MenuItem key={day} value={day}>
@@ -677,52 +681,59 @@ const handleCloseDialogs = () => {
             }
           }}
     />
-    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
+    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
       <InputLabel id="show-leaderboard-label" sx={{ fontSize: '16px' }}>Show Leaderboard</InputLabel>
       <Select
         labelId="show-leaderboard-label"
         id="show-leaderboard"
         name="showLeaderboard"
-        value={formData.showLeaderboard}
+        value={formData.showLeaderboard ? 'true' : 'false'}
+        label="Show Leaderboard"
         onChange={(e) =>
           setFormData((prevData) => ({
             ...prevData,
             showLeaderboard: e.target.value === 'true',
           }))
         }
+        sx={{ minHeight: '45px' }}
       >
         <MenuItem value="true">True</MenuItem>
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
-    <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-      <InputLabel id="DelayedStageUnlock-label" sx={{ fontSize: '16px' }}>DelayedStageUnlock</InputLabel>
+    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
       <Select
         labelId="DelayedStageUnlock-label"
         id="DelayedStageUnlock"
         name="DelayedStageUnlock"
-        value={formData.delayedStageUnlock}
+        value={formData.delayedStageUnlock ? 'true' : 'false'}
+        label="DelayedStageUnlock"
         onChange={(e) =>
           setFormData((prevData) => ({
             ...prevData,
             delayedStageUnlock: e.target.value === 'true',
           }))
         }
+        sx={{ minHeight: '45px' }}
       >
         <MenuItem value="true">True</MenuItem>
         <MenuItem value="false">False</MenuItem>
       </Select>
     </FormControl>
+
     {formData.delayedStageUnlock && (
-      <FormControl fullWidth margin="normal" size="small" sx={{ height: '45px' }}>
-        <InputLabel id="delay-in-days-label" sx={{ fontSize: '16px' }}>Delay in Days</InputLabel>
+      <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+        <InputLabel id="delay-in-days-label">Delay in Days</InputLabel>
         <Select
           labelId="delay-in-days-label"
           id="delay-in-days"
           name="delayInDays"
           value={formData.delayInDays}
+          label="Delay in Days"
           onChange={handleFormChange}
           error={!!formErrors.delayInDays}
+          sx={{ minHeight: '45px' }}
         >
           {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
             <MenuItem key={day} value={day}>

@@ -91,7 +91,7 @@ public class OrganizationService {
         mailSender.send(message);
     }
 
-    // Method to handle forgotten password
+ // Method to handle forgotten password - only requires email
     public void sendForgotPasswordOTP(String email) {
         Organization organization = getOrganizationByEmail(email);
         if (organization != null) {
@@ -99,52 +99,85 @@ public class OrganizationService {
             otpStorage.put(email, otp); // Store OTP in memory (temporary solution)
             sendOTPEmail(email, otp); // Send OTP via email
         } else {
-            throw new RuntimeException("Organization not found with email: " + email);
+            throw new RuntimeException("Admin email not found. Please check and try again.");
         }
     }
-
-    
- // Send OTP after verifying organization name and email
-    public void sendForgotPasswordOTP(String organizationName, String email) {
-        Organization organization = organizationRepository.findByOrganizationAdminEmail(email);
-        if (organization == null || !organization.getOrganizationName().equalsIgnoreCase(organizationName)) {
-            throw new RuntimeException("Invalid organization name or email.");
-        }
-
-        String otp = generateOTP();
-        otpStorage.put(email, otp);
-        sendOTPEmail(email, otp);
-    }
-
-    
- // Verify OTP and reset the password
-    public void resetPassword(String organizationName, String email, String otp, String newPassword) {
-        Organization organization = organizationRepository.findByOrganizationNameAndOrganizationAdminEmail(organizationName, email);
+ // Verify OTP and generate a new password
+    public String verifyOTPAndGenerateNewPassword(String email, String otp) {
+        Organization organization = getOrganizationByEmail(email);
         if (organization == null) {
-            throw new RuntimeException("Invalid organization name or email. Please try again.");
+            throw new RuntimeException("Admin email not found. Please check and try again.");
         }
 
         if (!otpStorage.containsKey(email) || !otpStorage.get(email).equals(otp)) {
             throw new RuntimeException("Invalid or expired OTP. Please try again.");
         }
 
-        // OTP is valid; update password
+        // OTP is valid; generate and update password
+        String newPassword = generatePassword();
         String encodedPassword = passwordEncoder.encode(newPassword);
         organization.setOrgPassword(encodedPassword);
 
         organizationRepository.save(organization); // Save updated password
-        sendNewPasswordEmail(email, newPassword); // Notify user of the updated password
+        sendNewPasswordEmail(email, newPassword); // Send new password to user
 
         otpStorage.remove(email); // Clear the OTP after use
+        
+        return newPassword;
     }
     
+ // Send OTP after verifying organization name and email
+//    public void sendForgotPasswordOTP(String organizationName, String email) {
+//        Organization organization = organizationRepository.findByOrganizationAdminEmail(email);
+//        if (organization == null || !organization.getOrganizationName().equalsIgnoreCase(organizationName)) {
+//            throw new RuntimeException("Invalid organization name or email.");
+//        }
+//
+//        String otp = generateOTP();
+//        otpStorage.put(email, otp);
+//        sendOTPEmail(email, otp);
+//    }
+
+    
+ // Reset password using old password (no OTP required)
+    public void resetPasswordWithOldPassword(String email, String oldPassword, String newPassword) {
+        Organization organization = getOrganizationByEmail(email);
+        if (organization == null) {
+            throw new RuntimeException("Admin email not found. Please check and try again.");
+        }
+
+        // Verify old password
+        if (!passwordEncoder.matches(oldPassword, organization.getOrgPassword())) {
+            throw new RuntimeException("Current password is incorrect. Please try again.");
+        }
+
+        // Update password
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        organization.setOrgPassword(encodedPassword);
+        organization.setUpdatedAt(OffsetDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+        organizationRepository.save(organization);
+        
+        // Send confirmation email
+        sendPasswordChangeConfirmationEmail(email);
+    }
+
+ // Method to send password change confirmation
+    private void sendPasswordChangeConfirmationEmail(String to) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Password Changed Successfully");
+        message.setText("Your password has been changed successfully. If you did not make this change, please contact support immediately.");
+        mailSender.send(message);
+    }
    
-    // Method to send the new password to the organization's email
+ // Method to send the new password to the admin's email
     private void sendNewPasswordEmail(String to, String newPassword) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("Your New Password");
-        message.setText("Your password has been reset. Your new password is: " + newPassword);
+        message.setText("Your password has been reset. Your new password is: " + newPassword + 
+                        "\n\nFor security reasons, we recommend changing this password after logging in.");
         mailSender.send(message);
     }
 
@@ -287,7 +320,6 @@ public class OrganizationService {
     }
     
     
- // Update an existing organization
  // Update an existing organization
     public Organization updateOrganization(String organizationId, Organization updatedOrganization) {
         return organizationRepository.findById(organizationId)

@@ -207,8 +207,8 @@ export default function UserPage() {
     }
     if (!formData.organizationName.trim()) {
       errors.organizationName = 'Organization name is required';
-    } else if (formData.organizationName.length < 6) {
-      errors.organizationName = 'Organization name must be at least 6 characters';
+    } else if (formData.organizationName.length < 4) {
+      errors.organizationName = 'Organization name must be at least 4 characters';
     }
     if (!formData.organizationAdminEmail) {
       errors.organizationAdminEmail = 'Email is required';

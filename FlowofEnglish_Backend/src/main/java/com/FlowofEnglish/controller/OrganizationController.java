@@ -178,38 +178,43 @@ public class OrganizationController {
         }
     }
     
- 
- // Modified forgot password API
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
-        String organizationName = request.get("organizationName");
         String email = request.get("email");
+        String otp = request.get("otp");
 
         try {
-            organizationService.sendForgotPasswordOTP(organizationName, email);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "An OTP has been sent to your email address.");
-            System.out.println("POST request received: " + request);
-            return ResponseEntity.ok(response);
+            // First request - send OTP
+            if (otp == null) {
+                organizationService.sendForgotPasswordOTP(email);
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "An OTP has been sent to your email address.");
+                return ResponseEntity.ok(response);
+            } 
+            // Second request in same API - verify OTP and send new password
+            else {
+                String newGeneratedPassword = organizationService.verifyOTPAndGenerateNewPassword(email, otp);
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Your password has been reset successfully. A new password has been sent to your email.");
+                return ResponseEntity.ok(response);
+            }
         } catch (RuntimeException e) {
             Map<String, String> response = new HashMap<>();
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-
- // Reset the password
+    
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
-        String organizationName = request.get("organizationName");
         String email = request.get("email");
-        String otp = request.get("otp");
+        String oldPassword = request.get("oldPassword");
         String newPassword = request.get("newPassword");
 
         try {
-            organizationService.resetPassword(organizationName, email, otp, newPassword);
+            organizationService.resetPasswordWithOldPassword(email, oldPassword, newPassword);
             Map<String, String> response = new HashMap<>();
-            response.put("message", "Your password has been reset successfully. The new password has been sent to your email.");
+            response.put("message", "Your password has been changed successfully.");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             Map<String, String> response = new HashMap<>();
@@ -217,7 +222,43 @@ public class OrganizationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-
-
- 
 }
+
+ // Modified forgot password API
+//  @PostMapping("/forgot-password")
+//  public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
+//      String organizationName = request.get("organizationName");
+//      String email = request.get("email");
+//
+//      try {
+//          organizationService.sendForgotPasswordOTP(organizationName, email);
+//          Map<String, String> response = new HashMap<>();
+//          response.put("message", "An OTP has been sent to your email address.");
+//          System.out.println("POST request received: " + request);
+//          return ResponseEntity.ok(response);
+//      } catch (RuntimeException e) {
+//          Map<String, String> response = new HashMap<>();
+//          response.put("message", e.getMessage());
+//          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//      }
+//  }
+ // Reset the password
+//    @PostMapping("/reset-password")
+//    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
+//        String organizationName = request.get("organizationName");
+//        String email = request.get("email");
+//        String otp = request.get("otp");
+//        String newPassword = request.get("newPassword");
+//
+//        try {
+//            organizationService.resetPassword(organizationName, email, otp, newPassword);
+//            Map<String, String> response = new HashMap<>();
+//            response.put("message", "Your password has been reset successfully. The new password has been sent to your email.");
+//            return ResponseEntity.ok(response);
+//        } catch (RuntimeException e) {
+//            Map<String, String> response = new HashMap<>();
+//            response.put("message", e.getMessage());
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//    }
+
