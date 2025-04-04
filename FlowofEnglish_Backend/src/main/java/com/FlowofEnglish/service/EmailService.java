@@ -1,6 +1,6 @@
 package com.FlowofEnglish.service;
 
-import java.util.List;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -8,6 +8,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+//import org.thymeleaf.TemplateEngine;
+//import org.thymeleaf.context.Context;
+
 
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
@@ -27,6 +30,9 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
     
+//    @Autowired
+//    private TemplateEngine templateEngine;
+
     @Autowired
     private UserRepository userRepository;
     
@@ -330,4 +336,43 @@ public class EmailService {
             // Don't throw exception to prevent disrupting the main correction flow
         }
     }
+    
+//    public void sendPaymentStatusEmail(String to, String subject, Map<String, Object> templateModel) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//            
+//            helper.setTo(to);
+//            helper.setSubject(subject);
+//            
+//            Context context = new Context();
+//            context.setVariables(templateModel);
+//            
+//            String template = determineTemplate(templateModel);
+//            String htmlContent = templateEngine.process(template, context);
+//            helper.setText(htmlContent, true);
+//            
+//            mailSender.send(message);
+//            logger.info("Payment notification email sent to {}", to);
+//        } catch (MessagingException e) {
+//            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+//        }
+//    }
+//    
+//    private String determineTemplate(Map<String, Object> templateModel) {
+//        String status = (String) templateModel.get("status");
+//        
+//        switch (status) {
+//            case "authorized":
+//                return "payment-authorized";
+//            case "successful":
+//                return "payment-successful";
+//            case "failed":
+//                return "payment-failed";
+//            case "paid":
+//                return "order-paid";
+//            default:
+//                return "payment-notification";
+//        }
+//    }
 }
