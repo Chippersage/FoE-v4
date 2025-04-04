@@ -14,8 +14,12 @@ public interface CohortRepository extends JpaRepository<Cohort, String> {
 
     List<Cohort> findByOrganizationOrganizationId(String organizationId);
     
- // Custom method to count cohorts by cohort name and organization ID
-    long countByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
+ // Find cohorts by exact name and organization ID
+    List<Cohort> findByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
+    
+    // Custom method to count existing cohorts
+    @Query("SELECT COUNT(c) FROM Cohort c WHERE c.cohortName = :cohortName AND c.organization.organizationId = :orgId")
+    long countByCohortNameAndOrganization(@Param("cohortName") String cohortName, @Param("orgId") String orgId);
     
     @Query("SELECT c FROM Cohort c WHERE c.cohortEndDate BETWEEN :startDate AND :endDate")
     List<Cohort> findCohortsEndingSoon(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);

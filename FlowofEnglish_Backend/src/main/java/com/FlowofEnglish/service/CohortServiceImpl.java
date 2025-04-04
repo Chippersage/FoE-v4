@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CohortServiceImpl implements CohortService {
@@ -39,17 +40,31 @@ public class CohortServiceImpl implements CohortService {
                 && cohort.getCohortEndDate().isBefore(cohort.getCohortStartDate())) {
             throw new CohortValidationException("Cohort end date must be greater than the cohort start date.");
         }
+     // Ensure organization and cohort name are not null
+        if (cohort.getCohortName() == null || cohort.getOrganization() == null) {
+            throw new CohortValidationException("Cohort name and organization are required.");
+        }
+        
+     // Prepare cohort name and organization details
+        String orgId = cohort.getOrganization().getOrganizationId();
+        String originalCohortName = cohort.getCohortName();
+        String sanitizedCohortName = originalCohortName.replaceAll("\\s+", "");
+        
+        // Generate name prefix
+        String namePrefix = sanitizedCohortName.length() >= 4
+                ? sanitizedCohortName.substring(0, 4).toUpperCase()
+                : sanitizedCohortName.toUpperCase();
 
-        // Generate cohort ID
-        if (cohort.getCohortId() == null && cohort.getCohortName() != null && cohort.getOrganization() != null) {
-            String orgId = cohort.getOrganization().getOrganizationId();
-            String sanitizedCohortName = cohort.getCohortName().replaceAll("\\s+", "");
-            String namePrefix = sanitizedCohortName.length() >= 4
-                    ? sanitizedCohortName.substring(0, 4).toUpperCase()
-                    : sanitizedCohortName.toUpperCase();
+     // Find existing cohorts with the same name in the organization
+        long cohortCount = cohortRepository.countByCohortNameAndOrganization(originalCohortName, orgId);
+        
+        // Generate unique cohort ID
+        String newCohortId = namePrefix + "-" + orgId + "-" + (cohortCount + 1);
+        cohort.setCohortId(newCohortId);
 
-            long cohortCount = cohortRepository.countByCohortNameAndOrganizationOrganizationId(sanitizedCohortName, orgId);
-            cohort.setCohortId(namePrefix + "-" + orgId + "-" + (cohortCount + 1));
+        // Generate UUID if not present
+        if (cohort.getUuid() == null) {
+            cohort.setUuid(UUID.randomUUID().toString());
         }
 
         // Save cohort

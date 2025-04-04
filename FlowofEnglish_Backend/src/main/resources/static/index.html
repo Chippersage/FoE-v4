@@ -83,7 +83,7 @@
                 updateResponse(`Order created: ${JSON.stringify(data)}`);
                 
                 const options = {
-                    key: "rzp_live_fMf4FtGcflFtWm",  // Replace with your actual key
+                    key: "rzp_live_ijC0oArpUtHAS8",  // Replace with your actual key
                     amount: data.amount,
                     currency: data.currency,
                     order_id: data.id,
@@ -92,17 +92,35 @@
                         verifyPayment(data.id, response.razorpay_payment_id, response.razorpay_signature);
                     },
                     prefill: {
-                        name: "Test User",
-                        email: "test@example.com",
-                        contact: "9999999999"
+                        name: "Hari",
+                        email: "harikrishna055hari@gmail.com",
+                        contact: "6301615610"
                     },
+					notes: {
+					                program_id: "CC-8",  // Add program ID
+					                organization_id: "SVCE", // Add organization ID
+					                max_cohorts: 1,               // Add max cohorts
+					                email: "harikrishna055hari@gmail.com" // Add email
+					            },
                     theme: {
                         color: "#3399cc"
                     }
                 };
                 
-                const rzp1 = new Razorpay(options);
-                rzp1.open();
+				var rzp1 = new Razorpay(options);
+				rzp1.on('payment.failed', function (response){
+				        alert(response.error.code);
+				        alert(response.error.description);
+				        alert(response.error.source);
+				        alert(response.error.step);
+				        alert(response.error.reason);
+				        alert(response.error.metadata.order_id);
+				        alert(response.error.metadata.payment_id);
+				});
+				document.getElementById('payButton').onclick = function(e){
+				    rzp1.open();
+				    e.preventDefault();
+				}
             })
             .catch(error => {
                 console.error('Error:', error);
