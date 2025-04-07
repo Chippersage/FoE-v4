@@ -4,18 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "subscriptions")
@@ -54,7 +44,7 @@ public class ProgramSubscription {
    private OffsetDateTime transactionDate;
    
    @Column(name = "amount_paid")
-   private float amountPaid; 
+   private double amountPaid; 
 
     @Column(name = "max_cohorts", nullable = true)
     private Integer maxCohorts;
@@ -62,35 +52,51 @@ public class ProgramSubscription {
     @Column(name = "uuid", unique = true, nullable = false, updatable = false)
     private String uuid;
  
+    @Column(name = "payment_status", nullable = false)
+    private String status;
+    
+    @Column(name = "user_email", length = 50, nullable = false)
+    private String userEmail;
+    
+    @Column(name = "user_address", length = 1000, nullable = true)
+    private String userAddress;
+    
+    @Column(name = "user_name", length = 100, nullable = false)
+    private String userName;
 
+    @Column(name = "user_phone_number", length = 15, nullable = true)
+    private String userPhoneNumber;
+    
 // Default constructor
 	public ProgramSubscription() {
 	}
 
 
 	// Parameterized constructor
-	   
-	 public ProgramSubscription(Long subscriptionId, Program program, Organization organization,
-				OffsetDateTime startDate, OffsetDateTime endDate, 
-				String transactionId, String transactionType,
-				OffsetDateTime transactionDate, float amountPaid, 
-				Integer maxCohorts, String uuid) {
-			super();
-			this.subscriptionId = subscriptionId;
-			this.program = program;
-			this.organization = organization;
-			this.startDate = startDate;
-			this.endDate = endDate;
-			this.transactionId = transactionId;
-			this.transactionType = transactionType;
-			this.transactionDate = transactionDate;
-			this.amountPaid = amountPaid;
-			this.maxCohorts = maxCohorts;
-			this.uuid = uuid;
-		}
+	public ProgramSubscription(Long subscriptionId, Program program, Organization organization,
+			OffsetDateTime startDate, OffsetDateTime endDate, String transactionId, String transactionType,
+			OffsetDateTime transactionDate, double amountPaid, Integer maxCohorts, String uuid, String status,
+			String userEmail, String userAddress, String userName, String userPhoneNumber) {
+		super();
+		this.subscriptionId = subscriptionId;
+		this.program = program;
+		this.organization = organization;
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.transactionId = transactionId;
+		this.transactionType = transactionType;
+		this.transactionDate = transactionDate;
+		this.amountPaid = amountPaid;
+		this.maxCohorts = maxCohorts;
+		this.uuid = uuid;
+		this.status = status;
+		this.userEmail = userEmail;
+		this.userAddress = userAddress;
+		this.userName = userName;
+		this.userPhoneNumber = userPhoneNumber;
+	}
 
-	// Getters and Setters 
-
+	// Getters and Setters
 	public Long getSubscriptionId() {
 		return subscriptionId;
 	}
@@ -169,12 +175,14 @@ public class ProgramSubscription {
 	public void setTransactionDate(OffsetDateTime transactionDate) {
 		this.transactionDate = transactionDate;
 	}
-	public float getAmountPaid() {
+
+
+	public double getAmountPaid() {
 		return amountPaid;
 	}
 
 
-	public void setAmountPaid(float amountPaid) {
+	public void setAmountPaid(double amountPaid) {
 		this.amountPaid = amountPaid;
 	}
 
@@ -198,14 +206,65 @@ public class ProgramSubscription {
 		this.uuid = uuid;
 	}
 
+
+	public String getStatus() {
+		return status;
+	}
+
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+
+	public String getUserEmail() {
+		return userEmail;
+	}
+
+
+	public void setUserEmail(String userEmail) {
+		this.userEmail = userEmail;
+	}
+
+
+	public String getUserAddress() {
+		return userAddress;
+	}
+
+
+	public void setUserAddress(String userAddress) {
+		this.userAddress = userAddress;
+	}
+
+
+	public String getUserName() {
+		return userName;
+	}
+
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+
+	public String getUserPhoneNumber() {
+		return userPhoneNumber;
+	}
+
+
+	public void setUserPhoneNumber(String userPhoneNumber) {
+		this.userPhoneNumber = userPhoneNumber;
+	}
+
 	@Override
 	public String toString() {
 		return "ProgramSubscription [subscriptionId=" + subscriptionId + ", program=" + program + ", organization="
 				+ organization + ", startDate=" + startDate + ", endDate=" + endDate + ", transactionId="
 				+ transactionId + ", transactionType=" + transactionType + ", transactionDate=" + transactionDate
-				+ ", amountPaid=" + amountPaid + ", maxCohorts=" + maxCohorts + ", uuid=" + uuid + "]";
+				+ ", amountPaid=" + amountPaid + ", maxCohorts=" + maxCohorts + ", uuid=" + uuid + ", status=" + status
+				+ ", userEmail=" + userEmail + ", userAddress=" + userAddress + ", userName=" + userName
+				+ ", userPhoneNumber=" + userPhoneNumber + "]";
 	}
-
 
 	// Method to ensure UUID and generate userId before persisting
     @PrePersist
