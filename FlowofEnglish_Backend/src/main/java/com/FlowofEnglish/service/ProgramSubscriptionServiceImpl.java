@@ -29,6 +29,14 @@ public class ProgramSubscriptionServiceImpl implements ProgramSubscriptionServic
             subscription.setStartDate(subscriptionDetails.getStartDate());
             subscription.setEndDate(subscriptionDetails.getEndDate());
             subscription.setMaxCohorts(subscriptionDetails.getMaxCohorts());
+            subscription.setAmountPaid(subscriptionDetails.getAmountPaid());
+            subscription.setUserName(subscriptionDetails.getUserName());
+            subscription.setTransactionDate(subscriptionDetails.getTransactionDate());
+            subscription.setStatus(subscriptionDetails.getStatus());
+            subscription.setUserAddress(subscriptionDetails.getUserAddress());
+            subscription.setUserEmail(subscriptionDetails.getUserEmail());
+            subscription.setTransactionType(subscriptionDetails.getTransactionType());
+            subscription.setUserPhoneNumber(subscriptionDetails.getUserPhoneNumber());
             return subscriptionRepository.save(subscription);
         }
         return null; // Or throw an exception

@@ -83,7 +83,7 @@
                 updateResponse(`Order created: ${JSON.stringify(data)}`);
                 
                 const options = {
-                    key: "rzp_live_ijC0oArpUtHAS8",  // Replace with your actual key
+                    key: "rzp_test_UCyO771J6mtj5d",  // Replace with your actual key
                     amount: data.amount,
                     currency: data.currency,
                     order_id: data.id,
@@ -97,31 +97,27 @@
                         contact: "6301615610"
                     },
 					notes: {
-					                program_id: "CC-8",  // Add program ID
-					                organization_id: "SVCE", // Add organization ID
-					                max_cohorts: 1,               // Add max cohorts
-					                email: "harikrishna055hari@gmail.com" // Add email
+						      name: "Hari krishna",
+						      email: "harikrishna055hari@gmail.com",
+						      contact: "6301615610",
+					          program_id: "CC-8",  // Add program ID
+					          organization_id: "SVCE", // Add organization ID
+					          max_cohorts: 3,               // Add max cohorts
+					          address: "Kurnool"
 					            },
                     theme: {
                         color: "#3399cc"
                     }
                 };
                 
-				var rzp1 = new Razorpay(options);
-				rzp1.on('payment.failed', function (response){
-				        alert(response.error.code);
-				        alert(response.error.description);
-				        alert(response.error.source);
-				        alert(response.error.step);
-				        alert(response.error.reason);
-				        alert(response.error.metadata.order_id);
-				        alert(response.error.metadata.payment_id);
-				});
-				document.getElementById('payButton').onclick = function(e){
-				    rzp1.open();
-				    e.preventDefault();
-				}
-            })
+				const rzp1 = new Razorpay(options);
+				            rzp1.on('payment.failed', function (response) {
+				                updateResponse("Payment Failed");
+				                alert("Payment failed:\n" + JSON.stringify(response.error, null, 2));
+				            });
+
+				            rzp1.open();
+				        })
             .catch(error => {
                 console.error('Error:', error);
                 updateResponse(`Error: ${error.message}`);
