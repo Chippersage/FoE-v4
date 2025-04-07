@@ -36,9 +36,9 @@ const InfoItem = ({ label, value, loading, isEmail = false }) => (
     {loading ? (
       <CircularProgress size={16} sx={{ ml: isEmail ? 0 : 1 }} />
     ) : (
-      <Typography 
-        variant="body1" 
-        sx={{ 
+      <Typography
+        variant="body1"
+        sx={{
           wordBreak: isEmail ? 'break-all' : 'normal',
           overflowWrap: 'break-word',
           whiteSpace: isEmail ? 'normal' : 'nowrap',
