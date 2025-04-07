@@ -42,7 +42,6 @@ function Dashboard() {
         const response = await axios.get(
           `${API_BASE_URL}/units/${userId}/program/${programId}`
         );
-        console.log(response.data);
         return response.data;
       } catch (error) {
         //  console.log('Error fetching program info:', error); // Log any error during fetching
@@ -210,9 +209,9 @@ function Dashboard() {
         <StagesSkeleton />
       )}
 
-      <div className="w-full md:w-[50%] flex flex-col progress-section">
+      <div className="w-full md:w-[50%] flex flex-col">
         {userProgress && currentUserLeaderBoardInfo ? (
-          <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
+          <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3 progress-section">
             <div className="flex justify-between py-2">
               <h3 className="text-xl font-semibold font-openSans">
                 Your Progress

@@ -68,8 +68,7 @@ export default function Dashboard() {
   }, [user?.cohorts]);
 
   const handleResume = async (cohortWithProgram: string) => {
-    // Save the tour state if not already done
-    localStorage.setItem("tourStep", 4); // assuming step 4 is the resume action
+    console.log("resume clicked")
     setSelectedCohortWithProgram(cohortWithProgram);
     // When setting the cohort
     localStorage.setItem(

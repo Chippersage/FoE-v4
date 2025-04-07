@@ -3,7 +3,7 @@ import Skeleton from "@/components/skeletons/Skeleton";
 
 export default function LeaderboardSkeleton() {
   return (
-    <Card className="w-full max-w-md mx-auto h-80 leaderboard-section">
+    <Card className="w-full max-w-md mx-auto h-80">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
           <Skeleton className="h-8 w-48 mx-auto" />
