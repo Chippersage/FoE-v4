@@ -8,6 +8,7 @@ import {
   type DragStartEvent,
   useDraggable,
   useDroppable,
+  useDndContext,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
@@ -303,6 +304,8 @@ const DraggableKeyword = ({
 
 
 // Droppable zone component
+// import { useDroppable, useDndContext } from "@dnd-kit/core";
+
 const DroppableZone = ({
   id,
   definition,
@@ -319,61 +322,75 @@ const DroppableZone = ({
   showResult: boolean;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
+  const { active } = useDndContext();
+
+  const draggingContent =
+    isOver && active?.data?.current?.content
+      ? active.data.current.content
+      : null;
+
+  const cloudImageSrc = (placedKeyword || isOver)
+    ? "/images/cloud_bg.webp"
+    : "/images/lighter_grey_cloud_bg.png";
 
   return (
     <div className="flex items-center gap-4 mb-4">
       <div
         ref={setNodeRef}
-        className={`w-48 h-14 rounded-full flex items-center justify-center transition-colors 
-      ${
-        placedKeyword
-          ? isOver
-            ? "bg-green-200 border-2 border-green-400"
-            : ""
-          : "bg-gray-200 border-2 border-transparent"
-      }
-      ${
-        placedKeyword && isSubmitted && isCorrect !== null && showResult
-          ? isCorrect
-            ? "bg-green-100"
-            : "bg-red-100"
-          : ""
-      }`}
+        className="relative w-48 h-14 flex items-center justify-center transition-transform duration-300 ease-in-out"
       >
-        {placedKeyword && (
-          <div className="relative flex items-center justify-center">
-            {/* Background Image */}
-            <img
-              src="/images/cloud_bg.webp" // Adjust to the correct path of your cloud image
-              alt="Cloud Background"
-              className="w-full h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[200px] object-contain"
-            />
+        {/* Cloud background */}
+        <img
+          src={cloudImageSrc}
+          alt="Cloud Background"
+          className={`w-full h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[200px] object-contain transition-transform ${
+            isOver ? "scale-105" : "scale-100"
+          }`}
+        />
 
-            {/* Content on top of the image */}
-            <div className="absolute flex items-center justify-around w-full px-2">
-              {placedKeyword.content.includes("/images/") ? (
-                <img
-                  src={placedKeyword.content || "/placeholder.svg"}
-                  width={32}
-                  height={32}
-                  alt="Punctuation mark"
-                />
-              ) : (
-                <span className="font-semibold">{placedKeyword.content}</span>
-              )}
+        {/* Display dragging content if hovering */}
+        <div className="absolute flex items-center justify-around w-full px-2">
+          {isOver && draggingContent ? (
+            draggingContent.includes("/images/") ? (
+              <img
+                src={draggingContent || "/placeholder.svg"}
+                width={32}
+                height={32}
+                alt="Dragged Image"
+              />
+            ) : (
+              <span className="font-semibold text-gray-800">
+                {draggingContent}
+              </span>
+            )
+          ) : placedKeyword ? (
+            placedKeyword.content.includes("/images/") ? (
+              <img
+                src={placedKeyword.content || "/placeholder.svg"}
+                width={32}
+                height={32}
+                alt="Punctuation mark"
+              />
+            ) : (
+              <span className="font-semibold text-gray-800">
+                {placedKeyword.content}
+              </span>
+            )
+          ) : null}
 
-              {/* Show result only if submitted and evaluated */}
-              {isSubmitted && isCorrect !== null && showResult && (
-                <span className="ml-1 text-xl">{isCorrect ? "✅" : "❌"}</span>
-              )}
-            </div>
-          </div>
-        )}
+          {/* Show result only if submitted and evaluated */}
+          {placedKeyword && isSubmitted && isCorrect !== null && showResult && (
+            <span className="ml-1 text-xl">{isCorrect ? "✅" : "❌"}</span>
+          )}
+        </div>
       </div>
+
       <p className="text-xl font-medium text-gray-800">{definition}</p>
     </div>
   );
 };
+
+
 
 // Timer component
 // const Timer = ({ time }: { time: string }) => {
@@ -422,16 +439,21 @@ const PageScoreIndicator = ({
 // Error component
 const ErrorState = ({ message }: { message: string }) => {
   return (
-    <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
-      <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-md">
-        <h3 className="text-2xl font-bold text-center text-red-600 mb-4">Error</h3>
+    <div className="relative w-full max-w-3xl h-[600px] rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+      <div className="bg-slate-100 rounded-xl p-8 shadow-lg w-full max-w-md">
+        <h3 className="text-2xl font-bold text-center text-red-600 mb-4">
+          Error
+        </h3>
         <p className="text-center text-gray-600 mb-8">{message}</p>
-        <Button className="w-full" onClick={() => window.location.reload()}>
+        <Button
+          className="w-full bg-[#64CE80]"
+          onClick={() => window.location.reload()}
+        >
           Try Again
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 interface VocabularyActivityProps {
@@ -519,7 +541,8 @@ export default function VocabularyActivity({
       } catch (error) {
         console.error("Error fetching or parsing XML:", error);
         setError(
-          "Failed to load questions. Please check the XML URL and try again."
+          // "Failed to load questions. Please check the XML URL and try again."
+          "Failed to load questions. Please try again later."
         );
         setIsLoading(false);
       }
@@ -885,7 +908,7 @@ useEffect(() => {
           </Card>
         </div>
 
-        <div className="space-y-4 mb-11 sm:px-10">
+        <div className="space-y-4 mb-11 max-w-4xl mx-auto">
           {currentDefinitions.map((definition) => (
             <DroppableZone
               key={definition.id}

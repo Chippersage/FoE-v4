@@ -111,6 +111,8 @@ const SingleSubconcept = () => {
 const [showSubmit, setShowSubmit] = useState(
   true
 );
+const [isSubmitting, setIsSubmitting] = useState(false);
+
 
 const [submissionPayload, setSubmissionPayload] = useState<{
   userAttemptFlag: boolean;
@@ -248,11 +250,15 @@ const [submissionPayload, setSubmissionPayload] = useState<{
     }
   };
 
-  const  handlePostScore = (payload: any) => {
+  const handlePostScore = (payload: any) => {
+    if (isSubmitting) return; // prevent duplicate
+    setIsSubmitting(true);
+
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-    if (!userData) {
+    if (!userData || Object.keys(userData).length === 0) {
       console.error("No user data available for POST request.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -273,40 +279,37 @@ const [submissionPayload, setSubmissionPayload] = useState<{
 
     fetch(`${userData.API_BASE_URL}/user-attempts`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(finalPayload),
     })
       .then((response) => {
         if (response.ok) {
           console.log("submitted and postSuccess message sent");
-          // Notify the iframe about the successful request
           const iframe = document.getElementById(
             "embeddedContent"
           ) as HTMLIFrameElement;
           if (iframe && iframe.tagName === "IFRAME") {
             iframe.contentWindow?.postMessage("postSuccess", "*");
-          }else if(subconcept?.subconceptType === "vocab"){
+          } else if (subconcept?.subconceptType === "vocab") {
             setSuccessOverlay(true);
           }
         } else {
-          setErrorOverlay(true); // Show error overlay on failure
+          setErrorOverlay(true);
         }
         return response.json();
       })
       .then((data) => {
-        console.log("payload?.userAttemptScore", payload?.userAttemptScore);
-        console.log(
-          "subconcept?.subconceptMaxscore",
-          subconcept?.subconceptMaxscore
+        setScorePercentage(
+          (payload?.userAttemptScore / subconcept?.subconceptMaxscore) * 100
         );
-        setScorePercentage((payload?.userAttemptScore / subconcept?.subconceptMaxscore) * 100);
         console.log("Score submitted successfully:", data);
       })
       .catch((error) => {
         console.error("Error submitting score:", error);
         setErrorOverlay(true);
+      })
+      .finally(() => {
+        setIsSubmitting(false); // allow future submissions
       });
   };
 
@@ -397,6 +400,7 @@ const [submissionPayload, setSubmissionPayload] = useState<{
             {/* Submit Button (Shown only when showSubmit is true) */}
             {showSubmit && (
               <button
+                disabled={isSubmitting}
                 onClick={handleSubmit}
                 className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-xs font-['system-ui'] rounded-full flex flex-col items-center justify-center md:relative md:top-48 z-[99] gap-1"
               >

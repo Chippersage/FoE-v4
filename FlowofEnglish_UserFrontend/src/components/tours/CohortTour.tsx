@@ -40,6 +40,7 @@ const CohortTour = ({ onResumeClick }) => {
       content:
         "Click the Resume button of the program you want to proceed with. (You must click here to continue.)",
       // This step forces the user to click the Resume button.
+      spotlightClicks: true,
     },
   ];
 
@@ -52,7 +53,7 @@ const CohortTour = ({ onResumeClick }) => {
     }
     // When the tour is finished, stop running
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      localStorage.setItem("hasSeenProductTour", "true");
+      // localStorage.setItem("hasSeenProductTour", "true");
       setRunTour(false);
     }
 
