@@ -4,6 +4,7 @@ import Header2 from "../../components/Header2.tsx";
 import { useEffect, useState } from "react";
 import WelcomeModal from "@/components/modals/WelcomeModal.tsx";
 import { useUserContext } from "@/context/AuthContext.tsx";
+import DashboardTour from "@/components/tours/DashboardTour.js";
 
 export const HomePage = () => {
   const [showWelcome, setShowWelcome] = useState(false);
@@ -11,7 +12,7 @@ export const HomePage = () => {
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [isLoading, setIsLoading] = useState(true); // Loader state
   // const selectedProgramId = localStorage.getItem("selectedProgramId");
-  console.log(selectedCohortWithProgram);
+const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
 
   useEffect(() => {
     // const selectedProgramId = localStorage.getItem("selectedProgramId");
@@ -50,6 +51,13 @@ export const HomePage = () => {
 
   return (
     <>
+      {/* Render Dashboard tour only if the product tour hasn't been completed */}
+      {!hasSeenProductTour && (
+        <DashboardTour
+          // onLetsGoClick={handleLetsGoClick}
+          // onActiveUnitClick={handleActiveUnitClick}
+        />
+      )}
       <div className="relative w-full min-h-full no-scrollbar">
         {/* Show Loader until backgroundUrl is ready */}
         {isLoading ? (
