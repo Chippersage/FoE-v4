@@ -210,23 +210,22 @@ function Dashboard() {
         <StagesSkeleton />
       )}
 
-      <div className="w-full md:w-[50%] flex flex-col">
+      <div className="w-full md:w-[50%] flex flex-col progress-section">
         {userProgress && currentUserLeaderBoardInfo ? (
           <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3">
             <div className="flex justify-between py-2">
               <h3 className="text-xl font-semibold font-openSans">
                 Your Progress
               </h3>
-              {formattedElapsedTime &&
-              <div className="flex items-center gap-2 rounded-full bg-green-50 px-2">
-                <Clock className="h-4 w-4 text-green-600" />
-                
+              {formattedElapsedTime && (
+                <div className="flex items-center gap-2 rounded-full bg-green-50 px-2">
+                  <Clock className="h-4 w-4 text-green-600" />
+
                   <span className="font-medium text-green-600 tabular-nums">
                     Session time: {formattedElapsedTime}
                   </span>
-                
-              </div>
-              } 
+                </div>
+              )}
             </div>
             <UserProgressBar userProgress={userProgress} />
             <div className="flex justify-between items-center mt-2">

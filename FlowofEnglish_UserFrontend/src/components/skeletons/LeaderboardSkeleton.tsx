@@ -3,7 +3,7 @@ import Skeleton from "@/components/skeletons/Skeleton";
 
 export default function LeaderboardSkeleton() {
   return (
-    <Card className="w-full max-w-md mx-auto h-80">
+    <Card className="w-full max-w-md mx-auto h-80 leaderboard-section">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
           <Skeleton className="h-8 w-48 mx-auto" />
@@ -17,7 +17,10 @@ export default function LeaderboardSkeleton() {
           {/* Skeleton for the top 3 performers */}
           {/* @ts-ignore */}
           {[...Array(3)].map((_, index) => (
-            <div key={index} className="flex justify-between items-center py-2 rounded-xl shadow-lg">
+            <div
+              key={index}
+              className="flex justify-between items-center py-2 rounded-xl shadow-lg"
+            >
               <div className="flex items-center">
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="ml-2">

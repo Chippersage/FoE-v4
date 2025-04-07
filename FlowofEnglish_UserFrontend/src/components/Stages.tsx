@@ -55,17 +55,17 @@ export default function Stages({ stages, programCompletionStatus }) {
         <h3 className="text-xl font-semibold font-openSans mb-4">
           Your Learning Path
         </h3>
-        {programCompletionStatus === "yes" &&
+        {programCompletionStatus === "yes" && (
           <div className="bg-emerald-50 text-emerald-600 px-4 py-2 text-sm font-medium flex items-center gap-2">
             <Trophy className="w-4 h-4" />
             All Stages Complete!
           </div>
-        }
+        )}
       </div>
       {/* Scrollable Cards */}
       <div
         ref={containerRef}
-        className="space-y-4 overflow-y-auto max-h-[400px] no-scrollbar"
+        className="space-y-4 overflow-y-auto max-h-[400px] no-scrollbar learning-path-section"
       >
         {stagesArray.length > 0 ? (
           stagesArray.map((stage, index) => {
@@ -158,7 +158,15 @@ export default function Stages({ stages, programCompletionStatus }) {
                           : "bg-[#5bc3cd] text-white hover:bg-[#5bc3cd] cursor-not-allowed" // Disabled
                       }`}
                     >
-                      <div className="flex items-center justify-center space-x-2">
+                      <div
+                        className={`flex items-center justify-center space-x-2 ${
+                          index === 0 &&
+                          stage?.stageCompletionStatus === "no" &&
+                          stage?.stageEnabled
+                            ? "lets-go-button"
+                            : ""
+                        }`}
+                      >
                         <span>
                           {/* @ts-ignore */}
                           {stage.stageEnabled
@@ -219,7 +227,7 @@ export default function Stages({ stages, programCompletionStatus }) {
                           className={`relative flex cursor-pointer items-center space-x-2 p-2 rounded-[3px] transition-all duration-200 ease-in-out ${
                             // @ts-ignore
                             unit.completionStatus === "incomplete" &&
-                            "bg-[#5BC3CD]"
+                            "bg-[#5BC3CD] active-unit"
                           } ${
                             // @ts-ignore
                             unit.completionStatus === "disabled" &&
