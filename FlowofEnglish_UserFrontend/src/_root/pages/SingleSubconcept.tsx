@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 import MediaContent from "@/components/MediaContent";
@@ -95,7 +95,7 @@ const SingleSubconcept = () => {
   const { user, selectedCohortWithProgram } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
-   // State to control Submit button visibility
+  // State to control Submit button visibility
   const [successOverlay, setSuccessOverlay] = useState(false);
   const [errorOverlay, setErrorOverlay] = useState(false);
   const [onFrameLoad, setOnFrameLoad] = useState(false);
@@ -106,79 +106,88 @@ const SingleSubconcept = () => {
   );
   // @ts-ignore
   const [showIframe, setShowIframe] = useState(
-    !["video", "audio", "pdf", "image", "assignment_video", "assignment_audio", "assignment_pdf", "assignment_image", "assessment", "youtube"].includes(subconcept?.subconceptType)
+    ![
+      "video",
+      "audio",
+      "pdf",
+      "image",
+      "assignment_video",
+      "assignment_audio",
+      "assignment_pdf",
+      "assignment_image",
+      "assessment",
+      "youtube",
+      "vocab",
+    ].includes(subconcept?.subconceptType)
   );
-const [showSubmit, setShowSubmit] = useState(
-  true
-);
-const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-
-const [submissionPayload, setSubmissionPayload] = useState<{
-  userAttemptFlag: boolean;
-  userAttemptScore: number;
-} | null>(null);
-
+  const [submissionPayload, setSubmissionPayload] = useState<{
+    userAttemptFlag: boolean;
+    userAttemptScore: number;
+  } | null>(null);
 
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
   const [scorePercentage, setScorePercentage] = useState<null | number>(null);
-    const [isPortrait, setIsPortrait] = useState(
-      window.innerWidth < window.innerHeight
-    );
-    const [modalVisible, setModalVisible] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(
+    window.innerWidth < window.innerHeight
+  );
+  const [modalVisible, setModalVisible] = useState(false);
+  const submitBtnRef = useRef(null); // 👈 ref for your styled submit button
 
-    useEffect(() => {
-      // Only set showSubmit to false if it's a vocabulary activity
-      if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
-        setShowSubmit(false);
-      } else {
-        setShowSubmit(true);
-      }
-    }, [subconcept]);
+  useEffect(() => {
+    // Only set showSubmit to false if it's a vocabulary activity
+    if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
+      setShowSubmit(false);
+    } else {
+      setShowSubmit(true);
+    }
+  }, [subconcept]);
 
-// useEffect(() => {
-//   // Clear sessionStorage when the component mounts to show modal again on revisit
-//   sessionStorage.removeItem("orientationModalDismissed");
+  // useEffect(() => {
+  //   // Clear sessionStorage when the component mounts to show modal again on revisit
+  //   sessionStorage.removeItem("orientationModalDismissed");
 
-//   // Function to check and update orientation
-//   const handleOrientationChange = () => {
-//     const portraitMode = window.innerWidth < window.innerHeight;
-//     setIsPortrait(portraitMode);
+  //   // Function to check and update orientation
+  //   const handleOrientationChange = () => {
+  //     const portraitMode = window.innerWidth < window.innerHeight;
+  //     setIsPortrait(portraitMode);
 
-//     // If device is in portrait mode and hasn't been dismissed, show modal
-//     const link = subconcept.subconceptLink.toUpperCase();
-//     if (
-//       (link.includes("MTF".toUpperCase()) ||
-//       link.includes("VOCABULARY".toUpperCase()) && showIframe)
-//     ) {
-//       const hasDismissed = sessionStorage.getItem("orientationModalDismissed");
-//       if (portraitMode && !hasDismissed) {
-//         setModalVisible(true);
-//       } else {
-//         setModalVisible(false); // Auto dismiss when in landscape
-//       }
-//     }
+  //     // If device is in portrait mode and hasn't been dismissed, show modal
+  //     const link = subconcept.subconceptLink.toUpperCase();
+  //     if (
+  //       (link.includes("MTF".toUpperCase()) ||
+  //       link.includes("VOCABULARY".toUpperCase()) && showIframe)
+  //     ) {
+  //       const hasDismissed = sessionStorage.getItem("orientationModalDismissed");
+  //       if (portraitMode && !hasDismissed) {
+  //         setModalVisible(true);
+  //       } else {
+  //         setModalVisible(false); // Auto dismiss when in landscape
+  //       }
+  //     }
 
-//   };
+  //   };
 
-//   // Initial check
-//   handleOrientationChange();
+  //   // Initial check
+  //   handleOrientationChange();
 
-//   // Listen for orientation changes
-//   window.addEventListener("resize", handleOrientationChange);
-//   window.addEventListener("orientationchange", handleOrientationChange);
+  //   // Listen for orientation changes
+  //   window.addEventListener("resize", handleOrientationChange);
+  //   window.addEventListener("orientationchange", handleOrientationChange);
 
-//   return () => {
-//     window.removeEventListener("resize", handleOrientationChange);
-//     window.removeEventListener("orientationchange", handleOrientationChange);
-//   };
-// }, [subconcept.subconceptLink]);
+  //   return () => {
+  //     window.removeEventListener("resize", handleOrientationChange);
+  //     window.removeEventListener("orientationchange", handleOrientationChange);
+  //   };
+  // }, [subconcept.subconceptLink]);
 
-    const dismissModal = () => {
-      setModalVisible(false);
-      sessionStorage.setItem("orientationModalDismissed", "true");
-    };
+  const dismissModal = () => {
+    setModalVisible(false);
+    sessionStorage.setItem("orientationModalDismissed", "true");
+  };
 
   useEffect(() => {
     if (user) {
@@ -237,9 +246,10 @@ const [submissionPayload, setSubmissionPayload] = useState<{
   // };
 
   const handleSubmit = () => {
-    if(subconcept?.subconceptType?.toLowerCase() === "vocab") handlePostScore(submissionPayload);
+    if (subconcept?.subconceptType?.toLowerCase() === "vocab")
+      handlePostScore(submissionPayload);
     // Send a message to the iframe when Submit is clicked
-    else{
+    else {
       const iframe = document.getElementById("embeddedContent");
       if (iframe && iframe.tagName === "IFRAME") {
         (iframe as HTMLIFrameElement).contentWindow?.postMessage(
@@ -351,7 +361,8 @@ const [submissionPayload, setSubmissionPayload] = useState<{
         <div className="flex-1 m-[2px]">
           {subconcept?.subconceptType === "vocab" ? (
             <VocabularyActivity
-              setShowSubmit={setShowSubmit}
+              triggerSubmit={() => submitBtnRef.current?.click()}
+              // setShowSubmit={setShowSubmit}
               xmlUrl={subconcept?.subconceptLink}
               // onSubmitScore={handlePostScore}
               setSubmissionPayload={setSubmissionPayload}
@@ -400,6 +411,7 @@ const [submissionPayload, setSubmissionPayload] = useState<{
             {/* Submit Button (Shown only when showSubmit is true) */}
             {showSubmit && (
               <button
+                ref={submitBtnRef}
                 disabled={isSubmitting}
                 onClick={handleSubmit}
                 className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white md:w-[85px] md:h-[85px] h-[60px] w-[60px] font-[700] md:text-[16px] text-xs font-['system-ui'] rounded-full flex flex-col items-center justify-center md:relative md:top-48 z-[99] gap-1"
