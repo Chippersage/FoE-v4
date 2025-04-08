@@ -8,6 +8,7 @@ import {
   type DragStartEvent,
   useDraggable,
   useDroppable,
+  useDndContext,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
@@ -20,38 +21,38 @@ import toast from "react-hot-toast";
 
 // XML parser types
 interface XMLQuestion {
-  id: string
-  word: string
-  correctOption: string
+  id: string;
+  word: string;
+  correctOption: string;
 }
 
 interface XMLActivity {
-  activityid: string
-  questions: XMLQuestion[]
+  activityid: string;
+  questions: XMLQuestion[];
 }
 
 interface XMLData {
-  headertext: string
-  activities: XMLActivity[]
+  headertext: string;
+  activities: XMLActivity[];
 }
 
 // Transformed question types for our component
 interface Keyword {
-  id: string
-  content: string
+  id: string;
+  content: string;
 }
 
 interface Definition {
-  id: string
-  text: string
-  correctKeywordId: string
+  id: string;
+  text: string;
+  correctKeywordId: string;
 }
 
 interface Question {
-  id: string
-  time: string
-  keywords: Keyword[]
-  definitions: Definition[]
+  id: string;
+  time: string;
+  keywords: Keyword[];
+  definitions: Definition[];
 }
 
 // Sound effects hook
@@ -78,7 +79,8 @@ const useSoundEffects = () => {
       // Set sources
       if (dragStartSound.current)
         dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
-      if (dropSound.current) dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
+      if (dropSound.current)
+        dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
       if (correctSound.current)
         correctSound.current.src = "/sounds/correct.ogg";
       if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
@@ -118,7 +120,9 @@ const useSoundEffects = () => {
   }, []);
 
   // Play sound function
-  const playSound = (type: "dragStart" | "drop" | "correct" | "wrong" | "allCorrect") => {
+  const playSound = (
+    type: "dragStart" | "drop" | "correct" | "wrong" | "allCorrect"
+  ) => {
     if (!isSoundEnabled || !soundsLoaded) return;
 
     let sound;
@@ -157,79 +161,83 @@ const useSoundEffects = () => {
 // XML parser function
 const parseXML = async (xmlUrl: string): Promise<XMLData> => {
   try {
-    const response = await fetch(xmlUrl)
+    const response = await fetch(xmlUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch XML: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `Failed to fetch XML: ${response.status} ${response.statusText}`
+      );
     }
 
-    const xmlText = await response.text()
-    const parser = new DOMParser()
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml")
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
     // Parse the header text
-    const activitiesElement = xmlDoc.getElementsByTagName("activities")[0]
-    const headerText = activitiesElement.getAttribute("headertext") || "Vocabulary Activity"
+    const activitiesElement = xmlDoc.getElementsByTagName("activities")[0];
+    const headerText =
+      activitiesElement.getAttribute("headertext") || "Vocabulary Activity";
 
     // Parse activities
-    const activityElements = xmlDoc.getElementsByTagName("activity")
-    const activities: XMLActivity[] = []
+    const activityElements = xmlDoc.getElementsByTagName("activity");
+    const activities: XMLActivity[] = [];
 
     for (let i = 0; i < activityElements.length; i++) {
-      const activityElement = activityElements[i]
-      const activityId = activityElement.getAttribute("activityid") || `activity-${i + 1}`
+      const activityElement = activityElements[i];
+      const activityId =
+        activityElement.getAttribute("activityid") || `activity-${i + 1}`;
 
       // Parse questions
-      const questionElements = activityElement.getElementsByTagName("question")
-      const questions: XMLQuestion[] = []
+      const questionElements = activityElement.getElementsByTagName("question");
+      const questions: XMLQuestion[] = [];
 
       for (let j = 0; j < questionElements.length; j++) {
-        const questionElement = questionElements[j]
+        const questionElement = questionElements[j];
         questions.push({
           id: questionElement.getAttribute("id") || `question-${j + 1}`,
           word: questionElement.getAttribute("word") || "",
           correctOption: questionElement.getAttribute("correctOption") || "",
-        })
+        });
       }
 
       activities.push({
         activityid: activityId,
         questions: questions,
-      })
+      });
     }
 
     return {
       headertext: headerText,
       activities: activities,
-    }
+    };
   } catch (error) {
-    console.error("Error parsing XML:", error)
-    throw error
+    console.error("Error parsing XML:", error);
+    throw error;
   }
-}
+};
 
 // Transform XML data to our component format
 const transformXMLToQuestions = (xmlData: XMLData): Question[] => {
   return xmlData.activities.map((activity, activityIndex) => {
-    const keywords: Keyword[] = []
-    const definitions: Definition[] = []
+    const keywords: Keyword[] = [];
+    const definitions: Definition[] = [];
 
     // Create keywords and definitions from questions
     activity.questions.forEach((question, questionIndex) => {
-      const keywordId = `keyword-${activity.activityid}-${question.id}`
+      const keywordId = `keyword-${activity.activityid}-${question.id}`;
 
       // Add keyword
       keywords.push({
         id: keywordId,
         content: question.word,
-      })
+      });
 
       // Add definition
       definitions.push({
         id: `def-${activity.activityid}-${question.id}`,
         text: question.correctOption,
         correctKeywordId: keywordId,
-      })
-    })
+      });
+    });
 
     // Create a question object
     return {
@@ -237,9 +245,9 @@ const transformXMLToQuestions = (xmlData: XMLData): Question[] => {
       time: `${activityIndex + 1}:00`, // Simple time format for each activity
       keywords: keywords,
       definitions: definitions,
-    }
-  })
-}
+    };
+  });
+};
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
@@ -249,7 +257,6 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   }
   return newArray;
 };
-
 
 // Draggable keyword component
 const DraggableKeyword = ({
@@ -301,7 +308,6 @@ const DraggableKeyword = ({
   );
 };
 
-
 // Droppable zone component
 const DroppableZone = ({
   id,
@@ -318,59 +324,82 @@ const DroppableZone = ({
   isSubmitted: boolean;
   showResult: boolean;
 }) => {
-  const { setNodeRef, isOver } = useDroppable({ id });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({ id });
+  const { active } = useDndContext();
+
+  // Always initialize draggable hooks with a consistent ID
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: placedKeyword?.id || `placeholder-${id}`,
+    data: { content: placedKeyword?.content || "" },
+    disabled: !placedKeyword,
+  });
+
+  const draggingContent = active?.data?.current?.content;
+  const cloudImageSrc =
+    placedKeyword || isOver
+      ? "/images/cloud_bg.webp"
+      : "/images/lighter_grey_cloud_bg.png";
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
 
   return (
     <div className="flex items-center gap-4 mb-4">
       <div
-        ref={setNodeRef}
-        className={`w-48 h-14 rounded-full flex items-center justify-center transition-colors 
-      ${
-        placedKeyword
-          ? isOver
-            ? "bg-green-200 border-2 border-green-400"
-            : ""
-          : "bg-gray-200 border-2 border-transparent"
-      }
-      ${
-        placedKeyword && isSubmitted && isCorrect !== null && showResult
-          ? isCorrect
-            ? "bg-green-100"
-            : "bg-red-100"
-          : ""
-      }`}
+        ref={setDroppableRef}
+        className="relative min-w-[120px] w-[120px] h-14 flex items-center justify-center shrink-0 transition-transform duration-300 ease-in-out"
       >
-        {placedKeyword && (
-          <div className="relative flex items-center justify-center">
-            {/* Background Image */}
-            <img
-              src="/images/cloud_bg.webp" // Adjust to the correct path of your cloud image
-              alt="Cloud Background"
-              className="w-full h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[200px] object-contain"
-            />
+        <img
+          src={cloudImageSrc}
+          alt="Cloud Background"
+          className={`w-full h-auto max-w-[120px] object-contain transition-transform ${
+            isOver ? "scale-105" : "scale-100"
+          }`}
+        />
 
-            {/* Content on top of the image */}
-            <div className="absolute flex items-center justify-around w-full px-2">
-              {placedKeyword.content.includes("/images/") ? (
-                <img
-                  src={placedKeyword.content || "/placeholder.svg"}
-                  width={32}
-                  height={32}
-                  alt="Punctuation mark"
-                />
-              ) : (
-                <span className="font-semibold">{placedKeyword.content}</span>
-              )}
-
-              {/* Show result only if submitted and evaluated */}
-              {isSubmitted && isCorrect !== null && showResult && (
-                <span className="ml-1 text-xl">{isCorrect ? "✅" : "❌"}</span>
-              )}
+        <div className="absolute flex items-center justify-around w-full px-2">
+          {isOver && draggingContent ? (
+            <span className="font-semibold text-gray-800 text-sm line-clamp-2 text-center">
+              {draggingContent}
+            </span>
+          ) : placedKeyword ? (
+            <div
+              ref={setDraggableRef}
+              style={style}
+              {...attributes}
+              {...listeners}
+              className={`relative flex items-center justify-center cursor-grab active:cursor-grabbing ${
+                isDragging ? "opacity-50" : ""
+              }`}
+            >
+              <span className="text-gray-800 font-semibold text-center text-sm">
+                {placedKeyword.content}
+              </span>
             </div>
-          </div>
-        )}
+          ) : null}
+
+          {placedKeyword && isSubmitted && isCorrect !== null && showResult && (
+            <span className="ml-1 text-xl absolute right-0">
+              {isCorrect ? "✅" : "❌"}
+            </span>
+          )}
+        </div>
       </div>
-      <p className="text-xl font-medium text-gray-800">{definition}</p>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-base sm:text-lg font-medium text-gray-800 break-words">
+          {definition}
+        </p>
+      </div>
     </div>
   );
 };
@@ -385,26 +414,25 @@ const DroppableZone = ({
 // };
 
 // Page score indicator component
-const PageScoreIndicator = ({
-  isAllCorrect,
-  questionsCount,
-  score,
-}: {
-  isAllCorrect: boolean | null;
-  questionsCount: number;
-  score: number;
-}) => {
-  return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-md">
-      <span className="font-bold text-lg">Score:</span>
-      <span className="text-xl">
-        {score}/{questionsCount}{" "}
-        {isAllCorrect !== null && (isAllCorrect ? "✅" : "❌")}
-      </span>
-    </div>
-  );
-};
-
+// const PageScoreIndicator = ({
+//   isAllCorrect,
+//   questionsCount,
+//   score,
+// }: {
+//   isAllCorrect: boolean | null;
+//   questionsCount: number;
+//   score: number;
+// }) => {
+//   return (
+//     <div className="absolute top-4 right-4 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-md">
+//       <span className="font-bold text-lg">Score:</span>
+//       <span className="text-xl">
+//         {score}/{questionsCount}{" "}
+//         {isAllCorrect !== null && (isAllCorrect ? "✅" : "❌")}
+//       </span>
+//     </div>
+//   );
+// };
 
 // Loading component
 // const LoadingState = ({ headerText }: { headerText: string }) => {
@@ -422,25 +450,31 @@ const PageScoreIndicator = ({
 // Error component
 const ErrorState = ({ message }: { message: string }) => {
   return (
-    <div className="relative w-full max-w-3xl h-[600px] bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
-      <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-md">
-        <h3 className="text-2xl font-bold text-center text-red-600 mb-4">Error</h3>
+    <div className="relative w-full max-w-3xl h-[600px] rounded-xl shadow-xl p-8 flex flex-col items-center justify-center">
+      <div className="bg-slate-100 rounded-xl p-8 shadow-lg w-full max-w-md">
+        <h3 className="text-2xl font-bold text-center text-red-600 mb-4">
+          Error
+        </h3>
         <p className="text-center text-gray-600 mb-8">{message}</p>
-        <Button className="w-full" onClick={() => window.location.reload()}>
+        <Button
+          className="w-full bg-[#64CE80]"
+          onClick={() => window.location.reload()}
+        >
           Try Again
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 interface VocabularyActivityProps {
+  triggerSubmit: () => void;
   xmlUrl: string;
   // onSubmitScore?: (payload: {
   //   userAttemptFlag: boolean;
   //   userAttemptScore: number;
   // }) => void;
-  setShowSubmit: React.Dispatch<React.SetStateAction<boolean>>;
+  // setShowSubmit: React.Dispatch<React.SetStateAction<boolean>>;
   setSubmissionPayload?: React.Dispatch<
     React.SetStateAction<{
       userAttemptFlag: boolean;
@@ -449,12 +483,12 @@ interface VocabularyActivityProps {
   >;
 }
 
-
 // Main component
 export default function VocabularyActivity({
+  triggerSubmit,
   xmlUrl,
   // onSubmitScore,
-  setShowSubmit,
+  // setShowSubmit,
   setSubmissionPayload,
 }: VocabularyActivityProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -473,6 +507,7 @@ export default function VocabularyActivity({
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [showResults, setShowResults] = useState<Record<string, boolean>>({});
   const [isPageCorrect, setIsPageCorrect] = useState<boolean | null>(null);
+  const [showSubmit, setShowSubmit] = useState(false);
 
   // XML data state
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -483,7 +518,7 @@ export default function VocabularyActivity({
   const [currentDefinitions, setCurrentDefinitions] = useState<Definition[]>(
     []
   );
-
+  console.log(score);
 
   // Use the sound effects hook
   const { playSound, toggleSound, isSoundEnabled } = useSoundEffects();
@@ -519,7 +554,8 @@ export default function VocabularyActivity({
       } catch (error) {
         console.error("Error fetching or parsing XML:", error);
         setError(
-          "Failed to load questions. Please check the XML URL and try again."
+          // "Failed to load questions. Please check the XML URL and try again."
+          "Failed to load questions. Please try again later."
         );
         setIsLoading(false);
       }
@@ -528,45 +564,44 @@ export default function VocabularyActivity({
     fetchData();
   }, [xmlUrl]);
 
-useEffect(() => {
-  if (questions.length === 0) return;
+  useEffect(() => {
+    if (questions.length === 0) return;
 
-  // Shuffle keywords and definitions for the current question
-  const shuffledKeywords = shuffleArray(
-    questions[currentQuestionIndex].keywords
-  );
-  const shuffledDefinitions = shuffleArray(
-    questions[currentQuestionIndex].definitions
-  );
+    // Shuffle keywords and definitions for the current question
+    const shuffledKeywords = shuffleArray(
+      questions[currentQuestionIndex].keywords
+    );
+    const shuffledDefinitions = shuffleArray(
+      questions[currentQuestionIndex].definitions
+    );
 
-  setCurrentKeywords(shuffledKeywords);
-  setCurrentDefinitions(shuffledDefinitions);
+    setCurrentKeywords(shuffledKeywords);
+    setCurrentDefinitions(shuffledDefinitions);
 
-  // Initialize placed keywords and keyword positions using the shuffled definitions and keywords
-  const initialPlacedKeywords: Record<
-    string,
-    { id: string; content: string } | null
-  > = {};
-  const initialKeywordPositions: Record<string, string | null> = {};
-  const initialShowResults: Record<string, boolean> = {};
+    // Initialize placed keywords and keyword positions using the shuffled definitions and keywords
+    const initialPlacedKeywords: Record<
+      string,
+      { id: string; content: string } | null
+    > = {};
+    const initialKeywordPositions: Record<string, string | null> = {};
+    const initialShowResults: Record<string, boolean> = {};
 
-  shuffledDefinitions.forEach((def) => {
-    initialPlacedKeywords[def.id] = null;
-    initialShowResults[def.id] = false;
-  });
+    shuffledDefinitions.forEach((def) => {
+      initialPlacedKeywords[def.id] = null;
+      initialShowResults[def.id] = false;
+    });
 
-  shuffledKeywords.forEach((keyword) => {
-    initialKeywordPositions[keyword.id] = "keywordArea";
-  });
+    shuffledKeywords.forEach((keyword) => {
+      initialKeywordPositions[keyword.id] = "keywordArea";
+    });
 
-  setPlacedKeywords(initialPlacedKeywords);
-  setKeywordPositions(initialKeywordPositions);
-  setIsSubmitted(false);
-  setResults({});
-  setShowResults(initialShowResults);
-  setIsPageCorrect(null);
-}, [currentQuestionIndex, questions]);
-
+    setPlacedKeywords(initialPlacedKeywords);
+    setKeywordPositions(initialKeywordPositions);
+    setIsSubmitted(false);
+    setResults({});
+    setShowResults(initialShowResults);
+    setIsPageCorrect(null);
+  }, [currentQuestionIndex, questions]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -611,10 +646,85 @@ useEffect(() => {
         }
 
         // Place the dragged keyword in the drop zone
-        setPlacedKeywords((prev) => ({
-          ...prev,
-          [dropZoneId]: { id: keywordId, content: keywordContent },
-        }));
+        setPlacedKeywords((prev) => {
+          const newPlacedKeywords = {
+            ...prev,
+            [dropZoneId]: { id: keywordId, content: keywordContent },
+          };
+
+          // Check if this placement completes all positions
+          const allPlaced = Object.values(newPlacedKeywords).every(
+            (value) => value !== null
+          );
+
+          // Only check answers when all keywords are placed
+          if (allPlaced && !isSubmitted) {
+            // Delay the check slightly to ensure state updates are complete
+            setTimeout(() => {
+              const newResults: Record<string, boolean> = {};
+              let allCorrect = true;
+
+              questions[currentQuestionIndex].definitions.forEach((def) => {
+                const placedKeyword = newPlacedKeywords[def.id];
+                const correctKeywordId = def.correctKeywordId;
+
+                const isCorrect = placedKeyword?.id === correctKeywordId;
+                newResults[def.id] = isCorrect;
+
+                if (!isCorrect) {
+                  allCorrect = false;
+                }
+              });
+
+              // Update states
+              setResults(newResults);
+              setIsSubmitted(true);
+              setIsPageCorrect(allCorrect);
+
+              // Update page results
+              setPageResults((prev) => {
+                const newPageResults = [...prev];
+                newPageResults[currentQuestionIndex] = allCorrect;
+                return newPageResults;
+              });
+
+              // Only increment score if all placements on the page are correct
+              if (allCorrect) {
+                setScore((prev) => prev + 1);
+              }
+
+              // Reveal results one by one with animation
+              const definitionIds = questions[
+                currentQuestionIndex
+              ].definitions.map((def) => def.id);
+
+              definitionIds.forEach((defId, index) => {
+                setTimeout(() => {
+                  setShowResults((prev) => ({
+                    ...prev,
+                    [defId]: true,
+                  }));
+
+                  // Play sound based on correctness
+                  if (newResults[defId]) {
+                    playSound("correct");
+                  } else {
+                    playSound("wrong");
+                  }
+
+                  // If this is the last result, play the all correct sound if applicable
+                  if (index === definitionIds.length - 1 && allCorrect) {
+                    setTimeout(() => {
+                      playSound("allCorrect");
+                    }, 500);
+                  }
+                }, index * 800);
+              });
+            }, 100);
+          }
+
+          return newPlacedKeywords;
+        });
 
         // Update the keyword's position
         setKeywordPositions((prev) => ({
@@ -716,24 +826,23 @@ useEffect(() => {
             playSound("allCorrect");
           }, 500);
 
-          
-            if (currentQuestionIndex === questions.length - 1) {
-              // If this is the last question, show the final score
-              setTimeout(() => {
-                setShowFinalScore(true);
-                // Submit score to API
-                // Calculate final score based on page results
-                const finalScore = newPageResults.filter(
-                  (result) => result
-                ).length;
+          if (currentQuestionIndex === questions.length - 1) {
+            // If this is the last question, show the final score
+            setTimeout(() => {
+              setShowFinalScore(true);
+              // Submit score to API
+              // Calculate final score based on page results
+              const finalScore = newPageResults.filter(
+                (result) => result
+              ).length;
 
-                // Send the payload to the parent via setSubmissionPayload
-                setSubmissionPayload?.({
-                  userAttemptFlag: true,
-                  userAttemptScore: finalScore,
-                });
-              }, 1500);
-            }
+              // Send the payload to the parent via setSubmissionPayload
+              setSubmissionPayload?.({
+                userAttemptFlag: true,
+                userAttemptScore: finalScore,
+              });
+            }, 1500);
+          }
         } else if (
           index === definitionIds.length - 1 &&
           currentQuestionIndex === questions.length - 1
@@ -757,6 +866,8 @@ useEffect(() => {
 
     if (currentQuestionIndex === questions.length - 1) {
       setShowSubmit(true);
+      console.log("triggerSubmit");
+      triggerSubmit;
     }
   };
 
@@ -846,16 +957,10 @@ useEffect(() => {
   // }
 
   return (
-    <div className="relative w-full  mx-auto md:min-h-[calc(100vh-100px)]  bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 mt-[100px]">
+    <div className="relative w-full mx-auto min-h-screen bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 pt-[120px] pb-28">
       <h2 className="text-xl font-bold text-black mb-4 text-center">
         {headerText}
       </h2>
-      {/* <Timer time={currentQuestion.time} /> */}
-      <PageScoreIndicator
-        isAllCorrect={isPageCorrect}
-        questionsCount={questions.length}
-        score={score}
-      />
 
       <DndContext
         sensors={sensors}
@@ -885,7 +990,7 @@ useEffect(() => {
           </Card>
         </div>
 
-        <div className="space-y-4 mb-11 sm:px-10">
+        <div className="space-y-4 mb-11 max-w-4xl mx-auto">
           {currentDefinitions.map((definition) => (
             <DroppableZone
               key={definition.id}
@@ -900,38 +1005,82 @@ useEffect(() => {
         </div>
       </DndContext>
 
-      <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-8">
-        <Button
-          variant="outline"
-          onClick={handlePrevQuestion}
-          disabled={currentQuestionIndex === 0}
-          className="bg-white"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-        </Button>
+      {/* Fixed bottom navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4 px-8 shadow-lg">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handlePrevQuestion}
+              disabled={currentQuestionIndex === 0}
+              className="bg-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
 
-        {!(isSubmitted && currentQuestionIndex === questions.length - 1) && (
-          <Button
-            onClick={isSubmitted ? handleNextQuestion : handleSubmit}
-            className="px-8 bg-[#45b162] rounded-[5px] hover:bg-[#64CE80]"
-            disabled={
-              isSubmitted && Object.values(showResults).some((value) => !value)
-            }
-          >
-            {isSubmitted ? "Next" : "Check"}
-            {isSubmitted && currentQuestionIndex !== questions.length - 1 && (
-              <ArrowRight className="ml-2 h-4 w-4" />
-            )}
-          </Button>
-        )}
+            {/* Compact pagination */}
+            <div className="flex items-center gap-1">
+              {/* First two pages */}
+              {[0, 1].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentQuestionIndex(index)}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                    currentQuestionIndex === index
+                      ? "bg-[#64CE80] text-white"
+                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
 
-        {/* <Button variant="outline" className="bg-white" onClick={toggleSound}>
-          {isSoundEnabled ? (
-            <Volume2 className="h-4 w-4" />
-          ) : (
-            <VolumeX className="h-4 w-4" />
+              {/* Middle ellipsis */}
+              {questions.length > 3 && (
+                <span className="text-gray-400 mx-1">...</span>
+              )}
+
+              {/* Last page */}
+              {questions.length > 2 && (
+                <button
+                  onClick={() => setCurrentQuestionIndex(questions.length - 1)}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                    currentQuestionIndex === questions.length - 1
+                      ? "bg-[#64CE80] text-white"
+                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                  }`}
+                >
+                  {questions.length}
+                </button>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handleNextQuestion}
+              disabled={currentQuestionIndex === questions.length - 1}
+              className="bg-white"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Submit Button - Only show on last page */}
+          {currentQuestionIndex === questions.length - 1 && (
+            <Button
+              onClick={handleSubmit}
+              // disabled={
+              //   isSubmitted ||
+              //   !currentDefinitions.every(
+              //     (def) => placedKeywords[def.id] !== null
+              //   )
+              // }
+              className="bg-[#64CE80] text-white hover:bg-[#5bc3cd]"
+            >
+              Submit
+            </Button>
           )}
-        </Button> */}
+        </div>
       </div>
     </div>
   );
