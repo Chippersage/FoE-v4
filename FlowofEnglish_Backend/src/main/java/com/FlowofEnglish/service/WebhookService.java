@@ -5,6 +5,7 @@ import com.FlowofEnglish.repository.*;
 import org.json.JSONObject;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,25 @@ public class WebhookService {
     
     @Autowired
     private PaymentEventRepository paymentEventRepository;
-      
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CohortProgramRepository cohortProgramRepository;
+
+    @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
+    // Default password for new users
+    private static final String DEFAULT_PASSWORD = "Welcome123";
+    
  // Payment status constants
     private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_AUTHORIZED = "AUTHORIZED";
@@ -81,7 +100,8 @@ public class WebhookService {
                     
                 default:
                     logger.info("Unhandled event type: {}", eventType);
-                    recordPaymentEvent(eventType, payload, null, null);
+//                 // Don't record payment event here, it's already recorded in WebhookController
+//                    recordPaymentEvent(eventType, payload, null, null);
                     return;
             }
          // Find associated subscription
@@ -101,16 +121,19 @@ public class WebhookService {
             
             if (subscriptionOpt.isPresent()) {
                 subscriptionId = subscriptionOpt.get().getSubscriptionId();
+                
+                // Update the payment event that was already created in WebhookController
+                updateExistingPaymentEvent(eventType, paymentId, orderId, subscriptionId);
             }
             
-            // Record the payment event
-            PaymentEvent event = recordPaymentEvent(eventType, payload, paymentId, orderId);
-            
-            // Fix for NullPointerException - check if event is null
-            if (event != null && subscriptionId != null) {
-                event.setSubscriptionId(subscriptionId);
-                paymentEventRepository.save(event);
-            }
+//            // Record the payment event
+//            PaymentEvent event = recordPaymentEvent(eventType, payload, paymentId, orderId);
+//            
+//            // Fix for NullPointerException - check if event is null
+//            if (event != null && subscriptionId != null) {
+//                event.setSubscriptionId(subscriptionId);
+//                paymentEventRepository.save(event);
+//            }
             
             // Process different event types
             switch (eventType) {
@@ -130,6 +153,35 @@ public class WebhookService {
         throw new RuntimeException("Error processing webhook event", e);
     }
 }
+ // New method to update the existing payment event with subscription ID
+    private void updateExistingPaymentEvent(String eventType, String paymentId, String orderId, Long subscriptionId) {
+        if (subscriptionId == null) return;
+        
+        try {
+            List<PaymentEvent> events;
+            if (paymentId != null) {
+                events = paymentEventRepository.findByPaymentId(paymentId);
+            } else if (orderId != null) {
+                events = paymentEventRepository.findByOrderId(orderId);
+            } else {
+                return;
+            }
+            
+            // Find the most recent event of this type
+            Optional<PaymentEvent> eventOpt = events.stream()
+                .filter(e -> e.getEventType().equals(eventType))
+                .findFirst();
+                
+            if (eventOpt.isPresent()) {
+                PaymentEvent event = eventOpt.get();
+                event.setSubscriptionId(subscriptionId);
+                paymentEventRepository.save(event);
+                logger.info("Updated payment event with subscription ID: {}", subscriptionId);
+            }
+        } catch (Exception e) {
+            logger.error("Error updating payment event with subscription ID: {}", e.getMessage(), e);
+        }
+    }
     
     private PaymentEvent recordPaymentEvent(String eventType, JSONObject payload, String paymentId, String orderId) {
         try {
@@ -199,18 +251,17 @@ public class WebhookService {
         
         // Send email notification logic here if needed
     }
-    
+     
     private void handlePaymentCaptured(JSONObject paymentEntity) {
         String paymentId = paymentEntity.getString("id");
         String orderId = paymentEntity.getString("order_id");
         double amount = paymentEntity.getDouble("amount") / 100.0; // Convert from paise to rupees
-        
+
         logger.info("Payment captured: Payment ID={}, Order ID={}, Amount={}", paymentId, orderId, amount);
-        
-        // Update existing subscription or create new one with PAID status
+     // Update existing subscription or create new one with PAID status
         try {
             Optional<ProgramSubscription> existingSubscription = subscriptionRepository.findByTransactionId(paymentId);
-            
+
             if (existingSubscription.isPresent()) {
                 ProgramSubscription subscription = existingSubscription.get();
                 subscription.setStatus(STATUS_PAID);
@@ -220,13 +271,17 @@ public class WebhookService {
             } else {
                 createOrUpdateSubscription(paymentEntity, STATUS_PAID);
             }
+
+            // ✅ Create user only if payment succeeded
+            createUserFromPaidSubscription(paymentEntity);
+
         } catch (Exception e) {
             logger.error("Error updating subscription: {}", e.getMessage(), e);
         }
-        
-        // Send email notification logic here if needed
+
+     // Send email notification logic here if needed
     }
-    
+
     private void handlePaymentFailed(JSONObject paymentEntity) {
         String paymentId = paymentEntity.getString("id");
         String orderId = paymentEntity.has("order_id") ? paymentEntity.getString("order_id") : "N/A";
@@ -263,20 +318,21 @@ public class WebhookService {
         
         logger.info("Order paid: Order ID={}, Amount={}", orderId, amount);
         
-        // Check if subscription already exists
-        Optional<ProgramSubscription> existingSubscription = subscriptionRepository.findByTransactionId(paymentId);
-        if (existingSubscription.isPresent()) {
-            ProgramSubscription subscription = existingSubscription.get();
-            subscription.setStatus(STATUS_PAID);
-            subscription.setTransactionDate(OffsetDateTime.now());
-            subscriptionRepository.save(subscription);
-            logger.info("Updated subscription status to PAID: {}", subscription.getSubscriptionId());
-            return;
-        }
-        
-        // Create new subscription with PAID status
         try {
-            createOrUpdateSubscription(paymentEntity, STATUS_PAID);
+            Optional<ProgramSubscription> existingSubscription = subscriptionRepository.findByTransactionId(paymentId);
+            if (existingSubscription.isPresent()) {
+                ProgramSubscription subscription = existingSubscription.get();
+                subscription.setStatus(STATUS_PAID);
+                subscription.setTransactionDate(OffsetDateTime.now());
+                subscriptionRepository.save(subscription);
+                logger.info("Updated subscription status to PAID: {}", subscription.getSubscriptionId());
+            } else {
+                createOrUpdateSubscription(paymentEntity, STATUS_PAID);
+            }
+
+//            // ✅ Create user only if payment succeeded
+//            createUserFromPaidSubscription(paymentEntity);
+
         } catch (Exception e) {
             logger.error("Error creating subscription: {}", e.getMessage(), e);
         }
@@ -418,4 +474,172 @@ public class WebhookService {
         // If cannot find email, return null
         return null;
     }
+       
+    // create the User after payment success
+    @Transactional
+    private void createUserFromPaidSubscription(JSONObject paymentEntity) {
+        String paymentId = paymentEntity.getString("id");
+        
+        // Find the subscription by transaction ID
+        Optional<ProgramSubscription> subscriptionOpt = subscriptionRepository.findByTransactionId(paymentId);
+        
+        if (!subscriptionOpt.isPresent()) {
+            logger.error("No subscription found for payment ID: {}", paymentId);
+            return;
+        }
+        
+        ProgramSubscription subscription = subscriptionOpt.get();
+        
+        // Only create user if subscription status is PAID
+        if (!STATUS_PAID.equals(subscription.getStatus())) {
+            logger.info("Skipping user creation for subscription with status: {}", subscription.getStatus());
+            return;
+        }
+        if (subscription.isUserCreated()) {
+            logger.info("User already created for subscription: {}", subscription.getSubscriptionId());
+            return;
+        }
+        
+        try {
+            // Create new user
+            User user = new User();
+            
+            // Generate userId from userName (remove spaces)
+            String userId = generateUserIdFromName(subscription.getUserName());
+            
+            // Set user details from subscription
+            user.setUserId(userId);
+            user.setUserName(subscription.getUserName());
+            user.setUserEmail(subscription.getUserEmail());
+            user.setUserPhoneNumber(subscription.getUserPhoneNumber());
+            user.setUserAddress(subscription.getUserAddress());
+            user.setUserType("learner"); // Default user type
+            user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+            user.setOrganization(subscription.getOrganization());
+            
+            // Save the user
+            User savedUser = userRepository.save(user);
+            logger.info("Created new user: {}", savedUser.getUserId());
+            
+            // Find default cohort for the program
+            Program program = subscription.getProgram();
+            Optional<CohortProgram> defaultCohortProgram = findDefaultCohortForProgram(program.getProgramId());
+            
+            if (!defaultCohortProgram.isPresent()) {
+                logger.error("No default cohort found for program: {}", program.getProgramId());
+                return;
+            }
+            
+            Cohort cohort = defaultCohortProgram.get().getCohort();
+            
+            // Check if this userId already exists in this specific cohort
+            boolean userExistsInCohort = checkUserExistsInCohort(userId, cohort.getCohortId());
+            
+            if (userExistsInCohort) {
+                logger.warn("User with ID {} already exists in cohort {}. Generating new userId.", 
+                        userId, cohort.getCohortId());
+                
+                // Generate a new unique userId with a suffix
+                String newUserId = userId + "_" + System.currentTimeMillis();
+                user.setUserId(newUserId);
+                
+                // Update the saved user with new ID
+                savedUser = userRepository.save(user);
+                logger.info("Created user with new ID: {}", savedUser.getUserId());
+            }
+            
+            // Create user-cohort mapping
+            UserCohortMapping userCohortMapping = new UserCohortMapping();
+            userCohortMapping.setUser(savedUser);
+            userCohortMapping.setCohort(cohort);
+            userCohortMapping.setLeaderboardScore(0);
+            userCohortMapping.setUuid(UUID.randomUUID().toString());
+            // Save the mapping
+            userCohortMappingRepository.save(userCohortMapping);
+            
+         // ✅ Mark user as created
+            subscription.setUserCreated(true);
+            subscriptionRepository.save(subscription);
+            
+            logger.info("User added to cohort: {}", cohort.getCohortName());
+            
+            // Prepare data for welcome email
+            List<String> programNames = new ArrayList<>();
+            programNames.add(program.getProgramName());
+            
+            List<String> cohortNames = new ArrayList<>();
+            cohortNames.add(cohort.getCohortName());
+            
+            // Send welcome email
+            sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
+            
+        } catch (Exception e) {
+            logger.error("Error creating user from subscription: {}", e.getMessage(), e);
+        }
+    }
+
+    // Generate a userId based on name and make sure it's unique
+    private String generateUserIdFromName(String userName) {
+        if (userName == null || userName.trim().isEmpty()) {
+            return "user" + System.currentTimeMillis();
+        }
+        
+        // Remove spaces and special characters
+        String baseUserId = userName.replaceAll("[^a-zA-Z0-9]", "");
+        
+        // Make sure it's not empty after cleaning
+        if (baseUserId.isEmpty()) {
+            baseUserId = "user";
+        }
+        
+        String userId = baseUserId;
+        int suffix = 1;
+        
+        // Check if userId already exists and generate a unique one
+        while (userRepository.existsById(userId)) {
+            userId = baseUserId + suffix;
+            suffix++;
+        }
+        
+        return userId;
+    }
+
+    // Check if a user with this ID already exists in the specified cohort
+    private boolean checkUserExistsInCohort(String userId, String cohortId) {
+        return userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId).isPresent();
+    }
+
+    private Optional<CohortProgram> findDefaultCohortForProgram(String programId) {
+        // Find all cohorts for the program
+        List<CohortProgram> cohortPrograms = cohortProgramRepository.findByProgramProgramId(programId);
+        
+        if (cohortPrograms.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        // Find the default cohort (you might need to add a "isDefault" flag to your CohortProgram entity)
+        // For now, we'll just use the first one found or you can implement your own logic
+        return Optional.of(cohortPrograms.get(0));
+    }
+
+    // Helper method for sending welcome email (this is already in your code)
+    private void sendWelcomeEmail(User user, String plainPassword, List<String> programNames, List<String> cohortNames) {
+        try {
+            Organization organization = user.getOrganization();
+            emailService.sendUserCreationEmail(
+                user.getUserEmail(),
+                user.getUserName(),
+                user.getUserId(),
+                plainPassword,
+                programNames,
+                cohortNames,
+                organization.getOrganizationAdminEmail(),
+                organization.getOrganizationName(),
+                user.getUserType()
+            );
+        } catch (Exception e) {
+            logger.error("Failed to send welcome email for user: {}", user.getUserId(), e);
+        }
+    }
+    
 }

@@ -16,6 +16,7 @@ public interface CohortProgramRepository extends JpaRepository<CohortProgram, Lo
     
 	Optional<CohortProgram> findByCohortCohortId(String cohortId);
 	List<CohortProgram> findAllByCohort_CohortId(String cohortId);
+	List<CohortProgram> findByProgramProgramId(String programId);
 	
 	 @Query("SELECT cp.program FROM CohortProgram cp " +
 	           "JOIN cp.cohort c " +
