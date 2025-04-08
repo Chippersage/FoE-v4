@@ -26,7 +26,7 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
   const displayedLeaderboard = showMore ? sortedLeaderboard : top3;
 
   return (
-    <Card className="max-w-lg mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-1">
+    <Card className="max-w-lg mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-1 leaderboard-section">
       <CardHeader className="text-center p-0 m-1">
         <CardTitle className="text-2xl font-bold font-openSans">
           Leaderboard

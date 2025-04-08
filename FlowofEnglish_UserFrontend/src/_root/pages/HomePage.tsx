@@ -12,7 +12,7 @@ export const HomePage = () => {
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null); // Start with null
   const [isLoading, setIsLoading] = useState(true); // Loader state
   // const selectedProgramId = localStorage.getItem("selectedProgramId");
-const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
+// const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
 
   useEffect(() => {
     // const selectedProgramId = localStorage.getItem("selectedProgramId");
@@ -52,12 +52,7 @@ const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
   return (
     <>
       {/* Render Dashboard tour only if the product tour hasn't been completed */}
-      {!hasSeenProductTour && (
-        <DashboardTour
-          // onLetsGoClick={handleLetsGoClick}
-          // onActiveUnitClick={handleActiveUnitClick}
-        />
-      )}
+      
       <div className="relative w-full min-h-full no-scrollbar">
         {/* Show Loader until backgroundUrl is ready */}
         {isLoading ? (
