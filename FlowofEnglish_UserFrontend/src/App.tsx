@@ -15,9 +15,10 @@ import NotFoundPage from "./components/NotFoundPage.tsx";
 import { Toaster } from "react-hot-toast"; // Import Toaster component
 
 export default function App() {
-  
   const { isAuthenticated } = useUserContext();
-  const selectedCohortWithProgram = localStorage.getItem("selectedCohortWithProgram");
+  const selectedCohortWithProgram = localStorage.getItem(
+    "selectedCohortWithProgram"
+  );
   const user = localStorage.getItem("user");
 
   useEffect(() => {
@@ -32,83 +33,82 @@ export default function App() {
     };
   }, []);
 
-return (
-  <SessionProvider>
-    <main className="flex h-screen flex-col">
-      <Toaster position="bottom-center" reverseOrder={false} />
-      {/* Show headers only when user is authenticated */}
-      {isAuthenticated && (
-        <>
-          <Header />
-          <Header2 />
-        </>
-      )}
+  return (
+    <SessionProvider>
+      <main className="flex h-screen flex-col">
+        <Toaster position="bottom-center" reverseOrder={false} />
+        {/* Show headers only when user is authenticated */}
+        {isAuthenticated && (
+          <>
+            <Header />
+            <Header2 />
+          </>
+        )}
 
-      <Routes>
-        {/* Public routes (no headers here) */}
-        <Route element={<AuthLayout />}>
+        <Routes>
+          {/* Public routes (no headers here) */}
+          <Route element={<AuthLayout />}>
+            <Route
+              path="/sign-in"
+              element={
+                user ? (
+                  <Navigate
+                    to={selectedCohortWithProgram ? "/home" : "/select-cohort"}
+                  />
+                ) : (
+                  <LoginForm />
+                )
+              }
+            />
+          </Route>
+
+          {/* Cohort selection page (headers should appear) */}
           <Route
-            path="/sign-in"
+            path="/select-cohort"
             element={
               user ? (
-                <Navigate
-                  to={selectedCohortWithProgram ? "/home" : "/select-cohort"}
-                />
+                selectedCohortWithProgram ? (
+                  <Navigate to="/home" />
+                ) : (
+                  <CohortSelectionPage />
+                )
               ) : (
-                <LoginForm />
+                <Navigate to="/sign-in" />
               )
             }
           />
-        </Route>
 
-        {/* Cohort selection page (headers should appear) */}
-        <Route
-          path="/select-cohort"
-          element={
-            user ? (
-              selectedCohortWithProgram ? (
-                <Navigate to="/home" />
-              ) : (
-                <CohortSelectionPage />
-              )
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-
-        {/* Redirect root to appropriate page */}
-        <Route
-          path="/"
-          element={
-            user ? (
-              selectedCohortWithProgram ? (
-                <Navigate to="/home" />
-              ) : (
-                <Navigate to="/select-cohort" />
-              )
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-
-        {/* Private routes (headers appear) */}
-        <Route element={<RootLayout />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/subconcepts/:unitId" element={<SubConceptsPage />} />
+          {/* Redirect root to appropriate page */}
           <Route
-            path="/subconcept/:subconceptId"
-            element={<SingleSubconcept />}
+            path="/"
+            element={
+              user ? (
+                selectedCohortWithProgram ? (
+                  <Navigate to="/home" />
+                ) : (
+                  <Navigate to="/select-cohort" />
+                )
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
           />
-        </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </main>
-  </SessionProvider>
-);
+          {/* Private routes (headers appear) */}
+          <Route element={<RootLayout />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/subconcepts/:unitId" element={<SubConceptsPage />} />
+            <Route
+              path="/subconcept/:subconceptId"
+              element={<SingleSubconcept />}
+            />
+          </Route>
 
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </SessionProvider>
+  );
 
   // return (
   //   <>

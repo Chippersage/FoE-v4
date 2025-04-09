@@ -1,18 +1,25 @@
 // CohortTour.tsx
 import React, { useEffect, useState } from "react";
-import Joyride, { STATUS } from "react-joyride";
+import Joyride, { STATUS, Step, CallBackProps } from "react-joyride";
+import CohortCustomTooltip from "./CohortCustomTooltip";
 
-const CohortTour = ({ onResumeClick }) => {
+interface CohortTourProps {
+  onResumeClick: () => void;
+}
+
+const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
   const [runTour, setRunTour] = useState(false);
   useEffect(() => {
-      setTimeout(() => {
-        setRunTour(true);
-      }, 2000);
-  })
-  const steps = [
+    setTimeout(() => {
+      setRunTour(true);
+    }, 2000);
+  }, []);
+
+  const steps: Step[] = [
     {
       target: ".cohort-page-header",
       content: "Welcome! This is your cohort selection page.",
+      disableBeacon: true,
     },
     {
       target: ".continue-learning-section",
@@ -25,38 +32,37 @@ const CohortTour = ({ onResumeClick }) => {
           </p>
         </div>
       ),
+      disableBeacon: true,
     },
     {
-      target: ".program-card-first", // This targets only the first card.
+      target: ".program-card-first",
       content: "This card shows your program details and progress.",
+      disableBeacon: true,
     },
     {
       target: ".daily-challenge-section",
       content:
         "Below are your Daily Challenges: Word of the Day and Daily Riddle.",
+      disableBeacon: true,
     },
     {
       target: ".resume-button",
       content:
         "Click the Resume button of the program you want to proceed with. (You must click here to continue.)",
-      // This step forces the user to click the Resume button.
       spotlightClicks: true,
+      disableBeacon: true,
     },
   ];
 
-  const handleJoyrideCallback = (data) => {
+  const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, index, type } = data;
 
-    // When finishing a step, save the next step index
-    if (type === "step:after" || type === "target:notFound") {
-      localStorage.setItem("tourStep", index + 1);
+    if (type === "step:after" || type === "error:target_not_found") {
+      localStorage.setItem("tourStep", String(index + 1));
     }
-    // When the tour is finished, stop running
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      // localStorage.setItem("hasSeenProductTour", "true");
+    if (status === "finished" || status === "skipped") {
       setRunTour(false);
     }
-
   };
 
   return (
@@ -68,7 +74,21 @@ const CohortTour = ({ onResumeClick }) => {
       showSkipButton={false}
       disableCloseOnEsc={true}
       callback={handleJoyrideCallback}
-      styles={{ options: { zIndex: 10000 } }}
+      tooltipComponent={CohortCustomTooltip}
+      styles={{
+        options: {
+          zIndex: 10000000,
+          primaryColor: "#5BC3CD",
+          backgroundColor: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+          textColor: "#1E293B",
+          arrowColor: "#F8FAFC",
+          overlayColor: "rgba(0, 0, 0, 0.5)",
+        },
+        beacon: {
+          backgroundColor: "#5BC3CD",
+          border: "2px solid #5BC3CD",
+        },
+      }}
     />
   );
 };

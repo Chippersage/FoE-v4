@@ -102,7 +102,6 @@ const iconMap = {
   text_from_picture: TextFromImage,
   text_from_text: TextFromText,
   writer_general_sentences: WriterGeneralSentences,
-  
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -154,7 +153,6 @@ export default function SubConceptsPage() {
   const [pathData, setPathData] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
-
 
   const { formattedElapsedTime } = useSession();
 
@@ -491,13 +489,14 @@ export default function SubConceptsPage() {
               autoplay
               style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
             />
-            <div className="absolute bg-white p-6 rounded shadow-lg text-center">
+            <div className="absolute bg-white p-6 rounded shadow-lg text-center max-w-[300px] sm:max-w-xl">
               <h2 className="text-2xl font-bold text-green-500">
                 Congratulations!
               </h2>
-              <p>You have unlocked the next unit!</p>
+              <p>You have completed this unit successfully!</p>
               <p className="text-sm text-gray-500 mt-2">
-                You are being redirected to the next unit...
+                You will be redirected to the home page. From there, you can
+                continue to the next unit to keep learning!
               </p>
             </div>
           </div>
@@ -575,7 +574,6 @@ export default function SubConceptsPage() {
                   ? Start
                   : Finish;
 
-
                 const isCompleted =
                   subconcept && subconcept.completionStatus === "yes";
                 const isEnabled =
@@ -603,7 +601,7 @@ export default function SubConceptsPage() {
                         (unitCompletionStatus === "yes" ||
                           unitCompletionStatus.toLowerCase() ===
                             "unit completed without assignments")
-                          ? `/subconcepts/${nextUnitId}`
+                          ? `/home`
                           : isEnabled && index !== totalSteps - 1 && index !== 0
                           ? `/subconcept/${subconcept?.subconceptId}`
                           : null
@@ -617,7 +615,7 @@ export default function SubConceptsPage() {
                       }`}
                       onMouseEnter={() => setActiveTooltip(index)}
                       onMouseLeave={() => setActiveTooltip(null)}
-                      onClick={() => {
+                      onClick={(e) => {
                         if (
                           index === totalSteps - 1 &&
                           (unitCompletionStatus === "yes" ||
@@ -625,11 +623,13 @@ export default function SubConceptsPage() {
                               "unit completed without assignments") &&
                           nextUnitId
                         ) {
+                          e.preventDefault(); // Prevent immediate navigation
                           setShowConfetti(true);
                           setAudioPlaying(true);
+                          // Navigate after confetti animation
                           setTimeout(() => {
-                            setShowConfetti(false);
-                          }, 5000);
+                            navigate("/home");
+                          }, 5000); // Match this with confetti duration
                         } else if (
                           index === totalSteps - 1 &&
                           (unitCompletionStatus === "yes" ||
