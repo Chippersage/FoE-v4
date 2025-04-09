@@ -16,6 +16,7 @@ public interface CohortProgramRepository extends JpaRepository<CohortProgram, Lo
     
 	Optional<CohortProgram> findByCohortCohortId(String cohortId);
 	List<CohortProgram> findAllByCohort_CohortId(String cohortId);
+	List<CohortProgram> findByProgramProgramId(String programId);
 	
 	 @Query("SELECT cp.program FROM CohortProgram cp " +
 	           "JOIN cp.cohort c " +
@@ -27,5 +28,5 @@ public interface CohortProgramRepository extends JpaRepository<CohortProgram, Lo
 		       "JOIN FETCH cp.cohort c " +
 		       "WHERE c.organization.organizationId = :organizationId")
 		List<CohortProgram> findCohortsByOrganizationId(@Param("organizationId") String organizationId);
-
+	 List<CohortProgram> findByProgramProgramIdAndCohort_Organization_OrganizationId(String programId, String organizationId);
 }
