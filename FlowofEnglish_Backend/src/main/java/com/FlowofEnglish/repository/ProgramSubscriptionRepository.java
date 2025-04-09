@@ -12,4 +12,6 @@ public interface ProgramSubscriptionRepository extends JpaRepository<ProgramSubs
     // Custom query to find subscriptions by organization ID
     List<ProgramSubscription> findByOrganization_OrganizationId(String organizationId);
     Optional<ProgramSubscription> findByTransactionId(String transactionId);
+    List<ProgramSubscription> findAllByTransactionIdStartingWith(String transactionIdPrefix);
+    List<ProgramSubscription> findAllByTransactionId(String transactionId);
 }
