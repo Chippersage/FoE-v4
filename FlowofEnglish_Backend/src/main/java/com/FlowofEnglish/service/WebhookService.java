@@ -2,6 +2,8 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class WebhookService {
@@ -362,6 +365,327 @@ public class WebhookService {
         // For example, you might want to mark the subscription as "REFUNDED" or reduce the subscription period
     }
     
+    
+//    @Transactional
+//    private void createOrUpdateSubscription(JSONObject paymentEntity, String status) {
+//        // Only proceed if status is PAID or FAILED
+//        if (!STATUS_PAID.equals(status) && !STATUS_FAILED.equals(status)) {
+//            logger.info("Skipping subscription update for status: {}", status);
+//            return;
+//        }
+//        
+//        // Extract the necessary data from the payment entity
+//        String paymentId = paymentEntity.getString("id");
+//        double totalAmount = paymentEntity.getDouble("amount") / 100.0; // Total payment amount
+//        
+//        // Extract user information
+//        JSONObject notes = paymentEntity.has("notes") ? paymentEntity.getJSONObject("notes") : new JSONObject();
+//        String userEmail = notes.has("user_email") ? notes.getString("user_email") : extractEmailFromPayment(paymentEntity);
+//        String userName = notes.has("user_name") ? notes.getString("user_name") : "Unknown User";
+//        String userPhone = notes.has("user_phone") ? notes.getString("user_phone") : null;
+//        String userAddress = notes.has("user_address") ? notes.getString("user_address") : null;
+//        
+//        // Check if this is a multi-program enrollment
+//        JSONArray enrollments = null;
+//        if (notes.has("enrollments")) {
+//            try {
+//                // First try to parse as a JSONArray directly
+//                try {
+//                    enrollments = notes.getJSONArray("enrollments");
+//                } catch (Exception e) {
+//                    // If that fails, try parsing as a string
+//                    String enrollmentsStr = notes.getString("enrollments");
+//                    enrollments = new JSONArray(enrollmentsStr);
+//                    logger.info("Successfully parsed enrollments string: {}", enrollmentsStr);
+//                }
+//            } catch (Exception e) {
+//                logger.error("Error parsing enrollments array or string: {}", e.getMessage());
+//            }
+//        }
+//        boolean processedEnrollment = false;
+//        
+//        if (enrollments != null && enrollments.length() > 0) {
+//            // Process multiple enrollments
+//            processedEnrollment = true;
+//            logger.info("Processing multi-program enrollment with {} programs", enrollments.length());
+//            for (int i = 0; i < enrollments.length(); i++) {
+//                JSONObject enrollment = enrollments.getJSONObject(i);
+//                String programId = enrollment.getString("program_id");
+//                String organizationId = enrollment.getString("organization_id");
+//                double amount = enrollment.has("amount") ? enrollment.getDouble("amount") : (totalAmount / enrollments.length());
+//                Integer maxCohorts = enrollment.has("max_cohorts") ? enrollment.getInt("max_cohorts") : 1;
+//                
+//                // Generate a unique transaction ID for this program subscription
+//                String subscriptionTransactionId = paymentId + "_" + programId;
+//                
+//                // Create or update subscription for this program
+//                createSingleSubscription(
+//                    subscriptionTransactionId, status, programId, organizationId, amount, 
+//                    userEmail, userName, userPhone, userAddress, maxCohorts
+//                );
+//            }
+//        } else if (notes.has("program_id") && notes.has("organization_id")) {
+//        	// Legacy path for single enrollment
+//            processedEnrollment = true;
+//            String programId = notes.getString("program_id");
+//            String organizationId = notes.getString("organization_id");
+//            Integer maxCohorts = notes.has("max_cohorts") ? notes.getInt("max_cohorts") : 1;
+//            
+//            createSingleSubscription(
+//                paymentId, status, programId, organizationId, totalAmount,
+//                userEmail, userName, userPhone, userAddress, maxCohorts
+//            );
+//        } else {
+//            // Try to find flattened enrollments like "enrollments[0].program_id"
+//            int index = 0;
+//            boolean foundFlattened = false;
+//            
+//            while (notes.has("enrollments[" + index + "].program_id")) {
+//                foundFlattened = true;
+//                processedEnrollment = true;
+//                
+//                String programId = notes.getString("enrollments[" + index + "].program_id");
+//                String organizationId = notes.getString("enrollments[" + index + "].organization_id");
+//                double amount = notes.has("enrollments[" + index + "].amount") ? 
+//                              notes.getDouble("enrollments[" + index + "].amount") : totalAmount;
+//                Integer maxCohorts = notes.has("enrollments[" + index + "].max_cohorts") ? 
+//                                   notes.getInt("enrollments[" + index + "].max_cohorts") : 1;
+//                    
+//                // Generate a unique transaction ID for this program subscription
+//                String subscriptionTransactionId = paymentId + "_" + programId;
+//                    
+//                // Create or update subscription for this program
+//                createSingleSubscription(
+//                    subscriptionTransactionId, status, programId, organizationId, amount, 
+//                    userEmail, userName, userPhone, userAddress, maxCohorts
+//                );
+//                
+//                index++;
+//            }
+//            
+//            if (foundFlattened) {
+//                logger.info("Processed {} flattened enrollments", index);
+//            }
+//        }
+//        
+//        if (!processedEnrollment) {
+//            logger.error("Missing program enrollment information in payment notes. Notes: {}", notes.toString());
+//        }
+//    }
+//
+//    private void createSingleSubscription(
+//            String transactionId, String status, String programId, String organizationId, 
+//            double amount, String userEmail, String userName, String userPhone, 
+//            String userAddress, Integer maxCohorts) {
+//        
+//        // Fetch program and organization
+//        Optional<Program> programOpt = programRepository.findByProgramId(programId);
+//        Optional<Organization> orgOpt = organizationRepository.findById(organizationId);
+//        
+//        if (!programOpt.isPresent() || !orgOpt.isPresent()) {
+//            logger.error("Program or Organization not found. Program ID: {}, Org ID: {}", programId, organizationId);
+//            return;
+//        }
+//        
+//        Program program = programOpt.get();
+//        Organization organization = orgOpt.get();
+//        
+//        // Check if subscription already exists for this transaction ID
+//        Optional<ProgramSubscription> existingSubscription = subscriptionRepository.findByTransactionId(transactionId);
+//        ProgramSubscription subscription;
+//        
+//        if (existingSubscription.isPresent()) {
+//            // Update existing subscription
+//            subscription = existingSubscription.get();
+//            subscription.setTransactionDate(OffsetDateTime.now());
+//            subscription.setStatus(status);
+//        } else {
+//            // Create new subscription
+//            subscription = new ProgramSubscription();
+//            subscription.setProgram(program);
+//            subscription.setOrganization(organization);
+//            subscription.setStartDate(OffsetDateTime.now());
+//            
+//            // Set end date based on program duration or a default period
+//            OffsetDateTime endDate = OffsetDateTime.now().plus(365, ChronoUnit.DAYS); // Default to one year
+//            subscription.setEndDate(endDate);
+//            
+//            subscription.setTransactionId(transactionId);
+//            subscription.setTransactionType("RAZORPAY");
+//            subscription.setTransactionDate(OffsetDateTime.now());
+//            subscription.setAmountPaid(amount);
+//            subscription.setMaxCohorts(maxCohorts);
+//            subscription.setStatus(status);
+//            
+//            // Set user information
+//            subscription.setUserEmail(userEmail);
+//            subscription.setUserName(userName);
+//            subscription.setUserPhoneNumber(userPhone);
+//            subscription.setUserAddress(userAddress);
+//            subscription.setUserCreated(false);
+//        }
+//        
+//        // Save the subscription
+//        subscriptionRepository.save(subscription);
+//        logger.info("Subscription created/updated for program {}: {}", programId, subscription);
+//    }
+//
+//    @Transactional
+//    private void createUserFromPaidSubscription(JSONObject paymentEntity) {
+//        String paymentId = paymentEntity.getString("id");
+//        
+//        // Find all subscriptions related to this payment
+//        List<ProgramSubscription> subscriptions = findAllSubscriptionsForPayment(paymentId);
+//        
+//        if (subscriptions.isEmpty()) {
+//            logger.error("No subscriptions found for payment ID: {}", paymentId);
+//            return;
+//        }
+//        
+//        // Process each subscription for the same payment
+//        logger.info("Found {} subscriptions for payment ID: {}", subscriptions.size(), paymentId);
+//        
+//        // Get user information from the first subscription
+//        ProgramSubscription firstSubscription = subscriptions.get(0);
+//        
+//        // Only process if the subscription is in PAID status
+//        if (!STATUS_PAID.equals(firstSubscription.getStatus())) {
+//            logger.info("Skipping user creation for subscription with status: {}", firstSubscription.getStatus());
+//            return;
+//        }
+//        
+//        String userEmail = firstSubscription.getUserEmail();
+//        String userName = firstSubscription.getUserName();
+//        String userPhone = firstSubscription.getUserPhoneNumber();
+//        String userAddress = firstSubscription.getUserAddress();
+//        Organization organization = firstSubscription.getOrganization();
+//        
+//        // Check if user already exists by email
+//        Optional<User> existingUserOpt = userRepository.findByUserEmail(userEmail);
+//        User user;
+//        boolean isNewUser = false;
+//        
+//        if (existingUserOpt.isPresent()) {
+//            // Use existing user
+//            user = existingUserOpt.get();
+//            logger.info("Using existing user: {}", user.getUserId());
+//        } else {
+//            // Create new user
+//            user = new User();
+//            isNewUser = true;
+//            
+//            // Generate userId from userName
+//            String userId = generateUserIdFromName(userName);
+//            
+//            // Set user details
+//            user.setUserId(userId);
+//            user.setUserName(userName);
+//            user.setUserEmail(userEmail);
+//            user.setUserPhoneNumber(userPhone);
+//            user.setUserAddress(userAddress);
+//            user.setUserType("learner"); // Default user type
+//            user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+//            user.setOrganization(organization);
+//            user.setUuid(UUID.randomUUID().toString());
+//            
+//            // Save the user
+//            user = userRepository.save(user);
+//            logger.info("Created new user: {}", user.getUserId());
+//        }
+//        
+//        // Lists to track programs and cohorts for welcome email
+//        List<String> programNames = new ArrayList<>();
+//        List<String> cohortNames = new ArrayList<>();
+//        
+//        // Process each subscription to enroll the user in the appropriate cohorts
+//        for (ProgramSubscription subscription : subscriptions) {
+//            // Skip if this subscription is not PAID or already processed
+//            if (!STATUS_PAID.equals(subscription.getStatus()) || subscription.isUserCreated()) {
+//                logger.info("Skipping subscription: ID={}, Status={}, UserCreated={}", 
+//                    subscription.getSubscriptionId(), subscription.getStatus(), subscription.isUserCreated());
+//                continue;
+//            }
+//            
+//            try {
+//                Program program = subscription.getProgram();
+//                
+//                // Find default cohort for this program
+//                Optional<CohortProgram> defaultCohortProgram = 
+//                    findDefaultCohortForProgram(program.getProgramId(), organization.getOrganizationId());
+//                
+//                if (!defaultCohortProgram.isPresent()) {
+//                    logger.error("No default cohort found for program: {} and organization: {}", 
+//                            program.getProgramId(), organization.getOrganizationId());
+//                    continue;
+//                }
+//                
+//                Cohort cohort = defaultCohortProgram.get().getCohort();
+//                
+//                // Verify cohort organization matches user organization
+//                if (!cohort.getOrganization().getOrganizationId().equals(organization.getOrganizationId())) {
+//                    logger.error("Organization mismatch for program {}! User org: {}, Cohort org: {}", 
+//                            program.getProgramId(), organization.getOrganizationId(), 
+//                            cohort.getOrganization().getOrganizationId());
+//                    continue;
+//                }
+//                
+//                // Check if user is already enrolled in this cohort
+//                boolean userExistsInCohort = 
+//                    checkUserExistsInCohort(user.getUserId(), cohort.getCohortId());
+//                
+//                if (!userExistsInCohort) {
+//                    // Create user-cohort mapping
+//                    UserCohortMapping mapping = new UserCohortMapping();
+//                    mapping.setUser(user);
+//                    mapping.setCohort(cohort);
+//                    mapping.setLeaderboardScore(0);
+//                    mapping.setUuid(UUID.randomUUID().toString());
+//                    
+//                    // Save the mapping
+//                    userCohortMappingRepository.save(mapping);
+//                    logger.info("User {} enrolled in cohort: {}", user.getUserId(), cohort.getCohortName());
+//                    
+//                    // Add to lists for welcome email
+//                    programNames.add(program.getProgramName());
+//                    cohortNames.add(cohort.getCohortName());
+//                } else {
+//                    logger.info("User {} already enrolled in cohort: {}", user.getUserId(), cohort.getCohortName());
+//                }
+//                
+//                // Mark this subscription as processed
+//                subscription.setUserCreated(true);
+//                subscriptionRepository.save(subscription);
+//                logger.info("Marked subscription {} as processed", subscription.getSubscriptionId());
+//                
+//            } catch (Exception e) {
+//                logger.error("Error enrolling user in program: {}, Error: {}", 
+//                        subscription.getProgram().getProgramId(), e.getMessage(), e);
+//            }
+//        }
+//        
+//        // Send welcome email with all enrolled programs and cohorts
+//        if (!programNames.isEmpty()) {
+//            sendWelcomeEmail(user, isNewUser ? DEFAULT_PASSWORD : null, programNames, cohortNames);
+//            logger.info("Sent welcome email to user {} with {} programs", user.getUserId(), programNames.size());
+//        }
+//    }
+//    
+//    private List<ProgramSubscription> findAllSubscriptionsForPayment(String paymentId) {
+//        // Find direct matches
+//        List<ProgramSubscription> direct = subscriptionRepository.findAllByTransactionId(paymentId);
+//        
+//        // Find subscriptions with derived transaction IDs (paymentId_programId format)
+//        List<ProgramSubscription> derived = subscriptionRepository
+//            .findAllByTransactionIdStartingWith(paymentId + "_");
+//        
+//        // Combine all results
+//        Set<ProgramSubscription> uniqueSubscriptions = new HashSet<>();
+//        uniqueSubscriptions.addAll(direct);
+//        uniqueSubscriptions.addAll(derived);
+//        
+//        return new ArrayList<>(uniqueSubscriptions);
+//    }
+
     @Transactional
     private void createOrUpdateSubscription(JSONObject paymentEntity, String status) {
     	// Only proceed if status is PAID or FAILED
@@ -515,22 +839,31 @@ public class WebhookService {
             user.setUserAddress(subscription.getUserAddress());
             user.setUserType("learner"); // Default user type
             user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-            user.setOrganization(subscription.getOrganization());
-            
+            Organization organization = subscription.getOrganization();
+            user.setOrganization(organization);
+            user.setUuid(UUID.randomUUID().toString()); // Set UUID for the user
             // Save the user
             User savedUser = userRepository.save(user);
             logger.info("Created new user: {}", savedUser.getUserId());
             
-            // Find default cohort for the program
+         // Find default cohort for the program ensuring org match
             Program program = subscription.getProgram();
-            Optional<CohortProgram> defaultCohortProgram = findDefaultCohortForProgram(program.getProgramId());
+            Optional<CohortProgram> defaultCohortProgram = findDefaultCohortForProgram(program.getProgramId(), organization.getOrganizationId());
             
             if (!defaultCohortProgram.isPresent()) {
-                logger.error("No default cohort found for program: {}", program.getProgramId());
+                logger.error("No default cohort found for program: {} and organization: {}", 
+                        program.getProgramId(), organization.getOrganizationId());
                 return;
             }
             
             Cohort cohort = defaultCohortProgram.get().getCohort();
+            
+            // Verify that cohort organization matches user organization
+            if (!cohort.getOrganization().getOrganizationId().equals(organization.getOrganizationId())) {
+                logger.error("Organization mismatch! User org: {}, Cohort org: {}", 
+                        organization.getOrganizationId(), cohort.getOrganization().getOrganizationId());
+                return;
+            }
             
             // Check if this userId already exists in this specific cohort
             boolean userExistsInCohort = checkUserExistsInCohort(userId, cohort.getCohortId());
@@ -578,6 +911,31 @@ public class WebhookService {
         }
     }
 
+    
+    /**
+     * Find default cohort for a program with organization validation
+     */
+    private Optional<CohortProgram> findDefaultCohortForProgram(String programId, String organizationId) {
+        // Find all cohorts for the program
+        List<CohortProgram> cohortPrograms = cohortProgramRepository.findByProgramProgramId(programId);
+        
+        if (cohortPrograms.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        // Filter cohorts by organization ID
+        List<CohortProgram> filteredByOrg = cohortPrograms.stream()
+            .filter(cp -> cp.getCohort().getOrganization().getOrganizationId().equals(organizationId))
+            .collect(Collectors.toList());
+        
+        if (filteredByOrg.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        // Return the first matching cohort
+        return Optional.of(filteredByOrg.get(0));
+    }
+    
     // Generate a userId based on name and make sure it's unique
     private String generateUserIdFromName(String userName) {
         if (userName == null || userName.trim().isEmpty()) {
