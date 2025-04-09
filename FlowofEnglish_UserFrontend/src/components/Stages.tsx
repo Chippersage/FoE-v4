@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircleAlert, CircleCheck, Trophy } from "lucide-react";
@@ -8,7 +8,7 @@ import { ChevronDown, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import {  } from "lucide-react";
+import {} from "lucide-react";
 import DashboardTour from "./tours/DashboardTour";
 // Define a type for the stage object
 // interface Stage {
@@ -24,13 +24,23 @@ import DashboardTour from "./tours/DashboardTour";
 // }
 
 // @ts-ignore
-export default function Stages({ stages, programCompletionStatus }) {
+export default function Stages({
+  stages,
+  programCompletionStatus,
+  isDataLoaded,
+}) {
   const [expandedModule, setExpandedModule] = useState(null);
   const [hoveredUnit, setHoveredUnit] = useState(null);
   const containerRef = useRef(null);
   const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
-   const [stepIndex, setStepIndex] = useState(0);
-   const [runTour, setRunTour] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [runTour, setRunTour] = useState(false);
+
+  useEffect(() => {
+    if (isDataLoaded && !hasSeenProductTour) {
+      setRunTour(true);
+    }
+  }, [isDataLoaded, hasSeenProductTour]);
 
   // Ensure that stages is not null or undefined before converting it to an array
   const stagesArray = stages ? Object.values(stages) : [];
@@ -61,8 +71,6 @@ export default function Stages({ stages, programCompletionStatus }) {
           setStepIndex={setStepIndex}
           runTour={runTour}
           setRunTour={setRunTour}
-          // onLetsGoClick={handleLetsGoClick}
-          // onActiveUnitClick={handleActiveUnitClick}
         />
       )}
       <div className="w-full max-h-[480px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px] overflow-y-auto no-scrollbar">
@@ -148,7 +156,11 @@ export default function Stages({ stages, programCompletionStatus }) {
                     )} */}
                     </div>
                   </CardHeader>
-                  <CardContent className={`relative ${expandedModule !== index && "pb-16"}`}>
+                  <CardContent
+                    className={`relative ${
+                      expandedModule !== index && "pb-16"
+                    }`}
+                  >
                     <p
                       className={`text-sm mb-4 font-openSans font-semibold ${
                         // @ts-ignore
