@@ -177,21 +177,12 @@ public class EmailService {
     
     // New helper method to get organization admin email for a user
     private String getUserOrganizationAdminEmail(String userEmail) {
-        try {
-            // This would need to be implemented based on your repository structure
-            // Example implementation:
-            User user = userRepository.findByUserEmail(userEmail);
-            if (user != null && user.getOrganization() != null) {
-                return user.getOrganization().getOrganizationAdminEmail();
-            }
-            // Default fallback email if needed
-            return "support@thechippersage.com";
-        } catch (Exception e) {
-            logger.error("Error fetching organization admin email: {}", e.getMessage());
-            // Return a default admin email as fallback
-            return "support@thechippersage.com";
-        }
+        return userRepository.findByUserEmail(userEmail)
+                .map(User::getOrganization)
+                .map(Organization::getOrganizationAdminEmail)
+                .orElse("support@thechippersage.com");
     }
+
     
     public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
     		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) { 

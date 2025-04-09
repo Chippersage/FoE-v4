@@ -16,8 +16,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     // Custom query to find users by organization ID
     List<User> findByOrganizationOrganizationId(String organizationId);
-    
-    User findByUserEmail(String userEmail);
+    Optional<User> findByUserEmail(String userEmail);
     @Query("SELECT u FROM User u WHERE u.userEmail IS NOT NULL")
     List<User> findUsersWithEmail();
    // User findByUserId(String userId);

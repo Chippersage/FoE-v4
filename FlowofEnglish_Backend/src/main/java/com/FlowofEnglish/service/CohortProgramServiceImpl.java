@@ -3,6 +3,8 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.model.CohortProgram;
 import com.FlowofEnglish.repository.CohortProgramRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,8 @@ public class CohortProgramServiceImpl implements CohortProgramService {
     @Autowired
     private CohortProgramRepository cohortProgramRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(CohortProgramServiceImpl.class);
+    
     @Override
     public List<CohortProgram> getAllCohortPrograms() {
         return cohortProgramRepository.findAll();

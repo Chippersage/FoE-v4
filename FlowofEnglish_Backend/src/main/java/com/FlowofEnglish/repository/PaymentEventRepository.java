@@ -11,4 +11,5 @@ public interface PaymentEventRepository extends JpaRepository<PaymentEvent, Long
     List<PaymentEvent> findByPaymentId(String paymentId);
     List<PaymentEvent> findBySubscriptionId(Long subscriptionId);
     List<PaymentEvent> findByEventType(String eventType);
+    List<PaymentEvent> findByOrderId(String orderId);
 }
