@@ -73,10 +73,10 @@ export default function Stages({
           setRunTour={setRunTour}
         />
       )}
-      <div className="w-full max-h-[480px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px] overflow-y-auto no-scrollbar">
+      <div className="w-full max-h-[480px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px] overflow-y-auto no-scrollbar relative learning-path-section">
         {/* Fixed Title */}
-        <div>
-          <h3 className="text-xl font-semibold font-openSans mb-4">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold font-openSans">
             Your Learning Path
           </h3>
           {programCompletionStatus === "yes" && (
@@ -89,7 +89,7 @@ export default function Stages({
         {/* Scrollable Cards */}
         <div
           ref={containerRef}
-          className="space-y-4 overflow-y-auto max-h-[400px] no-scrollbar learning-path-section"
+          className="space-y-4 overflow-y-auto max-h-[400px] no-scrollbar "
         >
           {stagesArray.length > 0 ? (
             stagesArray.map((stage, index) => {

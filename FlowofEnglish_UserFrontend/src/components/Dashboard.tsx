@@ -189,7 +189,7 @@ function Dashboard() {
   }, [programInfo]);
 
   return (
-    <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2 pb-10">
+    <div className="w-full flex flex-col md:flex-row gap-2 px-2 pb-10">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -198,14 +198,7 @@ function Dashboard() {
       />
 
       {/* Audio Element */}
-      {isModalOpen && (
-        <audio
-          src="/youaresuperb.mp3"
-          autoPlay
-
-          // onEnded={() => setShowConfetti(false)}
-        />
-      )}
+      {isModalOpen && <audio src="/youaresuperb.mp3" autoPlay />}
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
         <div className="md:w-[50%] w-full">
@@ -229,7 +222,6 @@ function Dashboard() {
               {formattedElapsedTime && (
                 <div className="flex items-center gap-2 rounded-full bg-green-50 px-2">
                   <Clock className="h-4 w-4 text-green-600" />
-
                   <span className="font-medium text-green-600 tabular-nums">
                     Session time: {formattedElapsedTime}
                   </span>

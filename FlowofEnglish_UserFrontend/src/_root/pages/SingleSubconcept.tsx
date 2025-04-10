@@ -372,7 +372,7 @@ const SingleSubconcept = () => {
               id="embeddedContent"
               src={subconcept?.subconceptLink}
               title="Embedded Content"
-              className={`w-full min-h-[500px] sm:min-h-[800px] mt-[100px] ${
+              className={`w-full min-h-[500px] sm:min-h-[800px] ${
                 onFrameLoad && ""
               }`}
               onLoad={() => {

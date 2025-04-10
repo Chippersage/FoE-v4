@@ -151,7 +151,7 @@ export default function Dashboard() {
         </Button>
       </header> */}
 
-        <main className="container mx-auto max-w-6xl p-4 mt-[120px]">
+        <main className="container mx-auto max-w-6xl p-4">
           {/* Welcome Banner */}
           {/* <div className="mb-6 rounded-lg bg-emerald-500 p-4 text-white">
           <h1 className="text-xl font-medium">Welcome Nalini!</h1>
