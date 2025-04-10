@@ -394,7 +394,7 @@ export default function SubConceptsPage() {
   const getPath = (numWaves = 2) => {
     const radius = window.innerWidth >= 640 ? 50 : 30;
     const waveHeight = rowHeight / 2;
-    const divisor = window.innerWidth <= 600 ? 6 : 3;
+    const divisor = window.innerWidth <= 600 ? 3 : 2;
 
     let path = `M100,${rowHeight / divisor}`;
     let maxY = rowHeight / divisor; // Track max Y-coordinate
@@ -472,7 +472,7 @@ export default function SubConceptsPage() {
       )}
       <div
         ref={scrollableDivRef}
-        className="relative w-full h-auto sm:mt-[200px] mt-[220px] md:mt-[200px] overflow-y-auto"
+        className="relative w-full h-auto overflow-y-auto"
       >
         <div
           className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-24 sm:top-0`}
@@ -532,7 +532,7 @@ export default function SubConceptsPage() {
         )}
         {/* Scrollable SVG Container */}
         {pathData && (
-          <div className="w-full min-h-full relative flex items-center justify-center ">
+          <div className="w-full min-h-full relative flex items-center justify-center">
             <svg
               className="w-full h-auto"
               viewBox={`0 0 ${pathWidth} ${pathData.dynamicHeight}`}
