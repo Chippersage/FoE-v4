@@ -30,7 +30,7 @@ const RootLayout = () => {
       {/* Content Container with Header Space */}
       <div
         className={`flex-1 overflow-y-auto ${
-          isHomePage ? "mt-[160px]" : "mt-[100px]"
+          isHomePage ? "mt-[120px] sm:mt-[160px]" : "mt-[100px]"
         }`}
       >
         {/* Announcement Banner */}
