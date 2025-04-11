@@ -278,7 +278,6 @@ export default function SubConceptsPage() {
         ? subconcepts.length + 1
         : calculatedTargetIndex + 1
     );
-    console.log(calculatedTargetIndex);
   }, [subconcepts]);
 
   // Scroll to the active subconcept when the target index changes
@@ -312,7 +311,7 @@ export default function SubConceptsPage() {
         // console.log(user);
         try {
           const result = await fetchSubconcepts();
-          console.log(result);
+          // console.log(result);
           setUnitCompletionStatus(result.unitCompletionStatus);
           setStageId(result.stageId);
           setCurrentUnitId(result.unitId);
@@ -354,13 +353,13 @@ export default function SubConceptsPage() {
     const allUnits: { unitId: string }[] = allUnitsString
       ? JSON.parse(allUnitsString)
       : [];
-    console.log(allUnits);
+    // console.log(allUnits);
     // Find the current unit index
     const currentIndex = allUnits.findIndex((unit) => {
-      console.log(unit);
+      // console.log(unit);
       return unit.unitId == unitId;
     });
-    console.log(currentIndex);
+    // console.log(currentIndex);
     // Find the next unit
     if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
       const nextUnit = allUnits[currentIndex + 1];
@@ -378,46 +377,39 @@ export default function SubConceptsPage() {
   };
 
   const getSinglePath = () => {
-    // Apply different division values based on screen width
-    // let divisor = window.innerWidth <= 600 ? 4 : 5; // Mobile: 4, Others: 5
-
-    // Start position (left to right, in the middle of the screen)
-    let maxY = rowHeight;
-    let path = `M100,${rowHeight / 2}`;
+    // Fixed starting Y position
+    const startY = 200; // Fixed starting position
+    let path = `M100,${startY}`;
 
     // Draw a straight horizontal line to the right
     path += `H${pathWidth - 40}`;
 
-    return { path, dynamicHeight: maxY + 50 };
+    return { path, dynamicHeight: startY + 100 }; // Add some padding
   };
 
   const getPath = (numWaves = 2) => {
     const radius = window.innerWidth >= 640 ? 50 : 30;
     const waveHeight = rowHeight / 2;
-    const divisor = window.innerWidth <= 600 ? 3 : 2;
+    const startY = 150; // Fixed starting position
 
-    let path = `M100,${rowHeight / divisor}`;
-    let maxY = rowHeight / divisor; // Track max Y-coordinate
+    let path = `M100,${startY}`;
+    let maxY = startY; // Track max Y-coordinate
 
     for (let i = 0; i < numWaves; i++) {
       let yOffset = i * waveHeight * 2;
-      let bottomY = waveHeight * 2 + rowHeight / divisor + yOffset;
+      let bottomY = waveHeight * 2 + startY + yOffset;
       maxY = Math.max(maxY, bottomY); // Update max Y-coordinate
 
       path += `
       H${pathWidth - 40 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 40},${
-        rowHeight / divisor + radius + yOffset
-      }
-      V${waveHeight + rowHeight / divisor - radius + yOffset} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 40},${startY + radius + yOffset}
+      V${waveHeight + startY - radius + yOffset} 
       A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
-        waveHeight + rowHeight / divisor + yOffset
+        waveHeight + startY + yOffset
       }
       H${40 + radius}
-      A${radius},${radius} 0 0 0 40,${
-        waveHeight + rowHeight / divisor + radius + yOffset
-      }
-      V${waveHeight * 2 + rowHeight / divisor - radius + yOffset} 
+      A${radius},${radius} 0 0 0 40,${waveHeight + startY + radius + yOffset}
+      V${waveHeight * 2 + startY - radius + yOffset} 
       A${radius},${radius} 0 0 0 ${40 + radius},${bottomY}
     `;
     }

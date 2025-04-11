@@ -26,7 +26,7 @@ export default function ActivityCompletionModal({
 }: ActivityCompletionModal) {
   const [countdown, setCountdown] = useState(countdownDuration);
   const [audio] = useState(new Audio());
-  console.log("scorePercentage", scorePercentage);
+  // console.log("scorePercentage in activity completion modal", scorePercentage);
 
   useEffect(() => {
     let timer: number;

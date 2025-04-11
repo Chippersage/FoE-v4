@@ -9,10 +9,16 @@ interface CohortTourProps {
 
 const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
   const [runTour, setRunTour] = useState(false);
+
   useEffect(() => {
-    setTimeout(() => {
-      setRunTour(true);
-    }, 2000);
+    // Check if tour has been shown in this session
+    const hasSeenTour = sessionStorage.getItem("hasSeenCohortTour");
+
+    if (!hasSeenTour) {
+      setTimeout(() => {
+        setRunTour(true);
+      }, 2000);
+    }
   }, []);
 
   const steps: Step[] = [
@@ -58,10 +64,12 @@ const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
     const { status, index, type } = data;
 
     if (type === "step:after" || type === "error:target_not_found") {
-      localStorage.setItem("tourStep", String(index + 1));
+      sessionStorage.setItem("tourStep", String(index + 1));
     }
     if (status === "finished" || status === "skipped") {
       setRunTour(false);
+      // Mark that the user has seen the tour in this session
+      sessionStorage.setItem("hasSeenCohortTour", "true");
     }
   };
 

@@ -32,15 +32,22 @@ export default function Stages({
   const [expandedModule, setExpandedModule] = useState(null);
   const [hoveredUnit, setHoveredUnit] = useState(null);
   const containerRef = useRef(null);
-  const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
   const [stepIndex, setStepIndex] = useState(0);
   const [runTour, setRunTour] = useState(false);
+  const [hasSeenDashboardTour, setHasSeenDashboardTour] = useState(false);
 
   useEffect(() => {
-    if (isDataLoaded && !hasSeenProductTour) {
+    // Check if user has seen the tour before
+    const seenTour = localStorage.getItem("hasSeenDashboardTour");
+    setHasSeenDashboardTour(!!seenTour);
+
+    // Only run tour if data is loaded and user hasn't seen it before
+    if (isDataLoaded && !seenTour) {
       setRunTour(true);
+      // Mark tour as seen after it starts
+      localStorage.setItem("hasSeenDashboardTour", "true");
     }
-  }, [isDataLoaded, hasSeenProductTour]);
+  }, [isDataLoaded]);
 
   // Ensure that stages is not null or undefined before converting it to an array
   const stagesArray = stages ? Object.values(stages) : [];
@@ -65,7 +72,7 @@ export default function Stages({
 
   return (
     <>
-      {!hasSeenProductTour && (
+      {!hasSeenDashboardTour && (
         <DashboardTour
           stepIndex={stepIndex}
           setStepIndex={setStepIndex}

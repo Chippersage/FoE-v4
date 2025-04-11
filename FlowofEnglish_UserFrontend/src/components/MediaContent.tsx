@@ -567,7 +567,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          }  rounded-lg overflow-y-auto no-scrollbar`}
+          } rounded-lg overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar`}
         >
           {renderContent()}
         </div>
