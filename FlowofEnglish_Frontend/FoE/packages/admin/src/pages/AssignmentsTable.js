@@ -195,10 +195,10 @@ const AssignmentsTable = ({ cohortId }) => {
                 <TableRow>
                   <TableCell>Assignment ID</TableCell>
                   <TableCell>User</TableCell>
-                  <TableCell>Program</TableCell>
+              {/*     <TableCell>Program</TableCell>
                   <TableCell>Stage</TableCell>
-                  <TableCell>Unit</TableCell>
-                  <TableCell>Subconcept</TableCell>
+                  <TableCell>Unit</TableCell> */}
+                  <TableCell>Assignment Q</TableCell>
                   <TableCell>Max Score</TableCell>
                   <TableCell>Submitted Date</TableCell>
                   <TableCell>Submitted File</TableCell>
@@ -219,22 +219,25 @@ const AssignmentsTable = ({ cohortId }) => {
                   >
                     <TableCell>{assignment.assignmentId}</TableCell>
                     <TableCell>{assignment.user.userName} ({assignment.user.userId})</TableCell>
-                    <TableCell>{assignment.program.programId}</TableCell>
+                {/*   <TableCell>{assignment.program.programName}</TableCell>
                     <TableCell>{assignment.stage.stageId}</TableCell>
-                    <TableCell>{assignment.unit.unitId}</TableCell>
-                    <TableCell title={assignment.subconcept.subconceptDesc}>
-                      {assignment.subconcept.subconceptId}
-                    </TableCell>
+                    <TableCell>{assignment.unit.unitId}</TableCell> */}
+                    <TableCell> {assignment.subconcept.subconceptLink ? (
+    <a href={assignment.subconcept.subconceptLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: '#0066cc', textDecoration: 'underline' }} >
+      {assignment.subconcept.subconceptId}
+    </a>
+  ) : (
+    assignment.subconcept.subconceptId
+  )}
+</TableCell>
                     <TableCell>{assignment.subconcept.subconceptMaxscore}</TableCell>
                     <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
                     <TableCell>
                       {assignment.submittedFile && (
-                      <a
-                      href={assignment.submittedFile.downloadUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-    style={{ color: '#0066cc', textDecoration: 'underline' }}
-                    >
+<a href={assignment.submittedFile.downloadUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'underline' }} >
     View File
                         </a>
                       )}
