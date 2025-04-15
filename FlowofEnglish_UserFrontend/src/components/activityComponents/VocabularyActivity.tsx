@@ -475,6 +475,8 @@ interface VocabularyActivityProps {
   //   userAttemptScore: number;
   // }) => void;
   // setShowSubmit: React.Dispatch<React.SetStateAction<boolean>>;
+  setScorePercentage: React.Dispatch<React.SetStateAction<number>>;
+  subconceptMaxscore: number;
   setSubmissionPayload?: React.Dispatch<
     React.SetStateAction<{
       userAttemptFlag: boolean;
@@ -487,6 +489,8 @@ interface VocabularyActivityProps {
 export default function VocabularyActivity({
   triggerSubmit,
   xmlUrl,
+  setScorePercentage,
+  subconceptMaxscore,
   // onSubmitScore,
   // setShowSubmit,
   setSubmissionPayload,
@@ -518,7 +522,7 @@ export default function VocabularyActivity({
   const [currentDefinitions, setCurrentDefinitions] = useState<Definition[]>(
     []
   );
-  console.log(score);
+  // console.log(score);
 
   // Use the sound effects hook
   const { playSound, toggleSound, isSoundEnabled } = useSoundEffects();
@@ -765,7 +769,6 @@ export default function VocabularyActivity({
 
     if (!allPlaced) {
       toast.error("Please place all keywords before submitting.");
-      // alert("Please place all keywords before submitting.");
       return;
     }
 
@@ -780,7 +783,6 @@ export default function VocabularyActivity({
       const isCorrect = placedKeyword?.id === correctKeywordId;
       newResults[def.id] = isCorrect;
 
-      // If any placement is incorrect, the whole page is incorrect
       if (!isCorrect) {
         allCorrect = false;
       }
@@ -788,7 +790,6 @@ export default function VocabularyActivity({
 
     setResults(newResults);
     setIsSubmitted(true);
-
     setIsPageCorrect(allCorrect);
 
     // Update page results
@@ -799,6 +800,26 @@ export default function VocabularyActivity({
     // Only increment score if all placements on the page are correct
     if (allCorrect) {
       setScore((prev) => prev + 1);
+    }
+
+    // Calculate final score based on page results
+    const finalScore = newPageResults.filter((result) => result).length;
+
+    // If this is the last question, handle final submission
+    if (currentQuestionIndex === questions.length - 1) {
+      // Set score percentage
+      setScorePercentage((finalScore / subconceptMaxscore) * 100);
+
+      // Set submission payload first
+      setSubmissionPayload?.({
+        userAttemptFlag: true,
+        userAttemptScore: finalScore,
+      });
+
+      // Then trigger submit after a small delay to ensure state updates
+      setTimeout(() => {
+        triggerSubmit();
+      }, 100);
     }
 
     // Reveal results one by one with animation
@@ -825,50 +846,9 @@ export default function VocabularyActivity({
           setTimeout(() => {
             playSound("allCorrect");
           }, 500);
-
-          if (currentQuestionIndex === questions.length - 1) {
-            // If this is the last question, show the final score
-            setTimeout(() => {
-              setShowFinalScore(true);
-              // Submit score to API
-              // Calculate final score based on page results
-              const finalScore = newPageResults.filter(
-                (result) => result
-              ).length;
-
-              // Send the payload to the parent via setSubmissionPayload
-              setSubmissionPayload?.({
-                userAttemptFlag: true,
-                userAttemptScore: finalScore,
-              });
-            }, 1500);
-          }
-        } else if (
-          index === definitionIds.length - 1 &&
-          currentQuestionIndex === questions.length - 1
-        ) {
-          // If this is the last question but not all correct
-          setTimeout(() => {
-            setShowFinalScore(true);
-            // Submit score to API
-            // Calculate final score based on page results
-            const finalScore = newPageResults.filter((result) => result).length;
-
-            // Send the payload to the parent via setSubmissionPayload
-            setSubmissionPayload?.({
-              userAttemptFlag: true,
-              userAttemptScore: finalScore,
-            });
-          }, 1500);
         }
-      }, index * 800); // Show each result with a 800ms delay
+      }, index * 800);
     });
-
-    if (currentQuestionIndex === questions.length - 1) {
-      setShowSubmit(true);
-      console.log("triggerSubmit");
-      triggerSubmit;
-    }
   };
 
   const handleNextQuestion = () => {

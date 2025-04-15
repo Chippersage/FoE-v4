@@ -80,64 +80,63 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
     );
   };
 
-useEffect(() => {
-  const fetchAssignment = async () => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
-      );
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
+        );
 
-      const data = response.data;
+        const data = response.data;
 
-      const formattedData = {
-        status: data.status, // "not_corrected" | "corrected"
-        submittedFile: {
-          name: data.submittedFile.fileName,
-          downloadUrl: data.submittedFile.downloadUrl,
-        },
-        correctedFile: data.correctedFile
-          ? {
-              name: data.correctedFile.fileName,
-              downloadUrl: data.correctedFile.downloadUrl,
-            }
-          : undefined,
-        score: data.score,
-        remarks: data.remarks,
-      };
+        const formattedData = {
+          status: data.status, // "not_corrected" | "corrected"
+          submittedFile: {
+            name: data.submittedFile.fileName,
+            downloadUrl: data.submittedFile.downloadUrl,
+          },
+          correctedFile: data.correctedFile
+            ? {
+                name: data.correctedFile.fileName,
+                downloadUrl: data.correctedFile.downloadUrl,
+              }
+            : undefined,
+          score: data.score,
+          remarks: data.remarks,
+        };
 
-      // Categorize the data based on its status
-      if (data.status === "not_corrected") {
-        setAssignmentData((prev) => ({
-          ...prev,
-          not_corrected: formattedData,
-        }));
-        setCurrentStatus("not_corrected");
-      } else if (data.status === "corrected" && data.correctedFile) {
-        setAssignmentData((prev) => ({
-          ...prev,
-          corrected_with_file: formattedData,
-        }));
-        setCurrentStatus("corrected_with_file");
-      } else if (data.status === "corrected") {
-        setAssignmentData((prev) => ({
-          ...prev,
-          corrected: formattedData,
-        }));
-        setCurrentStatus("corrected");
+        // Categorize the data based on its status
+        if (data.status === "not_corrected") {
+          setAssignmentData((prev) => ({
+            ...prev,
+            not_corrected: formattedData,
+          }));
+          setCurrentStatus("not_corrected");
+        } else if (data.status === "corrected" && data.correctedFile) {
+          setAssignmentData((prev) => ({
+            ...prev,
+            corrected_with_file: formattedData,
+          }));
+          setCurrentStatus("corrected_with_file");
+        } else if (data.status === "corrected") {
+          setAssignmentData((prev) => ({
+            ...prev,
+            corrected: formattedData,
+          }));
+          setCurrentStatus("corrected");
+        }
+        setIsAssignmentStatusModalOpen(true); // Open modal when data is ready
+      } catch (error) {
+        console.error("Error fetching assignment:", error);
       }
-      setIsAssignmentStatusModalOpen(true); // Open modal when data is ready
-    } catch (error) {
-      console.error("Error fetching assignment:", error);
-    }
-  };
+    };
 
-  if (
-    userData?.userId &&
-    subconceptData?.subconceptType?.toLowerCase().startsWith("assignment")
-  )
-    fetchAssignment();
-
-}, [userData?.userId]);
+    if (
+      userData?.userId &&
+      subconceptData?.subconceptType?.toLowerCase().startsWith("assignment")
+    )
+      fetchAssignment();
+  }, [userData?.userId]);
 
   useEffect(() => {
     if (isAssignmentUploadSuccesfull) {
@@ -248,10 +247,10 @@ useEffect(() => {
     // checking if subconceptMaxscore is 0 and setting scorePercentage to 100 otherwise low score variant of activity completion modal will be shown which is not correct
 
     setScorePercentage(
-      (subconceptData?.subconceptMaxscore == 0 ||
+      subconceptData?.subconceptMaxscore == 0 ||
         ["assignment", "assessment"].some((type) =>
           subconceptData?.subconceptType?.toLowerCase().startsWith(type)
-        ))
+        )
         ? 100
         : (finalScore / subconceptData?.subconceptMaxscore) * 100
     );
@@ -476,21 +475,21 @@ useEffect(() => {
           userData?.cohortId
         );
         return (
-              <iframe
-                src={updatedUrl} // Disable PDF toolbar
-                width="100%"
-                height="600px"
-                title="PDF Document"
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-                  // pointerEvents: "none",
-                }}
-                // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-                // @ts-ignore
-                // controlsList="nodownload" // Restrict download
-              />
-          );
+          <iframe
+            src={updatedUrl} // Disable PDF toolbar
+            width="100%"
+            height="600px"
+            title="PDF Document"
+            style={{
+              borderRadius: "10px",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              // pointerEvents: "none",
+            }}
+            // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+            // @ts-ignore
+            // controlsList="nodownload" // Restrict download
+          />
+        );
       default:
         return <p>Something went wrong!</p>;
     }
@@ -525,21 +524,20 @@ useEffect(() => {
         )
       ) : null} */}
       {showSuccessPopup ? (
-          <ActivityCompletionModal
-            countdownDuration={3}
-            onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
-            scorePercentage={scorePercentage}
-            subconceptType={subconceptData?.subconceptType}
-          />
-        ) : (
-          null
-        )}
+        <ActivityCompletionModal
+          countdownDuration={3}
+          onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
+          scorePercentage={scorePercentage}
+          subconceptType={subconceptData?.subconceptType}
+        />
+      ) : null}
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
       {/* @ts-ignore */}
-      <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full">
-        <h1 className="mt-24 pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
-          {(subconceptData?.subconceptType === "video" || subconceptData?.subconceptType === "youtube")
+      <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full fixed">
+        <h1 className="pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
+          {subconceptData?.subconceptType === "video" ||
+          subconceptData?.subconceptType === "youtube"
             ? "Watch the video"
             : subconceptData?.subconceptType === "audio"
             ? "Listen to the audio"
@@ -569,7 +567,7 @@ useEffect(() => {
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          }  rounded-lg overflow-y-auto no-scrollbar`}
+          } rounded-lg overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar`}
         >
           {renderContent()}
         </div>

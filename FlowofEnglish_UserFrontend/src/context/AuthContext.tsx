@@ -7,7 +7,7 @@ type UserCohort = {
   cohortName: string;
   cohortStartDate: number;
   cohortEndDate: number;
-  program: INITIAL_USER_PROGRAM_STATE,
+  program: INITIAL_USER_PROGRAM_STATE;
 };
 
 type INITIAL_USER_PROGRAM_STATE = {
@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
-
   // Function to check if the user is authenticated
   const checkAuthUser = async () => {
     setIsLoading(true);
@@ -112,21 +111,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-
   // Check authentication on mount
-useEffect(() => {
-  const user = localStorage.getItem("user");
-  if (!user) {
-    navigate("/sign-in");
-  } else {
-    checkAuthUser();
-    // Navigate to cohort selection ONLY IF no cohort is selected
-    if (!selectedCohortWithProgram) {
-      navigate("/select-cohort");
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      navigate("/sign-in");
+    } else {
+      checkAuthUser();
+      // Navigate to cohort selection ONLY IF no cohort is selected
+      if (!selectedCohortWithProgram) {
+        navigate("/select-cohort");
+      }
     }
-  }
-}, [navigate, selectedCohortWithProgram]);
-
+  }, [navigate, selectedCohortWithProgram]);
 
   // Value to be provided by the context
   const value = {

@@ -8,14 +8,14 @@ import { useSession } from "@/context/TimerContext";
 // Import the logout image
 
 const Header2 = () => {
-  const { user, selectedCohortWithProgram, setIsAuthenticated } = useUserContext();
+  const { user, selectedCohortWithProgram, setIsAuthenticated } =
+    useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
   const isSelectCohortPage = location.pathname === "/select-cohort";
 
   const { resetSession } = useSession();
-
 
   const handleLogout = async () => {
     try {
@@ -29,7 +29,7 @@ const Header2 = () => {
           },
         }
       );
-      
+
       setIsAuthenticated(false);
       // Clear user info and setUser to null after logout
       // localStorage.removeItem("tempSessionId");
@@ -44,7 +44,8 @@ const Header2 = () => {
       localStorage.removeItem("userData");
       localStorage.removeItem("userId");
       localStorage.removeItem("selectedCohortWithProgram");
-      resetSession()
+      localStorage.removeItem("hasSeenDashboardTour");
+      resetSession();
       // Cookies.remove("JSESSIONID", { path: "/" });
       // Navigate the user to the login page
       navigate("/sign-in");

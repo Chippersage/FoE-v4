@@ -32,8 +32,8 @@ export function UploadModal({
   const stageId = location.state?.stageId;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); // URL for preview
 
-  console.log("recordedMedia", recordedMedia);
-  console.log("file", file);
+  // console.log("recordedMedia", recordedMedia);
+  // console.log("file", file);
 
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function UploadModal({
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      console.log(recordedMedia)
+      // console.log(recordedMedia)
        const newUrl = URL.createObjectURL(recordedMedia.blob);
        setPreviewUrl(newUrl);
       return () => URL.revokeObjectURL(newUrl); // Cleanup when component unmounts
@@ -79,7 +79,7 @@ export function UploadModal({
     try {
       const formData = new FormData();
       if (file) {
-        console.log("file", file);
+        // console.log("file", file);
         formData.append(
           "file",
           file,

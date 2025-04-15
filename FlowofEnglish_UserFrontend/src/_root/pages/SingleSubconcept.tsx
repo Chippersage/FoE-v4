@@ -91,7 +91,7 @@ const ErrorOverlay = ({ countdown = 5, onClose }) => {
 };
 
 const SingleSubconcept = () => {
-  console.log("rendered");
+  // console.log("rendered");
   const { user, selectedCohortWithProgram } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,16 +117,20 @@ const SingleSubconcept = () => {
       "assignment_image",
       "assessment",
       "youtube",
-      "vocab",
+      // "vocab", // To uncomment for new vocab activity component
     ].includes(subconcept?.subconceptType)
   );
-  const [showSubmit, setShowSubmit] = useState(true);
+  const [showSubmit, setShowSubmit] = useState(
+    subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [submissionPayload, setSubmissionPayload] = useState<{
     userAttemptFlag: boolean;
     userAttemptScore: number;
   } | null>(null);
+
+  // console.log("submissionPayload", submissionPayload);
 
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
@@ -137,14 +141,14 @@ const SingleSubconcept = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const submitBtnRef = useRef(null); // 👈 ref for your styled submit button
 
-  useEffect(() => {
-    // Only set showSubmit to false if it's a vocabulary activity
-    if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
-      setShowSubmit(false);
-    } else {
-      setShowSubmit(true);
-    }
-  }, [subconcept]);
+  // useEffect(() => {
+  //   // Only set showSubmit to false if it's a vocabulary activity
+  //   if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
+  //     setShowSubmit(false);
+  //   } else {
+  //     setShowSubmit(true);
+  //   }
+  // }, [subconcept]);
 
   // useEffect(() => {
   //   // Clear sessionStorage when the component mounts to show modal again on revisit
@@ -246,10 +250,20 @@ const SingleSubconcept = () => {
   // };
 
   const handleSubmit = () => {
-    if (subconcept?.subconceptType?.toLowerCase() === "vocab")
-      handlePostScore(submissionPayload);
-    // Send a message to the iframe when Submit is clicked
-    else {
+
+    // To uncomment for new vocab activity component
+
+    // if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
+    //   // Only proceed if we have a valid submission payload
+    //   if (!submissionPayload) {
+    //     console.error("No submission payload available");
+    //     return;
+    //   }
+    //   console.log("submissionPayload in final call", submissionPayload);
+    //   handlePostScore(submissionPayload);
+    // }
+    // // Send a message to the iframe when Submit is clicked
+    // else {
       const iframe = document.getElementById("embeddedContent");
       if (iframe && iframe.tagName === "IFRAME") {
         (iframe as HTMLIFrameElement).contentWindow?.postMessage(
@@ -257,10 +271,11 @@ const SingleSubconcept = () => {
           "*"
         );
       }
-    }
+    // }
   };
 
   const handlePostScore = (payload: any) => {
+    // console.log("payload", payload);
     if (isSubmitting) return; // prevent duplicate
     setIsSubmitting(true);
 
@@ -294,7 +309,7 @@ const SingleSubconcept = () => {
     })
       .then((response) => {
         if (response.ok) {
-          console.log("submitted and postSuccess message sent");
+          // console.log("submitted and postSuccess message sent");
           const iframe = document.getElementById(
             "embeddedContent"
           ) as HTMLIFrameElement;
@@ -312,7 +327,7 @@ const SingleSubconcept = () => {
         setScorePercentage(
           (payload?.userAttemptScore / subconcept?.subconceptMaxscore) * 100
         );
-        console.log("Score submitted successfully:", data);
+        // console.log("Score submitted successfully:", data);
       })
       .catch((error) => {
         console.error("Error submitting score:", error);
@@ -359,20 +374,29 @@ const SingleSubconcept = () => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
-          {subconcept?.subconceptType === "vocab" ? (
+
+          {/* To uncomment for new vocab activity component */}
+
+          {/* {subconcept?.subconceptType === "vocab" ? (
             <VocabularyActivity
-              triggerSubmit={() => submitBtnRef.current?.click()}
+              triggerSubmit={() => {
+                // console.log("triggerSubmit parent");
+                submitBtnRef.current?.click();
+              }}
               // setShowSubmit={setShowSubmit}
               xmlUrl={subconcept?.subconceptLink}
               // onSubmitScore={handlePostScore}
               setSubmissionPayload={setSubmissionPayload}
+              setScorePercentage={setScorePercentage}
+              subconceptMaxscore={subconcept?.subconceptMaxscore}
             />
-          ) : showIframe ? (
+          ) : */}
+           {showIframe ? (
             <iframe
               id="embeddedContent"
               src={subconcept?.subconceptLink}
               title="Embedded Content"
-              className={`w-full min-h-[500px] sm:min-h-[800px] mt-[100px] ${
+              className={`w-full min-h-[500px] sm:min-h-[800px] ${
                 onFrameLoad && ""
               }`}
               onLoad={() => {

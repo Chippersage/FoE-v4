@@ -102,7 +102,6 @@ const iconMap = {
   text_from_picture: TextFromImage,
   text_from_text: TextFromText,
   writer_general_sentences: WriterGeneralSentences,
-  
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -154,7 +153,6 @@ export default function SubConceptsPage() {
   const [pathData, setPathData] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
-
 
   const { formattedElapsedTime } = useSession();
 
@@ -280,7 +278,6 @@ export default function SubConceptsPage() {
         ? subconcepts.length + 1
         : calculatedTargetIndex + 1
     );
-    console.log(calculatedTargetIndex);
   }, [subconcepts]);
 
   // Scroll to the active subconcept when the target index changes
@@ -314,7 +311,7 @@ export default function SubConceptsPage() {
         // console.log(user);
         try {
           const result = await fetchSubconcepts();
-          console.log(result);
+          // console.log(result);
           setUnitCompletionStatus(result.unitCompletionStatus);
           setStageId(result.stageId);
           setCurrentUnitId(result.unitId);
@@ -356,13 +353,13 @@ export default function SubConceptsPage() {
     const allUnits: { unitId: string }[] = allUnitsString
       ? JSON.parse(allUnitsString)
       : [];
-    console.log(allUnits);
+    // console.log(allUnits);
     // Find the current unit index
     const currentIndex = allUnits.findIndex((unit) => {
-      console.log(unit);
+      // console.log(unit);
       return unit.unitId == unitId;
     });
-    console.log(currentIndex);
+    // console.log(currentIndex);
     // Find the next unit
     if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
       const nextUnit = allUnits[currentIndex + 1];
@@ -380,46 +377,39 @@ export default function SubConceptsPage() {
   };
 
   const getSinglePath = () => {
-    // Apply different division values based on screen width
-    // let divisor = window.innerWidth <= 600 ? 4 : 5; // Mobile: 4, Others: 5
-
-    // Start position (left to right, in the middle of the screen)
-    let maxY = rowHeight;
-    let path = `M100,${rowHeight / 2}`;
+    // Fixed starting Y position
+    const startY = 200; // Fixed starting position
+    let path = `M100,${startY}`;
 
     // Draw a straight horizontal line to the right
     path += `H${pathWidth - 40}`;
 
-    return { path, dynamicHeight: maxY + 50 };
+    return { path, dynamicHeight: startY + 100 }; // Add some padding
   };
 
   const getPath = (numWaves = 2) => {
     const radius = window.innerWidth >= 640 ? 50 : 30;
     const waveHeight = rowHeight / 2;
-    const divisor = window.innerWidth <= 600 ? 6 : 3;
+    const startY = 150; // Fixed starting position
 
-    let path = `M100,${rowHeight / divisor}`;
-    let maxY = rowHeight / divisor; // Track max Y-coordinate
+    let path = `M100,${startY}`;
+    let maxY = startY; // Track max Y-coordinate
 
     for (let i = 0; i < numWaves; i++) {
       let yOffset = i * waveHeight * 2;
-      let bottomY = waveHeight * 2 + rowHeight / divisor + yOffset;
+      let bottomY = waveHeight * 2 + startY + yOffset;
       maxY = Math.max(maxY, bottomY); // Update max Y-coordinate
 
       path += `
       H${pathWidth - 40 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 40},${
-        rowHeight / divisor + radius + yOffset
-      }
-      V${waveHeight + rowHeight / divisor - radius + yOffset} 
+      A${radius},${radius} 0 0 1 ${pathWidth - 40},${startY + radius + yOffset}
+      V${waveHeight + startY - radius + yOffset} 
       A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
-        waveHeight + rowHeight / divisor + yOffset
+        waveHeight + startY + yOffset
       }
       H${40 + radius}
-      A${radius},${radius} 0 0 0 40,${
-        waveHeight + rowHeight / divisor + radius + yOffset
-      }
-      V${waveHeight * 2 + rowHeight / divisor - radius + yOffset} 
+      A${radius},${radius} 0 0 0 40,${waveHeight + startY + radius + yOffset}
+      V${waveHeight * 2 + startY - radius + yOffset} 
       A${radius},${radius} 0 0 0 ${40 + radius},${bottomY}
     `;
     }
@@ -474,7 +464,7 @@ export default function SubConceptsPage() {
       )}
       <div
         ref={scrollableDivRef}
-        className="relative w-full h-auto sm:mt-[200px] mt-[220px] md:mt-[200px] overflow-y-auto"
+        className="relative w-full h-auto overflow-y-auto"
       >
         <div
           className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-24 sm:top-0`}
@@ -491,13 +481,14 @@ export default function SubConceptsPage() {
               autoplay
               style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
             />
-            <div className="absolute bg-white p-6 rounded shadow-lg text-center">
+            <div className="absolute bg-white p-6 rounded shadow-lg text-center max-w-[300px] sm:max-w-xl">
               <h2 className="text-2xl font-bold text-green-500">
                 Congratulations!
               </h2>
-              <p>You have unlocked the next unit!</p>
+              <p>You have completed this unit successfully!</p>
               <p className="text-sm text-gray-500 mt-2">
-                You are being redirected to the next unit...
+                You will be redirected to the home page. From there, you can
+                continue to the next unit to keep learning!
               </p>
             </div>
           </div>
@@ -533,7 +524,7 @@ export default function SubConceptsPage() {
         )}
         {/* Scrollable SVG Container */}
         {pathData && (
-          <div className="w-full min-h-full relative flex items-center justify-center ">
+          <div className="w-full min-h-full relative flex items-center justify-center">
             <svg
               className="w-full h-auto"
               viewBox={`0 0 ${pathWidth} ${pathData.dynamicHeight}`}
@@ -575,7 +566,6 @@ export default function SubConceptsPage() {
                   ? Start
                   : Finish;
 
-
                 const isCompleted =
                   subconcept && subconcept.completionStatus === "yes";
                 const isEnabled =
@@ -603,7 +593,7 @@ export default function SubConceptsPage() {
                         (unitCompletionStatus === "yes" ||
                           unitCompletionStatus.toLowerCase() ===
                             "unit completed without assignments")
-                          ? `/subconcepts/${nextUnitId}`
+                          ? `/home`
                           : isEnabled && index !== totalSteps - 1 && index !== 0
                           ? `/subconcept/${subconcept?.subconceptId}`
                           : null
@@ -617,7 +607,7 @@ export default function SubConceptsPage() {
                       }`}
                       onMouseEnter={() => setActiveTooltip(index)}
                       onMouseLeave={() => setActiveTooltip(null)}
-                      onClick={() => {
+                      onClick={(e) => {
                         if (
                           index === totalSteps - 1 &&
                           (unitCompletionStatus === "yes" ||
@@ -625,11 +615,13 @@ export default function SubConceptsPage() {
                               "unit completed without assignments") &&
                           nextUnitId
                         ) {
+                          e.preventDefault(); // Prevent immediate navigation
                           setShowConfetti(true);
                           setAudioPlaying(true);
+                          // Navigate after confetti animation
                           setTimeout(() => {
-                            setShowConfetti(false);
-                          }, 5000);
+                            navigate("/home");
+                          }, 5000); // Match this with confetti duration
                         } else if (
                           index === totalSteps - 1 &&
                           (unitCompletionStatus === "yes" ||
