@@ -114,12 +114,16 @@ export const AuthProvider = ({ children }) => {
   // Check authentication on mount
   useEffect(() => {
     const user = localStorage.getItem("user");
-    if (!user) {
+    const userType = localStorage.getItem("userType");
+    const validUserTypes = ["Learner", "Mentor", "mentor", "learner"];
+
+    if (!user || !userType || !validUserTypes.includes(userType)) {
       navigate("/sign-in");
     } else {
       checkAuthUser();
-      // Navigate to cohort selection ONLY IF no cohort is selected
-      if (!selectedCohortWithProgram) {
+      // Only navigate to cohort selection if no cohort is selected AND we're not on the assignments page
+      const currentPath = window.location.pathname;
+      if (!selectedCohortWithProgram && !currentPath.includes("/cohorts/")) {
         navigate("/select-cohort");
       }
     }
