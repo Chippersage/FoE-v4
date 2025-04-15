@@ -11,6 +11,8 @@ import CohortSelectionPage from "./_root/pages/CohortSelectionPage";
 import { SessionProvider } from "./context/TimerContext";
 import NotFoundPage from "./components/NotFoundPage";
 import { Toaster } from "react-hot-toast";
+import AssignmentsTable from "./components/AssignmentsTable";
+import AssignmentsPage from "./_root/pages/AssignmentsPage";
 
 export default function App() {
   const { isAuthenticated } = useUserContext();
@@ -18,6 +20,14 @@ export default function App() {
     "selectedCohortWithProgram"
   );
   const user = localStorage.getItem("user");
+  const userType = localStorage.getItem("userType");
+
+  const isValidUserType =
+    userType === "Learner" ||
+    userType === "Mentor" ||
+    userType === "learner" ||
+    userType === "mentor";
+  const isAuthenticatedAndValid = user && isValidUserType;
 
   useEffect(() => {
     // @ts-ignore
@@ -42,7 +52,7 @@ export default function App() {
             <Route
               path="/sign-in"
               element={
-                user ? (
+                isAuthenticatedAndValid ? (
                   <Navigate
                     to={selectedCohortWithProgram ? "/home" : "/select-cohort"}
                   />
@@ -59,7 +69,7 @@ export default function App() {
             <Route
               path="/select-cohort"
               element={
-                user ? (
+                isAuthenticatedAndValid ? (
                   selectedCohortWithProgram ? (
                     <Navigate to="/home" />
                   ) : (
@@ -78,13 +88,17 @@ export default function App() {
               path="/subconcept/:subconceptId"
               element={<SingleSubconcept />}
             />
+            <Route
+              path="/cohorts/:cohortId/assignments"
+              element={<AssignmentsPage />}
+            />
           </Route>
 
           {/* Redirect root to appropriate page */}
           <Route
             path="/"
             element={
-              user ? (
+              isAuthenticatedAndValid ? (
                 selectedCohortWithProgram ? (
                   <Navigate to="/home" />
                 ) : (
