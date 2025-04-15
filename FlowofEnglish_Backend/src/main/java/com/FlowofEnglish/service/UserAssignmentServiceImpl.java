@@ -396,8 +396,9 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile.toFile()))) {
             // Write CSV header
-            writer.println("AssignmentId,Username,UserId,SubconceptId,SubmittedFileId,SubmittedDate," +
-                          "ProgramId,StageId,UnitId,MaxScore,Score,Remarks,FileName,FileDownloadLink");
+            writer.println("AssignmentId,UserName,UserId,SubconceptLink,SubmittedFileId,SubmittedDate," +
+//                          "ProgramId,StageId,UnitId,"
+                          "MaxScore,Score,Remarks,FileName,FileDownloadLink");
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             
@@ -423,12 +424,12 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     safeString(assignment.getAssignmentId()),
                     safeString(assignment.getUser().getUserName()),
                     safeString(assignment.getUser().getUserId()),
-                    safeString(assignment.getSubconcept().getSubconceptId()),
+                    safeString(assignment.getSubconcept().getSubconceptLink()),
                     assignment.getSubmittedFile() != null ? safeString(assignment.getSubmittedFile().getFileId()) : "",
                     safeString(submittedDate),
-                    safeString(assignment.getProgram().getProgramId()),
-                    safeString(assignment.getStage().getStageId()),
-                    safeString(assignment.getUnit().getUnitId()),
+//                    safeString(assignment.getProgram().getProgramName()),
+//                    safeString(assignment.getStage().getStageName()),
+//                    safeString(assignment.getUnit().getUnitName()),
                     maxScore != null ? maxScore.toString() : "",
                     assignment.getScore() != null ? assignment.getScore().toString() : "",
                     safeString(assignment.getRemarks()),
@@ -604,8 +605,9 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile.toFile()))) {
             // Write CSV header
-            writer.println("AssignmentId,Username,UserId,SubconceptId,SubmittedFileId,SubmittedDate," +
-                          "ProgramId,StageId,UnitId,MaxScore,Score,Remarks,FileName,FileDownloadLink,CorrectionDate,CorrectedFileAttached");
+            writer.println("AssignmentId,Username,UserId,Assignment question,SubmittedFileId,SubmittedDate," +
+//                          "ProgramName,StageName,UnitName,"
+                           "MaxScore,Score,Remarks,FileName,FileDownloadLink,CorrectionDate,CorrectedFileAttached");
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             
@@ -632,12 +634,12 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     safeString(assignment.getAssignmentId()),
                     safeString(assignment.getUser().getUserName()),
                     safeString(assignment.getUser().getUserId()),
-                    safeString(assignment.getSubconcept().getSubconceptId()),
+                    safeString(assignment.getSubconcept().getSubconceptLink()),
                     assignment.getSubmittedFile() != null ? safeString(assignment.getSubmittedFile().getFileId()) : "",
                     safeString(submittedDate),
-                    safeString(assignment.getProgram().getProgramId()),
-                    safeString(assignment.getStage().getStageId()),
-                    safeString(assignment.getUnit().getUnitId()),
+//                    safeString(assignment.getProgram().getProgramName()),
+//                    safeString(assignment.getStage().getStageName()),
+//                    safeString(assignment.getUnit().getUnitName()),
                     maxScore != null ? maxScore.toString() : "",
                     assignment.getScore() != null ? assignment.getScore().toString() : "",
                     safeString(assignment.getRemarks()),
