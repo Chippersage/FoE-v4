@@ -68,7 +68,7 @@ export default function Dashboard() {
   }, [user?.cohorts]);
 
   const handleResume = async (cohortWithProgram: string) => {
-    console.log("resume clicked")
+    console.log("resume clicked");
     setSelectedCohortWithProgram(cohortWithProgram);
     // When setting the cohort
     localStorage.setItem(
@@ -151,7 +151,7 @@ export default function Dashboard() {
         </Button>
       </header> */}
 
-        <main className="container mx-auto max-w-6xl p-4 mt-[120px]">
+        <main className="container mx-auto max-w-6xl p-4">
           {/* Welcome Banner */}
           {/* <div className="mb-6 rounded-lg bg-emerald-500 p-4 text-white">
           <h1 className="text-xl font-medium">Welcome Nalini!</h1>
@@ -191,9 +191,7 @@ export default function Dashboard() {
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="flex gap-4 pb-4 w-full overflow-x-auto custom-scrollbar-2"
-
-              // style={{ width: "max-content" }}
+              className="flex gap-4 pb-4 w-full overflow-x-auto custom-scrollbar-2 snap-x snap-mandatory"
             >
               {user?.cohorts?.map((cohortWithProgram, index) => {
                 const programId = cohortWithProgram?.program?.programId;
@@ -202,7 +200,7 @@ export default function Dashboard() {
                 return (
                   <Card
                     key={cohortWithProgram?.program?.programId}
-                    className={`min-w-[280px] border border-gray-200 md:min-w-[400px] bg-gradient-to-b from-[#CAF2BC] to-white rounded-xl shadow-lg ${
+                    className={`min-w-[280px] max-w-[280px] border border-gray-200 md:min-w-[400px] md:max-w-[400px] bg-gradient-to-b from-[#CAF2BC] to-white rounded-xl shadow-lg snap-center ${
                       index === 0 ? "program-card-first" : ""
                     }`}
                   >

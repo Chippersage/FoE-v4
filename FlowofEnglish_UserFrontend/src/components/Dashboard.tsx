@@ -28,6 +28,7 @@ function Dashboard() {
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
   const [userProgress, setUserProgress] = useState({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const [completedStagesCount, setCompletedStagesCount] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +37,9 @@ function Dashboard() {
 
   const getProgramInfoByProgramId = async () => {
     if (user && user.userId && selectedCohortWithProgram) {
-      const programId = encodeURIComponent(selectedCohortWithProgram?.program?.programId);
+      const programId = encodeURIComponent(
+        selectedCohortWithProgram?.program?.programId
+      );
       const userId = encodeURIComponent(user.userId); // Extract userId here
       try {
         const response = await axios.get(
@@ -126,6 +129,13 @@ function Dashboard() {
     }
   }, [user, selectedCohortWithProgram]);
 
+  // Add effect to check if all data is loaded
+  useEffect(() => {
+    if (programInfo && userProgress && leaderBoardInfo) {
+      setIsDataLoaded(true);
+    }
+  }, [programInfo, userProgress, leaderBoardInfo]);
+
   const openModal = () => {
     // @ts-ignore
     setCelebratedProgramName(programInfo?.programName);
@@ -179,7 +189,7 @@ function Dashboard() {
   }, [programInfo]);
 
   return (
-    <div className="w-full flex flex-col md:flex-row mt-40 overflow-scroll no-scrollbar gap-2 px-2 pb-10">
+    <div className="w-full flex flex-col md:flex-row gap-2 px-2 pb-10">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -188,21 +198,14 @@ function Dashboard() {
       />
 
       {/* Audio Element */}
-      {isModalOpen && (
-        <audio
-          src="/youaresuperb.mp3"
-          autoPlay
-
-          // onEnded={() => setShowConfetti(false)}
-        />
-      )}
+      {isModalOpen && <audio src="/youaresuperb.mp3" autoPlay />}
       {/* @ts-ignore */}
       {programInfo && programInfo.stages ? (
         <div className="md:w-[50%] w-full">
-          {/* @ts-ignore */}
           <Stages
             stages={programInfo?.stages}
             programCompletionStatus={programInfo?.programCompletionStatus}
+            isDataLoaded={isDataLoaded}
           />
         </div>
       ) : (
@@ -219,7 +222,6 @@ function Dashboard() {
               {formattedElapsedTime && (
                 <div className="flex items-center gap-2 rounded-full bg-green-50 px-2">
                   <Clock className="h-4 w-4 text-green-600" />
-
                   <span className="font-medium text-green-600 tabular-nums">
                     Session time: {formattedElapsedTime}
                   </span>

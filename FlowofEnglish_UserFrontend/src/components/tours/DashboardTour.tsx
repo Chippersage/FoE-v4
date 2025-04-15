@@ -1,8 +1,18 @@
 // DashboardTour.tsx
-import React, { useEffect, useState } from "react";
-import Joyride, { STATUS } from "react-joyride";
+import * as React from "react";
+import Joyride, { STATUS, Step, CallBackProps } from "react-joyride";
+import CustomTooltip from "./CustomTooltip";
 
-const DashboardTour = ({
+interface DashboardTourProps {
+  stepIndex: number;
+  setStepIndex: (index: number) => void;
+  runTour: boolean;
+  setRunTour: (run: boolean) => void;
+  onLetsGoClick?: () => void;
+  onActiveUnitClick?: () => void;
+}
+
+const DashboardTour: React.FC<DashboardTourProps> = ({
   stepIndex,
   setStepIndex,
   runTour,
@@ -14,13 +24,7 @@ const DashboardTour = ({
   // const [runTour, setRunTour] = useState(false);
   //   const [stepIndex, setStepIndex] = useState(savedStepIndex);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setRunTour(true);
-    }, 2000);
-  }, []);
-
-  const steps = [
+  const steps: Step[] = [
     {
       target: ".learning-path-section",
       content: "These are your modules. Click on a module to see its details.",
@@ -38,8 +42,8 @@ const DashboardTour = ({
     },
     {
       target: ".lets-go-button",
-      content: 'Click the "Let’s Go" button to expand this module.',
-      disableBeacon: true, // Enforces interaction by preventing auto progression.
+      content: 'Click the "Let\'s Go" button to expand this module.',
+      disableBeacon: true,
       spotlightClicks: true,
     },
     {
@@ -47,19 +51,20 @@ const DashboardTour = ({
       content:
         "This is your current active unit. Click here to begin your activity.",
       disableBeacon: true,
+      spotlightClicks: true,
     },
   ];
 
-  const handleJoyrideCallback = (data) => {
+  const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, index, type } = data;
 
-    if (type === "step:after" || type === "target:notFound") {
-      //   localStorage.setItem("tourStep", index + 1);
-        setStepIndex(index + 1);
+    if (type === "step:after" || type === "error:target_not_found") {
+      setStepIndex(index + 1);
     }
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      // localStorage.removeItem("tourStep");
+    if (status === "finished" || status === "skipped") {
       setRunTour(false);
+      // Mark tour as completed
+      localStorage.setItem("hasSeenDashboardTour", "true");
     }
   };
 
@@ -70,10 +75,24 @@ const DashboardTour = ({
       stepIndex={stepIndex}
       continuous={true}
       scrollToFirstStep={true}
-      showSkipButton={false}
+      showSkipButton={true}
       disableCloseOnEsc={true}
       callback={handleJoyrideCallback}
-      styles={{ options: { zIndex: 10000000 } }}
+      tooltipComponent={CustomTooltip}
+      styles={{
+        options: {
+          zIndex: 10000000,
+          primaryColor: "#5BC3CD",
+          backgroundColor: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+          textColor: "#1E293B",
+          arrowColor: "#F8FAFC",
+          overlayColor: "rgba(0, 0, 0, 0.5)",
+        },
+        beacon: {
+          backgroundColor: "#5BC3CD",
+          border: "2px solid #5BC3CD",
+        },
+      }}
     />
   );
 };
