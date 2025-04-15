@@ -114,11 +114,13 @@ public class UserAssignmentController {
             // Add unit info
             Map<String, Object> unitData = new HashMap<>();
             unitData.put("unitId", assignment.getUnit().getUnitId());
+            unitData.put("unitName",assignment.getUnit().getUnitName());
             assignmentData.put("unit", unitData);
             
             // Add subconcept info
             Map<String, Object> subconceptData = new HashMap<>();
             subconceptData.put("subconceptId", assignment.getSubconcept().getSubconceptId());
+            subconceptData.put("subconceptLink", assignment.getSubconcept().getSubconceptLink());
             subconceptData.put("subconceptDesc", assignment.getSubconcept().getSubconceptDesc());
             subconceptData.put("subconceptMaxscore", assignment.getSubconcept().getSubconceptMaxscore());
             assignmentData.put("subconcept", subconceptData);

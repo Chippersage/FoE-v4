@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+// import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "UserAssignments",
