@@ -25,38 +25,15 @@ import axios from "axios";
 import WordOfTheDay from "@/components/WordADay";
 import { AnimatePresence, motion } from "framer-motion";
 import CohortTour from "@/components/tours/CohortTour";
+import { Badge } from "@/components/ui/badge";
 
-const courses: Course[] = [
-  {
-    id: "course-1",
-    title: "Introduction to Web Development",
-    color: "from-pink-500 to-rose-500",
-  },
-  {
-    id: "course-2",
-    title: "Advanced React Patterns",
-    color: "from-violet-500 to-purple-500",
-  },
-  {
-    id: "course-3",
-    title: "Full Stack Development",
-    color: "from-cyan-500 to-blue-500",
-  },
-  {
-    id: "course-4",
-    title: "UI/UX Design Principles",
-    color: "from-amber-400 to-orange-500",
-  },
-  {
-    id: "course-5",
-    title: "Data Structures & Algorithms",
-    color: "from-emerald-500 to-green-500",
-  },
-  {
-    id: "course-6",
-    title: "Mobile App Development",
-    color: "from-red-500 to-pink-500",
-  },
+const courseColors = [
+  "from-pink-500 to-rose-500",
+  "from-violet-500 to-purple-500",
+  "from-cyan-500 to-blue-500",
+  "from-amber-400 to-orange-500",
+  "from-emerald-500 to-green-500",
+  "from-red-500 to-pink-500",
 ];
 
 export default function Dashboard() {
@@ -71,7 +48,16 @@ export default function Dashboard() {
   const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
   const userType = localStorage.getItem("userType");
   const [showAssignments, setShowAssignments] = useState(false);
+  const [notificationCounts, setNotificationCounts] = useState({});
   // const tempSessionId = localStorage.getItem("tempSessionId");
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setShowAssignments(true);
+  }, 2000); // 3 seconds
+
+  return () => clearTimeout(timer); // cleanup on unmount
+}, []);
 
   useEffect(() => {
     if (!user?.cohorts) return;
@@ -105,6 +91,38 @@ export default function Dashboard() {
         });
     });
   }, [user?.cohorts]);
+
+  useEffect(() => {
+    if (!user?.cohorts) return;
+
+    // Fetch assignments for each cohort
+    user.cohorts.forEach((cohort) => {
+      const cohortId = cohort?.cohortId;
+      if (!cohortId) return;
+
+      // Fetch assignments data
+      fetch(`${API_BASE_URL}/assignments/cohort/${cohortId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          // Count assignments with correctedDate as null
+          const uncorrectedCount = data.filter(
+            (assignment) => assignment.correctedDate === null
+          ).length;
+
+          // Update notification counts state
+          setNotificationCounts((prev) => ({
+            ...prev,
+            [cohortId]: uncorrectedCount,
+          }));
+        })
+        .catch((error) =>
+          console.error(
+            `Error fetching assignments for cohort ${cohortId}:`,
+            error
+          )
+        );
+    });
+  }, [user?.cohorts, API_BASE_URL]);
 
   const handleResume = async (cohortWithProgram: string) => {
     console.log("resume clicked");
@@ -269,7 +287,7 @@ export default function Dashboard() {
                     <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
                       <Button
                         size="sm"
-                        className={`bg-[#64CE80] hover:bg-emerald-600 rounded-[5px] ${
+                        className={`bg-gradient-to-r from-emerald-500 to-green-500 hover:bg-emerald-600 rounded-[5px] ${
                           index === 0 ? "resume-button" : ""
                         }`}
                         onClick={() => handleResume(cohortWithProgram)}
@@ -295,11 +313,11 @@ export default function Dashboard() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <h2 className="text-2xl font-bold text-emerald-700">
-                  Mentor Dashboard
+                  Manage Cohort Assignments
                 </h2>
-                <Button
+                {/* <Button
                   onClick={() => setShowAssignments(!showAssignments)}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                  className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-teal-400 hover:to-pink-500 text-white"
                 >
                   <ClipboardList className="mr-2 h-5 w-5" />
                   {showAssignments
@@ -310,7 +328,7 @@ export default function Dashboard() {
                   ) : (
                     <ChevronDown className="ml-2 h-4 w-4" />
                   )}
-                </Button>
+                </Button> */}
               </div>
 
               <AnimatePresence>
@@ -322,38 +340,94 @@ export default function Dashboard() {
                     transition={{ duration: 0.3 }}
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-gradient-to-b from-[#CAF2BC] to-white p-4 rounded-xl"
                   >
-                    {user?.cohorts?.map((course) => (
-                      <Card
-                        key={course.cohortId}
-                        className="group overflow-hidden border-0 bg-white dark:bg-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 dark:shadow-gray-900/30 rounded-xl"
-                      >
-                        <div
-                          className={`h-2 w-full bg-gradient-to-r ${course.color}`}
-                        />
-                        <CardContent className="p-6">
-                          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
-                            <BookOpen className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-                          </div>
-                          <h3 className="text-xl font-semibold tracking-tight">
-                            {course.cohortName}
-                          </h3>
-                        </CardContent>
-                        <CardFooter className="p-6 pt-0">
-                          <Button
-                            asChild
-                            className={`w-full bg-gradient-to-r ${course.color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0`}
-                          >
-                            <Link
-                              to={`/cohorts/${course.cohortId}/assignments`}
-                              className="flex items-center justify-center gap-2"
+                    {user?.cohorts?.map((course, index) => {
+                      const color = "from-emerald-500 to-green-500";
+                      const notificationCount =
+                        notificationCounts[course.cohortId] || 0;
+
+                      return (
+                        <Card
+                          key={course.cohortId}
+                          className="group overflow-hidden border-0 bg-white dark:bg-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 dark:shadow-gray-900/30 rounded-xl relative"
+                        >
+                          <div
+                            className={`h-2 w-full bg-gradient-to-r ${color}`}
+                          />
+
+                          {/* Animated notification badge */}
+                          <AnimatePresence>
+                            {notificationCount > 0 && (
+                              <motion.div
+                                className="absolute top-3 right-3 z-10"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 500,
+                                  damping: 15,
+                                }}
+                              >
+                                <div className="relative">
+                                  <motion.div
+                                    className="absolute -inset-1 rounded-full bg-red-300 opacity-70 blur-sm"
+                                    animate={{
+                                      scale: [1, 1.2, 1],
+                                      opacity: [0.7, 0.9, 0.7],
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      repeatType: "reverse",
+                                    }}
+                                  />
+                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-xs font-bold text-white shadow-lg">
+                                    {notificationCount}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <CardContent className="p-6">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+                              <BookOpen className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                            </div>
+                            <h3 className="text-xl font-semibold tracking-tight">
+                              {course.cohortName}
+                            </h3>
+                          </CardContent>
+                          <CardFooter className="p-6 pt-0">
+                            <Button
+                              asChild
+                              className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0`}
                             >
-                              View Assignments
-                              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                            </Link>
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
+                              <Link
+                                to={`/cohorts/${course.cohortId}/assignments`}
+                                className="flex items-center justify-center gap-2"
+                              >
+                                View Assignments
+                                {notificationCount > 0 && (
+                                  <motion.span
+                                    className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-medium text-emerald-600"
+                                    initial={{ y: 0 }}
+                                    animate={{ y: [0, -2, 0] }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                    }}
+                                  >
+                                    {notificationCount}
+                                  </motion.span>
+                                )}
+                                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              </Link>
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -379,7 +453,7 @@ export default function Dashboard() {
                     </p>
                     <Button
                       onClick={() => setShowAssignments(true)}
-                      className="bg-[#64CE80] text-white rounded-[5px]"
+                      className="bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-[5px]"
                     >
                       <ClipboardList className="mr-2 h-5 w-5" />
                       View All Assignments

@@ -12,11 +12,11 @@ const AssignmentsPage: React.FC = () => {
       <main className="container mx-auto max-w-6xl">
         <header className="mb-6">
           <h1 className="text-3xl font-bold text-emerald-700">
-            Course Assignments
+            Cohort Assignments
           </h1>
-          <p className="text-gray-600">
+          {/* <p className="text-gray-600">
             View and manage assignments for Cohort {cohortId || "N/A"}.
-          </p>
+          </p> */}
         </header>
 
         {/* Render the AssignmentsTable component */}
