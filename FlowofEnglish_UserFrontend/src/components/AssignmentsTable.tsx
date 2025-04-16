@@ -20,8 +20,9 @@ import axios from "axios";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { format } from "date-fns";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const AssignmentsTable = ({ cohortId }) => {
-    console.log("table rendered")
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -32,8 +33,6 @@ const AssignmentsTable = ({ cohortId }) => {
   });
   const [editedAssignments, setEditedAssignments] = useState({});
   const LIGHT_TEAL = "#e6f5f5";
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
   useEffect(() => {
     fetchAssignments();
   }, [cohortId]);
@@ -168,7 +167,7 @@ const AssignmentsTable = ({ cohortId }) => {
 
     try {
       const response = await axios.post(
-        `${apiUrl}/assignments/${assignmentId}/correct`,
+        `${API_BASE_URL}/assignments/${assignmentId}/correct`,
         formData,
         {
           headers: {
@@ -225,10 +224,10 @@ const AssignmentsTable = ({ cohortId }) => {
               <TableRow>
                 <TableCell>Assignment ID</TableCell>
                 <TableCell>User</TableCell>
-                <TableCell>Program</TableCell>
-                <TableCell>Stage</TableCell>
-                <TableCell>Unit</TableCell>
-                <TableCell>Subconcept</TableCell>
+                {/*     <TableCell>Program</TableCell>
+                  <TableCell>Stage</TableCell>
+                  <TableCell>Unit</TableCell> */}
+                <TableCell>Assignment Q</TableCell>
                 <TableCell>Max Score</TableCell>
                 <TableCell>Submitted Date</TableCell>
                 <TableCell>Submitted File</TableCell>
@@ -254,11 +253,26 @@ const AssignmentsTable = ({ cohortId }) => {
                   <TableCell>
                     {assignment.user.userName} ({assignment.user.userId})
                   </TableCell>
-                  <TableCell>{assignment.program.programId}</TableCell>
-                  <TableCell>{assignment.stage.stageId}</TableCell>
-                  <TableCell>{assignment.unit.unitId}</TableCell>
-                  <TableCell title={assignment.subconcept.subconceptDesc}>
-                    {assignment.subconcept.subconceptId}
+                  {/*   <TableCell>{assignment.program.programName}</TableCell>
+                    <TableCell>{assignment.stage.stageId}</TableCell>
+                    <TableCell>{assignment.unit.unitId}</TableCell> */}
+                  <TableCell>
+                    {" "}
+                    {assignment.subconcept.subconceptLink ? (
+                      <a
+                        href={assignment.subconcept.subconceptLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#0066cc",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {assignment.subconcept.subconceptId}
+                      </a>
+                    ) : (
+                      assignment.subconcept.subconceptId
+                    )}
                   </TableCell>
                   <TableCell>
                     {assignment.subconcept.subconceptMaxscore}
