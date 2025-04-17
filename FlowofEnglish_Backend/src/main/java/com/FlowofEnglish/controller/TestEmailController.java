@@ -1,0 +1,102 @@
+package com.FlowofEnglish.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.FlowofEnglish.model.User;
+import com.FlowofEnglish.repository.UserRepository;
+import com.FlowofEnglish.service.GoodFridayGreetingService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/test")
+public class TestEmailController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TestEmailController.class);
+    
+    @Autowired
+    private GoodFridayGreetingService goodFridayGreetingService;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @GetMapping("/good-friday/email/{userId}")
+    public String sendTestGoodFridayEmail(@PathVariable String userId) {
+        logger.info("Received request to send test Good Friday email to user ID: {}", userId);
+        
+        // Find user by userId - using Optional since that's what the repository returns
+        Optional<User> userOptional = userRepository.findByUserId(userId);
+        
+        if (!userOptional.isPresent()) {
+            logger.error("User not found with ID: {}", userId);
+            return "User not found with ID: " + userId;
+        }
+        
+        // Get the actual User object from the Optional
+        User user = userOptional.get();
+        
+        if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
+            logger.error("User with ID: {} has no email address", userId);
+            return "User with ID: " + userId + " has no email address";
+        }
+        
+        try {
+            // Current timestamp
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String timestamp = now.format(formatter);
+            
+            // Send test email to the actual user
+            goodFridayGreetingService.sendTestGoodFridayEmail(user.getUserEmail());
+            
+            logger.info("Test Good Friday email sent to user: {}, email: {} at {}", 
+                        user.getUserName(), user.getUserEmail(), timestamp);
+                        
+            return "Test Good Friday email sent to " + user.getUserName() + 
+                   " (" + user.getUserEmail() + ") at " + timestamp;
+                   
+        } catch (Exception e) {
+            logger.error("Error sending test Good Friday email to user ID: {}, Error: {}", 
+                        userId, e.getMessage(), e);
+            return "Error sending test email: " + e.getMessage();
+        }
+    }
+    
+    @GetMapping("/good-friday/email/manual")
+    public String sendManualTestEmail() {
+        // For the specific user mentioned in the requirement
+        String userId = "Harikrishna05";
+        String username = "Harikrishna";
+        String email = "harikrishna055hari@gmail.com";
+        
+        logger.info("Sending manual test Good Friday email to: {}", email);
+        
+        try {
+            // Create timestamp for current time
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+            String timestamp = now.format(formatter);
+            
+            // Use the test method from the service
+            goodFridayGreetingService.sendTestGoodFridayEmail(email);
+            
+            logger.info("Manual test Good Friday email sent to {} at {}", email, timestamp);
+            
+            return "Manual test Good Friday email sent to " + username + 
+                   " (" + email + ") at " + timestamp;
+                   
+        } catch (Exception e) {
+            logger.error("Error sending manual test Good Friday email: {}", e.getMessage(), e);
+            return "Error sending manual test email: " + e.getMessage();
+        }
+    }
+}

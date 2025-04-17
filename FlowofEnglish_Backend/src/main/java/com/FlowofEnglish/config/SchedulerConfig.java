@@ -17,8 +17,8 @@ public class SchedulerConfig {
     @Autowired
     private WeeklyReportService weeklyReportService;
     
-//    @Autowired
-//    private HoliGreetingService holiGreetingService;
+    @Autowired
+    private GoodFridayGreetingService goodFridayGreetingService;
     
     @Scheduled(cron = "0 0 9 * * MON", zone = "Asia/Kolkata") // Every Monday at 9 AM
     public void sendWeeklyEmails() {
@@ -32,16 +32,16 @@ public class SchedulerConfig {
         }
     }
     
-//    // Run once at 3:45 PM today (March 14, 2025)
-//    @Scheduled(cron = "0 0 16 14 3 ?", zone = "Asia/Kolkata")
-//    public void sendHoliGreetings() {
-//        System.out.println("Holi greeting scheduler triggered at: " + java.time.LocalDateTime.now());
-//        logger.info("Holi greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
-//        try {
-//            holiGreetingService.sendHoliGreetings();
-//            logger.info("Holi greeting process completed successfully.");
-//        } catch (Exception e) {
-//            logger.error("Error occurred while sending Holi greetings: {}", e.getMessage(), e);
-//        }
-//    }
+    // Run once at 9:00 AM  (April 17, 2025)
+    @Scheduled(cron = "0 0 9 18 4 ?", zone = "Asia/Kolkata")
+    public void sendGoodFridayGreetings() {
+        System.out.println("Good Friday greeting scheduler triggered at: " + java.time.LocalDateTime.now());
+        logger.info("Good Friday greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
+        try {
+            goodFridayGreetingService.sendGoodFridayGreetings();
+            logger.info("Good Friday greeting process completed successfully.");
+        } catch (Exception e) {
+            logger.error("Error occurred while sending Good Friday greetings: {}", e.getMessage(), e);
+        }
+    }
 }
