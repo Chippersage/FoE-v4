@@ -24,7 +24,8 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
     List<UserCohortMapping> findAllByUserUserId(String userId);
     void deleteByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
     void deleteByUserUserId(String userId);
-    
+    // Count the number of users in a specific cohort
+    int countByCohortCohortId(String cohortId);
  // Add this method to your repository
     @Query("SELECT u FROM UserCohortMapping u WHERE u.user.userId = :userId AND u.cohort.cohortId IN " +
            "(SELECT cp.cohort.cohortId FROM CohortProgram cp WHERE cp.program.programId = :programId)")

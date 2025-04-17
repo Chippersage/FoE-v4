@@ -38,10 +38,14 @@ export default function AccountPopover() {
   const [orgDetails, setOrgDetails] = useState({});
 
   useEffect(() => {
+    // Get userType from context or localStorage
+    const currentUserType = userType || localStorage.getItem('userType');
+    // Get orgId from context or localStorage
+    const currentOrgId = orgId || localStorage.getItem('orgId');
+    
     // Fetch organization details on component mount
-    if (userType === 'orgAdmin' || orgId) {
-      getOrg(orgId).then((res) => {
-       // console.log(res);
+    if (currentUserType === 'orgAdmin' && currentOrgId) {
+      getOrg(currentOrgId).then((res) => {
         setOrgDetails(res);
       });
     }
@@ -57,10 +61,7 @@ export default function AccountPopover() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    // console.log(orgId);
-    if (userType === 'superAdmin') {
-      // console.log(orgId, ' this is the org id');
-      // console.log(userType);
+    if (userType === 'superAdmin' || localStorage.getItem('userType') === 'superAdmin') {
       setUserType(null);
       setOrgId(null);
       localStorage.removeItem('userType');
@@ -68,14 +69,11 @@ export default function AccountPopover() {
       localStorage.removeItem('token');
       navigate('/login', { replace: true });
     } else {
-      // console.log(userType);
       setUserType(null);
       setOrgId(null);
       localStorage.removeItem('userType');
       localStorage.removeItem('orgId');
       localStorage.removeItem('token');
-      localStorage.removeItem('orgId');
-      // console.log(orgId, 'it is the main organisation iddddd');
       navigate('/loginorg', { replace: true });
     }
   };
@@ -123,12 +121,16 @@ export default function AccountPopover() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {/* {account.displayName} */}
-            { userType === 'orgAdmin' ? orgDetails?.organizationName : 'Admin' }
+            {(userType === 'orgAdmin' || localStorage.getItem('userType') === 'orgAdmin') 
+              ? orgDetails?.organizationName 
+              : 'Admin'
+            }
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {/* {account.email} */}
-            { userType === 'orgAdmin' ? orgDetails?.organizationAdminEmail : '' }
+            {(userType === 'orgAdmin' || localStorage.getItem('userType') === 'orgAdmin') 
+              ? orgDetails?.organizationAdminEmail 
+              : ''
+            }
           </Typography>
         </Box>
 

@@ -6,6 +6,7 @@ import { useUser } from '../UserContext';
 const OrgAdminProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   const { userType, orgId } = useUser();
+  const localStorageOrgId = localStorage.getItem('orgId');
 
   if (!token) {
     return <Navigate to="/loginorg" replace />;
@@ -17,7 +18,7 @@ const OrgAdminProtectedRoute = ({ children }) => {
   }
 
   // Ensure orgId is available for Org Admin
-  if (userType === 'orgAdmin' && !orgId) {
+  if (userType === 'orgAdmin' && !orgId && !localStorageOrgId) {
     return <Navigate to="/loginorg" replace />;
   }
 

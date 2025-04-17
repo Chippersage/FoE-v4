@@ -46,6 +46,9 @@ public class UserController {
     private UserSessionMappingService userSessionMappingService;
     
     @Autowired
+    private UserAssignmentService userAssignmentService;
+    
+    @Autowired
     private HttpSession session;
 
     @Autowired
@@ -156,9 +159,100 @@ public class UserController {
         return ResponseEntity.ok(resultMessage);
     }
 
-   // Signin Method
-     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData ) {
+//   // Signin Method
+//     @PostMapping("/signin")
+//    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData ) {
+//        String userId = loginData.get("userId");
+//        String userPassword = loginData.get("userPassword");
+//        String expectedUserType = loginData.get("userType");
+//        
+//        // Debug logging
+//        System.out.println("Received userId: " + userId);
+//        System.out.println("Received password: " + userPassword);
+//        System.out.println("Received userType: " + expectedUserType);
+//        
+//        // Initialize response map
+//        Map<String, Object> response = new HashMap<>();
+//        
+//        // Perform a case-sensitive lookup in the database
+//        Optional<User> userOpt = userRepository.findByUserId(userId); // Ensure findByUserId is case-sensitive
+//
+//        if (userOpt.isPresent()) {
+//            User user = userOpt.get();
+//            
+//            // Validate exact case-sensitive userId
+//            if (!user.getUserId().equals(userId)) {
+//                response.put("error", "Invalid userId. Please enter the correct case-sensitive userId.");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//            
+//            // Check user type
+//            if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
+//                response.put("error", "Invalid userType.");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//            
+//            // Debugging the user type
+//            System.out.println("User Type: " + user.getUserType());
+//
+//            if (userService.verifyPassword(userPassword, user.getUserPassword())) {
+////            	// Set temporary session attribute
+////                session.setAttribute("tempUserId", userId);
+////                
+////                // Generate temporary session ID
+////                String tempSessionId = UUID.randomUUID().toString();
+////                session.setAttribute("tempSessionId", tempSessionId);
+////                // Set a cookie as well for redundancy
+////                Cookie tempSessionCookie = new Cookie("tempSessionId", tempSessionId);
+////                tempSessionCookie.setPath("/");
+////                tempSessionCookie.setHttpOnly(true);
+////                tempSessionCookie.setMaxAge(3600); // 1 hour expiration
+////                httpServletResponse.addCookie(tempSessionCookie);
+//                // Fetch user details with cohorts and programs
+//                UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
+//
+//                response.put("message", "Successfully logged in as " + user.getUserType() + ".");
+//              //  response.put("tempSessionId", tempSessionId); // Add session ID to response
+//                response.put("userType", user.getUserType());
+//                response.put("userDetails", userDetailsDTO); 
+//                
+//
+//                // Add cohort end-date reminders for all active cohorts
+//                List<String> cohortReminders = new ArrayList<>();
+//                if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+//                    for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+//                        if (cohort.getCohortEndDate() != null) {
+//                            OffsetDateTime cohortEndDate = cohort.getCohortEndDate();
+//                            OffsetDateTime today = OffsetDateTime.now(ZoneOffset.UTC);
+//                            
+//                            long daysUntilEnd = today.until(cohortEndDate, ChronoUnit.DAYS);
+//                            if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
+//                                cohortReminders.add(String.format("Cohort %s ends in %d day(s). Please complete your activities.", 
+//                                    cohort.getCohortName(), daysUntilEnd));
+//                            } else if (daysUntilEnd == 0) {
+//                                cohortReminders.add(String.format("Cohort %s ends today. Please complete your activities. If you need extra time, contact your admin for an extension.",
+//                                    cohort.getCohortName()));
+//                            }
+//                        }
+//                    }
+//                    if (!cohortReminders.isEmpty()) {
+//                        response.put("cohortReminders", cohortReminders);
+//                    }
+//                }
+//                
+//                return ResponseEntity.ok(response);
+//            
+//            } else {
+//                response.put("error", "Invalid userpassword");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//        } else {
+//            response.put("error", "Invalid userId");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//    }
+    @PostMapping("/signin")
+    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData) {
         String userId = loginData.get("userId");
         String userPassword = loginData.get("userPassword");
         String expectedUserType = loginData.get("userType");
@@ -172,7 +266,7 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         
         // Perform a case-sensitive lookup in the database
-        Optional<User> userOpt = userRepository.findByUserId(userId); // Ensure findByUserId is case-sensitive
+        Optional<User> userOpt = userRepository.findByUserId(userId);
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
@@ -193,26 +287,79 @@ public class UserController {
             System.out.println("User Type: " + user.getUserType());
 
             if (userService.verifyPassword(userPassword, user.getUserPassword())) {
-//            	// Set temporary session attribute
-//                session.setAttribute("tempUserId", userId);
-//                
-//                // Generate temporary session ID
-//                String tempSessionId = UUID.randomUUID().toString();
-//                session.setAttribute("tempSessionId", tempSessionId);
-//                // Set a cookie as well for redundancy
-//                Cookie tempSessionCookie = new Cookie("tempSessionId", tempSessionId);
-//                tempSessionCookie.setPath("/");
-//                tempSessionCookie.setHttpOnly(true);
-//                tempSessionCookie.setMaxAge(3600); // 1 hour expiration
-//                httpServletResponse.addCookie(tempSessionCookie);
-                // Fetch user details with cohorts and programs
                 UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
 
                 response.put("message", "Successfully logged in as " + user.getUserType() + ".");
-              //  response.put("tempSessionId", tempSessionId); // Add session ID to response
                 response.put("userType", user.getUserType());
-                response.put("userDetails", userDetailsDTO); 
+                response.put("userDetails", userDetailsDTO);
                 
+                // Add assignment statistics for mentor login only
+                if ("mentor".equalsIgnoreCase(user.getUserType())) {
+                    Map<String, Object> assignmentStats = new HashMap<>();
+                    
+                    // Get all cohorts associated with this mentor
+                    List<String> mentorCohortIds = new ArrayList<>();
+                    if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+                        for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+                            mentorCohortIds.add(cohort.getCohortId());
+                        }
+                    }
+                    
+                    // Aggregated statistics across all mentor's cohorts
+                    int totalCohortUserCount = 0;
+                    int totalAssignments = 0;
+                    int totalCorrectedAssignments = 0;
+                    int totalPendingAssignments = 0;
+                    
+                    // Detailed statistics per cohort
+                    Map<String, Map<String, Object>> cohortStatistics = new HashMap<>();
+                    
+                    // Calculate statistics for each cohort
+                    for (String cohortId : mentorCohortIds) {
+                        // Get user count for this cohort
+                        int cohortUserCount = getUserCountInCohort(cohortId);
+                        totalCohortUserCount += cohortUserCount;
+                        
+                        // Get assignments for this cohort
+                        List<UserAssignment> assignments = userAssignmentService.getAssignmentsByCohortId(cohortId);
+                        int cohortTotalAssignments = assignments.size();
+                        totalAssignments += cohortTotalAssignments;
+                        
+                        // Count corrected vs pending assignments
+                        int cohortCorrectedAssignments = 0;
+                        int cohortPendingAssignments = 0;
+                        
+                        for (UserAssignment assignment : assignments) {
+                            if (assignment.getCorrectedDate() != null) {
+                                cohortCorrectedAssignments++;
+                                totalCorrectedAssignments++;
+                            } else {
+                                cohortPendingAssignments++;
+                                totalPendingAssignments++;
+                            }
+                        }
+                        
+                        // Store cohort-specific statistics
+                        Map<String, Object> cohortStats = new HashMap<>();
+                        cohortStats.put("cohortUserCount", cohortUserCount);
+                        cohortStats.put("totalAssignments", cohortTotalAssignments);
+                        cohortStats.put("correctedAssignments", cohortCorrectedAssignments);
+                        cohortStats.put("pendingAssignments", cohortPendingAssignments);
+                        
+                        // Add to cohort statistics map
+                        cohortStatistics.put(cohortId, cohortStats);
+                    }
+                    
+                    // Create aggregate statistics
+                    assignmentStats.put("totalCohortUserCount", totalCohortUserCount);
+                    assignmentStats.put("totalAssignments", totalAssignments);
+                    assignmentStats.put("correctedAssignments", totalCorrectedAssignments);
+                    assignmentStats.put("pendingAssignments", totalPendingAssignments);
+                    assignmentStats.put("cohortDetails", cohortStatistics);
+                    
+                    // Add assignment statistics to response
+                    response.put("assignmentStatistics", assignmentStats);
+                }
 
                 // Add cohort end-date reminders for all active cohorts
                 List<String> cohortReminders = new ArrayList<>();
@@ -248,6 +395,17 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
+
+    /**
+     * Helper method to get the count of users in a cohort
+     * @param cohortId the ID of the cohort
+     * @return the number of users in the cohort
+     */
+    private int getUserCountInCohort(String cohortId) {
+        // Use a repository method to get the count
+        return userCohortMappingRepository.countByCohortCohortId(cohortId);
+    }
+    
     @PostMapping("/select-cohort")
     public ResponseEntity<?> selectCohort(@RequestBody Map<String, String> cohortData) {
 //        String serverStoredTempSessionId = (String) session.getAttribute("tempSessionId");
