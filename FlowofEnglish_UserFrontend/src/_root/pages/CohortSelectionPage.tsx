@@ -32,7 +32,7 @@ const courseColors = [
   "from-violet-500 to-purple-500",
   "from-cyan-500 to-blue-500",
   "from-amber-400 to-orange-500",
-  "from-emerald-500 to-green-500",
+  // "from-emerald-500 to-green-500",
   "from-red-500 to-pink-500",
 ];
 
@@ -48,7 +48,7 @@ export default function Dashboard() {
   const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
   const userType = localStorage.getItem("userType");
   const [showAssignments, setShowAssignments] = useState(false);
-  const [notificationCounts, setNotificationCounts] = useState({});
+  // const [notificationCounts, setNotificationCounts] = useState({});
   // const tempSessionId = localStorage.getItem("tempSessionId");
 
 useEffect(() => {
@@ -92,37 +92,37 @@ useEffect(() => {
     });
   }, [user?.cohorts]);
 
-  useEffect(() => {
-    if (!user?.cohorts) return;
+  // useEffect(() => {
+  //   if (!user?.cohorts) return;
 
-    // Fetch assignments for each cohort
-    user.cohorts.forEach((cohort) => {
-      const cohortId = cohort?.cohortId;
-      if (!cohortId) return;
+  //   // Fetch assignments for each cohort
+  //   user.cohorts.forEach((cohort) => {
+  //     const cohortId = cohort?.cohortId;
+  //     if (!cohortId) return;
 
-      // Fetch assignments data
-      fetch(`${API_BASE_URL}/assignments/cohort/${cohortId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          // Count assignments with correctedDate as null
-          const uncorrectedCount = data.filter(
-            (assignment) => assignment.correctedDate === null
-          ).length;
+  //     // Fetch assignments data
+  //     fetch(`${API_BASE_URL}/assignments/cohort/${cohortId}`)
+  //       .then((res) => res.json())
+  //       .then((data) => {
+  //         // Count assignments with correctedDate as null
+  //         const uncorrectedCount = data.filter(
+  //           (assignment) => assignment.correctedDate === null
+  //         ).length;
 
-          // Update notification counts state
-          setNotificationCounts((prev) => ({
-            ...prev,
-            [cohortId]: uncorrectedCount,
-          }));
-        })
-        .catch((error) =>
-          console.error(
-            `Error fetching assignments for cohort ${cohortId}:`,
-            error
-          )
-        );
-    });
-  }, [user?.cohorts, API_BASE_URL]);
+  //         // Update notification counts state
+  //         setNotificationCounts((prev) => ({
+  //           ...prev,
+  //           [cohortId]: uncorrectedCount,
+  //         }));
+  //       })
+  //       .catch((error) =>
+  //         console.error(
+  //           `Error fetching assignments for cohort ${cohortId}:`,
+  //           error
+  //         )
+  //       );
+  //   });
+  // }, [user?.cohorts, API_BASE_URL]);
 
   const handleResume = async (cohortWithProgram: string) => {
     console.log("resume clicked");
@@ -341,9 +341,13 @@ useEffect(() => {
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-gradient-to-b from-[#CAF2BC] to-white p-4 rounded-xl"
                   >
                     {user?.cohorts?.map((course, index) => {
+                      const themeColor = courseColors[index % courseColors.length];
                       const color = "from-emerald-500 to-green-500";
-                      const notificationCount =
-                        notificationCounts[course.cohortId] || 0;
+
+                      const pendingCount =
+                        user?.assignmentStatistics?.cohortDetails?.[
+                          course.cohortId
+                        ]?.pendingAssignments || 0;
 
                       return (
                         <Card
@@ -351,43 +355,24 @@ useEffect(() => {
                           className="group overflow-hidden border-0 bg-white dark:bg-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 dark:shadow-gray-900/30 rounded-xl relative"
                         >
                           <div
-                            className={`h-2 w-full bg-gradient-to-r ${color}`}
+                            className={`h-2 w-full bg-gradient-to-r ${themeColor}`}
                           />
 
-                          {/* Animated notification badge */}
-                          <AnimatePresence>
-                            {notificationCount > 0 && (
-                              <motion.div
-                                className="absolute top-3 right-3 z-10"
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0, opacity: 0 }}
-                                transition={{
-                                  type: "spring",
-                                  stiffness: 500,
-                                  damping: 15,
-                                }}
-                              >
-                                <div className="relative">
-                                  <motion.div
-                                    className="absolute -inset-1 rounded-full bg-red-300 opacity-70 blur-sm"
-                                    animate={{
-                                      scale: [1, 1.2, 1],
-                                      opacity: [0.7, 0.9, 0.7],
-                                    }}
-                                    transition={{
-                                      duration: 2,
-                                      repeat: Infinity,
-                                      repeatType: "reverse",
-                                    }}
-                                  />
-                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-xs font-bold text-white shadow-lg">
-                                    {notificationCount}
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {/* Show badge only if pendingCount > 0 */}
+                          {pendingCount > 0 && (
+                            <div className="absolute top-3 right-3 z-10">
+                              <div className="relative">
+                                <span
+                                  className={`flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-r ${themeColor} text-xs font-bold text-white px-2 animate-bounce-subtle`}
+                                >
+                                  {pendingCount}
+                                </span>
+                                <span
+                                  className={`absolute -inset-1 rounded-full bg-gradient-to-r ${themeColor} opacity-30`}
+                                ></span>
+                              </div>
+                            </div>
+                          )}
 
                           <CardContent className="p-6">
                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
@@ -407,20 +392,6 @@ useEffect(() => {
                                 className="flex items-center justify-center gap-2"
                               >
                                 View Assignments
-                                {notificationCount > 0 && (
-                                  <motion.span
-                                    className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-medium text-emerald-600"
-                                    initial={{ y: 0 }}
-                                    animate={{ y: [0, -2, 0] }}
-                                    transition={{
-                                      duration: 1.5,
-                                      repeat: Infinity,
-                                      ease: "easeInOut",
-                                    }}
-                                  >
-                                    {notificationCount}
-                                  </motion.span>
-                                )}
                                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                               </Link>
                             </Button>

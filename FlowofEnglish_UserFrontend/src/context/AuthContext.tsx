@@ -20,6 +20,36 @@ type INITIAL_USER_PROGRAM_STATE = {
   programCompletionStatus: "";
 };
 
+type AssignmentStatistics = {
+  correctedAssignments: number;
+  totalAssignments: number;
+  pendingAssignments: number;
+  totalCohortUserCount: number;
+  cohortDetails: {
+    [cohortId: string]: {
+      correctedAssignments: number;
+      totalAssignments: number;
+      pendingAssignments: number;
+      cohortUserCount: number;
+    };
+  };
+};
+
+type User = {
+  userId: string;
+  userAddress: string;
+  userEmail: string;
+  userName: string;
+  userPhoneNumber: string;
+  organization: typeof INITIAL_USER_ORGANISATION_STATE;
+  cohorts: UserCohort[];
+  program: INITIAL_USER_PROGRAM_STATE;
+  selectedCohortWithProgram: any;
+  assignmentStatistics?: AssignmentStatistics | null;
+};
+
+
+
 export const INITIAL_USER_PROGRAM_STATE: INITIAL_USER_PROGRAM_STATE = {};
 
 // Define initial states
@@ -33,7 +63,7 @@ export const INITIAL_USER_ORGANISATION_STATE = {
 
 export const INITIAL_USER_COHORTS_STATE: UserCohort[] = [];
 
-export const INITIAL_USER_STATE = {
+export const INITIAL_USER_STATE: User = {
   userId: "",
   userAddress: "",
   userEmail: "",
@@ -42,23 +72,39 @@ export const INITIAL_USER_STATE = {
   organization: INITIAL_USER_ORGANISATION_STATE,
   cohorts: INITIAL_USER_COHORTS_STATE,
   program: INITIAL_USER_PROGRAM_STATE,
-  selectedCohortWithProgram: null, // Add this
+  selectedCohortWithProgram: null,
+  assignmentStatistics: null, // ✅ Add this
 };
 
+interface AuthContextType {
+  user: User;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User>>;
+  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  checkAuthUser: () => Promise<boolean>;
+  selectedCohortWithProgram: any;
+  setSelectedCohortWithProgram: React.Dispatch<React.SetStateAction<any>>;
+}
+
+
+
 /// Define initial state for AuthContext
-export const INITIAL_STATE = {
+export const INITIAL_STATE: AuthContextType = {
   user: INITIAL_USER_STATE,
   isLoading: false,
   isAuthenticated: false,
   setUser: () => {},
   setIsAuthenticated: () => {},
   checkAuthUser: async () => false,
-  selectedCohortWithProgram: null, // Add this
-  setSelectedCohortWithProgram: () => {}, // Add this
+  selectedCohortWithProgram: null,
+  setSelectedCohortWithProgram: () => {},
 };
 
+
 // Create AuthContext
-const AuthContext = createContext(INITIAL_STATE);
+const AuthContext = createContext<AuthContextType>(INITIAL_STATE);
+
 
 // @ts-ignore
 export const AuthProvider = ({ children }) => {
@@ -74,35 +120,46 @@ export const AuthProvider = ({ children }) => {
   );
 
   // Function to check if the user is authenticated
-  const checkAuthUser = async () => {
-    setIsLoading(true);
-    try {
-      // @ts-ignore
-      const currentUser = JSON.parse(localStorage.getItem("user"));
-      // console.log(currentUser);
-      if (currentUser) {
-        setUser({
-          userId: currentUser.userId,
-          userAddress: currentUser.userAddress,
-          userEmail: currentUser.userEmail,
-          userName: currentUser.userName,
-          userPhoneNumber: currentUser.userPhoneNumber,
-          organization: currentUser.organization,
-          cohorts: currentUser.allCohortsWithPrograms,
-          // program: currentUser.program,
-        });
+const checkAuthUser = async () => {
+  setIsLoading(true);
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    const userType = localStorage.getItem("userType");
+    console.log("currentUser", currentUser);
+    if (currentUser) {
+      const newUserState = {
+        userId: currentUser.userId,
+        userAddress: currentUser.userAddress,
+        userEmail: currentUser.userEmail,
+        userName: currentUser.userName,
+        userPhoneNumber: currentUser.userPhoneNumber,
+        organization: currentUser.organization,
+        cohorts: currentUser.allCohortsWithPrograms,
+        program: currentUser.program,
+        selectedCohortWithProgram:
+          currentUser.selectedCohortWithProgram || null,
+        assignmentStatistics: null,
+      };
 
-        setIsAuthenticated(true);
-        return true;
+      if (userType?.toLowerCase() === "mentor") {
+        newUserState.assignmentStatistics =
+          currentUser.assignmentStatistics || null;
       }
-      return false;
-    } catch (error) {
-      console.error("Error checking auth:", error);
-      return false;
-    } finally {
-      setIsLoading(false);
+
+      setUser(newUserState);
+      setIsAuthenticated(true);
+      return true;
     }
-  };
+
+    return false;
+  } catch (error) {
+    console.error("Error checking auth:", error);
+    return false;
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
     const savedCohort = localStorage.getItem("selectedCohortWithProgram");
