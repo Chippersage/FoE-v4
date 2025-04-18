@@ -1,8 +1,9 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.model.MediaFile;
+import com.FlowofEnglish.model.Subconcept;
 import com.FlowofEnglish.model.UserAssignment;
-import com.FlowofEnglish.repository.UserCohortMappingRepository;
+import com.FlowofEnglish.repository.*;
 import com.FlowofEnglish.service.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 // import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/assignments")
@@ -39,6 +41,9 @@ public class UserAssignmentController {
     
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Autowired
+    private SubconceptRepository subconceptRepository;
 
     @PostMapping("/submit")
     public ResponseEntity<UserAssignment> submitAssignment(
@@ -139,11 +144,36 @@ public class UserAssignmentController {
             
             // Add subconcept info
             Map<String, Object> subconceptData = new HashMap<>();
-            subconceptData.put("subconceptId", assignment.getSubconcept().getSubconceptId());
-            subconceptData.put("dependency", assignment.getSubconcept().getDependency());
-            subconceptData.put("subconceptLink", assignment.getSubconcept().getSubconceptLink());
-            subconceptData.put("subconceptDesc", assignment.getSubconcept().getSubconceptDesc());
-            subconceptData.put("subconceptMaxscore", assignment.getSubconcept().getSubconceptMaxscore());
+            Subconcept subconcept = assignment.getSubconcept();
+            subconceptData.put("subconceptId", subconcept.getSubconceptId());
+            subconceptData.put("subconceptDesc", subconcept.getSubconceptDesc());
+            subconceptData.put("subconceptMaxscore", subconcept.getSubconceptMaxscore());
+            subconceptData.put("subconceptLink", subconcept.getSubconceptLink());
+         // Process dependency information
+            String dependencyIds = subconcept.getDependency();
+            if (dependencyIds != null && !dependencyIds.isEmpty()) {
+                // Parse dependency IDs (assuming comma-separated list)
+                String[] dependencyIdArray = dependencyIds.split(",");
+                List<Map<String, Object>> dependencyList = new ArrayList<>();
+                
+                for (String dependencyId : dependencyIdArray) {
+                    dependencyId = dependencyId.trim();
+                    // Fetch the dependency subconcept
+                    Optional<Subconcept> dependencySubconcept = subconceptRepository.findBySubconceptId(dependencyId);
+                    
+                    if (dependencySubconcept.isPresent()) {
+                        Map<String, Object> dependencyData = new HashMap<>();
+                        dependencyData.put("subconceptId", dependencySubconcept.get().getSubconceptId());
+                        dependencyData.put("subconceptDesc", dependencySubconcept.get().getSubconceptDesc());
+                        dependencyData.put("subconceptLink", dependencySubconcept.get().getSubconceptLink());
+                        dependencyData.put("subconceptMaxscore", dependencySubconcept.get().getSubconceptMaxscore());
+                        dependencyList.add(dependencyData);
+                    }
+                }
+                
+                subconceptData.put("dependencies", dependencyList);
+            }
+            
             assignmentData.put("subconcept", subconceptData);
             
             // Add submitted file info with public S3 URL

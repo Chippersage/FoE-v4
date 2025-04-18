@@ -32,16 +32,16 @@ public class SchedulerConfig {
         }
     }
     
-    // Run once at 9:00 AM  (April 17, 2025)
-    @Scheduled(cron = "0 0 9 18 4 ?", zone = "Asia/Kolkata")
-    public void sendGoodFridayGreetings() {
-        System.out.println("Good Friday greeting scheduler triggered at: " + java.time.LocalDateTime.now());
-        logger.info("Good Friday greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
-        try {
-            goodFridayGreetingService.sendGoodFridayGreetings();
-            logger.info("Good Friday greeting process completed successfully.");
-        } catch (Exception e) {
-            logger.error("Error occurred while sending Good Friday greetings: {}", e.getMessage(), e);
-        }
-    }
+    // Run once at 9:00 AM  (April 18, 2025)
+//    @Scheduled(cron = "0 0 9 18 4 ?", zone = "Asia/Kolkata")
+//    public void sendGoodFridayGreetings() {
+//        System.out.println("Good Friday greeting scheduler triggered at: " + java.time.LocalDateTime.now());
+//        logger.info("Good Friday greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
+//        try {
+//            goodFridayGreetingService.sendGoodFridayGreetings();
+//            logger.info("Good Friday greeting process completed successfully.");
+//        } catch (Exception e) {
+//            logger.error("Error occurred while sending Good Friday greetings: {}", e.getMessage(), e);
+//        }
+//    }
 }

@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Typography, Box, TextField, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Button, CircularProgress,
-  Snackbar, Alert, IconButton, Card, Chip, Tooltip, NoSsr
+  Snackbar, Alert, IconButton, Card, Chip, Tooltip, NoSsr, Accordion,
+  AccordionSummary, AccordionDetails, Divider, Dialog, DialogContent,
+  DialogTitle, DialogActions
 } from '@mui/material';
 import axios from 'axios';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import EmptyStateIcon from '@mui/icons-material/FolderOff';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LinkIcon from '@mui/icons-material/Link';
 import { format } from 'date-fns';
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -24,11 +28,19 @@ const AssignmentsTable = ({ cohortId }) => {
   const [updating, setUpdating] = useState(false);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
   const [editedAssignments, setEditedAssignments] = useState({});
-  
+  const [contentDialog, setContentDialog] = useState({
+    open: false,
+    title: '',
+    content: '',
+    link: ''
+  });
+  const [zoomLevel, setZoomLevel] = useState(1); // Default zoom level (1 = 100%)
+
   // Theme colors
   const LIGHT_TEAL = '#e6f5f5';
   const LINK_COLOR = '#0066cc';
   const HOVER_COLOR = '#f5f5f5';
+  const DEPENDENCY_CHIP_COLOR = '#f0e6ff';
   
   useEffect(() => {
     fetchAssignments();
@@ -211,6 +223,22 @@ const AssignmentsTable = ({ cohortId }) => {
     return format(date, 'yyyy-MM-dd HH:mm:ss');
   };
 
+  const handleOpenContent = (title, content, link) => {
+    setContentDialog({
+      open: true,
+      title,
+      content,
+      link
+    });
+  };
+
+  const handleCloseContent = () => {
+    setContentDialog({
+      ...contentDialog,
+      open: false
+    });
+  };
+
   // Empty state component
   const EmptyState = () => (
     <Box 
@@ -295,6 +323,7 @@ const AssignmentsTable = ({ cohortId }) => {
                 <TableCell>Assignment ID</TableCell>
                 <TableCell>User</TableCell>
                 <TableCell>Assignment Q</TableCell>
+                <TableCell>Dependencies</TableCell>
                 <TableCell>Max Score</TableCell>
                 <TableCell>Submitted Date</TableCell>
                 <TableCell>Submitted File</TableCell>
@@ -329,20 +358,54 @@ const AssignmentsTable = ({ cohortId }) => {
                   </TableCell>
                   <TableCell> 
                     {assignment.subconcept.subconceptLink ? (
-                      <a 
-                        href={assignment.subconcept.subconceptLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ 
+                      <Button
+                        size="small"
+                        variant="text"
+                        endIcon={<LinkIcon fontSize="small" />}
+                        onClick={() => handleOpenContent(
+                          assignment.subconcept.subconceptId,
+                          assignment.subconcept.subconceptDesc,
+                          assignment.subconcept.subconceptLink
+                        )}
+                        sx={{ 
                           color: LINK_COLOR, 
                           textDecoration: 'underline',
-                          fontWeight: 500 
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          padding: '0px 4px'
                         }}
                       >
                         {assignment.subconcept.subconceptId}
-                      </a>
+                      </Button>
                     ) : (
                       assignment.subconcept.subconceptId
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {assignment.subconcept.dependencies && assignment.subconcept.dependencies.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {assignment.subconcept.dependencies.map((dep, index) => (
+                          <Chip 
+                            key={index}
+                            label={dep.subconceptId}
+                            size="small"
+                            sx={{ 
+                              bgcolor: DEPENDENCY_CHIP_COLOR, 
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 } 
+                            }}
+                            onClick={() => handleOpenContent(
+                              dep.subconceptId,
+                              dep.subconceptDesc,
+                              dep.subconceptLink
+                            )}
+                          />
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        None
+                      </Typography>
                     )}
                   </TableCell>
                   <TableCell align="center">
@@ -484,6 +547,108 @@ const AssignmentsTable = ({ cohortId }) => {
           </Table>
         </TableContainer>
       )}
+
+      {/* Content Dialog for viewing subconcept content */}
+      <Dialog 
+        open={contentDialog.open} 
+        onClose={handleCloseContent}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0' }}>
+          {contentDialog.title}
+        </DialogTitle>
+        <DialogContent>
+          {contentDialog.content && (
+            <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
+              {contentDialog.content}
+            </Typography>
+          )}
+          
+          {contentDialog.link && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>Content Link:</Typography>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  bgcolor: '#f5f5f5', 
+                  borderRadius: 1,
+                  overflow: 'auto',
+                  maxHeight: '500px',  // Increased height for better viewing
+                  position: 'relative' // For positioning zoom controls
+                }}
+              >
+                 <Box 
+            sx={{ 
+              position: 'absolute', 
+              top: 10, 
+              right: 10, 
+              zIndex: 10,
+              display: 'flex',
+              gap: 1,
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              borderRadius: '4px',
+              padding: '4px'
+            }}
+          >
+            <Button 
+              variant="contained" 
+              size="small" 
+              onClick={() => setZoomLevel(prevZoom => Math.min(prevZoom + 0.25, 2))}
+            >
+              Zoom +
+            </Button>
+            <Button 
+              variant="contained" 
+              size="small" 
+              onClick={() => setZoomLevel(1)} // Reset zoom
+            >
+              Reset
+            </Button>
+            <Button 
+              variant="contained" 
+              size="small" 
+              onClick={() => setZoomLevel(prevZoom => Math.max(prevZoom - 0.25, 0.5))}
+            >
+              Zoom -
+            </Button>
+          </Box>
+          <Box 
+            sx={{ 
+              transform: `scale(${zoomLevel})`, 
+              transformOrigin: 'top left',
+              transition: 'transform 0.2s ease'
+            }}
+          >
+                <iframe
+                  src={contentDialog.link}
+                  title="Subconcept Content"
+                  width="100%"
+                  height="400px"  // Increased height
+                  style={{ border: '1px solid #e0e0e0', borderRadius: '4px' }}
+                />
+              </Box>
+            </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseContent} color="primary">
+            Close
+          </Button>
+          {contentDialog.link && (
+            <Button 
+              href={contentDialog.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              color="primary"
+              variant="contained"
+            >
+              Open in New Tab
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       {/* Alert message */}
       <Snackbar
