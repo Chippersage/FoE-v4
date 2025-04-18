@@ -38,7 +38,7 @@ public class GoodFridayGreetingService {
     @Transactional
     public void sendGoodFridayGreetings() {
         logger.info("Starting Good Friday greeting email process...");
-        
+        long startTime = System.currentTimeMillis();
         // Get all users with email addresses
         List<User> usersWithEmails = userRepository.findAll().stream()
             .filter(user -> user.getUserEmail() != null && !user.getUserEmail().isEmpty())
@@ -48,12 +48,18 @@ public class GoodFridayGreetingService {
         
         // Track successful emails
         int sentEmails = 0;
+        long dbFetchTime = System.currentTimeMillis() - startTime;
+        logger.info("Time taken to fetch users from database: {} ms", dbFetchTime);
         
         // Send Good Friday greetings to all users (regardless of organization)
         for (User user : usersWithEmails) {
+        	long emailStartTime = System.currentTimeMillis();
             try {
                 sendGoodFridayGreeting(user);
                 sentEmails++;
+                long emailSendTime = System.currentTimeMillis() - emailStartTime;
+                logger.info("Good Friday greeting sent to user: {}, time taken: {} ms", 
+                        user.getUserEmail(), emailSendTime);
                 logger.info("Good Friday greeting sent to user: {}", user.getUserEmail());
             } catch (Exception e) {
                 logger.error("Failed to send Good Friday greeting to user: {}. Error: {}", 
@@ -61,7 +67,9 @@ public class GoodFridayGreetingService {
                 sendPlainTextFallbackEmail(user);
             }
         }
-        
+        long totalTime = System.currentTimeMillis() - startTime;
+        logger.info("Completed Good Friday greeting process. Sent emails to {} users in {} ms (avg {} ms per email).", 
+                    sentEmails, totalTime, sentEmails > 0 ? totalTime/sentEmails : 0);
         logger.info("Completed Good Friday greeting process. Sent emails to {} users.", sentEmails);
     }
     
@@ -210,6 +218,9 @@ public class GoodFridayGreetingService {
         }
     }
 }
+
+
+
 
 //package com.FlowofEnglish.service;
 //
