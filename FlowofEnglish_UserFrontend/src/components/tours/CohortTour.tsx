@@ -1,5 +1,6 @@
 // CohortTour.tsx
-import React, { useEffect, useState } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import Joyride, { STATUS, Step, CallBackProps } from "react-joyride";
 import CohortCustomTooltip from "./CohortCustomTooltip";
 
@@ -7,7 +8,9 @@ interface CohortTourProps {
   onResumeClick: () => void;
 }
 
-const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
+const CohortTour: React.FC<CohortTourProps> = ({
+  onResumeClick,
+}: CohortTourProps) => {
   const [runTour, setRunTour] = useState(false);
 
   useEffect(() => {
@@ -23,9 +26,19 @@ const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
 
   const steps: Step[] = [
     {
-      target: ".cohort-page-header",
-      content: "Welcome! This is your cohort selection page.",
+      target: "body",
+      content:
+        localStorage.getItem("userType")?.toLowerCase() === "mentor"
+          ? "Welcome to the mentor dashboard!"
+          : "Welcome! This is your cohort selection page.",
       disableBeacon: true,
+      placement: "center",
+      styles: {
+        options: {
+          zIndex: 10000000,
+          overlayColor: "rgba(0, 0, 0, 0.7)",
+        },
+      },
     },
     {
       target: ".continue-learning-section",
@@ -40,17 +53,32 @@ const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
       ),
       disableBeacon: true,
     },
-    {
-      target: ".program-card-first",
-      content: "This card shows your program details and progress.",
-      disableBeacon: true,
-    },
-    {
-      target: ".daily-challenge-section",
-      content:
-        "Below are your Daily Challenges: Word of the Day and Daily Riddle.",
-      disableBeacon: true,
-    },
+    ...(localStorage.getItem("userType")?.toLowerCase() === "mentor"
+      ? [
+          {
+            target: ".manage-cohort-assignments-section",
+            content:
+              "Here you can see all the cohorts assigned to you and manage their assignments.",
+            disableBeacon: true,
+          },
+          {
+            target: ".view-assignments-button",
+            content:
+              "Click 'View Assignments' to review and manage assignments for a specific cohort.",
+            spotlightClicks: true,
+            disableBeacon: true,
+          },
+        ]
+      : localStorage.getItem("userType")?.toLowerCase() === "learner"
+      ? [
+          {
+            target: ".daily-challenge-section",
+            content:
+              "Below are your Daily Challenges: Word of the Day and Daily Riddle.",
+            disableBeacon: true,
+          },
+        ]
+      : []),
     {
       target: ".resume-button",
       content:
@@ -58,7 +86,7 @@ const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
       spotlightClicks: true,
       disableBeacon: true,
     },
-  ];
+  ] as Step[];
 
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, index, type } = data;
@@ -66,12 +94,20 @@ const CohortTour: React.FC<CohortTourProps> = ({ onResumeClick }) => {
     if (type === "step:after" || type === "error:target_not_found") {
       sessionStorage.setItem("tourStep", String(index + 1));
     }
-    if (status === "finished" || status === "skipped") {
+
+    if (status === "finished") {
       setRunTour(false);
-      // Mark that the user has seen the tour in this session
       sessionStorage.setItem("hasSeenCohortTour", "true");
+      // Do NOT set skip flag here
+    }
+
+    if (status === "skipped") {
+      setRunTour(false);
+      sessionStorage.setItem("hasSeenCohortTour", "true");
+      localStorage.setItem("cohortTourSkipped", "true"); // ✅ only if skipped
     }
   };
+
 
   return (
     <Joyride

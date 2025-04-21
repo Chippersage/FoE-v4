@@ -37,15 +37,16 @@ export default function Stages({
   const [hasSeenDashboardTour, setHasSeenDashboardTour] = useState(false);
 
   useEffect(() => {
-    // Check if user has seen the tour before
+    // Check if user has seen the tour before or if cohort tour was skipped
     const seenTour = localStorage.getItem("hasSeenDashboardTour");
-    setHasSeenDashboardTour(!!seenTour);
+    const cohortTourSkipped =
+      localStorage.getItem("cohortTourSkipped") === "true";
 
-    // Only run tour if data is loaded and user hasn't seen it before
-    if (isDataLoaded && !seenTour) {
+    setHasSeenDashboardTour(!!seenTour || cohortTourSkipped);
+
+    // Only run tour if data is loaded and user hasn't seen it before and cohort tour wasn't skipped
+    if (isDataLoaded && !seenTour && !cohortTourSkipped) {
       setRunTour(true);
-      // Mark tour as seen after it starts
-      localStorage.setItem("hasSeenDashboardTour", "true");
     }
   }, [isDataLoaded]);
 
