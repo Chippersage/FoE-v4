@@ -15,15 +15,27 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Card,
+  Chip,
+  Tooltip,
+  NoSsr,
 } from "@mui/material";
 import axios from "axios";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import EmptyStateIcon from "@mui/icons-material/FolderOff";
 import { format } from "date-fns";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AssignmentsTable = ({ cohortId }) => {
   const [assignments, setAssignments] = useState([]);
+  const [statistics, setStatistics] = useState({
+    correctedAssignments: 0,
+    totalAssignments: 0,
+    pendingAssignments: 0,
+    cohortUserCount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [alert, setAlert] = useState({
@@ -32,7 +44,12 @@ const AssignmentsTable = ({ cohortId }) => {
     severity: "success",
   });
   const [editedAssignments, setEditedAssignments] = useState({});
+
+  // Theme colors
   const LIGHT_TEAL = "#e6f5f5";
+  const LINK_COLOR = "#0066cc";
+  const HOVER_COLOR = "#f5f5f5";
+
   useEffect(() => {
     fetchAssignments();
   }, [cohortId]);
@@ -43,13 +60,20 @@ const AssignmentsTable = ({ cohortId }) => {
       const response = await axios.get(
         `${API_BASE_URL}/assignments/cohort/${cohortId}`
       );
-      const sortedAssignments = response.data.sort((a, b) =>
+      // Handle the new response format with assignments and statistics
+      const { assignments: fetchedAssignments, statistics: fetchedStatistics } =
+        response.data;
+
+      // Sort assignments with pending first
+      const sortedAssignments = fetchedAssignments.sort((a, b) =>
         a.correctedDate ? 1 : -1
       );
       setAssignments(sortedAssignments);
+      setStatistics(fetchedStatistics);
+
       // Initialize editedAssignments with current values
       const initialEdits = {};
-      response.data.forEach((assignment) => {
+      fetchedAssignments.forEach((assignment) => {
         initialEdits[assignment.assignmentId] = {
           score: assignment.score || "",
           remarks: assignment.remarks || "",
@@ -98,6 +122,7 @@ const AssignmentsTable = ({ cohortId }) => {
       },
     }));
   };
+
   const handleCorrectedDateChange = (assignmentId, date) => {
     setEditedAssignments((prev) => ({
       ...prev,
@@ -107,6 +132,7 @@ const AssignmentsTable = ({ cohortId }) => {
       },
     }));
   };
+
   const handleSubmitCorrection = async (assignmentId) => {
     const editedData = editedAssignments[assignmentId];
     const assignment = assignments.find((a) => a.assignmentId === assignmentId);
@@ -119,6 +145,7 @@ const AssignmentsTable = ({ cohortId }) => {
       });
       return;
     }
+
     // Validate score against max score
     if (
       editedData.score &&
@@ -139,7 +166,7 @@ const AssignmentsTable = ({ cohortId }) => {
     // Validate correction date
     if (editedData.correctedDate && assignment.submittedDate) {
       const correctedDate = new Date(editedData.correctedDate);
-      const submittedDate = new Date(assignment.submittedDate);
+      const submittedDate = new Date(assignment.submittedDate * 1000); // Convert timestamp to Date
       if (correctedDate < submittedDate) {
         setAlert({
           open: true,
@@ -149,6 +176,7 @@ const AssignmentsTable = ({ cohortId }) => {
         return;
       }
     }
+
     setUpdating(true);
     const formData = new FormData();
 
@@ -183,6 +211,13 @@ const AssignmentsTable = ({ cohortId }) => {
         )
       );
 
+      // Update statistics
+      setStatistics((prevStats) => ({
+        ...prevStats,
+        correctedAssignments: prevStats.correctedAssignments + 1,
+        pendingAssignments: prevStats.pendingAssignments - 1,
+      }));
+
       setAlert({
         open: true,
         message: "Assignment successfully corrected",
@@ -207,26 +242,94 @@ const AssignmentsTable = ({ cohortId }) => {
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
 
-  return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
-        Assignments for Cohort: {cohortId}
+  // Empty state component
+  const EmptyState = () => (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      my={8}
+      p={4}
+      sx={{
+        backgroundColor: "#f5f5f5",
+        borderRadius: 2,
+        width: "100%",
+        maxWidth: "600px",
+        margin: "0 auto",
+      }}
+    >
+      <EmptyStateIcon sx={{ fontSize: 80, color: "#999", mb: 2 }} />
+      <Typography variant="h6" gutterBottom>
+        No Assignments Found
       </Typography>
+      <Typography variant="body1" color="textSecondary" align="center">
+        There are no assignments available for this cohort.
+      </Typography>
+    </Box>
+  );
+
+  return (
+    <Card sx={{ p: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
+        <Box display="flex" alignItems="center">
+          <AssignmentIcon sx={{ mr: 1, color: "#1976d2" }} />
+          <Typography variant="h5" component="div">
+            Assignments for Cohort: {cohortId}
+          </Typography>
+        </Box>
+        <Box display="flex" gap={2}>
+          <Chip
+            label={`Total: ${statistics.totalAssignments}`}
+            color="default"
+            variant="outlined"
+          />
+          <Chip
+            label={`Pending: ${statistics.pendingAssignments}`}
+            color="warning"
+            variant="outlined"
+          />
+          <Chip
+            label={`Corrected: ${statistics.correctedAssignments}`}
+            color="success"
+            variant="outlined"
+          />
+          <Chip
+            label={`Users: ${statistics.cohortUserCount}`}
+            color="info"
+            variant="outlined"
+          />
+        </Box>
+      </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" my={4}>
+        <Box display="flex" justifyContent="center" my={8}>
           <CircularProgress />
         </Box>
+      ) : assignments.length === 0 ? (
+        <EmptyState />
       ) : (
-        <TableContainer component={Paper} sx={{ mt: 2, overflow: "auto" }}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            mt: 2,
+            overflow: "auto",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            "& .MuiTableRow-root:hover": {
+              backgroundColor: HOVER_COLOR,
+            },
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
                 <TableCell>Assignment ID</TableCell>
                 <TableCell>User</TableCell>
-                {/*     <TableCell>Program</TableCell>
-                  <TableCell>Stage</TableCell>
-                  <TableCell>Unit</TableCell> */}
                 <TableCell>Assignment Q</TableCell>
                 <TableCell>Max Score</TableCell>
                 <TableCell>Submitted Date</TableCell>
@@ -247,25 +350,31 @@ const AssignmentsTable = ({ cohortId }) => {
                       ? LIGHT_TEAL
                       : "inherit",
                     color: assignment.correctedDate ? "black" : "inherit",
+                    transition: "background-color 0.2s ease",
                   }}
                 >
-                  <TableCell>{assignment.assignmentId}</TableCell>
                   <TableCell>
-                    {assignment.user.userName} ({assignment.user.userId})
+                    <Chip
+                      label={assignment.assignmentId}
+                      size="small"
+                      sx={{ fontSize: "0.75rem" }}
+                    />
                   </TableCell>
-                  {/*   <TableCell>{assignment.program.programName}</TableCell>
-                    <TableCell>{assignment.stage.stageId}</TableCell>
-                    <TableCell>{assignment.unit.unitId}</TableCell> */}
                   <TableCell>
-                    {" "}
+                    <Tooltip title={`User ID: ${assignment.user.userId}`}>
+                      <span>{assignment.user.userName}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
                     {assignment.subconcept.subconceptLink ? (
                       <a
                         href={assignment.subconcept.subconceptLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          color: "#0066cc",
+                          color: LINK_COLOR,
                           textDecoration: "underline",
+                          fontWeight: 500,
                         }}
                       >
                         {assignment.subconcept.subconceptId}
@@ -274,25 +383,29 @@ const AssignmentsTable = ({ cohortId }) => {
                       assignment.subconcept.subconceptId
                     )}
                   </TableCell>
-                  <TableCell>
-                    {assignment.subconcept.subconceptMaxscore}
+                  <TableCell align="center">
+                    <Chip
+                      label={assignment.subconcept.subconceptMaxscore}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
                   </TableCell>
                   <TableCell>
                     {formatDateTime(assignment.submittedDate)}
                   </TableCell>
                   <TableCell>
                     {assignment.submittedFile && (
-                      <a
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<CloudUploadIcon />}
                         href={assignment.submittedFile.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                          color: "#0066cc",
-                          textDecoration: "underline",
-                        }}
                       >
-                        View File
-                      </a>
+                        View
+                      </Button>
                     )}
                   </TableCell>
                   <TableCell>
@@ -313,6 +426,16 @@ const AssignmentsTable = ({ cohortId }) => {
                         max: assignment.subconcept.subconceptMaxscore,
                         style: { width: "60px" },
                       }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "rgba(0, 0, 0, 0.2)",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "primary.main",
+                          },
+                        },
+                      }}
                     />
                   </TableCell>
                   <TableCell>
@@ -331,44 +454,69 @@ const AssignmentsTable = ({ cohortId }) => {
                         )
                       }
                       inputProps={{ style: { width: "150px" } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "rgba(0, 0, 0, 0.2)",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "primary.main",
+                          },
+                        },
+                      }}
                     />
                   </TableCell>
                   <TableCell>
-                    <label
-                      htmlFor={`correction-file-${assignment.assignmentId}`}
-                    >
-                      <input
-                        accept="*/*"
-                        id={`correction-file-${assignment.assignmentId}`}
-                        type="file"
-                        style={{ display: "none" }}
-                        onChange={(e) =>
-                          handleFileChange(
-                            assignment.assignmentId,
-                            e.target.files[0]
-                          )
-                        }
-                      />
-                      <IconButton component="span" color="primary">
-                        <CloudUploadIcon />
-                      </IconButton>
-                    </label>
-                    {editedAssignments[assignment.assignmentId]?.file?.name ||
-                      (assignment.correctedFile ? (
-                        <a
-                          href={assignment.correctedFile.downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            color: "#0066cc",
-                            textDecoration: "underline",
-                          }}
+                    <Box display="flex" alignItems="center">
+                      <label
+                        htmlFor={`correction-file-${assignment.assignmentId}`}
+                      >
+                        <input
+                          accept="*/*"
+                          id={`correction-file-${assignment.assignmentId}`}
+                          type="file"
+                          style={{ display: "none" }}
+                          onChange={(e) =>
+                            handleFileChange(
+                              assignment.assignmentId,
+                              e.target.files[0]
+                            )
+                          }
+                        />
+                        <Tooltip title="Upload correction file">
+                          <IconButton
+                            component="span"
+                            color="primary"
+                            size="small"
+                          >
+                            <CloudUploadIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </label>
+                      {editedAssignments[assignment.assignmentId]?.file
+                        ?.name ? (
+                        <Typography
+                          variant="caption"
+                          noWrap
+                          sx={{ ml: 1, maxWidth: 100 }}
                         >
-                          View File
-                        </a>
+                          {editedAssignments[assignment.assignmentId].file.name}
+                        </Typography>
                       ) : (
-                        ""
-                      ))}
+                        assignment.correctedFile && (
+                          <Button
+                            variant="text"
+                            size="small"
+                            href={assignment.correctedFile.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ ml: 1, textTransform: "none" }}
+                          >
+                            View File
+                          </Button>
+                        )
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell>
                     {assignment.correctedDate ? (
@@ -387,6 +535,7 @@ const AssignmentsTable = ({ cohortId }) => {
                             e.target.value
                           )
                         }
+                        sx={{ width: 130 }}
                       />
                     )}
                   </TableCell>
@@ -398,9 +547,20 @@ const AssignmentsTable = ({ cohortId }) => {
                       onClick={() =>
                         handleSubmitCorrection(assignment.assignmentId)
                       }
-                      disabled={updating}
+                      disabled={updating || assignment.correctedDate}
+                      sx={{
+                        textTransform: "none",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        "&:hover": {
+                          boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                        },
+                      }}
                     >
-                      {updating ? "Saving..." : "Save"}
+                      {updating
+                        ? "Saving..."
+                        : assignment.correctedDate
+                        ? "Corrected"
+                        : "Save"}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -420,11 +580,12 @@ const AssignmentsTable = ({ cohortId }) => {
         <Alert
           onClose={() => setAlert({ ...alert, open: false })}
           severity={alert.severity}
+          sx={{ width: "100%", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}
         >
           {alert.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Card>
   );
 };
 

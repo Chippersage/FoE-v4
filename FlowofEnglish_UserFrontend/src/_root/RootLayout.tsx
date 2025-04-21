@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header2 from "@/components/Header2";
 import { useLocation } from "react-router-dom";
 
@@ -12,6 +12,14 @@ const RootLayout = () => {
   );
   const location = useLocation();
   const isHomePage = location.pathname === "/home";
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll main content to top on location change
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   const handleOnClose = () => {
     localStorage.removeItem("cohortReminder");
@@ -29,6 +37,7 @@ const RootLayout = () => {
 
       {/* Content Container with Header Space */}
       <div
+        ref={mainContentRef}
         className={`flex-1 overflow-y-auto ${
           isHomePage ? "mt-[120px] sm:mt-[160px]" : "mt-[100px]"
         }`}
@@ -46,7 +55,7 @@ const RootLayout = () => {
 
         {/* Main Content */}
         <main
-          className={`min-h-[calc(100vh-${isHomePage ? "160px" : "100px"})]`}
+          className={`min-h-[calc(100vh-${isHomePage ? "160px" : "100px"})] pb-[100px] sm:pb-0`}
         >
           <Outlet />
         </main>
