@@ -63,6 +63,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/assignments/**").permitAll()
                     .requestMatchers("/api/v1/payments/**").permitAll()
                     .requestMatchers("/api/v1/webhook/**").permitAll()
+                    .requestMatchers("/api/test/**").permitAll()
                     .requestMatchers("/", "/index.html", "/static/**").permitAll()
                     .anyRequest().authenticated() // Require authentication for all other requests
                 )
