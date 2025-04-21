@@ -1,7 +1,7 @@
 // DashboardTour.tsx
 import * as React from "react";
 import Joyride, { STATUS, Step, CallBackProps } from "react-joyride";
-import CustomTooltip from "./CustomTooltip";
+import CustomTooltip from "./HomeCustomTooltip";
 
 interface DashboardTourProps {
   stepIndex: number;
@@ -20,9 +20,9 @@ const DashboardTour: React.FC<DashboardTourProps> = ({
   onLetsGoClick,
   onActiveUnitClick,
 }) => {
-  //   const savedStepIndex = Number(localStorage.getItem("tourStep")) || 0;
-  // const [runTour, setRunTour] = useState(false);
-  //   const [stepIndex, setStepIndex] = useState(savedStepIndex);
+  // Check if cohort tour was skipped
+  const cohortTourSkipped =
+    localStorage.getItem("cohortTourSkipped") === "true";
 
   const steps: Step[] = [
     {
@@ -67,6 +67,11 @@ const DashboardTour: React.FC<DashboardTourProps> = ({
       localStorage.setItem("hasSeenDashboardTour", "true");
     }
   };
+
+  // If cohort tour was skipped, don't run the dashboard tour
+  if (cohortTourSkipped) {
+    return null;
+  }
 
   return (
     <Joyride
