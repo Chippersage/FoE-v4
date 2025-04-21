@@ -1,6 +1,7 @@
 package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.exception.BulkUploadException;
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
@@ -270,7 +271,19 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                        .setHeader()
                        .setSkipHeaderRecord(true)
                        .build())) {
+        	//  Validate required headers
+            Set<String> headers = csvParser.getHeaderMap().keySet();
+            List<String> requiredHeaders = List.of("ProgramId", "StageId", "UnitId", "SubconceptId", "programconcept_desc", "position");
 
+            for (String header : requiredHeaders) {
+                if (!headers.contains(header)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of(
+                                    "success", false,
+                                    "message", "Missing required header: " + header
+                            ));
+                }
+            }
                for (CSVRecord record : csvParser) {
                    try {
                        String programId = record.get("ProgramId");
@@ -280,24 +293,34 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                        String programConceptDesc = record.get("programconcept_desc");
                        String positionStr = record.get("position"); // New field
                        
-                       // Parse or default the position
-                       Integer position = (positionStr != null && !positionStr.isBlank())
-                           ? Integer.parseInt(positionStr)
-                           : 0; // Default to 0 if not provided
-
-
-                       // Validate required fields
-                       if (Stream.of(programId, stageId, unitId, subconceptId)
-                               .anyMatch(field -> field == null || field.trim().isEmpty())) {
+                       //  Required fields check
+                       if (Stream.of(programId, stageId, unitId, subconceptId).anyMatch(field -> field == null || field.isBlank())) {
                            errorMessages.add("Missing required fields in row: " + record.getRecordNumber());
                            failCount++;
                            continue;
                        }
 
-                       // Check for duplicate mapping
-                       String mappingKey = String.format("%s_%s_%s_%s", programId, stageId, unitId, subconceptId);
+                       //  Safer parsing for position
+                       int position = 0;
+                       if (positionStr != null && !positionStr.isBlank()) {
+                           try {
+                               position = Integer.parseInt(positionStr.trim());
+                           } catch (NumberFormatException e) {
+                               errorMessages.add("Invalid position value at row " + record.getRecordNumber());
+                               failCount++;
+                               continue;
+                           }
+                       }
+
+                       //  Duplicate check (case-insensitive)
+                       String mappingKey = String.format("%s_%s_%s_%s",
+                               programId.toLowerCase(),
+                               stageId.toLowerCase(),
+                               unitId.toLowerCase(),
+                               subconceptId.toLowerCase());
+
                        if (csvMappings.contains(mappingKey)) {
-                           errorMessages.add("Duplicate mapping found: " + mappingKey);
+                           errorMessages.add("Duplicate mapping found in CSV: " + mappingKey);
                            failCount++;
                            continue;
                        }
@@ -344,6 +367,11 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                        "error", e.getMessage()
                    ));
            }
+     //  Optional: Rollback if any failure occurs
+        if (failCount > 0) {
+            throw new BulkUploadException("CSV processing failed with " + failCount + " failed rows. Rolling back.");
+        }
+
 
            Map<String, Object> response = new HashMap<>();
            response.put("successCount", successCount);

@@ -149,6 +149,7 @@ public class UserAssignmentController {
             subconceptData.put("subconceptDesc", subconcept.getSubconceptDesc());
             subconceptData.put("subconceptMaxscore", subconcept.getSubconceptMaxscore());
             subconceptData.put("subconceptLink", subconcept.getSubconceptLink());
+            subconceptData.put("subconceptType", subconcept.getSubconceptType());
          // Process dependency information
             String dependencyIds = subconcept.getDependency();
             if (dependencyIds != null && !dependencyIds.isEmpty()) {
@@ -167,6 +168,7 @@ public class UserAssignmentController {
                         dependencyData.put("subconceptDesc", dependencySubconcept.get().getSubconceptDesc());
                         dependencyData.put("subconceptLink", dependencySubconcept.get().getSubconceptLink());
                         dependencyData.put("subconceptMaxscore", dependencySubconcept.get().getSubconceptMaxscore());
+                        dependencyData.put("subconceptType", dependencySubconcept.get().getSubconceptType());
                         dependencyList.add(dependencyData);
                     }
                 }
