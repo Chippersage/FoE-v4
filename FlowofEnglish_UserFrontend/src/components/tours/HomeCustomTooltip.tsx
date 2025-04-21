@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { TooltipRenderProps } from "react-joyride";
 
 const CustomTooltip: React.FC<TooltipRenderProps> = ({
@@ -12,7 +12,7 @@ const CustomTooltip: React.FC<TooltipRenderProps> = ({
   primaryProps,
   skipProps,
   tooltipProps,
-}) => {
+}: TooltipRenderProps) => {
   // Check if we're on the 4th step (index 3)
   const isFourthStep = index === 3;
 
@@ -97,25 +97,36 @@ const CustomTooltip: React.FC<TooltipRenderProps> = ({
           )}
 
           {!isLastStep && !isFourthStep && (
-            <button
-              {...primaryProps}
-              style={{
-                color: "#000000",
-                backgroundColor: "#5BC3CD",
-                borderRadius: "8px",
-                padding: "10px 20px",
-                fontSize: "15px",
-                fontWeight: "600",
-                fontFamily:
-                  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-                letterSpacing: "0.5px",
-                border: "none",
-                cursor: "pointer",
-                boxShadow: "0 2px 4px rgba(91, 195, 205, 0.2)",
-              }}
-            >
-              Next
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span
+                style={{
+                  color: "#64748B",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                {index + 1} of {size}
+              </span>
+              <button
+                {...primaryProps}
+                style={{
+                  color: "#000000",
+                  backgroundColor: "#5BC3CD",
+                  borderRadius: "8px",
+                  padding: "10px 20px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  fontFamily:
+                    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  letterSpacing: "0.5px",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 4px rgba(91, 195, 205, 0.2)",
+                }}
+              >
+                Next
+              </button>
+            </div>
           )}
 
           {isLastStep && (

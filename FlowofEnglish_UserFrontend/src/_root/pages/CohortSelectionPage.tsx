@@ -51,13 +51,13 @@ export default function Dashboard() {
   // const [notificationCounts, setNotificationCounts] = useState({});
   // const tempSessionId = localStorage.getItem("tempSessionId");
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setShowAssignments(true);
-  }, 2000); // 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowAssignments(true);
+    }, 2000); // 3 seconds
 
-  return () => clearTimeout(timer); // cleanup on unmount
-}, []);
+    return () => clearTimeout(timer); // cleanup on unmount
+  }, []);
 
   useEffect(() => {
     if (!user?.cohorts) return;
@@ -309,26 +309,12 @@ useEffect(() => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="mb-8"
+              className="mb-8 manage-cohort-assignments-section"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <h2 className="text-2xl font-bold text-emerald-700">
                   Manage Cohort Assignments
                 </h2>
-                {/* <Button
-                  onClick={() => setShowAssignments(!showAssignments)}
-                  className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-teal-400 hover:to-pink-500 text-white"
-                >
-                  <ClipboardList className="mr-2 h-5 w-5" />
-                  {showAssignments
-                    ? "Hide Assignments"
-                    : "View All Assignments"}
-                  {showAssignments ? (
-                    <ChevronUp className="ml-2 h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  )}
-                </Button> */}
               </div>
 
               <AnimatePresence>
@@ -341,7 +327,8 @@ useEffect(() => {
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-gradient-to-b from-[#CAF2BC] to-white p-4 rounded-xl"
                   >
                     {user?.cohorts?.map((course, index) => {
-                      const themeColor = courseColors[index % courseColors.length];
+                      const themeColor =
+                        courseColors[index % courseColors.length];
                       const color = "from-emerald-500 to-green-500";
 
                       const pendingCount =
@@ -385,7 +372,7 @@ useEffect(() => {
                           <CardFooter className="p-6 pt-0">
                             <Button
                               asChild
-                              className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0`}
+                              className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0 view-assignments-button`}
                             >
                               <Link
                                 to={`/cohorts/${course.cohortId}/assignments`}

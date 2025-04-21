@@ -16,7 +16,7 @@ const CohortCustomTooltip: React.FC<TooltipRenderProps> = ({
   return (
     <div
       {...tooltipProps}
-      className="joyride-tooltip max-w-[300px] sm:max-w-[400px]"
+      className="joyride-tooltip min-w-[250px] max-w-[300px] sm:max-w-[400px]"
       style={{
         background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
         borderRadius: "12px",
@@ -109,7 +109,7 @@ const CohortCustomTooltip: React.FC<TooltipRenderProps> = ({
                 boxShadow: "0 2px 4px rgba(91, 195, 205, 0.2)",
               }}
             >
-              Next
+              Next ({index + 1} of {size})
             </button>
           )}
 
