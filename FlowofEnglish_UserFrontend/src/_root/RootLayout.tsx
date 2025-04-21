@@ -55,7 +55,9 @@ const RootLayout = () => {
 
         {/* Main Content */}
         <main
-          className={`min-h-[calc(100vh-${isHomePage ? "160px" : "100px"})] pb-[100px] sm:pb-0`}
+          className={`min-h-[calc(100vh-${
+            isHomePage ? "160px" : "100px"
+          })] pb-[100px] sm:pb-0`}
         >
           <Outlet />
         </main>
