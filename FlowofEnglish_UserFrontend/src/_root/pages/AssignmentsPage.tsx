@@ -9,7 +9,7 @@ const AssignmentsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans p-4">
-      <main className="container mx-auto max-w-6xl">
+      <main className="container mx-auto max-w-fit">
         <header className="mb-6">
           <h1 className="text-3xl font-bold text-emerald-700">
             Cohort Assignments
