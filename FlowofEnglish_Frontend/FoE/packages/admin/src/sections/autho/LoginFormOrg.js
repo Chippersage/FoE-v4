@@ -43,6 +43,9 @@ export default function LoginFormOrg() {
       const orgData = await response.json();
       if (orgData.organizationId) {
         localStorage.setItem('token', 'dummyToken'); // Set token as needed
+        // Store the orgId in localStorage
+        localStorage.setItem('orgId', orgData.organizationId);
+        localStorage.setItem('userType', 'orgAdmin');
         setUserType('orgAdmin');
         setOrgId(orgData.organizationId);
         setCohortReminders(orgData.cohortReminders || []);

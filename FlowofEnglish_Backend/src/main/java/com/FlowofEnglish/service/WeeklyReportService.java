@@ -37,6 +37,10 @@ public class WeeklyReportService {
     
     private static final String TEAM_ORG_ID = "TEAM";
     
+    private static final String MAHA_ORG_ID = "MAHA";
+    
+    private static final String SKEI_ORG_ID = "SKEI";
+    
     // Define image paths as constants - using class-path for deployed environment
     private static final String CONSISTENCY_IMAGE = "images/Improve Everyday 01.jpg";
     private static final String LOGO_IMAGE = "images/ChipperSageLogo.png";
