@@ -4,7 +4,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, Button, CircularProgress,
   Snackbar, Alert, IconButton, Card, Chip, Tooltip, NoSsr, Accordion,
   AccordionSummary, AccordionDetails, Divider, Dialog, DialogContent,
-  DialogTitle, DialogActions
+  DialogTitle, DialogActions, TablePagination, InputAdornment
 } from '@mui/material';
 import axios from 'axios';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -12,9 +12,127 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import EmptyStateIcon from '@mui/icons-material/FolderOff';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LinkIcon from '@mui/icons-material/Link';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { format } from 'date-fns';
+import { filter } from 'lodash';
 
 const apiUrl = process.env.REACT_APP_API_URL;
+
+// Table header definitions for sorting
+const TABLE_HEAD = [
+  { id: 'assignmentId', label: 'Assignment ID', alignRight: false },
+  { id: 'userName', label: 'User', alignRight: false },
+  { id: 'subconceptId', label: 'Assignment Q', alignRight: false },
+  { id: 'dependencies', label: 'Reference', alignRight: false },
+  { id: 'maxScore', label: 'Max Score', alignRight: true },
+  { id: 'submittedDate', label: 'Submitted Date', alignRight: false },
+  { id: 'submittedFile', label: 'Submitted File', alignRight: false },
+  { id: 'score', label: 'Score', alignRight: false },
+  { id: 'remarks', label: 'Remarks', alignRight: false },
+  { id: 'correctionFile', label: 'Correction File', alignRight: false },
+  { id: 'correctedDate', label: 'Corrected Date', alignRight: false },
+  { id: 'actions', label: 'Actions', alignRight: false },
+];
+
+// Component for the search toolbar
+const UserListToolbar = ({ filterName, onFilterName, filterConcept, onFilterConcept }) => {
+  return (
+    <Box sx={{ py: 1, px: 1, bgcolor: '#f9f9f9', borderRadius: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <TextField
+          fullWidth
+          placeholder="Search user..."
+          value={filterName}
+          onChange={onFilterName}
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'text.disabled', fontSize: '1.1rem' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { height: '36px' } }}
+        />
+        <TextField
+          fullWidth
+          placeholder="Search by concept..."
+          value={filterConcept}
+          onChange={onFilterConcept}
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <FilterListIcon sx={{ color: 'text.disabled', fontSize: '1.1rem' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { height: '36px' } }}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+// Sort comparator function
+function descendingComparator(a, b, orderBy) {
+  if (orderBy === 'userName') {
+    return b.user.userName.localeCompare(a.user.userName);
+  }
+  if (orderBy === 'subconceptId') {
+    return b.subconcept.subconceptId.localeCompare(a.subconcept.subconceptId);
+  }
+  if (orderBy === 'maxScore') {
+    return b.subconcept.subconceptMaxscore - a.subconcept.subconceptMaxscore;
+  }
+  if (orderBy === 'submittedDate' || orderBy === 'correctedDate') {
+    const aValue = a[orderBy] || 0;
+    const bValue = b[orderBy] || 0;
+    return bValue - aValue;
+  }
+  
+  const bValue = b[orderBy] === null ? '' : b[orderBy];
+  const aValue = a[orderBy] === null ? '' : a[orderBy];
+  
+  if (bValue < aValue) return -1;
+  if (bValue > aValue) return 1;
+  return 0;
+}
+
+function getComparator(order, orderBy) {
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+// Filter and sort function
+const applySortFilter = (array, comparator, queryName, queryConcept) => {
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+  
+  let filteredArray = array;
+  
+  if (queryName || queryConcept) {
+    filteredArray = filter(
+      array, 
+      (item) => {
+        const nameMatch = queryName ? item.user.userName.toLowerCase().includes(queryName.toLowerCase()) : true;
+        const conceptMatch = queryConcept ? item.subconcept.subconceptId.toLowerCase().includes(queryConcept.toLowerCase()) : true;
+        return nameMatch && conceptMatch;
+      }
+    );
+    return filteredArray;
+  }
+  
+  return stabilizedThis.map((el) => el[0]);
+};
 
 const AssignmentsTable = ({ cohortId }) => {
   const [assignments, setAssignments] = useState([]);
@@ -32,9 +150,18 @@ const AssignmentsTable = ({ cohortId }) => {
     open: false,
     title: '',
     content: '',
-    link: ''
+    link: '',
+    type: ''
   });
   const [zoomLevel, setZoomLevel] = useState(1); // Default zoom level (1 = 100%)
+
+  // Pagination and sorting states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [order, setOrder] = useState('desc');
+  const [orderBy, setOrderBy] = useState('submittedDate');
+  const [filterName, setFilterName] = useState('');
+  const [filterConcept, setFilterConcept] = useState('');
 
   // Theme colors
   const LIGHT_TEAL = '#e6f5f5';
@@ -223,12 +350,13 @@ const AssignmentsTable = ({ cohortId }) => {
     return format(date, 'yyyy-MM-dd HH:mm:ss');
   };
 
-  const handleOpenContent = (title, content, link) => {
+  const handleOpenContent = (title, content, link, type) => {
     setContentDialog({
       open: true,
       title,
       content,
-      link
+      link,
+      type
     });
   };
 
@@ -237,6 +365,34 @@ const AssignmentsTable = ({ cohortId }) => {
       ...contentDialog,
       open: false
     });
+  };
+
+  // Pagination handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Sorting handlers
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  // Filter handlers
+  const handleFilterByName = (event) => {
+    setFilterName(event.target.value);
+    setPage(0);
+  };
+
+  const handleFilterByConcept = (event) => {
+    setFilterConcept(event.target.value);
+    setPage(0);
   };
 
   // Empty state component
@@ -264,6 +420,46 @@ const AssignmentsTable = ({ cohortId }) => {
         There are no assignments available for this cohort.
       </Typography>
     </Box>
+  );
+
+  // Not found state component when filtering returns no results
+  const NotFoundState = () => (
+    <TableBody>
+      <TableRow>
+        <TableCell align="center" colSpan={12} sx={{ py: 3 }}>
+          <Paper sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" paragraph>
+              Not found
+            </Typography>
+            <Typography variant="body2">
+              No results found for username &quot;{filterName}&quot; 
+              {filterConcept && <> or concept &quot;{filterConcept}&quot;</>}. 
+              Try checking for typos or using complete words.
+            </Typography>
+          </Paper>
+        </TableCell>
+      </TableRow>
+    </TableBody>
+  );
+
+  // Apply filtering and sorting
+  const filteredAssignments = applySortFilter(
+    assignments, 
+    getComparator(order, orderBy), 
+    filterName,
+    filterConcept
+  );
+
+  const isNotFound = !filteredAssignments.length && (!!filterName || !!filterConcept);
+
+  // Calculate pagination
+  const emptyRows = page > 0 
+    ? Math.max(0, (1 + page) * rowsPerPage - filteredAssignments.length) 
+    : 0;
+
+  const visibleRows = filteredAssignments.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
   );
 
   return (
@@ -299,6 +495,14 @@ const AssignmentsTable = ({ cohortId }) => {
         </Box>
       </Box>
 
+      {/* Search and filter toolbar */}
+      <UserListToolbar
+        filterName={filterName}
+        onFilterName={handleFilterByName}
+        filterConcept={filterConcept}
+        onFilterConcept={handleFilterByConcept}
+      />
+
       {loading ? (
         <Box display="flex" justifyContent="center" my={8}>
           <CircularProgress />
@@ -306,250 +510,297 @@ const AssignmentsTable = ({ cohortId }) => {
       ) : assignments.length === 0 ? (
         <EmptyState />
       ) : (
-        <TableContainer 
-          component={Paper} 
-          sx={{ 
-            mt: 2, 
-            overflow: 'auto',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            '& .MuiTableRow-root:hover': {
-              backgroundColor: HOVER_COLOR
-            }
-          }}
-        >
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f0f8ff' }}>
-                <TableCell>Assignment ID</TableCell>
-                <TableCell>User</TableCell>
-                <TableCell>Assignment Q</TableCell>
-                <TableCell>Dependencies</TableCell>
-                <TableCell>Max Score</TableCell>
-                <TableCell>Submitted Date</TableCell>
-                <TableCell>Submitted File</TableCell>
-                <TableCell>Score</TableCell>
-                <TableCell>Remarks</TableCell>
-                <TableCell>Correction File</TableCell>
-                <TableCell>Corrected Date</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {assignments.map((assignment) => (
-                <TableRow 
-                  key={assignment.assignmentId}
-                  sx={{
-                    backgroundColor: assignment.correctedDate ? LIGHT_TEAL : 'inherit',
-                    color: assignment.correctedDate ? 'black' : 'inherit',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  <TableCell>
-                    <Chip 
-                      label={assignment.assignmentId} 
-                      size="small" 
-                      sx={{ fontSize: '0.75rem' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title={`User ID: ${assignment.user.userId}`}>
-                      <span>{assignment.user.userName}</span>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell> 
-                    {assignment.subconcept.subconceptLink ? (
-                      <Button
-                        size="small"
-                        variant="text"
-                        endIcon={<LinkIcon fontSize="small" />}
-                        onClick={() => handleOpenContent(
-                          assignment.subconcept.subconceptId,
-                          assignment.subconcept.subconceptDesc,
-                          assignment.subconcept.subconceptLink
-                        )}
-                        sx={{ 
-                          color: LINK_COLOR, 
-                          textDecoration: 'underline',
-                          fontWeight: 500,
-                          textTransform: 'none',
-                          padding: '0px 4px'
-                        }}
-                      >
-                        {assignment.subconcept.subconceptId}
-                      </Button>
-                    ) : (
-                      assignment.subconcept.subconceptId
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {assignment.subconcept.dependencies && assignment.subconcept.dependencies.length > 0 ? (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {assignment.subconcept.dependencies.map((dep, index) => (
-                          <Chip 
-                            key={index}
-                            label={dep.subconceptId}
-                            size="small"
-                            sx={{ 
-                              bgcolor: DEPENDENCY_CHIP_COLOR, 
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 } 
-                            }}
-                            onClick={() => handleOpenContent(
-                              dep.subconceptId,
-                              dep.subconceptDesc,
-                              dep.subconceptLink
-                            )}
-                          />
-                        ))}
-                      </Box>
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">
-                        None
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip 
-                      label={assignment.subconcept.subconceptMaxscore} 
-                      size="small" 
-                      color="primary" 
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
-                  <TableCell>
-                    {assignment.submittedFile && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<CloudUploadIcon />}
-                        href={assignment.submittedFile.downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View
-                      </Button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      size="small"
-                      value={editedAssignments[assignment.assignmentId]?.score || ''}
-                      onChange={(e) => handleScoreChange(assignment.assignmentId, e.target.value)}
-                      inputProps={{
-                        min: 0,
-                        max: assignment.subconcept.subconceptMaxscore,
-                        style: { width: '60px' },
-                      }}
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.2)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'primary.main',
-                          },
-                        },
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      size="small"
-                      multiline
-                      maxRows={3}
-                      value={editedAssignments[assignment.assignmentId]?.remarks || ''}
-                      onChange={(e) => handleRemarksChange(assignment.assignmentId, e.target.value)}
-                      inputProps={{ style: { width: '150px' } }}
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.2)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'primary.main',
-                          },
-                        },
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <label htmlFor={`correction-file-${assignment.assignmentId}`}>
-                        <input
-                          accept="*/*"
-                          id={`correction-file-${assignment.assignmentId}`}
-                          type="file"
-                          style={{ display: 'none' }}
-                          onChange={(e) => handleFileChange(assignment.assignmentId, e.target.files[0])}
-                        />
-                        <Tooltip title="Upload correction file">
-                          <IconButton component="span" color="primary" size="small">
-                            <CloudUploadIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </label>
-                      {editedAssignments[assignment.assignmentId]?.file?.name ? (
-                        <Typography variant="caption" noWrap sx={{ ml: 1, maxWidth: 100 }}>
-                          {editedAssignments[assignment.assignmentId].file.name}
-                        </Typography>
+        <>
+          <TableContainer 
+            component={Paper} 
+            sx={{ 
+              mt: 2, 
+              overflow: 'auto',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              '& .MuiTableRow-root:hover': {
+                backgroundColor: HOVER_COLOR
+              }
+            }}
+          >
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f0f8ff' }}>
+                  {TABLE_HEAD.map((headCell) => (
+                    <TableCell
+                      key={headCell.id}
+                      align={headCell.alignRight ? 'right' : 'left'}
+                      sortDirection={orderBy === headCell.id ? order : false}
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      {headCell.id !== 'actions' && headCell.id !== 'dependencies' && 
+                      headCell.id !== 'submittedFile' && headCell.id !== 'correctionFile' ? (
+                        <Box
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            cursor: 'pointer',
+                            '&:hover': { opacity: 0.8 }
+                          }}
+                          onClick={() => handleRequestSort(headCell.id)}
+                        >
+                          {headCell.label}
+                          {orderBy === headCell.id ? (
+                            <Box component="span" sx={{ ml: 0.5 }}>
+                              {order === 'desc' ? (
+                                <ArrowDownwardIcon fontSize="small" />
+                              ) : (
+                                <ArrowUpwardIcon fontSize="small" />
+                              )}
+                            </Box>
+                          ) : null}
+                        </Box>
                       ) : (
-                        assignment.correctedFile && (
-                          <Button
-                            variant="text"
-                            size="small"
-                            href={assignment.correctedFile.downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{ ml: 1, textTransform: 'none' }}
-                          >
-                            View File
-                          </Button>
-                        )
+                        headCell.label
                       )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {assignment.correctedDate ? (
-                      formatDateTime(assignment.correctedDate)
-                    ) : (
-                      <TextField
-                        type="date"
-                        size="small"
-                        value={editedAssignments[assignment.assignmentId]?.correctedDate || ''}
-                        onChange={(e) => handleCorrectedDateChange(assignment.assignmentId, e.target.value)}
-                        sx={{ width: 130 }}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleSubmitCorrection(assignment.assignmentId)}
-                      disabled={updating || assignment.correctedDate}
-                      sx={{ 
-                        textTransform: 'none',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        '&:hover': {
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
-                        }
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              
+              {isNotFound ? (
+                <NotFoundState />
+              ) : (
+                <TableBody>
+                  {visibleRows.map((assignment) => (
+                    <TableRow 
+                      key={assignment.assignmentId}
+                      sx={{
+                        backgroundColor: assignment.correctedDate ? LIGHT_TEAL : 'inherit',
+                        color: assignment.correctedDate ? 'black' : 'inherit',
+                        transition: 'background-color 0.2s ease'
                       }}
                     >
-                      {updating ? 'Saving...' : assignment.correctedDate ? 'Corrected' : 'Save'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      <TableCell>
+                        <Chip 
+                          label={assignment.assignmentId} 
+                          size="small" 
+                          sx={{ fontSize: '0.75rem' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title={`User ID: ${assignment.user.userId}`}>
+                          <span>{assignment.user.userName}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell> 
+                        {assignment.subconcept.subconceptLink ? (
+                          <Button
+                            size="small"
+                            variant="text"
+                            endIcon={<LinkIcon fontSize="small" />}
+                            onClick={() => handleOpenContent(
+                              assignment.subconcept.subconceptId,
+                              assignment.subconcept.subconceptDesc,
+                              assignment.subconcept.subconceptLink,
+                              assignment.subconcept.subconceptType
+                            )}
+                            sx={{ 
+                              color: LINK_COLOR, 
+                              textDecoration: 'underline',
+                              fontWeight: 500,
+                              textTransform: 'none',
+                              padding: '0px 4px'
+                            }}
+                          >
+                            {assignment.subconcept.subconceptId}
+                          </Button>
+                        ) : (
+                          assignment.subconcept.subconceptId
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {assignment.subconcept.dependencies && assignment.subconcept.dependencies.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {assignment.subconcept.dependencies.map((dep, index) => (
+                              <Chip 
+                                key={index}
+                                label={dep.subconceptId}
+                                size="small"
+                                sx={{ 
+                                  bgcolor: DEPENDENCY_CHIP_COLOR, 
+                                  cursor: 'pointer',
+                                  '&:hover': { opacity: 0.8 } 
+                                }}
+                                onClick={() => handleOpenContent(
+                                  dep.subconceptId,
+                                  dep.subconceptDesc,
+                                  dep.subconceptLink,
+                                  dep.subconceptType
+                                )}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            None
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip 
+                          label={assignment.subconcept.subconceptMaxscore} 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
+                      <TableCell>
+                        {assignment.submittedFile && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<CloudUploadIcon />}
+                            href={assignment.submittedFile.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          size="small"
+                          value={editedAssignments[assignment.assignmentId]?.score || ''}
+                          onChange={(e) => handleScoreChange(assignment.assignmentId, e.target.value)}
+                          inputProps={{
+                            min: 0,
+                            max: assignment.subconcept.subconceptMaxscore,
+                            style: { width: '60px' },
+                          }}
+                          sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor: 'rgba(0, 0, 0, 0.2)',
+                              },
+                              '&:hover fieldset': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          multiline
+                          maxRows={3}
+                          value={editedAssignments[assignment.assignmentId]?.remarks || ''}
+                          onChange={(e) => handleRemarksChange(assignment.assignmentId, e.target.value)}
+                          inputProps={{ style: { width: '150px' } }}
+                          sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor: 'rgba(0, 0, 0, 0.2)',
+                              },
+                              '&:hover fieldset': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center">
+                          <label htmlFor={`correction-file-${assignment.assignmentId}`}>
+                            <input
+                              accept="*/*"
+                              id={`correction-file-${assignment.assignmentId}`}
+                              type="file"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleFileChange(assignment.assignmentId, e.target.files[0])}
+                            />
+                            <Tooltip title="Upload correction file">
+                              <IconButton component="span" color="primary" size="small">
+                                <CloudUploadIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </label>
+                          {editedAssignments[assignment.assignmentId]?.file?.name ? (
+                            <Typography variant="caption" noWrap sx={{ ml: 1, maxWidth: 100 }}>
+                              {editedAssignments[assignment.assignmentId].file.name}
+                            </Typography>
+                          ) : (
+                            assignment.correctedFile && (
+                              <Button
+                                variant="text"
+                                size="small"
+                                href={assignment.correctedFile.downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={{ ml: 1, textTransform: 'none' }}
+                              >
+                                View File
+                              </Button>
+                            )
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        {assignment.correctedDate ? (
+                          formatDateTime(assignment.correctedDate)
+                        ) : (
+                          <TextField
+                            type="date"
+                            size="small"
+                            value={editedAssignments[assignment.assignmentId]?.correctedDate || ''}
+                            onChange={(e) => handleCorrectedDateChange(assignment.assignmentId, e.target.value)}
+                            sx={{ width: 130 }}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleSubmitCorrection(assignment.assignmentId)}
+                          disabled={updating || assignment.correctedDate}
+                          sx={{ 
+                            textTransform: 'none',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                            '&:hover': {
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+                            }
+                          }}
+                        >
+                          {updating ? 'Saving...' : assignment.correctedDate ? 'Corrected' : 'Save'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {emptyRows > 0 && (
+                    <TableRow style={{ height: 53 * emptyRows }}>
+                      <TableCell colSpan={12} />
+                    </TableRow>
+                  )}
+                </TableBody>
+              )}
+            </Table>
+          </TableContainer>
+          
+          {/* Pagination */}
+          <TablePagination
+            rowsPerPageOptions={[20, 50, 100]}
+            component="div"
+            count={filteredAssignments.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </>
       )}
 
       {/* Content Dialog for viewing subconcept content */}
-      <Dialog 
+      <Dialog
         open={contentDialog.open} 
         onClose={handleCloseContent}
         maxWidth="md"
@@ -568,8 +819,8 @@ const AssignmentsTable = ({ cohortId }) => {
           {contentDialog.link && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1" gutterBottom>Content Link:</Typography>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   p: 2, 
                   bgcolor: '#f5f5f5', 
                   borderRadius: 1,
@@ -578,30 +829,30 @@ const AssignmentsTable = ({ cohortId }) => {
                   position: 'relative' // For positioning zoom controls
                 }}
               >
-                 <Box 
-            sx={{ 
-              position: 'absolute', 
-              top: 10, 
-              right: 10, 
-              zIndex: 10,
-              display: 'flex',
-              gap: 1,
-              backgroundColor: 'rgba(255,255,255,0.7)',
-              borderRadius: '4px',
-              padding: '4px'
-            }}
-          >
-            <Button 
-              variant="contained" 
-              size="small" 
-              onClick={() => setZoomLevel(prevZoom => Math.min(prevZoom + 0.25, 2))}
-            >
-              Zoom +
-            </Button>
-            <Button 
-              variant="contained" 
-              size="small" 
-              onClick={() => setZoomLevel(1)} // Reset zoom
+                <Box 
+                  sx={{ 
+                    position: 'absolute', 
+                    top: 10, 
+                    right: 10, 
+                    zIndex: 10,
+                    display: 'flex',
+                    gap: 1,
+                    backgroundColor: 'rgba(255,255,255,0.7)',
+                    borderRadius: '4px',
+                    padding: '4px'
+                  }}
+                >
+                  <Button 
+                    variant="contained" 
+                    size="small" 
+                    onClick={() => setZoomLevel(prevZoom => Math.min(prevZoom + 0.25, 2))}
+                  >
+                    Zoom +
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    size="small" 
+                    onClick={() => setZoomLevel(1)} // Reset zoom
             >
               Reset
             </Button>
@@ -620,13 +871,53 @@ const AssignmentsTable = ({ cohortId }) => {
               transition: 'transform 0.2s ease'
             }}
           >
-                <iframe
-                  src={contentDialog.link}
-                  title="Subconcept Content"
-                  width="100%"
-                  height="400px"  // Increased height
-                  style={{ border: '1px solid #e0e0e0', borderRadius: '4px' }}
-                />
+                {contentDialog.type === "image" ||
+                  contentDialog.type === "assignment_image" ? (
+                    <img
+                      src={contentDialog.link}
+                      alt={contentDialog.title}
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        maxHeight: "400px",
+                        objectFit: "contain",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                      }}
+                    />
+                  ) : contentDialog.type === "video" ||
+                    contentDialog.type === "assignment_video" ? (
+                      <video
+                      controls
+                      style={{
+                        width: "100%",
+                        maxHeight: "400px",
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <source src={contentDialog.link} type="video/mp4" />
+                      <track 
+                        kind="captions" 
+                        src="" 
+                        label="English" 
+                        srcLang="en" 
+                        default 
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <iframe
+                      src={contentDialog.link}
+                      title="Subconcept Content"
+                      width="100%"
+                      height="400px"
+                      style={{
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                      }}
+                    />
+                  )}
               </Box>
             </Box>
             </Box>
