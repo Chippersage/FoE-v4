@@ -193,7 +193,14 @@ export default function Dashboard() {
   return (
     <>
       {/* Render tour only if the user hasn't seen it before */}
-      {!hasSeenProductTour && <CohortTour onResumeClick={handleResume} />}
+      {!hasSeenProductTour && (
+        <CohortTour
+          onResumeClick={handleResume}
+          firstCohortProgress={
+            progressData[user?.cohorts?.[0]?.program?.programId]
+          }
+        />
+      )}
 
       <div className="min-h-screen bg-slate-100 font-sans">
         {/* Header */}
@@ -287,12 +294,12 @@ export default function Dashboard() {
                     <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
                       <Button
                         size="sm"
-                        className={`bg-gradient-to-r from-emerald-500 to-green-500 hover:bg-emerald-600 rounded-[5px] ${
+                        className={`w-[80px] bg-gradient-to-r from-emerald-500 to-green-500 hover:bg-emerald-600 rounded-[5px] ${
                           index === 0 ? "resume-button" : ""
                         }`}
                         onClick={() => handleResume(cohortWithProgram)}
                       >
-                        Resume
+                        {progress === 0 ? "Start" : "Resume"}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -346,7 +353,7 @@ export default function Dashboard() {
                           />
 
                           {/* Show badge only if pendingCount > 0 */}
-                          {pendingCount > 0 && (
+                          {/* {pendingCount > 0 && (
                             <div className="absolute top-3 right-3 z-10">
                               <div className="relative">
                                 <span
@@ -359,16 +366,35 @@ export default function Dashboard() {
                                 ></span>
                               </div>
                             </div>
-                          )}
+                          )} */}
 
                           <CardContent className="p-6">
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
-                              <BookOpen className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                            <div className="mb-4 flex items-center gap-2">
+                              {/* BookOpen Icon */}
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+                                <BookOpen className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                              </div>
+
+                              {/* Pending Count beside icon */}
+                              {pendingCount > 0 && (
+                                <div className="relative ml-2">
+                                  <span
+                                    className={`flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-r ${themeColor} text-xs font-bold text-white px-2 animate-bounce-subtle`}
+                                  >
+                                    {pendingCount}
+                                  </span>
+                                  <span
+                                    className={`absolute -inset-1 rounded-full bg-gradient-to-r ${themeColor} opacity-30`}
+                                  ></span>
+                                </div>
+                              )}
                             </div>
+
                             <h3 className="text-xl font-semibold tracking-tight">
                               {course.cohortName}
                             </h3>
                           </CardContent>
+
                           <CardFooter className="p-6 pt-0">
                             <Button
                               asChild

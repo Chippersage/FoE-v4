@@ -6,10 +6,12 @@ import CohortCustomTooltip from "./CohortCustomTooltip";
 
 interface CohortTourProps {
   onResumeClick: () => void;
+  firstCohortProgress?: number;
 }
 
 const CohortTour: React.FC<CohortTourProps> = ({
   onResumeClick,
+  firstCohortProgress,
 }: CohortTourProps) => {
   const [runTour, setRunTour] = useState(false);
 
@@ -26,66 +28,40 @@ const CohortTour: React.FC<CohortTourProps> = ({
 
   const steps: Step[] = [
     {
-      target: "body",
-      content:
-        localStorage.getItem("userType")?.toLowerCase() === "mentor"
-          ? "Welcome to the mentor dashboard!"
-          : "Welcome! This is your cohort selection page.",
-      disableBeacon: true,
-      placement: "center",
-      styles: {
-        options: {
-          zIndex: 10000000,
-          overlayColor: "rgba(0, 0, 0, 0.7)",
-        },
-      },
-    },
-    {
       target: ".continue-learning-section",
       content: (
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">Continue Learning</h3>
-          <p>
-            This is your dashboard where you can access all your learning
-            resources.
-          </p>
+          <p>View all assigned program(s)</p>
         </div>
       ),
       disableBeacon: true,
     },
+    {
+      target: ".resume-button",
+      content:
+        firstCohortProgress === 0
+          ? "Click here to start the program"
+          : "Click here to resume the program",
+      spotlightClicks: true,
+      disableBeacon: true,
+    },
+
     ...(localStorage.getItem("userType")?.toLowerCase() === "mentor"
       ? [
           {
             target: ".manage-cohort-assignments-section",
-            content:
-              "Here you can see all the cohorts assigned to you and manage their assignments.",
+            content: "Access assignments from your cohort",
             disableBeacon: true,
           },
           {
             target: ".view-assignments-button",
-            content:
-              "Click 'View Assignments' to review and manage assignments for a specific cohort.",
+            content: "Click 'View Assignments' to review and provide feedback",
             spotlightClicks: true,
             disableBeacon: true,
           },
         ]
-      : localStorage.getItem("userType")?.toLowerCase() === "learner"
-      ? [
-          {
-            target: ".daily-challenge-section",
-            content:
-              "Below are your Daily Challenges: Word of the Day and Daily Riddle.",
-            disableBeacon: true,
-          },
-        ]
       : []),
-    {
-      target: ".resume-button",
-      content:
-        "Click the Resume button of the program you want to proceed with. (You must click here to continue.)",
-      spotlightClicks: true,
-      disableBeacon: true,
-    },
   ] as Step[];
 
   const handleJoyrideCallback = (data: CallBackProps) => {
@@ -107,7 +83,6 @@ const CohortTour: React.FC<CohortTourProps> = ({
       localStorage.setItem("cohortTourSkipped", "true"); // ✅ only if skipped
     }
   };
-
 
   return (
     <Joyride
