@@ -840,7 +840,7 @@ sx={{
   px: 1, // Padding X
   borderRadius: '4px', // Border radius
   }}
-            >Cancel</Button>
+  >Cancel</Button>
 <Button onClick={handleCreateUser} color="primary" disabled={!isFormValid}
 sx={{
   bgcolor: '#5bc3cd', // Default background color
