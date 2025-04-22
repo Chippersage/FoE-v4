@@ -27,29 +27,29 @@ const DashboardTour: React.FC<DashboardTourProps> = ({
   const steps: Step[] = [
     {
       target: ".learning-path-section",
-      content: "These are your modules. Click on a module to see its details.",
+      content: "View the learning modules",
       disableBeacon: true,
     },
-    {
-      target: ".progress-section",
-      content: "This section shows your progress so far.",
-      disableBeacon: true,
-    },
-    {
-      target: ".leaderboard-section",
-      content: "Here is the leaderboard to see how you rank against others.",
-      disableBeacon: true,
-    },
+    // {
+    //   target: ".progress-section",
+    //   content: "This section shows your progress so far.",
+    //   disableBeacon: true,
+    // },
+    // {
+    //   target: ".leaderboard-section",
+    //   content: "Here is the leaderboard to see how you rank against others.",
+    //   disableBeacon: true,
+    // },
     {
       target: ".lets-go-button",
-      content: 'Click the "Let\'s Go" button to expand this module.',
+      content: 'Click lets go to access the lessons.',
       disableBeacon: true,
       spotlightClicks: true,
     },
     {
       target: ".active-unit",
       content:
-        "This is your current active unit. Click here to begin your activity.",
+        "This is your current active lesson. Click here to begin.",
       disableBeacon: true,
       spotlightClicks: true,
     },
