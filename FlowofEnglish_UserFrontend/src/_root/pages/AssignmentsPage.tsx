@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Joyride, { STATUS, Step } from "react-joyride";
 import AssignmentsTable from "@/components/AssignmentsTable";
 import CohortCustomTooltip from "@/components/tours/CohortCustomTooltip";
+import BackButton from "@/components/BackButton";
 
 interface AssignmentsPageProps {}
 
@@ -11,15 +12,28 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   const [runTour, setRunTour] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
   const [firstRun, setFirstRun] = useState(true);
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
 
   // Check if this is user's first visit to show tour automatically
   useEffect(() => {
     const hasSeenTour = localStorage.getItem("assignmentsTourCompleted");
-    if (!hasSeenTour && firstRun) {
-      setRunTour(true);
-      setFirstRun(false);
+    if (!hasSeenTour && firstRun && assignmentsLoaded) {
+      // Add a small delay to ensure DOM elements are rendered
+      const tourTimer = setTimeout(() => {
+        // Check if at least one of the tour targets exists
+        const firstTarget = document.querySelector('[data-tour-id="topic"]');
+        if (firstTarget) {
+          setRunTour(true);
+          setFirstRun(false);
+        } else {
+          console.warn("Tour targets not found in DOM, delaying tour start");
+          // Could implement a retry mechanism here if needed
+        }
+      }, 500); // 500ms delay
+
+      return () => clearTimeout(tourTimer);
     }
-  }, [firstRun]);
+  }, [firstRun, assignmentsLoaded]);
 
   // Define tour steps
   useEffect(() => {
@@ -90,6 +104,10 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
     }
   };
 
+  const handleAssignmentsLoaded = () => {
+    setAssignmentsLoaded(true);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 font-sans p-4">
       <Joyride
@@ -120,13 +138,20 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
 
       <main className="container mx-auto max-w-[100rem] py-10">
         <header className="mb-6">
+          {/* Add the BackButton component here */}
+          <div className="flex items-center mb-4">
+            <BackButton />
+          </div>
           <h1 className="text-3xl font-bold text-emerald-700">
             Review Assignments
           </h1>
         </header>
 
         {/* Render the AssignmentsTable component */}
-        <AssignmentsTable cohortId={cohortId || ""} />
+        <AssignmentsTable
+          cohortId={cohortId || ""}
+          onAssignmentsLoaded={handleAssignmentsLoaded}
+        />
       </main>
       {/* Fixed Take Tour Button */}
       {/* Fixed Take Tour Button with Enhanced Shadow Effect */}

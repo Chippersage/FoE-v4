@@ -131,7 +131,7 @@ const AssignmentRow = React.memo(({
             }}
             data-tour-id="topic"
           >
-            {assignment.subconcept.subconceptDesc}
+            {assignment.subconcept.subconceptDesc}  
           </Typography>
         </Tooltip>
       </TableCell>
@@ -326,7 +326,7 @@ const AssignmentRow = React.memo(({
   );
 });
 
-const AssignmentsTable = ({ cohortId }) => {
+const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -412,6 +412,10 @@ const AssignmentsTable = ({ cohortId }) => {
         };
       });
       setEditedAssignments(initialEdits);
+      // Notify parent that assignments are loaded
+      if (onAssignmentsLoaded && fetchedAssignments.length > 0) {
+        onAssignmentsLoaded();
+      }
     } catch (error) {
       console.error("Error fetching assignments:", error);
       setAlert({

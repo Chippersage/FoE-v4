@@ -124,6 +124,23 @@ export default function Dashboard() {
   //   });
   // }, [user?.cohorts, API_BASE_URL]);
 
+  const sortedCohorts = [...(user?.cohorts || [])].sort((a, b) => {
+    // Get pending assignment counts
+    const pendingCountA =
+      user?.assignmentStatistics?.cohortDetails?.[a.cohortId]
+        ?.pendingAssignments || 0;
+    const pendingCountB =
+      user?.assignmentStatistics?.cohortDetails?.[b.cohortId]
+        ?.pendingAssignments || 0;
+
+    // First sort by pending assignments (descending)
+    if (pendingCountA > 0 && pendingCountB === 0) return -1;
+    if (pendingCountA === 0 && pendingCountB > 0) return 1;
+
+    // Then sort alphabetically by cohort name
+    return a.cohortName.localeCompare(b.cohortName);
+  });
+
   const handleResume = async (cohortWithProgram: string) => {
     console.log("resume clicked");
     setSelectedCohortWithProgram(cohortWithProgram);
@@ -333,7 +350,7 @@ export default function Dashboard() {
                     transition={{ duration: 0.3 }}
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-gradient-to-b from-[#CAF2BC] to-white p-4 rounded-xl"
                   >
-                    {user?.cohorts?.map((course, index) => {
+                    {sortedCohorts.map((course, index) => {
                       const themeColor =
                         courseColors[index % courseColors.length];
                       const color = "from-emerald-500 to-green-500";
