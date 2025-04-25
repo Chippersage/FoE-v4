@@ -42,14 +42,14 @@ const DashboardTour: React.FC<DashboardTourProps> = ({
     // },
     {
       target: ".lets-go-button",
-      content: 'Click lets go to access the lessons.',
+      content: "Click lets go to access the lessons.",
       disableBeacon: true,
       spotlightClicks: true,
+      disableScrolling: true,
     },
     {
       target: ".active-unit",
-      content:
-        "This is your current active lesson. Click here to begin.",
+      content: "This is your current active lesson. Click here to begin.",
       disableBeacon: true,
       spotlightClicks: true,
     },
