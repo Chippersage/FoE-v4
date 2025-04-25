@@ -17,6 +17,15 @@ const Header2 = () => {
 
   const { resetSession } = useSession();
 
+    const handleNavigation = () => {
+      if (selectedCohortWithProgram && selectedCohortWithProgram !== "null") {
+        navigate("/home");
+      } else {
+        console.log("Cohort not selected or is null.");
+        // or show a message / toast if you want
+      }
+    };
+
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -60,7 +69,7 @@ const Header2 = () => {
         <img
           src={"/icons/User-icons/home-icon.png"}
           alt="Home"
-          onClick={() => navigate("/home")}
+          onClick={handleNavigation}
           style={{
             width: "25px",
             height: "25px",

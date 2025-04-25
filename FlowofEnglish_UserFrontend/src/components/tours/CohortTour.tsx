@@ -37,15 +37,15 @@ const CohortTour: React.FC<CohortTourProps> = ({
       ),
       disableBeacon: true,
     },
-    {
-      target: ".resume-button",
-      content:
-        firstCohortProgress === 0
-          ? "Click here to start the program"
-          : "Click here to resume the program",
-      spotlightClicks: true,
-      disableBeacon: true,
-    },
+    // {
+    //   target: ".resume-button",
+    //   content:
+    //     firstCohortProgress === 0
+    //       ? "Click here to start the program"
+    //       : "Click here to resume the program",
+    //   spotlightClicks: true,
+    //   disableBeacon: true,
+    // },
 
     ...(localStorage.getItem("userType")?.toLowerCase() === "mentor"
       ? [

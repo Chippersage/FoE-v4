@@ -57,6 +57,7 @@ import TextFromText from "@/components/activityIcons/TextFromText";
 import { useSession } from "@/context/TimerContext";
 import Default from "@/components/activityIcons/Default";
 import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSentences";
+import BackButton from "@/components/BackButton";
 
 interface Subconcept {
   subconceptId: string;
@@ -446,13 +447,13 @@ export default function SubConceptsPage() {
   return (
     <>
       <Header2 />
+      <BackButton className="fixed top-28 left-4 z-20" /> {/* Add this line */}
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
         stageName={celebratedStageName}
         congratsType="stageCompletion"
       />
-
       {/* Audio Element */}
       {isModalOpen && (
         <audio
