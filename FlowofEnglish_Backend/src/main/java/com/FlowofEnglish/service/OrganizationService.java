@@ -460,7 +460,7 @@ public class OrganizationService {
                              "This is a reminder that the cohort \"" + cohort.getCohortName() + 
                              "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
                              "Please ensure all related tasks are completed before this date.\n\n" +
-                             "Best regards,\nFlow of English Team";
+                             "Best regards,\nTeam Chippersage";
 
             sendEmail(adminEmail, subject, message);
         }
@@ -481,7 +481,7 @@ public class OrganizationService {
                                  "This is a reminder that your cohort \"" + cohort.getCohortName() + 
                                  "\" will end in " + daysToEnd + " days on " + cohort.getCohortEndDate() + ".\n\n" +
                                  "Please ensure you complete all tasks before this date.\n\n" +
-                                 "Best regards,\nFlow of English Team";
+                                 "Best regards,\nTeam Chippersage";
 
                 sendEmail(userEmail, subject, message);
             }

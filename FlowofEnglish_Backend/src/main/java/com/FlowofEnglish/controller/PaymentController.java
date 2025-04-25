@@ -30,18 +30,18 @@ public class PaymentController {
     }
     
     @PostMapping("/createSubscriptionOrder")
-    public ResponseEntity<?> createSubscriptionOrder(
-        @RequestParam(required = true) double amount,
-        @RequestParam(required = true) String currency,
-        @RequestParam(required = true) String programId,
-        @RequestParam(required = true) String organizationId,
-        @RequestParam(required = false, defaultValue = "1") Integer maxCohorts,
-        @RequestParam(required = false) String userName,
-        @RequestParam(required = false) String userEmail,
-        @RequestParam(required = false) String userPhone,
-        @RequestParam(required = false) String userAddress) {
-        
+    public ResponseEntity<?> createSubscriptionOrder(@RequestBody Map<String, Object> request) {
         try {
+            double amount = Double.parseDouble(request.get("amount").toString());
+            String currency = request.get("currency").toString();
+            String programId = request.get("programId").toString();
+            String organizationId = request.get("organizationId").toString();
+            Integer maxCohorts = request.containsKey("maxCohorts") ? Integer.parseInt(request.get("maxCohorts").toString()) : 1;
+            String userName = (String) request.get("userName");
+            String userEmail = (String) request.get("userEmail");
+            String userPhone = (String) request.get("userPhone");
+            String userAddress = (String) request.get("userAddress");
+
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("program_id", programId);
             metadata.put("organization_id", organizationId);
@@ -59,6 +59,7 @@ public class PaymentController {
                 .body("Error creating subscription order: " + e.getMessage());
         }
     }
+
 
     @PostMapping("/verify")
     public ResponseEntity<String> verifyPayment(
