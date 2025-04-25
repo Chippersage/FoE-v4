@@ -69,7 +69,9 @@ public class ProgramSubscription {
     
     @Column(name = "user_created")
     private boolean userCreated = false; // default to false
-
+    
+    @Column(name = "user_id", length = 255, nullable = true)
+    private String userId;
 // Default constructor
 	public ProgramSubscription() {
 	}
@@ -79,7 +81,8 @@ public class ProgramSubscription {
 	public ProgramSubscription(Long subscriptionId, Program program, Organization organization,
 			OffsetDateTime startDate, OffsetDateTime endDate, String transactionId, String transactionType,
 			OffsetDateTime transactionDate, double amountPaid, Integer maxCohorts, String uuid, String status,
-			String userEmail, String userAddress, String userName, String userPhoneNumber, boolean userCreated) {
+			String userEmail, String userAddress, String userName, String userPhoneNumber, boolean userCreated,
+			String userId) {
 		super();
 		this.subscriptionId = subscriptionId;
 		this.program = program;
@@ -98,7 +101,10 @@ public class ProgramSubscription {
 		this.userName = userName;
 		this.userPhoneNumber = userPhoneNumber;
 		this.userCreated = userCreated;
+		this.userId = userId;
 	}
+
+
 
 	// Getters and Setters
 	public Long getSubscriptionId() {
@@ -265,7 +271,13 @@ public class ProgramSubscription {
 	public void setUserCreated(boolean userCreated) {
 		this.userCreated = userCreated;
 	}
+	public String getUserId() {
+	    return userId;
+	}
 
+	public void setUserId(String userId) {
+	    this.userId = userId;
+	}
 
 	@Override
 	public String toString() {
@@ -274,7 +286,7 @@ public class ProgramSubscription {
 				+ transactionId + ", transactionType=" + transactionType + ", transactionDate=" + transactionDate
 				+ ", amountPaid=" + amountPaid + ", maxCohorts=" + maxCohorts + ", uuid=" + uuid + ", status=" + status
 				+ ", userEmail=" + userEmail + ", userAddress=" + userAddress + ", userName=" + userName
-				+ ", userPhoneNumber=" + userPhoneNumber + ", userCreated=" + userCreated + "]";
+				+ ", userPhoneNumber=" + userPhoneNumber + ", userCreated=" + userCreated + ", userId=" + userId + "]";
 	}
 
 	// Method to ensure UUID and generate userId before persisting
