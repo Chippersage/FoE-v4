@@ -802,115 +802,122 @@ public class WebhookService {
     // create the User after payment success
     @Transactional
     private void createUserFromPaidSubscription(JSONObject paymentEntity) {
-        String paymentId = paymentEntity.getString("id");
-        
-        // Find the subscription by transaction ID
-        Optional<ProgramSubscription> subscriptionOpt = subscriptionRepository.findByTransactionId(paymentId);
-        
-        if (!subscriptionOpt.isPresent()) {
-            logger.error("No subscription found for payment ID: {}", paymentId);
-            return;
-        }
-        
-        ProgramSubscription subscription = subscriptionOpt.get();
-        
-        // Only create user if subscription status is PAID
-        if (!STATUS_PAID.equals(subscription.getStatus())) {
-            logger.info("Skipping user creation for subscription with status: {}", subscription.getStatus());
-            return;
-        }
-        if (subscription.isUserCreated()) {
-            logger.info("User already created for subscription: {}", subscription.getSubscriptionId());
-            return;
-        }
-        
-        try {
-            // Create new user
-            User user = new User();
-            
-            // Generate userId from userName (remove spaces)
-            String userId = generateUserIdFromName(subscription.getUserName());
-            
-            // Set user details from subscription
-            user.setUserId(userId);
-            user.setUserName(subscription.getUserName());
-            user.setUserEmail(subscription.getUserEmail());
-            user.setUserPhoneNumber(subscription.getUserPhoneNumber());
-            user.setUserAddress(subscription.getUserAddress());
-            user.setUserType("learner"); // Default user type
-            user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-            Organization organization = subscription.getOrganization();
-            user.setOrganization(organization);
-            user.setUuid(UUID.randomUUID().toString()); // Set UUID for the user
-            // Save the user
-            User savedUser = userRepository.save(user);
-            logger.info("Created new user: {}", savedUser.getUserId());
-            
-         // Find default cohort for the program ensuring org match
-            Program program = subscription.getProgram();
-            Optional<CohortProgram> defaultCohortProgram = findDefaultCohortForProgram(program.getProgramId(), organization.getOrganizationId());
-            
-            if (!defaultCohortProgram.isPresent()) {
-                logger.error("No default cohort found for program: {} and organization: {}", 
-                        program.getProgramId(), organization.getOrganizationId());
-                return;
-            }
-            
-            Cohort cohort = defaultCohortProgram.get().getCohort();
-            
-            // Verify that cohort organization matches user organization
-            if (!cohort.getOrganization().getOrganizationId().equals(organization.getOrganizationId())) {
-                logger.error("Organization mismatch! User org: {}, Cohort org: {}", 
-                        organization.getOrganizationId(), cohort.getOrganization().getOrganizationId());
-                return;
-            }
-            
-            // Check if this userId already exists in this specific cohort
-            boolean userExistsInCohort = checkUserExistsInCohort(userId, cohort.getCohortId());
-            
-            if (userExistsInCohort) {
-                logger.warn("User with ID {} already exists in cohort {}. Generating new userId.", 
-                        userId, cohort.getCohortId());
-                
-                // Generate a new unique userId with a suffix
-                String newUserId = userId + "_" + System.currentTimeMillis();
-                user.setUserId(newUserId);
-                
-                // Update the saved user with new ID
-                savedUser = userRepository.save(user);
-                logger.info("Created user with new ID: {}", savedUser.getUserId());
-            }
-            
-            // Create user-cohort mapping
-            UserCohortMapping userCohortMapping = new UserCohortMapping();
-            userCohortMapping.setUser(savedUser);
-            userCohortMapping.setCohort(cohort);
-            userCohortMapping.setLeaderboardScore(0);
-            userCohortMapping.setUuid(UUID.randomUUID().toString());
-            // Save the mapping
-            userCohortMappingRepository.save(userCohortMapping);
-            
-         // ✅ Mark user as created
-            subscription.setUserCreated(true);
-            subscriptionRepository.save(subscription);
-            
-            logger.info("User added to cohort: {}", cohort.getCohortName());
-            
-            // Prepare data for welcome email
-            List<String> programNames = new ArrayList<>();
-            programNames.add(program.getProgramName());
-            
-            List<String> cohortNames = new ArrayList<>();
-            cohortNames.add(cohort.getCohortName());
-            
-            // Send welcome email
-            sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
-            
-        } catch (Exception e) {
-            logger.error("Error creating user from subscription: {}", e.getMessage(), e);
-        }
+    String paymentId = paymentEntity.getString("id");
+    
+    // Find the subscription by transaction ID
+    Optional<ProgramSubscription> subscriptionOpt = subscriptionRepository.findByTransactionId(paymentId);
+    
+    if (!subscriptionOpt.isPresent()) {
+        logger.error("No subscription found for payment ID: {}", paymentId);
+        return;
     }
-
+    
+    ProgramSubscription subscription = subscriptionOpt.get();
+    
+    // Only create user if subscription status is PAID
+    if (!STATUS_PAID.equals(subscription.getStatus())) {
+        logger.info("Skipping user creation for subscription with status: {}", subscription.getStatus());
+        return;
+    }
+    if (subscription.isUserCreated()) {
+        logger.info("User already created for subscription: {}", subscription.getSubscriptionId());
+        return;
+    }
+    
+    try {
+        // Create new user
+        User user = new User();
+        
+        // Generate userId from userName (remove spaces)
+        String userId = generateUserIdFromName(subscription.getUserName());
+        
+        // Set user details from subscription
+        user.setUserId(userId);
+        user.setUserName(subscription.getUserName());
+        user.setUserEmail(subscription.getUserEmail());
+        user.setUserPhoneNumber(subscription.getUserPhoneNumber());
+        user.setUserAddress(subscription.getUserAddress());
+        user.setUserType("learner"); // Default user type
+        user.setUserPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+        Organization organization = subscription.getOrganization();
+        user.setOrganization(organization);
+        user.setUuid(UUID.randomUUID().toString()); // Set UUID for the user
+        
+        // Save the user
+        User savedUser = userRepository.save(user);
+        logger.info("Created new user: {}", savedUser.getUserId());
+        
+        // Update the subscription with the userId
+        subscription.setUserId(savedUser.getUserId());
+        
+        // Find default cohort for the program ensuring org match
+        Program program = subscription.getProgram();
+        Optional<CohortProgram> defaultCohortProgram = findDefaultCohortForProgram(program.getProgramId(), organization.getOrganizationId());
+        
+        if (!defaultCohortProgram.isPresent()) {
+            logger.error("No default cohort found for program: {} and organization: {}", 
+                    program.getProgramId(), organization.getOrganizationId());
+            return;
+        }
+        
+        Cohort cohort = defaultCohortProgram.get().getCohort();
+        
+        // Verify that cohort organization matches user organization
+        if (!cohort.getOrganization().getOrganizationId().equals(organization.getOrganizationId())) {
+            logger.error("Organization mismatch! User org: {}, Cohort org: {}", 
+                    organization.getOrganizationId(), cohort.getOrganization().getOrganizationId());
+            return;
+        }
+        
+        // Check if this userId already exists in this specific cohort
+        boolean userExistsInCohort = checkUserExistsInCohort(userId, cohort.getCohortId());
+        
+        if (userExistsInCohort) {
+            logger.warn("User with ID {} already exists in cohort {}. Generating new userId.", 
+                    userId, cohort.getCohortId());
+            
+            // Generate a new unique userId with a suffix
+            String newUserId = userId + "_" + System.currentTimeMillis();
+            user.setUserId(newUserId);
+            
+            // Update the saved user with new ID
+            savedUser = userRepository.save(user);
+            
+            // Make sure to update the subscription with the new user ID
+            subscription.setUserId(savedUser.getUserId());
+            logger.info("Created user with new ID: {}", savedUser.getUserId());
+        }
+        
+        // Create user-cohort mapping
+        UserCohortMapping userCohortMapping = new UserCohortMapping();
+        userCohortMapping.setUser(savedUser);
+        userCohortMapping.setCohort(cohort);
+        userCohortMapping.setLeaderboardScore(0);
+        userCohortMapping.setUuid(UUID.randomUUID().toString());
+        // Save the mapping
+        userCohortMappingRepository.save(userCohortMapping);
+        
+        // ✅ Mark user as created and save the subscription with userId
+        subscription.setUserCreated(true);
+        subscriptionRepository.save(subscription);
+        
+        logger.info("User added to cohort: {}", cohort.getCohortName());
+        logger.info("Subscription updated with userId: {}", subscription.getUserId());
+        
+        // Prepare data for welcome email
+        List<String> programNames = new ArrayList<>();
+        programNames.add(program.getProgramName());
+        
+        List<String> cohortNames = new ArrayList<>();
+        cohortNames.add(cohort.getCohortName());
+        
+        // Send welcome email
+        sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
+        
+    } catch (Exception e) {
+        logger.error("Error creating user from subscription: {}", e.getMessage(), e);
+    }
+}
     
     /**
      * Find default cohort for a program with organization validation
