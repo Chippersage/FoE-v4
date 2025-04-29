@@ -87,13 +87,18 @@ public class PaymentService {
             // Get user details
             String userEmail = metadata.containsKey("email") ? 
                     metadata.get("email").toString() : null;
-            String userName = metadata.containsKey("user_name") ? 
-                    metadata.get("user_name").toString() : null;
-            String userPhone = metadata.containsKey("user_phone") ? 
-                    metadata.get("user_phone").toString() : null;
-            String userAddress = metadata.containsKey("user_address") ? 
-                    metadata.get("user_address").toString() : null;
+            String userName = metadata.containsKey("name") ? 
+                    metadata.get("name").toString() : null;
+            String userPhone = metadata.containsKey("contact") ? 
+                    metadata.get("contact").toString() : null;
+            String userAddress = metadata.containsKey("address") ? 
+                    metadata.get("address").toString() : null;
             
+            // Check for required fields
+            if (userName == null || userEmail == null) {
+                logger.error("Required user details missing. Name: {}, Email: {}", userName, userEmail);
+                throw new RuntimeException("Required user details missing");
+            }
             // Fetch program and organization
             Optional<Program> programOpt = programRepository.findByProgramId(programId);
             Optional<Organization> orgOpt = organizationRepository.findById(organizationId);
@@ -136,10 +141,14 @@ public class PaymentService {
             PaymentEvent event = new PaymentEvent();
             event.setEventType("order.created");
             event.setOrderId(orderId);
+         // Set a placeholder value for payment_id since it cannot be null
+            event.setPaymentId("pending_" + orderId);
             event.setAmount(amount);
             event.setStatus(STATUS_PENDING);
             event.setSubscriptionId(savedSubscription.getSubscriptionId());
             event.setRawPayload(orderData.toString());
+            event.setUuid(UUID.randomUUID().toString());
+            event.setCreatedAt(OffsetDateTime.now());
             
             paymentEventRepository.save(event);
             
