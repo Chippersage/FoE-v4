@@ -93,6 +93,7 @@ const iconMap = {
   riddles: Riddle,
   dictation: Dictation,
   vocab: Spelling,
+  mtf: Spelling,
   realworld: RealWorld,
   literature: Literature,
   dialogue_writing: DialogueWriting,

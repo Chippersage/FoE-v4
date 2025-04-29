@@ -117,11 +117,12 @@ const SingleSubconcept = () => {
       "assignment_image",
       "assessment",
       "youtube",
-      // "vocab", // To uncomment for new vocab activity component
+      "mtf", // To uncomment for new mtf activity component
     ].includes(subconcept?.subconceptType)
   );
   const [showSubmit, setShowSubmit] = useState(
-    subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
+    subconcept?.subconceptType?.toLowerCase().startsWith("assignment") ||
+      subconcept?.subconceptType?.toLowerCase().startsWith("mtf")
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -251,19 +252,19 @@ const SingleSubconcept = () => {
 
   const handleSubmit = () => {
 
-    // To uncomment for new vocab activity component
+    // To uncomment for new mtf activity component
 
-    // if (subconcept?.subconceptType?.toLowerCase() === "vocab") {
-    //   // Only proceed if we have a valid submission payload
-    //   if (!submissionPayload) {
-    //     console.error("No submission payload available");
-    //     return;
-    //   }
-    //   console.log("submissionPayload in final call", submissionPayload);
-    //   handlePostScore(submissionPayload);
-    // }
-    // // Send a message to the iframe when Submit is clicked
-    // else {
+    if (subconcept?.subconceptType?.toLowerCase() === "mtf") {
+      // Only proceed if we have a valid submission payload
+      if (!submissionPayload) {
+        console.error("No submission payload available");
+        return;
+      }
+      console.log("submissionPayload in final call", submissionPayload);
+      handlePostScore(submissionPayload);
+    }
+    // Send a message to the iframe when Submit is clicked
+    else {
       const iframe = document.getElementById("embeddedContent");
       if (iframe && iframe.tagName === "IFRAME") {
         (iframe as HTMLIFrameElement).contentWindow?.postMessage(
@@ -271,7 +272,7 @@ const SingleSubconcept = () => {
           "*"
         );
       }
-    // }
+    }
   };
 
   const handlePostScore = (payload: any) => {
@@ -315,7 +316,7 @@ const SingleSubconcept = () => {
           ) as HTMLIFrameElement;
           if (iframe && iframe.tagName === "IFRAME") {
             iframe.contentWindow?.postMessage("postSuccess", "*");
-          } else if (subconcept?.subconceptType === "vocab") {
+          } else if (subconcept?.subconceptType === "mtf") {
             setSuccessOverlay(true);
           }
         } else {
@@ -374,10 +375,9 @@ const SingleSubconcept = () => {
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
         <div className="flex-1 m-[2px]">
+          {/* To uncomment for new mtf activity component */}
 
-          {/* To uncomment for new vocab activity component */}
-
-          {/* {subconcept?.subconceptType === "vocab" ? (
+          {subconcept?.subconceptType === "mtf" ? (
             <VocabularyActivity
               triggerSubmit={() => {
                 // console.log("triggerSubmit parent");
@@ -390,8 +390,7 @@ const SingleSubconcept = () => {
               setScorePercentage={setScorePercentage}
               subconceptMaxscore={subconcept?.subconceptMaxscore}
             />
-          ) : */}
-           {showIframe ? (
+          ) : showIframe ? (
             <iframe
               id="embeddedContent"
               src={subconcept?.subconceptLink}
@@ -449,6 +448,17 @@ const SingleSubconcept = () => {
               </button>
             )}
           </div>
+        )}
+
+        {/* Hidden external Submit Button for MTF type only */}
+        {subconcept?.subconceptType === "mtf" && (
+          <button
+            ref={submitBtnRef}
+            onClick={handleSubmit}
+            style={{ display: "none" }}
+          >
+            Hidden MTF Submit
+          </button>
         )}
       </div>
     </>

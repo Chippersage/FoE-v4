@@ -823,32 +823,32 @@ export default function VocabularyActivity({
     }
 
     // Reveal results one by one with animation
-    const definitionIds = questions[currentQuestionIndex].definitions.map(
-      (def) => def.id
-    );
+    // const definitionIds = questions[currentQuestionIndex].definitions.map(
+    //   (def) => def.id
+    // );
 
-    definitionIds.forEach((defId, index) => {
-      setTimeout(() => {
-        setShowResults((prev) => ({
-          ...prev,
-          [defId]: true,
-        }));
+    // definitionIds.forEach((defId, index) => {
+    //   setTimeout(() => {
+    //     setShowResults((prev) => ({
+    //       ...prev,
+    //       [defId]: true,
+    //     }));
 
-        // Play sound based on correctness
-        if (newResults[defId]) {
-          playSound("correct");
-        } else {
-          playSound("wrong");
-        }
+    //     // Play sound based on correctness
+    //     if (newResults[defId]) {
+    //       playSound("correct");
+    //     } else {
+    //       playSound("wrong");
+    //     }
 
-        // If this is the last result, play the all correct sound if applicable
-        if (index === definitionIds.length - 1 && allCorrect) {
-          setTimeout(() => {
-            playSound("allCorrect");
-          }, 500);
-        }
-      }, index * 800);
-    });
+    //     // If this is the last result, play the all correct sound if applicable
+    //     if (index === definitionIds.length - 1 && allCorrect) {
+    //       setTimeout(() => {
+    //         playSound("allCorrect");
+    //       }, 500);
+    //     }
+    //   }, index * 800);
+    // });
   };
 
   const handleNextQuestion = () => {
@@ -1000,20 +1000,22 @@ export default function VocabularyActivity({
 
             {/* Compact pagination */}
             <div className="flex items-center gap-1">
-              {/* First two pages */}
-              {[0, 1].map((index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentQuestionIndex(index)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                    currentQuestionIndex === index
-                      ? "bg-[#64CE80] text-white"
-                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              {/* Dynamically render first few pages based on questions length */}
+              {questions
+                .slice(0, Math.min(2, questions.length))
+                .map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentQuestionIndex(index)}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                      currentQuestionIndex === index
+                        ? "bg-[#64CE80] text-white"
+                        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
 
               {/* Middle ellipsis */}
               {questions.length > 3 && (
