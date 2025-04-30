@@ -139,9 +139,9 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
       <main className="container mx-auto max-w-[100rem] py-10">
         <header className="mb-6">
           {/* Add the BackButton component here */}
-          <div className="flex items-center mb-4">
+          {/* <div className="flex items-center mb-4">
             <BackButton />
-          </div>
+          </div> */}
           <h1 className="text-3xl font-bold text-emerald-700">
             Review Assignments
           </h1>

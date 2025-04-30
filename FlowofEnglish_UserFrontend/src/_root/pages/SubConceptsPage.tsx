@@ -448,7 +448,7 @@ export default function SubConceptsPage() {
   return (
     <>
       <Header2 />
-      <BackButton className="fixed top-28 left-4 z-20" /> {/* Add this line */}
+      {/* <BackButton className="fixed top-28 left-4 z-20" /> Add this line */}
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
