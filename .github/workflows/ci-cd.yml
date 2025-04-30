@@ -84,7 +84,7 @@ jobs:
     - name: Build admin frontend
       run: |
         cd FlowofEnglish_Frontend/FoE/packages/admin  # Update this to your admin frontend directory
-        npm install
+        npm install --legacy-peer-deps
         npm run build
         
     # User frontend build
