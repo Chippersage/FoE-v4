@@ -72,6 +72,7 @@ jobs:
     - name: Build backend with Maven
       run: |
         cd FlowofEnglish_Backend  # Update this to your backend directory name
+        chmod +x ./mvnw
         ./mvnw clean package -DskipTests
         
     # Admin frontend build
