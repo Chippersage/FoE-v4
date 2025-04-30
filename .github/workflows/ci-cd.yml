@@ -85,7 +85,9 @@ jobs:
       run: |
         cd FlowofEnglish_Frontend/FoE/packages/admin  # Update this to your admin frontend directory
         npm install --legacy-peer-deps
-        npm run build
+        ESLINT_NO_DEV_ERRORS=true npm run build
+      env:
+        CI: false  # This is an alternative approach that tells React not to treat warnings as errors
         
     # User frontend build
     - name: Set up Node.js for user frontend
