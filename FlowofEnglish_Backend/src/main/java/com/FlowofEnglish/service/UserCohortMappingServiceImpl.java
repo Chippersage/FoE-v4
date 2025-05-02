@@ -1,25 +1,35 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.dto.UserCohortMappingDTO;
-import com.FlowofEnglish.model.*;
-import com.FlowofEnglish.repository.*;
-
-import com.opencsv.CSVReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.FlowofEnglish.dto.UserCohortMappingDTO;
+import com.FlowofEnglish.model.Cohort;
+import com.FlowofEnglish.model.CohortProgram;
+import com.FlowofEnglish.model.User;
+import com.FlowofEnglish.model.UserCohortMapping;
+import com.FlowofEnglish.repository.CohortProgramRepository;
+import com.FlowofEnglish.repository.CohortRepository;
+import com.FlowofEnglish.repository.UserCohortMappingRepository;
+import com.FlowofEnglish.repository.UserRepository;
+import com.opencsv.CSVReader;
 
 @Service
 public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -27,64 +37,65 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     private CohortRepository cohortRepository;
     @Autowired
     private CohortProgramRepository cohortProgramRepository;
-    
+
     @Autowired
     private EmailService emailService;
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCohortMappingServiceImpl.class);
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory
+            .getLogger(UserCohortMappingServiceImpl.class);
 
-    
     @Override
     public UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd) {
-        logger.info("Updating leaderboard score for userId: {}, cohortId: {}, scoreToAdd: {}", userId, cohortId, scoreToAdd);
-        
+        logger.info("Updating leaderboard score for userId: {}, cohortId: {}, scoreToAdd: {}", userId, cohortId,
+                scoreToAdd);
+
         if (userId == null || userId.isEmpty()) {
             logger.error("User ID is empty");
             throw new IllegalArgumentException("User ID cannot be empty");
         }
-        
+
         if (cohortId == null || cohortId.isEmpty()) {
             logger.error("Cohort ID is empty");
             throw new IllegalArgumentException("Cohort ID cannot be empty");
         }
-        
+
         if (scoreToAdd == null) {
             logger.error("Score to add is null");
             throw new IllegalArgumentException("Score cannot be null");
         }
-        
+
         // Find the user-cohort mapping
-        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
-        
+        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId,
+                cohortId);
+
         if (!mappingOpt.isPresent()) {
             logger.error("No mapping found for userId: {} and cohortId: {}", userId, cohortId);
             throw new IllegalArgumentException("No mapping found for the specified user and cohort");
         }
-        
+
         UserCohortMapping mapping = mappingOpt.get();
-        
+
         // Check if cohort has leaderboard enabled
         if (!mapping.getCohort().isShowLeaderboard()) {
             logger.warn("Leaderboard is disabled for cohort: {}", cohortId);
             throw new IllegalArgumentException("Leaderboard is disabled for this cohort");
         }
-        
+
         // Get current score and add the new score
         int currentScore = mapping.getLeaderboardScore();
         int newScore = currentScore + scoreToAdd;
-        
+
         logger.info("Updating score from {} to {} for user: {}", currentScore, newScore, userId);
-        
+
         // Update the score
         mapping.setLeaderboardScore(newScore);
         UserCohortMapping updatedMapping = userCohortMappingRepository.save(mapping);
-        
+
         logger.info("Successfully updated leaderboard score for userId: {}", userId);
-        
+
         // Convert to DTO and return
         return convertToDTO(updatedMapping);
     }
-    
-    
+
     @Override
     public UserCohortMapping createUserCohortMapping(String userId, String cohortId) {
         logger.info("Starting createUserCohortMapping for userId: {}, cohortId: {}", userId, cohortId);
@@ -129,7 +140,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
                 if (cohortProgramOpt.isPresent()) {
                     CohortProgram cohortProgram = cohortProgramOpt.get();
-                    logger.info("Found cohort program mapping. Program name: {}", cohortProgram.getProgram().getProgramName());
+                    logger.info("Found cohort program mapping. Program name: {}",
+                            cohortProgram.getProgram().getProgramName());
 
                     // Send email
                     try {
@@ -138,8 +150,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
                                 user.getUserName(),
                                 cohort.getCohortName(),
                                 cohortProgram.getProgram().getProgramName(),
-                                user.getOrganization().getOrganizationName()
-                        );
+                                user.getOrganization().getOrganizationName());
                         logger.info("Successfully sent cohort assignment email to {}", user.getUserEmail());
                     } catch (Exception e) {
                         logger.error("Failed to send email to {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
@@ -148,7 +159,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
                     logger.warn("No cohort program mapping found for cohortId: {}", cohortId);
                 }
             } catch (Exception e) {
-                logger.error("Error while processing cohort program mapping for cohortId: {}. Error: {}", cohortId, e.getMessage(), e);
+                logger.error("Error while processing cohort program mapping for cohortId: {}. Error: {}", cohortId,
+                        e.getMessage(), e);
             }
         } else {
             logger.warn("User with ID {} has no email address. Skipping email notification.", userId);
@@ -167,33 +179,33 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return savedMapping;
     }
 
-
     @Override
     public UserCohortMapping updateUserCohortMappingByCohortId(String cohortId, UserCohortMapping userCohortMapping) {
-    	List<UserCohortMapping> existingMappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
-    	if (existingMappings.isEmpty()) {
+        List<UserCohortMapping> existingMappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+        if (existingMappings.isEmpty()) {
             throw new IllegalArgumentException("UserCohortMapping not found with ID: " + cohortId);
         }
-    	UserCohortMapping existingMapping = existingMappings.get(0);
+        UserCohortMapping existingMapping = existingMappings.get(0);
 
         // Find the new cohort by its ID
         Cohort newCohort = cohortRepository.findById(cohortId)
                 .orElseThrow(() -> new IllegalArgumentException("Cohort with ID " + cohortId + " not found."));
 
         // Check if the user and the new cohort belong to the same organization
-        if (!existingMapping.getUser().getOrganization().getOrganizationId().equals(newCohort.getOrganization().getOrganizationId())) {
+        if (!existingMapping.getUser().getOrganization().getOrganizationId()
+                .equals(newCohort.getOrganization().getOrganizationId())) {
             throw new IllegalArgumentException("User and new Cohort must belong to the same organization.");
         }
 
         // Update the cohort and save the mapping
         existingMapping.setCohort(newCohort);
         userCohortMappingRepository.save(existingMapping);
-        
+
         System.out.println("User-Cohort mapping successfully updated for Cohort ID: " + cohortId);
 
         return existingMapping;
     }
-    
+
     private String validateCsvData(String userId, String cohortId) {
         if (userId == null || userId.isEmpty()) {
             return "User ID is empty.";
@@ -218,7 +230,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         // Assuming userCohortId is the primary key, simply save the updated entity
         userCohortMappingRepository.save(userCohortMapping);
     }
-    
+
     public Map<String, List<String>> importUserCohortMappingsWithResponse(MultipartFile file) {
         List<String> successMessages = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
@@ -254,11 +266,11 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return response;
     }
 
-    
     @Override
     public UserCohortMapping updateUserCohortMapping(String userId, UserCohortMapping userCohortMapping) {
         return userCohortMappingRepository.findByUserUserId(userId).map(existingMapping -> {
-            if (!userCohortMapping.getUser().getOrganization().equals(userCohortMapping.getCohort().getOrganization())) {
+            if (!userCohortMapping.getUser().getOrganization()
+                    .equals(userCohortMapping.getCohort().getOrganization())) {
                 throw new IllegalArgumentException("User and Cohort must belong to the same organization.");
             }
             existingMapping.setCohort(userCohortMapping.getCohort());
@@ -271,20 +283,19 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     public Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId) {
         return userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
     }
-    
-    
 
     @Override
     public List<UserCohortMappingDTO> getAllUserCohortMappings() {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAll();
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-    
+
     @Override
     public List<UserCohortMappingDTO> getUserCohortMappingsCohortId(String cohortId) {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
+
     @Override
     public Map<String, Object> getUserCohortMappingsByCohortId(String cohortId) {
         Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
@@ -296,20 +307,20 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
         // Check the Show_leaderboard flag
         if (!cohort.isShowLeaderboard()) {
-            // If the leaderboard is disabled, return the information with a "not available" status
+            // If the leaderboard is disabled, return the information with a "not available"
+            // status
             return Map.of("leaderboardStatus", "not available", "message", "Leaderboard is disabled for this cohort.");
         }
 
         // If the leaderboard is enabled, fetch and return the data
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
         List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
 
         return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
     }
 
-    
     @Override
     public Map<String, Object> getUserCohortMappingsWithLeaderboard(String cohortId) {
         Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
@@ -321,15 +332,16 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
         // Check the Show_leaderboard flag
         if (!cohort.isShowLeaderboard()) {
-            // If the leaderboard is disabled, return the information with a "not available" flag
+            // If the leaderboard is disabled, return the information with a "not available"
+            // flag
             return Map.of("leaderboardStatus", "not available");
         }
 
         // Otherwise, return the leaderboard data
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
         List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
 
         return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
     }
@@ -344,7 +356,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     public Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId);
     }
-    
+
     @Override
     public Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId) {
         return userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId);
@@ -355,12 +367,12 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByUserUserId(userId);
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-    
+
     @Override
     public UserCohortMapping createUserCohortMapping(UserCohortMapping userCohortMapping) {
         return userCohortMappingRepository.save(userCohortMapping);
     }
-    
+
     @Override
     public void deleteUserCohortMappingByUserId(String userId) {
         userCohortMappingRepository.deleteByUserUserId(userId);
@@ -368,7 +380,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     private UserCohortMappingDTO convertToDTO(UserCohortMapping userCohortMapping) {
         UserCohortMappingDTO dto = new UserCohortMappingDTO();
-        //dto.setOrganizationName(userCohortMapping.getCohort().getOrganization().getOrganizationName());
+        // dto.setOrganizationName(userCohortMapping.getCohort().getOrganization().getOrganizationName());
         dto.setCohortId(userCohortMapping.getCohort().getCohortId());
         dto.setUserId(userCohortMapping.getUser().getUserId());
         dto.setUserName(userCohortMapping.getUser().getUserName());
@@ -376,7 +388,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         dto.setUserEmail(userCohortMapping.getUser().getUserEmail());
         dto.setCohortName(userCohortMapping.getCohort().getCohortName());
         dto.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
-        
+
         return dto;
     }
 }

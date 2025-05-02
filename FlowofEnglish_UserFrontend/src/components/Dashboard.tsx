@@ -9,7 +9,7 @@ import StagesSkeleton from "./skeletons/StageSkeleton";
 // import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import UserProgressBar from "./UserProgressBar";
 // @ts-ignore
-import ProgressbarSkeleton from "./skeletons/ProgressBarSkeleton";
+import ProgressbarSkeleton from "./skeletons/ProgressbarSkeleton";
 import KidFriendlyModal from "./modals/CongratulatoryModal";
 import LeaderboardSkeleton from "./skeletons/LeaderboardSkeleton";
 import Leaderboard from "./Leaderboard";
