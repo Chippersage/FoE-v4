@@ -108,4 +108,20 @@ public class UserCohortMappingController {
         userCohortMappingService.deleteUserCohortMappingByUserId(userId);
         return ResponseEntity.noContent().build();
     }
+    // New endpoint to update leaderboard score from Google Forms
+    @PutMapping("/update-score")
+    public ResponseEntity<?> updateLeaderboardScore(@RequestBody Map<String, Object> request) {
+        try {
+            String userId = (String) request.get("userId");
+            String cohortId = (String) request.get("cohortId");
+            Integer scoreToAdd = Integer.valueOf(request.get("score").toString());
+            
+            UserCohortMappingDTO updatedMapping = userCohortMappingService.updateLeaderboardScore(userId, cohortId, scoreToAdd);
+            return ResponseEntity.ok(updatedMapping);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred: " + ex.getMessage()));
+        }
+    }
 }

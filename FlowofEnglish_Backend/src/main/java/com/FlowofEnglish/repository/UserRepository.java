@@ -29,6 +29,9 @@ public interface UserRepository extends JpaRepository<User, String> {
  	Optional<User> findByUserTypeAndCohort(@Param("userType") String userType, @Param("cohort") Cohort cohort);
  // Find all admins in an organization
     List<User> findByOrganizationAndUserType(Organization organization, String userType);
-    
+    @Query("SELECT u FROM User u JOIN u.userCohortMappings ucm " +
+            "WHERE LOWER(u.userType) = LOWER(:userType) AND ucm.cohort = :cohort")
+     List<User> findAllByUserTypeAndCohort(@Param("userType") String userType, @Param("cohort") Cohort cohort);
+     
   
 }

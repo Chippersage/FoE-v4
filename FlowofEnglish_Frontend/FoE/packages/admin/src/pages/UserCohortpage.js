@@ -592,16 +592,18 @@ const toggleAssignmentsTable = () => {
                 onChange={(e) => setFormValues({ ...formValues, userId: e.target.value })}
                 required
                 disabled={!!currentRecord}
-              >
-                {orgUsers
-                .filter(user => !userCohortData.some(
-                  cohortUser => cohortUser.userId === user.userId
+                >
+                {Array.isArray(orgUsers) &&
+                orgUsers
+                .filter(user => !userCohortData?.some(
+                cohortUser => cohortUser.userId === user.userId
                 ))
                 .map(user => (
-                  <MenuItem key={user.userId} value={user.userId}>
-                    {user.userName}  ({user.userId})
-                  </MenuItem>
-                ))}
+                <MenuItem key={user.userId} value={user.userId}>
+                {user.userName}  ({user.userId})
+                </MenuItem>
+                ))
+                }
               </Select>
             </FormControl>
             <TextField

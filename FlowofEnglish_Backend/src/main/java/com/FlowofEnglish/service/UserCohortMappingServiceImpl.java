@@ -32,6 +32,59 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     private EmailService emailService;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCohortMappingServiceImpl.class);
 
+    
+    @Override
+    public UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd) {
+        logger.info("Updating leaderboard score for userId: {}, cohortId: {}, scoreToAdd: {}", userId, cohortId, scoreToAdd);
+        
+        if (userId == null || userId.isEmpty()) {
+            logger.error("User ID is empty");
+            throw new IllegalArgumentException("User ID cannot be empty");
+        }
+        
+        if (cohortId == null || cohortId.isEmpty()) {
+            logger.error("Cohort ID is empty");
+            throw new IllegalArgumentException("Cohort ID cannot be empty");
+        }
+        
+        if (scoreToAdd == null) {
+            logger.error("Score to add is null");
+            throw new IllegalArgumentException("Score cannot be null");
+        }
+        
+        // Find the user-cohort mapping
+        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+        
+        if (!mappingOpt.isPresent()) {
+            logger.error("No mapping found for userId: {} and cohortId: {}", userId, cohortId);
+            throw new IllegalArgumentException("No mapping found for the specified user and cohort");
+        }
+        
+        UserCohortMapping mapping = mappingOpt.get();
+        
+        // Check if cohort has leaderboard enabled
+        if (!mapping.getCohort().isShowLeaderboard()) {
+            logger.warn("Leaderboard is disabled for cohort: {}", cohortId);
+            throw new IllegalArgumentException("Leaderboard is disabled for this cohort");
+        }
+        
+        // Get current score and add the new score
+        int currentScore = mapping.getLeaderboardScore();
+        int newScore = currentScore + scoreToAdd;
+        
+        logger.info("Updating score from {} to {} for user: {}", currentScore, newScore, userId);
+        
+        // Update the score
+        mapping.setLeaderboardScore(newScore);
+        UserCohortMapping updatedMapping = userCohortMappingRepository.save(mapping);
+        
+        logger.info("Successfully updated leaderboard score for userId: {}", userId);
+        
+        // Convert to DTO and return
+        return convertToDTO(updatedMapping);
+    }
+    
+    
     @Override
     public UserCohortMapping createUserCohortMapping(String userId, String cohortId) {
         logger.info("Starting createUserCohortMapping for userId: {}, cohortId: {}", userId, cohortId);
