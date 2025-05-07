@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question id="q1" type="single" marks="1">
+    <text>Which of the following is a popular programming language for developing multimedia webpages.</text>
+    <option id="q1_a" correct="false">COBOL</option>
+    <option id="q1_b" correct="false">COBOL</option>
+    <option id="q1_c" correct="false">COBOL</option>
+    <option id="q1_d" correct="true">COBOL</option>
+  </question>
+  <question id="q2" type="single" marks="1">
+    <text>What does HTML stand for?</text>
+    <option id="q2_a" correct="true">Hypertext Markup Language</option>
+    <option id="q2_b" correct="false">Hypertext Markdown Language</option>
+    <option id="q2_c" correct="false">Hypertext Machine Language</option>
+    <option id="q2_d" correct="false">Hightech Modern Language</option>
+  </question>
+  <question id="q3" type="multiple" marks="2">
+    <text>Which of the following are JavaScript frameworks?</text>
+    <option id="q3_a" correct="true">React</option>
+    <option id="q3_b" correct="true">Vue</option>
+    <option id="q3_c" correct="true">Angular</option>
+    <option id="q3_d" correct="false">Django</option>
+  </question>
+  <question id="q4" type="single" marks="1">
+    <text>What symbol is used for single-line comments in JavaScript?</text>
+    <option id="q4_a" correct="false">#</option>
+    <option id="q4_b" correct="true">//</option>
+    <option id="q4_c" correct="false">/* */</option>
+    <option id="q4_d" correct="false">--</option>
+  </question>
+  <question id="q5" type="multiple" marks="2">
+    <text>Which of the following are valid CSS preprocessors?</text>
+    <option id="q5_a" correct="true">SASS</option>
+    <option id="q5_b" correct="true">LESS</option>
+    <option id="q5_c" correct="false">FAST</option>
+    <option id="q5_d" correct="true">Stylus</option>
+  </question>
+  <question id="q6" type="single" marks="1">
+    <text>What does API stand for?</text>
+    <option id="q6_a" correct="true">Application Programming Interface</option>
+    <option id="q6_b" correct="false">Advanced Programming Interface</option>
+    <option id="q6_c" correct="false">Application Protocol Interface</option>
+    <option id="q6_d" correct="false">Advanced Process Integration</option>
+  </question>
+  <question id="q7" type="multiple" marks="2">
+    <text>Which of the following are NoSQL databases?</text>
+    <option id="q7_a" correct="true">MongoDB</option>
+    <option id="q7_b" correct="false">MySQL</option>
+    <option id="q7_c" correct="true">Cassandra</option>
+    <option id="q7_d" correct="true">Redis</option>
+  </question>
+  <question id="q8" type="single" marks="1">
+    <text>Which tag is used to create an unordered list in HTML?</text>
+    <option id="q8_a" correct="false">&lt;ol&gt;</option>
+    <option id="q8_b" correct="true">&lt;ul&gt;</option>
+    <option id="q8_c" correct="false">&lt;li&gt;</option>
+    <option id="q8_d" correct="false">&lt;dl&gt;</option>
+  </question>
+  <question id="q9" type="single" marks="1">
+    <text>Which CSS property is used to change the text color?</text>
+    <option id="q9_a" correct="false">text-style</option>
+    <option id="q9_b" correct="false">font-color</option>
+    <option id="q9_c" correct="true">color</option>
+    <option id="q9_d" correct="false">text-color</option>
+  </question>
+  <question id="q10" type="multiple" marks="2">
+    <text>Which of the following are valid HTTP methods?</text>
+    <option id="q10_a" correct="true">GET</option>
+    <option id="q10_b" correct="true">POST</option>
+    <option id="q10_c" correct="true">PUT</option>
+    <option id="q10_d" correct="true">DELETE</option>
+  </question>
+</quiz>

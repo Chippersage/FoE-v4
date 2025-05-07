@@ -5,6 +5,7 @@ import { useUserContext } from "../../context/AuthContext";
 import MediaContent from "@/components/MediaContent";
 import ActivityCompletionModal from "@/components/ActivityCompletionModal";
 import VocabularyActivity from "@/components/activityComponents/VocabularyActivity";
+import QuizActivity from "@/components/activityComponents/QuizActivity";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -378,22 +379,24 @@ const SingleSubconcept = () => {
           {/* To uncomment for new mtf activity component */}
 
           {subconcept?.subconceptType === "mtf" ? (
-            <VocabularyActivity
-              triggerSubmit={() => {
-                // console.log("triggerSubmit parent");
-                submitBtnRef.current?.click();
-              }}
-              // setShowSubmit={setShowSubmit}
-              xmlUrl={subconcept?.subconceptLink}
-              // onSubmitScore={handlePostScore}
-              setSubmissionPayload={setSubmissionPayload}
-              setScorePercentage={setScorePercentage}
-              subconceptMaxscore={subconcept?.subconceptMaxscore}
-            />
+            // <VocabularyActivity
+            //   triggerSubmit={() => {
+            //     // console.log("triggerSubmit parent");
+            //     submitBtnRef.current?.click();
+            //   }}
+            //   // setShowSubmit={setShowSubmit}
+            //   xmlUrl={subconcept?.subconceptLink}
+            //   // onSubmitScore={handlePostScore}
+            //   setSubmissionPayload={setSubmissionPayload}
+            //   setScorePercentage={setScorePercentage}
+            //   subconceptMaxscore={subconcept?.subconceptMaxscore}
+            // />
+            <QuizActivity/>
           ) : showIframe ? (
             <iframe
               id="embeddedContent"
-              src={subconcept?.subconceptLink}
+              // src={subconcept?.subconceptLink}
+              src={"/PET-Practice%20Drills/MCQ/MCQs/CC/21C-0007.html"}
               title="Embedded Content"
               className={`w-full min-h-[500px] sm:min-h-[800px] ${
                 onFrameLoad && ""
