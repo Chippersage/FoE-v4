@@ -70,6 +70,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/user-session-mappings/**").permitAll()
                     .requestMatchers("/api/v1/userSubConceptsCompletion/**").permitAll()
                     .requestMatchers("/api/v1/programconceptsmappings/**").permitAll()
+                    .requestMatchers("/api/v1/assignment-with-attempt/**").permitAll()
                     .requestMatchers("/api/v1/subscriptions/**").permitAll()
                     .requestMatchers("/api/v1/reports/**").permitAll()
                     .requestMatchers("/api/v1/assignments/**").permitAll()

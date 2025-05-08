@@ -1,10 +1,6 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.Cohort;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserAttempts;
-import com.FlowofEnglish.model.UserCohortMapping;
-import com.FlowofEnglish.model.UserSubConcept;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.UserAttemptsRepository;
 
 import jakarta.transaction.Transactional;
@@ -44,11 +40,15 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
         return userAttemptsRepository.findById(userAttemptId);
     }
     
-    @Override
+    @Transactional
     public UserAttempts saveUserAttempt(UserAttempts userAttempt) {
-        return userAttemptsRepository.save(userAttempt);
+        try {
+            return userAttemptsRepository.save(userAttempt);
+        } catch (Exception e) {
+            logger.error("Error saving user attempt: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save user attempt", e);
+        }
     }
-   
     
     @Override
     @Transactional
@@ -140,6 +140,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
             newEntry.setUser(user);
             newEntry.setLeaderboardScore(score);
             newEntry.setUuid(UUID.randomUUID().toString());
+            
             
             // Save the new UserCohortMapping entry
             userCohortMappingService.createUserCohortMapping(newEntry);

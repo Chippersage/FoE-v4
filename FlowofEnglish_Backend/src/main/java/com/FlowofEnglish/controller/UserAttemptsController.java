@@ -1,20 +1,8 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.dto.UserAttemptRequestDTO;
-import com.FlowofEnglish.model.Program;
-import com.FlowofEnglish.model.Stage;
-import com.FlowofEnglish.model.Subconcept;
-import com.FlowofEnglish.model.Unit;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserAttempts;
-import com.FlowofEnglish.model.UserSessionMapping;
-import com.FlowofEnglish.service.ProgramService;
-import com.FlowofEnglish.service.StageService;
-import com.FlowofEnglish.service.SubconceptService;
-import com.FlowofEnglish.service.UnitService;
-import com.FlowofEnglish.service.UserAttemptsService;
-import com.FlowofEnglish.service.UserService;
-import com.FlowofEnglish.service.UserSessionMappingService;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.service.*;
 import java.time.ZoneOffset;
 
 import org.springframework.beans.factory.annotation.Autowired;
