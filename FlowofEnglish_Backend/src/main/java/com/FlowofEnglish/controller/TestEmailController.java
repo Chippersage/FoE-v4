@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/test")
+@RequestMapping("/api/v1/test")
 public class TestEmailController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestEmailController.class);
