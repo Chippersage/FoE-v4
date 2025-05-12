@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -363,24 +364,47 @@ public class UserController {
 
                 // Add cohort end-date reminders for all active cohorts
                 List<String> cohortReminders = new ArrayList<>();
+                List<String> endedCohortReminders = new ArrayList<>();
+                
+                OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+                OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+
                 if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
                     for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
                         if (cohort.getCohortEndDate() != null) {
-                            OffsetDateTime cohortEndDate = cohort.getCohortEndDate();
-                            OffsetDateTime today = OffsetDateTime.now(ZoneOffset.UTC);
-                            
-                            long daysUntilEnd = today.until(cohortEndDate, ChronoUnit.DAYS);
-                            if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
-                                cohortReminders.add(String.format("Cohort %s ends in %d day(s). Please complete your activities.", 
+                            OffsetDateTime cohortEndDate = cohort.getCohortEndDate().truncatedTo(ChronoUnit.DAYS);
+                            long daysUntilEnd = ChronoUnit.DAYS.between(nowDateOnly, cohortEndDate);
+
+                            // Check for upcoming end dates
+                            if (daysUntilEnd > 0 && daysUntilEnd <= 15) {
+                                cohortReminders.add(String.format(
+                                    "Your cohort '%s' ends in %d day(s). Make sure to complete your assignments and activities.",
                                     cohort.getCohortName(), daysUntilEnd));
-                            } else if (daysUntilEnd == 0) {
-                                cohortReminders.add(String.format("Cohort %s ends today. Please complete your activities. If you need extra time, contact your admin for an extension.",
+                            } 
+                            // Check for cohorts ending today
+                            else if (daysUntilEnd == 0) {
+                                cohortReminders.add(String.format(
+                                    "Your cohort '%s' ends today! Please complete any pending work immediately.",
                                     cohort.getCohortName()));
+                            }
+                            // Check for ended cohorts
+                            else if (cohortEndDate.isBefore(nowDateOnly)) {
+                                endedCohortReminders.add(String.format(
+                                    "Your cohort '%s' has ended on %s. No further activities are possible.",
+                                    cohort.getCohortName(), 
+                                    cohort.getCohortEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
                             }
                         }
                     }
+                    
+                    // Add reminders to response
                     if (!cohortReminders.isEmpty()) {
                         response.put("cohortReminders", cohortReminders);
+                    }
+                    
+                    // Add ended cohort reminders to response
+                    if (!endedCohortReminders.isEmpty()) {
+                        response.put("endedCohortReminders", endedCohortReminders);
                     }
                 }
                 
@@ -408,80 +432,19 @@ public class UserController {
     
     @PostMapping("/select-cohort")
     public ResponseEntity<?> selectCohort(@RequestBody Map<String, String> cohortData) {
-//        String serverStoredTempSessionId = (String) session.getAttribute("tempSessionId");
-//        String serverStoredUserId = (String) session.getAttribute("tempUserId");
-//        // Also check for the tempSessionId in cookies
-//        String cookieTempSessionId = null;
-//        if (request.getCookies() != null) {
-//            for (Cookie cookie : request.getCookies()) {
-//                if ("tempSessionId".equals(cookie.getName())) {
-//                    cookieTempSessionId = cookie.getValue();
-//                    break;
-//                }
-//            }
-//        }
-//        
-//        logger.info("Session ID: {}", session.getId());
-//        logger.info("Stored tempSessionId: {}", serverStoredTempSessionId);
-//        logger.info("Cookie tempSessionId: {}", cookieTempSessionId);
-//        logger.info("Stored tempUserId: {}", serverStoredUserId);
         // Get values from request body
         String selectedCohortId = cohortData.get("cohortId");
         String userId = cohortData.get("userId");
-//        String requestTempSessionId = cohortData.get("tempSessionId");
-//        
-//        logger.info("Request tempSessionId: {}", requestTempSessionId);
         logger.info("Request userId: {}", userId);
         
         Map<String, Object> response = new HashMap<>();
         
-//        // Use the tempSessionId from any source (session, cookie, or request)
-//        boolean hasValidSession = serverStoredTempSessionId != null || 
-//                                 cookieTempSessionId != null || 
-//                                 (requestTempSessionId != null && requestUserId != null);
-//        
-//        if (!hasValidSession) {
-//            response.put("error", "No active login session found");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//        
-//        // Use the best available information
-//        String effectiveUserId = serverStoredUserId != null ? serverStoredUserId : requestUserId;
-//        String effectiveTempSessionId = serverStoredTempSessionId != null ? 
-//                                       serverStoredTempSessionId : 
-//                                       (cookieTempSessionId != null ? cookieTempSessionId : requestTempSessionId);
-//        
-//        // Restore session if needed
-//        if (serverStoredTempSessionId == null && effectiveTempSessionId != null) {
-//            session.setAttribute("tempSessionId", effectiveTempSessionId);
-//        }
-//        
-//        if (serverStoredUserId == null && effectiveUserId != null) {
-//            session.setAttribute("tempUserId", effectiveUserId);
-//        }
-//        // Comprehensive validation
-//        if (serverStoredTempSessionId == null || serverStoredUserId == null) {
-//            response.put("error", "No active login session found");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
         
         // Validate cohortId
         if (selectedCohortId == null || selectedCohortId.trim().isEmpty()) {
             response.put("error", "CohortId is required");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        
-//        // Validate userId if provided in request
-//        if (requestUserId != null && !requestUserId.equals(serverStoredUserId)) {
-//            response.put("error", "UserId mismatch with session");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//        
-//        // Validate tempSessionId if provided in request
-//        if (requestTempSessionId != null && !requestTempSessionId.equals(serverStoredTempSessionId)) {
-//            response.put("error", "Invalid session ID");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
         
         // Fetch user and validate cohort assignment
         Optional<User> userOpt = userRepository.findByUserId(userId);
@@ -515,49 +478,133 @@ public class UserController {
         }
         
         Cohort selectedCohort = cohortOpt.get();
+
+     // Check if cohort end date is today or in the past
+     OffsetDateTime cohortEndDate = selectedCohort.getCohortEndDate();
+     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+     
+     // Truncate both dates to remove time components
+     OffsetDateTime endDateOnly = cohortEndDate != null 
+         ? cohortEndDate.withHour(0).withMinute(0).withSecond(0).withNano(0)
+         : null;
+     OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
         
-        try {
-            // Check for existing active session
-        	userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
-//            Optional<UserSessionMapping> existingSession = 
-//                userSessionMappingService.findActiveSessionByUserIdAndCohortId(userId, selectedCohortId);
-//            
-//            if (existingSession.isPresent()) {
-//                // Invalidate existing session
-//                userSessionMappingService.invalidateSession(existingSession.get().getSessionId());
-//            }
-            
-            // Create new session
-            UserSessionMapping userSession = new UserSessionMapping();
-            String newSessionId = UUID.randomUUID().toString();
-            userSession.setSessionId(newSessionId);
-            userSession.setUser(user);
-            userSession.setCohort(selectedCohort);
-            userSession.setSessionStartTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
-            userSession.setUuid(UUID.randomUUID().toString());
-            
-            // Save new session
-            userSessionMappingService.createUserSessionMapping(userSession);
-            
-            // Update session attributes
-            session.setAttribute("userId", userId);
-            session.setAttribute("cohortId", selectedCohortId);
-            session.setAttribute("sessionId", newSessionId);
-//            session.removeAttribute("tempSessionId");
-//            session.removeAttribute("tempUserId");
-            
-            response.put("message", "Cohort selected successfully");
-            response.put("sessionId", newSessionId);
-            response.put("cohortId", selectedCohortId);
-            response.put("userId", userId);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("error", "Error creating session: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    } 
+  // If cohort end date is null, proceed with selection
+     if (cohortEndDate == null) {
+         // Proceed with cohort selection
+         try {
+             // Check for existing active sessions
+             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+             
+             // Create new session
+             UserSessionMapping userSession = new UserSessionMapping();
+             String newSessionId = UUID.randomUUID().toString();
+             userSession.setSessionId(newSessionId);
+             userSession.setUser(user);
+             userSession.setCohort(selectedCohort);
+             userSession.setSessionStartTimestamp(now);
+             userSession.setUuid(UUID.randomUUID().toString());
+             
+             // Save new session
+             userSessionMappingService.createUserSessionMapping(userSession);
+             
+             // Update session attributes
+             session.setAttribute("userId", userId);
+             session.setAttribute("cohortId", selectedCohortId);
+             session.setAttribute("sessionId", newSessionId);
+        
+             response.put("message", "Cohort selected successfully");
+             response.put("sessionId", newSessionId);
+             response.put("cohortId", selectedCohortId);
+             response.put("userId", userId);
+             
+             return ResponseEntity.ok(response);
+             
+         } catch (Exception e) {
+             response.put("error", "Error creating session: " + e.getMessage());
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+         }
+     }
+
+     // Check if cohort end date is exactly today
+     if (endDateOnly.isEqual(nowDateOnly)) {
+         // Cohort is ending today, allow selection
+         try {
+             // Check for existing active sessions
+             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+             
+             // Create new session
+             UserSessionMapping userSession = new UserSessionMapping();
+             String newSessionId = UUID.randomUUID().toString();
+             userSession.setSessionId(newSessionId);
+             userSession.setUser(user);
+             userSession.setCohort(selectedCohort);
+             userSession.setSessionStartTimestamp(now);
+             userSession.setUuid(UUID.randomUUID().toString());
+             
+             // Save new session
+             userSessionMappingService.createUserSessionMapping(userSession);
+             
+             // Update session attributes
+             session.setAttribute("userId", userId);
+             session.setAttribute("cohortId", selectedCohortId);
+             session.setAttribute("sessionId", newSessionId);
+        
+             response.put("message", "Cohort selected successfully on its final day");
+             response.put("sessionId", newSessionId);
+             response.put("cohortId", selectedCohortId);
+             response.put("userId", userId);
+             
+             return ResponseEntity.ok(response);
+             
+         } catch (Exception e) {
+             response.put("error", "Error creating session: " + e.getMessage());
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+         }
+     }
+
+     // Check if cohort end date has passed
+     if (endDateOnly.isBefore(nowDateOnly)) {
+         // Cohort has ended
+         response.put("error", String.format("This cohort has ended on %s. You cannot select this cohort.", 
+             cohortEndDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+     }
+
+     // If cohort end date is in the future, proceed with selection
+     try {
+         // Check for existing active sessions
+         userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+         
+         // Create new session
+         UserSessionMapping userSession = new UserSessionMapping();
+         String newSessionId = UUID.randomUUID().toString();
+         userSession.setSessionId(newSessionId);
+         userSession.setUser(user);
+         userSession.setCohort(selectedCohort);
+         userSession.setSessionStartTimestamp(now);
+         userSession.setUuid(UUID.randomUUID().toString());
+         
+         // Save new session
+         userSessionMappingService.createUserSessionMapping(userSession);
+         
+         // Update session attributes
+         session.setAttribute("userId", userId);
+         session.setAttribute("cohortId", selectedCohortId);
+         session.setAttribute("sessionId", newSessionId);
+    
+         response.put("message", "Cohort selected successfully");
+         response.put("sessionId", newSessionId);
+         response.put("cohortId", selectedCohortId);
+         response.put("userId", userId);
+         
+         return ResponseEntity.ok(response);
+         
+     } catch (Exception e) {
+         response.put("error", "Error creating session: " + e.getMessage());
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+     }
+ }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpSession session) {
