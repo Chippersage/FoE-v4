@@ -1,5 +1,6 @@
 import React from "react";
 import { Option as OptionType } from "../types/types";
+import { CheckCircle, XCircle } from "lucide-react"; // Optional: if using Lucide icons
 
 interface OptionsProps {
   options: OptionType[];
@@ -20,7 +21,7 @@ const Options: React.FC<OptionsProps> = ({
     const isSelected = selectedOptions.includes(option.id);
 
     let baseClass =
-      "border rounded-md p-4 flex items-center cursor-pointer transition-all duration-300 hover:border-green-700";
+      "border rounded-md p-4 flex items-center cursor-pointer transition-all duration-300 relative";
 
     if (!isChecked) {
       return `${baseClass} ${
@@ -37,6 +38,18 @@ const Options: React.FC<OptionsProps> = ({
     }
 
     return `${baseClass} border-gray-200 opacity-70`;
+  };
+
+  const renderIcon = (option: OptionType) => {
+    if (!isChecked || !selectedOptions.includes(option.id)) return null;
+
+    if (option.isCorrect) {
+      return (
+        <CheckCircle className="ml-2 text-green-600 animate-bounce" size={20} />
+      );
+    } else {
+      return <XCircle className="ml-2 text-red-600 animate-ping" size={20} />;
+    }
   };
 
   const letterMapping: Record<number, string> = {
@@ -56,6 +69,9 @@ const Options: React.FC<OptionsProps> = ({
         >
           <div className="mr-3 font-medium w-6">{letterMapping[index]}.</div>
           <div className="flex-grow">{option.text}</div>
+
+          {/* Tick or Cross Animation */}
+          {renderIcon(option)}
         </div>
       ))}
     </div>

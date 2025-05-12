@@ -94,6 +94,7 @@ const iconMap = {
   dictation: Dictation,
   vocab: Spelling,
   mtf: Spelling,
+  mcq: QnA,
   realworld: RealWorld,
   literature: Literature,
   dialogue_writing: DialogueWriting,
@@ -242,7 +243,7 @@ export default function SubConceptsPage() {
       // Set background URL dynamically
       setBackgroundUrl(
         selectedCohortWithProgram?.program?.programId.startsWith("PET")
-          ? "/images/PET-background-1.png"
+          ? "/images/PET-New-Bg.jpg"
           : "/images/index.png"
       );
 
@@ -468,12 +469,19 @@ export default function SubConceptsPage() {
         ref={scrollableDivRef}
         className="relative w-full h-auto overflow-y-auto"
       >
+        {/* Background image */}
         <div
-          className={`fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none opacity-70 top-24 sm:top-0`}
+          className="fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none top-24 sm:top-0 z-0"
           style={{
             backgroundImage: `url(${backgroundUrl})`,
           }}
         />
+
+        {/* Black overlay on top of the background */}
+        {backgroundUrl === "/images/PET-New-Bg.jpg" && (
+        <div className="fixed inset-0 bg-black opacity-25 pointer-events-none top-24 sm:top-0 z-10" />
+        )}
+        
         {/* Confetti Animation */}
         {showConfetti && (
           <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
@@ -507,7 +515,7 @@ export default function SubConceptsPage() {
 
         {/* Current Unit Title */}
         <div
-          className="fixed z-[10] top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
+          className="fixed z-[20] top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
           style={{ maxWidth: "90%" }} // Ensures text doesn't overflow
         >
           <div>{unitName || "Loading Unit..."}</div>

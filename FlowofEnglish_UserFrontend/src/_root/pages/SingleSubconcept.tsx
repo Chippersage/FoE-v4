@@ -118,12 +118,16 @@ const SingleSubconcept = () => {
       "assignment_image",
       "assessment",
       "youtube",
-      "mtf", // To uncomment for new mtf activity component
+      "mtf", 
+      "mcq", 
     ].includes(subconcept?.subconceptType)
   );
+  // const [showSubmit, setShowSubmit] = useState(
+  //   subconcept?.subconceptType?.toLowerCase().startsWith("assignment") ||
+  //     subconcept?.subconceptType?.toLowerCase().startsWith("mtf")
+  // );
   const [showSubmit, setShowSubmit] = useState(
-    subconcept?.subconceptType?.toLowerCase().startsWith("assignment") ||
-      subconcept?.subconceptType?.toLowerCase().startsWith("mtf")
+    subconcept?.subconceptType?.toLowerCase().startsWith("assignment")
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -255,7 +259,10 @@ const SingleSubconcept = () => {
 
     // To uncomment for new mtf activity component
 
-    if (subconcept?.subconceptType?.toLowerCase() === "mtf") {
+    if (
+      subconcept?.subconceptType?.toLowerCase() === "mtf" ||
+      subconcept?.subconceptType?.toLowerCase() === "mcq"
+    ) {
       // Only proceed if we have a valid submission payload
       if (!submissionPayload) {
         console.error("No submission payload available");
@@ -317,7 +324,10 @@ const SingleSubconcept = () => {
           ) as HTMLIFrameElement;
           if (iframe && iframe.tagName === "IFRAME") {
             iframe.contentWindow?.postMessage("postSuccess", "*");
-          } else if (subconcept?.subconceptType === "mtf") {
+          } else if (
+            subconcept?.subconceptType?.toLowerCase() === "mtf" ||
+            subconcept?.subconceptType?.toLowerCase() === "mcq"
+          ) {
             setSuccessOverlay(true);
           }
         } else {
@@ -378,41 +388,58 @@ const SingleSubconcept = () => {
         <div className="flex-1 m-[2px]">
           {/* To uncomment for new mtf activity component */}
 
-          {subconcept?.subconceptType === "mtf" ? (
-            // <VocabularyActivity
-            //   triggerSubmit={() => {
-            //     // console.log("triggerSubmit parent");
-            //     submitBtnRef.current?.click();
-            //   }}
-            //   // setShowSubmit={setShowSubmit}
-            //   xmlUrl={subconcept?.subconceptLink}
-            //   // onSubmitScore={handlePostScore}
-            //   setSubmissionPayload={setSubmissionPayload}
-            //   setScorePercentage={setScorePercentage}
-            //   subconceptMaxscore={subconcept?.subconceptMaxscore}
-            // />
-            <QuizActivity/>
-          ) : showIframe ? (
-            <iframe
-              id="embeddedContent"
-              // src={subconcept?.subconceptLink}
-              src={"/PET-Practice%20Drills/MCQ/MCQs/CC/21C-0007.html"}
-              title="Embedded Content"
-              className={`w-full min-h-[500px] sm:min-h-[800px] ${
-                onFrameLoad && ""
-              }`}
-              onLoad={() => {
-                setShowGoBack(true);
-                setOnFrameLoad(true);
-              }}
-              allow="autoplay"
-            />
-          ) : (
-            <MediaContent
-              subconceptData={subconcept}
-              currentUnitId={currentUnitId}
-            />
-          )}
+          {(() => {
+            if (subconcept?.subconceptType === "mtf") {
+              return (
+                <VocabularyActivity
+                  triggerSubmit={() => {
+                    // console.log("triggerSubmit parent");
+                    submitBtnRef.current?.click();
+                  }}
+                  // setShowSubmit={setShowSubmit}
+                  xmlUrl={subconcept?.subconceptLink}
+                  // onSubmitScore={handlePostScore}
+                  setSubmissionPayload={setSubmissionPayload}
+                  setScorePercentage={setScorePercentage}
+                  subconceptMaxscore={subconcept?.subconceptMaxscore}
+                />
+              );
+            } else if (subconcept?.subconceptType === "mcq") {
+              return (
+                <QuizActivity
+                  triggerSubmit={() => {
+                    submitBtnRef.current?.click();
+                  }}
+                  xmlUrl={subconcept?.subconceptLink}
+                  setSubmissionPayload={setSubmissionPayload}
+                  setScorePercentage={setScorePercentage}
+                  subconceptMaxscore={subconcept?.subconceptMaxscore}
+                />
+              );
+            } else if (showIframe) {
+              return (
+                <iframe
+                  id="embeddedContent"
+                  src={subconcept?.subconceptLink}
+                  // src={"/PET-Practice%20Drills/MCQ/MCQs/CC/21C-0007.html"} // or use: src={subconcept?.subconceptLink}
+                  title="Embedded Content"
+                  className={`w-full min-h-[500px] sm:min-h-[800px]`}
+                  onLoad={() => {
+                    setShowGoBack(true);
+                    setOnFrameLoad(true);
+                  }}
+                  allow="autoplay"
+                />
+              );
+            } else {
+              return (
+                <MediaContent
+                  subconceptData={subconcept}
+                  currentUnitId={currentUnitId}
+                />
+              );
+            }
+          })()}
         </div>
         {/* <hr className="w-[1px] border-0 bg-white h-full" /> */}
 
@@ -454,13 +481,14 @@ const SingleSubconcept = () => {
         )}
 
         {/* Hidden external Submit Button for MTF type only */}
-        {subconcept?.subconceptType === "mtf" && (
+        {(subconcept?.subconceptType === "mtf" ||
+          subconcept?.subconceptType === "mcq") && (
           <button
             ref={submitBtnRef}
             onClick={handleSubmit}
             style={{ display: "none" }}
           >
-            Hidden MTF Submit
+            Hidden Submit
           </button>
         )}
       </div>

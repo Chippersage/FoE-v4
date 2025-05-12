@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, FileIcon } from "lucide-react";
@@ -31,6 +32,7 @@ export function UploadModal({
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); // URL for preview
+  const userData = JSON.parse(localStorage.getItem("userData"));
 
   // console.log("recordedMedia", recordedMedia);
   // console.log("file", file);
@@ -103,6 +105,11 @@ export function UploadModal({
         throw new Error("No file or media found for upload.");
       }
 
+      const date = new Date();
+      const ISTOffset = 5.5 * 60 * 60 * 1000;
+      const ISTTime = new Date(date.getTime() + ISTOffset);
+      const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
+
       formData.append("userId", user.userId);
       formData.append("cohortId", selectedCohortWithProgram?.cohortId);
       formData.append(
@@ -112,9 +119,15 @@ export function UploadModal({
       formData.append("stageId", stageId);
       formData.append("unitId", currentUnitId);
       formData.append("subconceptId", subconcept?.subconceptId);
+      formData.append("sessionId", userData.sessionId);
+      formData.append("userAttemptStartTimestamp", userData.userAttemptStartTimestamp);
+      formData.append("userAttemptEndTimestamp", formattedISTTimestamp);
+      formData.append("userAttemptScore", "0");
+      formData.append("userAttemptFlag", "true");
+
 
       const response = await axios.post(
-        ` ${API_BASE_URL}/assignments/submit`,
+        ` ${API_BASE_URL}/assignment-with-attempt/submit`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

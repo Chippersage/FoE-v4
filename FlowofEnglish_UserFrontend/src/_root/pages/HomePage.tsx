@@ -15,7 +15,7 @@ export const HomePage = () => {
     if (selectedCohortWithProgram) {
       setBackgroundUrl(
         selectedCohortWithProgram?.program?.programId.startsWith("PET")
-          ? "/images/PET-background-1.png"
+          ? "/images/PET-New-Bg.jpg"
           : "/images/index.png"
       );
       setIsLoading(false);
@@ -48,6 +48,14 @@ export const HomePage = () => {
               }}
             ></div>
 
+            {/* Overlay */}
+            {backgroundUrl === "/images/PET-New-Bg.jpg" && (
+            <div
+              className="fixed inset-0 bg-black opacity-30"
+              style={{ marginTop: "100px", zIndex: 1 }}
+            ></div>
+            )}
+            
             {/* Center Image */}
             {backgroundUrl === "/images/index.png" && (
               <div className="fixed inset-0 flex items-center justify-center">

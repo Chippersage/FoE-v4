@@ -140,7 +140,9 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
 
   useEffect(() => {
     if (isAssignmentUploadSuccesfull) {
-      handleComplete();
+      // handleComplete();
+      setShowSuccessPopup(true);
+      setSuccessCountdown(3); // Reset success countdown
     }
   }, [isAssignmentUploadSuccesfull]);
 
@@ -293,14 +295,14 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       .catch((error) => {
         console.error("Error:", error);
 
-        if (subconceptData?.subconceptType === "assignment" && retryCount < 1) {
-          setRetryCount((prev) => prev + 1);
-          sendAttemptData(userData);
-        } else {
+        // if (subconceptData?.subconceptType === "assignment" && retryCount < 1) {
+        //   setRetryCount((prev) => prev + 1);
+        //   sendAttemptData(userData);
+        // } else {
           setShowErrorPopup(true);
           setErrorCountdown(5); // Reset error countdown
           setIsComplete(false);
-        }
+        // }
       });
   };
 
@@ -527,7 +529,13 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
         <ActivityCompletionModal
           countdownDuration={3}
           onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
-          scorePercentage={scorePercentage}
+          scorePercentage={
+            ["assignment", "assessment"].some((type) =>
+              subconceptData?.subconceptType?.toLowerCase().startsWith(type)
+            )
+              ? 100
+              : scorePercentage
+          }
           subconceptType={subconceptData?.subconceptType}
         />
       ) : null}

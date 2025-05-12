@@ -1,179 +1,257 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Question as QuestionType, QuizState } from '@/types/types';
-import { parseQuestionsFromXML } from '@/utils/XmlParser';
+import { fetchAndParseQuestionsFromXML } from "@/utils/XmlParser";
 import Question from '@/components/Question';
 import Options from '@/components/Options';
 import Navigation from '@/components/Navigation';
-import Timer from '@/components/Timer';
 import ScoreDisplay from '@/components/ScoreDisplay';
 // import xmlData from '../data/questions.xml?raw';
-import xmlData from '@/constants/questions.xml?raw';
+// import xmlData from '@/constants/questions.xml?raw';
 
-const QuizActivity: React.FC = () => {
+interface QuizActivityProps {
+  triggerSubmit: () => void;
+  xmlUrl: string;
+  setScorePercentage: React.Dispatch<React.SetStateAction<number>>;
+  subconceptMaxscore: number;
+  setSubmissionPayload?: React.Dispatch<
+    React.SetStateAction<{
+      userAttemptFlag: boolean;
+      userAttemptScore: number;
+    } | null>
+    >;
+}
+
+const QuizActivity: React.FC<QuizActivityProps> = ({ 
+  triggerSubmit,
+  xmlUrl,
+  setScorePercentage,
+  subconceptMaxscore,
+  setSubmissionPayload, }) => {
+  // console.log(xmlString)
   const [state, setState] = useState<QuizState>({
     currentQuestionIndex: 0,
     questions: [],
     selectedOptions: {},
     isChecked: false,
     score: 0,
-    timeRemaining: 15 * 60, // 15 minutes in seconds
-    totalMarks: 0
+    timeRemaining: 15 * 60,
+    totalMarks: 0,
+    scoredQuestions: {}, // <-- add this
   });
-  
-  const [isQuizCompleted, setIsQuizCompleted] = useState(false);
-  
+
+  // const [isQuizCompleted, setIsQuizCompleted] = useState(false);
+
   useEffect(() => {
-    const questions = parseQuestionsFromXML(xmlData);
-    console.log(questions)
-    const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
-    
-    setState(prev => ({
-      ...prev,
-      questions,
-      totalMarks
-    }));
-  }, []);
-  
+    const loadQuestions = async () => {
+      try {
+        const questions = await fetchAndParseQuestionsFromXML(xmlUrl); // `xmlString` is now a URL
+        // console.log(questions)
+        const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+
+        setState((prev) => ({
+          ...prev,
+          questions,
+          totalMarks,
+        }));
+      } catch (error) {
+        console.error("Error fetching or parsing XML:", error);
+      }
+    };
+
+    if (xmlUrl) {
+      loadQuestions();
+    }
+  }, [xmlUrl]);
+
   const currentQuestion = state.questions[state.currentQuestionIndex] || null;
-  
+  console.log(currentQuestion);
+
   const handleOptionSelect = (optionId: string) => {
     if (state.isChecked) return;
-    
-    const questionId = currentQuestion?.id || '';
-    const isMultiple = currentQuestion?.type === 'multiple';
+
+    const questionId = currentQuestion?.id || "";
+    const isMultiple = currentQuestion?.type === "multiple";
     const selectedOptions = { ...state.selectedOptions };
-    
+
     if (isMultiple) {
       // For multiple-choice questions, toggle the selection
       if (!selectedOptions[questionId]) {
         selectedOptions[questionId] = [];
       }
-      
+
       if (selectedOptions[questionId].includes(optionId)) {
-        selectedOptions[questionId] = selectedOptions[questionId].filter(id => id !== optionId);
+        selectedOptions[questionId] = selectedOptions[questionId].filter(
+          (id) => id !== optionId
+        );
       } else {
-        selectedOptions[questionId] = [...selectedOptions[questionId], optionId];
+        selectedOptions[questionId] = [
+          ...selectedOptions[questionId],
+          optionId,
+        ];
       }
     } else {
       // For single-choice questions, replace the selection
       selectedOptions[questionId] = [optionId];
     }
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
-      selectedOptions
+      selectedOptions,
     }));
   };
-  
-  const handleCheck = () => {
-    if (!currentQuestion) return;
-    
-    const questionId = currentQuestion.id;
-    const selectedIds = state.selectedOptions[questionId] || [];
-    const correctOptionIds = currentQuestion.options.filter(opt => opt.isCorrect).map(opt => opt.id);
-    
-    // For single-choice questions or if all selections are correct in multiple-choice
-    let isCorrect = false;
-    
-    if (currentQuestion.type === 'single') {
-      isCorrect = selectedIds.length === 1 && correctOptionIds.includes(selectedIds[0]);
-    } else {
-      // For multiple-choice, all correct options must be selected and no incorrect ones
-      const allCorrectSelected = correctOptionIds.every(id => selectedIds.includes(id));
-      const noIncorrectSelected = selectedIds.every(id => correctOptionIds.includes(id));
-      isCorrect = allCorrectSelected && noIncorrectSelected;
-    }
-    
-    const scoreIncrease = isCorrect ? currentQuestion.marks : 0;
-    
-    setState(prev => ({
+
+const handleCheck = () => {
+  if (!currentQuestion) return;
+
+  const questionId = currentQuestion.id;
+
+  // Skip scoring if already scored
+  if (state.scoredQuestions[questionId]) {
+    setState((prev) => ({
       ...prev,
       isChecked: true,
-      score: prev.score + scoreIncrease
     }));
-  };
-  
+    return;
+  }
+
+  const selectedIds = state.selectedOptions[questionId] || [];
+  const correctOptionIds = currentQuestion.options
+    .filter((opt) => opt.isCorrect)
+    .map((opt) => opt.id);
+
+  let isCorrect = false;
+
+  if (currentQuestion.type === "single") {
+    isCorrect =
+      selectedIds.length === 1 && correctOptionIds.includes(selectedIds[0]);
+  } else {
+    const allCorrectSelected = correctOptionIds.every((id) =>
+      selectedIds.includes(id)
+    );
+    const noIncorrectSelected = selectedIds.every((id) =>
+      correctOptionIds.includes(id)
+    );
+    isCorrect = allCorrectSelected && noIncorrectSelected;
+  }
+
+  const scoreIncrease = isCorrect ? currentQuestion.marks : 0;
+
+  setState((prev) => ({
+    ...prev,
+    isChecked: true,
+    score: prev.score + scoreIncrease,
+    scoredQuestions: {
+      ...prev.scoredQuestions,
+      ...(isCorrect && !prev.scoredQuestions[questionId]
+        ? { [questionId]: true }
+        : {}),
+    },
+  }));
+};
+
+
   const handleNext = () => {
     if (state.currentQuestionIndex >= state.questions.length - 1) return;
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
       currentQuestionIndex: prev.currentQuestionIndex + 1,
-      isChecked: false
+      isChecked: false,
     }));
   };
-  
+
   const handlePrevious = () => {
     if (state.currentQuestionIndex <= 0) return;
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
       currentQuestionIndex: prev.currentQuestionIndex - 1,
-      isChecked: false
+      isChecked: false,
     }));
   };
-  
+
   const handleSubmit = () => {
-    setIsQuizCompleted(true);
+    const finalScore = state.score;
+    const percentage = (finalScore / subconceptMaxscore) * 100;
+
+    // Set the score percentage
+    setScorePercentage(percentage);
+
+    // Set the submission payload
+    setSubmissionPayload?.({
+      userAttemptFlag: true,
+      userAttemptScore: finalScore,
+    });
+
+    // Trigger submit after 100ms
+    setTimeout(() => {
+      triggerSubmit();
+    }, 100);
   };
-  
-  const handleTimeUp = () => {
-    setIsQuizCompleted(true);
-  };
-  
+
+
+  // const handleTimeUp = () => {
+  //   setIsQuizCompleted(true);
+  // };
+
   if (state.questions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-pulse text-lg text-gray-600">Loading quiz...</div>
-      </div>
-    );
-  }
-  
-  if (isQuizCompleted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-xl shadow-lg p-8 w-full">
-          <h1 className="text-xl font-bold text-center mb-6">Quiz Completed</h1>
-          <div className="flex justify-center mb-6">
-            <ScoreDisplay score={state.score} total={state.totalMarks} />
-          </div>
-          <p className="text-center text-lg mb-4">
-            Your final score: <span className="font-bold">{state.score}</span> out of {state.totalMarks}
-          </p>
-          <p className="text-center text-gray-600">
-            {state.score === state.totalMarks 
-              ? 'Perfect score! Excellent work!' 
-              : state.score >= state.totalMarks * 0.7 
-                ? 'Great job!' 
-                : 'Keep practicing!'}
-          </p>
+        <div className="animate-pulse text-lg text-gray-600">
+          Loading quiz...
         </div>
       </div>
     );
   }
-  
+
+  // if (isQuizCompleted) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="max-w-md bg-white rounded-xl shadow-lg p-8 w-full">
+  //         <h1 className="text-xl font-bold text-center mb-6">Quiz Completed</h1>
+  //         <div className="flex justify-center mb-6">
+  //           <ScoreDisplay score={state.score} total={state.totalMarks} />
+  //         </div>
+  //         <p className="text-center text-lg mb-4">
+  //           Your final score: <span className="font-bold">{state.score}</span>{" "}
+  //           out of {state.totalMarks}
+  //         </p>
+  //         <p className="text-center text-gray-600">
+  //           {state.score === state.totalMarks
+  //             ? "Perfect score! Excellent work!"
+  //             : state.score >= state.totalMarks * 0.7
+  //             ? "Great job!"
+  //             : "Keep practicing!"}
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
   if (!currentQuestion) return null;
-  
+
   const questionId = currentQuestion.id;
   const selectedOptions = state.selectedOptions[questionId] || [];
   const canCheck = selectedOptions.length > 0;
-  
+
   return (
-    <div className="bg-gray-50">
-      <div className=" bg-white rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative">
+    <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-green-200 py-10 px-4">
+      <div className="bg-gradient-to-b from-[#b8eea5] to-white border border-green-200 shadow-md rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">
-            Question {state.currentQuestionIndex + 1} of{" "}
-            {state.questions.length}
+            {/* Question {state.currentQuestionIndex + 1} of{" "}
+            {state.questions.length} */}
           </h2>
-          <button
+          {/* <button
             onClick={handleSubmit}
-            className={`px-6 py-2 bg-green-800 text-white rounded-md hover:bg-green-700 transition-all ${
-              !(state.currentQuestionIndex === state.questions.length - 1) && 'hidden'
+            className={`px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-500 ${
+              !(state.currentQuestionIndex === state.questions.length - 1) &&
+              "hidden"
             }`}
           >
             Submit
-          </button>
+          </button> */}
         </div>
 
         {/* <div className="flex justify-between items-center mb-6">
