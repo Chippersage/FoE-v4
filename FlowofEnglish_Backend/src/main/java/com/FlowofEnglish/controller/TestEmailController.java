@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.FlowofEnglish.model.User;
 import com.FlowofEnglish.repository.UserRepository;
-import com.FlowofEnglish.service.GoodFridayGreetingService;
+import com.FlowofEnglish.service.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class TestEmailController {
     private static final Logger logger = LoggerFactory.getLogger(TestEmailController.class);
     
     @Autowired
-    private GoodFridayGreetingService goodFridayGreetingService;
+    private BuddhaPurnimaGreetingService buddhaPurnimaGreetingService;
     
     @Autowired
     private UserRepository userRepository;
@@ -56,7 +56,7 @@ public class TestEmailController {
             String timestamp = now.format(formatter);
             
             // Send test email to the actual user
-            goodFridayGreetingService.sendTestGoodFridayEmail(user.getUserEmail());
+            buddhaPurnimaGreetingService.sendTestBuddhaPurnimaEmail(user.getUserEmail());
             
             logger.info("Test Good Friday email sent to user: {}, email: {} at {}", 
                         user.getUserName(), user.getUserEmail(), timestamp);
@@ -87,7 +87,7 @@ public class TestEmailController {
             String timestamp = now.format(formatter);
             
             // Use the test method from the service
-            goodFridayGreetingService.sendTestGoodFridayEmail(email);
+            buddhaPurnimaGreetingService.sendTestBuddhaPurnimaEmail(email);
             
             logger.info("Manual test Good Friday email sent to {} at {}", email, timestamp);
             
