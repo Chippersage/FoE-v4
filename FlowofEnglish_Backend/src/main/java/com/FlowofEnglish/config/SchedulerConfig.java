@@ -18,7 +18,7 @@ public class SchedulerConfig {
     private WeeklyReportService weeklyReportService;
     
     @Autowired
-    private GoodFridayGreetingService goodFridayGreetingService;
+    private BuddhaPurnimaGreetingService buddhaPurnimaGreetingService;
     
     @Scheduled(cron = "0 0 9 * * MON", zone = "Asia/Kolkata") // Every Monday at 9 AM
     public void sendWeeklyEmails() {
@@ -32,16 +32,16 @@ public class SchedulerConfig {
         }
     }
     
-    // Run once at 9:00 AM  (April 18, 2025)
-//    @Scheduled(cron = "0 0 9 18 4 ?", zone = "Asia/Kolkata")
-//    public void sendGoodFridayGreetings() {
-//        System.out.println("Good Friday greeting scheduler triggered at: " + java.time.LocalDateTime.now());
-//        logger.info("Good Friday greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
+//    // Run once at 2:00 PM  (May 12, 2025)
+//    @Scheduled(cron = "0 0 14 12 5 ?", zone = "Asia/Kolkata")
+//    public void sendBuddhaPurnimaGreetings() {
+//        System.out.println("Buddha Purnima greeting scheduler triggered at: " + java.time.LocalDateTime.now());
+//        logger.info("Buddha Purnima greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
 //        try {
-//            goodFridayGreetingService.sendGoodFridayGreetings();
-//            logger.info("Good Friday greeting process completed successfully.");
+//            buddhaPurnimaGreetingService.sendBuddhaPurnimaGreetings();
+//            logger.info("Buddha Purnima greeting process completed successfully.");
 //        } catch (Exception e) {
-//            logger.error("Error occurred while sending Good Friday greetings: {}", e.getMessage(), e);
+//            logger.error("Error occurred while sending Buddha Purnima greetings: {}", e.getMessage(), e);
 //        }
 //    }
 }
