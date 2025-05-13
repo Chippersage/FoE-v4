@@ -2,12 +2,18 @@ import { Question, Option } from "../types/types";
 
 export const fetchAndParseQuestionsFromXML = async (
   xmlUrl: string
-): Promise<Question[]> => {
+): Promise<{ questions: Question[]; activitiesHeaderText: string | null }> => {
   const response = await fetch(xmlUrl);
   const xmlString = await response.text();
 
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+  // First check if we have an activities tag and extract its headertext
+  const activitiesNode = xmlDoc.getElementsByTagName("activities")[0];
+  const activitiesHeaderText =
+    activitiesNode?.getAttribute("headertext") || null;
+
   const questionNodes = xmlDoc.getElementsByTagName("question");
   const questions: Question[] = [];
 
@@ -44,12 +50,12 @@ export const fetchAndParseQuestionsFromXML = async (
     questions.push({
       id: questionId,
       text: questionText,
-      headerText, // add headerText to the question object
+      headerText, // Individual question headerText
       options,
       type,
       marks: 1,
     });
   }
 
-  return questions;
+  return { questions, activitiesHeaderText };
 };

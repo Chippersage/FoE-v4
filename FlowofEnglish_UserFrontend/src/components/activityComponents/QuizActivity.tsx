@@ -1,13 +1,11 @@
 // @ts-nocheck
-import { useEffect, useState } from 'react';
-import { Question as QuestionType, QuizState } from '@/types/types';
+import { useEffect, useState, useRef } from "react";
+import { Question as QuestionType, QuizState } from "@/types/types";
 import { fetchAndParseQuestionsFromXML } from "@/utils/XmlParser";
-import Question from '@/components/Question';
-import Options from '@/components/Options';
-import Navigation from '@/components/Navigation';
-import ScoreDisplay from '@/components/ScoreDisplay';
-// import xmlData from '../data/questions.xml?raw';
-// import xmlData from '@/constants/questions.xml?raw';
+import Question from "@/components/Question";
+import Options from "@/components/Options";
+import Navigation from "@/components/Navigation";
+import ScoreDisplay from "@/components/ScoreDisplay";
 
 interface QuizActivityProps {
   triggerSubmit: () => void;
@@ -19,16 +17,25 @@ interface QuizActivityProps {
       userAttemptFlag: boolean;
       userAttemptScore: number;
     } | null>
-    >;
+  >;
 }
 
-const QuizActivity: React.FC<QuizActivityProps> = ({ 
+// Sound effect paths - you can replace these with your actual audio files
+const SOUND_EFFECTS = {
+  QUIZ_LOAD: "/",
+  OPTION_SELECT: "/",
+  CORRECT_ANSWER: "/duolingo-correct.mp3",
+  WRONG_ANSWER: "/duolingo-wrong.mp3",
+  NAVIGATION: "/",
+};
+
+const QuizActivity: React.FC<QuizActivityProps> = ({
   triggerSubmit,
   xmlUrl,
   setScorePercentage,
   subconceptMaxscore,
-  setSubmissionPayload, }) => {
-  // console.log(xmlString)
+  setSubmissionPayload,
+}) => {
   const [state, setState] = useState<QuizState>({
     currentQuestionIndex: 0,
     questions: [],
@@ -37,16 +44,58 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
     score: 0,
     timeRemaining: 15 * 60,
     totalMarks: 0,
-    scoredQuestions: {}, // <-- add this
+    scoredQuestions: {},
   });
 
-  // const [isQuizCompleted, setIsQuizCompleted] = useState(false);
+  // Add state for activities header text
+  const [activitiesHeaderText, setActivitiesHeaderText] = useState<
+    string | null
+  >(null);
+
+  // Create refs for audio elements
+  const loadSoundRef = useRef<HTMLAudioElement | null>(null);
+  const selectSoundRef = useRef<HTMLAudioElement | null>(null);
+  const correctSoundRef = useRef<HTMLAudioElement | null>(null);
+  const wrongSoundRef = useRef<HTMLAudioElement | null>(null);
+  const navigationSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio elements
+  useEffect(() => {
+    loadSoundRef.current = new Audio(SOUND_EFFECTS.QUIZ_LOAD);
+    selectSoundRef.current = new Audio(SOUND_EFFECTS.OPTION_SELECT);
+    correctSoundRef.current = new Audio(SOUND_EFFECTS.CORRECT_ANSWER);
+    wrongSoundRef.current = new Audio(SOUND_EFFECTS.WRONG_ANSWER);
+    navigationSoundRef.current = new Audio(SOUND_EFFECTS.NAVIGATION);
+
+    // Preload audio
+    loadSoundRef.current.load();
+    selectSoundRef.current.load();
+    correctSoundRef.current.load();
+    wrongSoundRef.current.load();
+    navigationSoundRef.current.load();
+
+    return () => {
+      // Cleanup audio elements when component unmounts
+      [
+        loadSoundRef,
+        selectSoundRef,
+        correctSoundRef,
+        wrongSoundRef,
+        navigationSoundRef,
+      ].forEach((ref) => {
+        if (ref.current) {
+          ref.current.pause();
+          ref.current = null;
+        }
+      });
+    };
+  }, []);
 
   useEffect(() => {
     const loadQuestions = async () => {
       try {
-        const questions = await fetchAndParseQuestionsFromXML(xmlUrl); // `xmlString` is now a URL
-        // console.log(questions)
+        const { questions, activitiesHeaderText } =
+          await fetchAndParseQuestionsFromXML(xmlUrl);
         const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
 
         setState((prev) => ({
@@ -54,6 +103,14 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
           questions,
           totalMarks,
         }));
+
+        // Set the activities header text
+        setActivitiesHeaderText(activitiesHeaderText);
+
+        // Play loading sound when questions are loaded
+        if (loadSoundRef.current) {
+          loadSoundRef.current.play();
+        }
       } catch (error) {
         console.error("Error fetching or parsing XML:", error);
       }
@@ -65,10 +122,23 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
   }, [xmlUrl]);
 
   const currentQuestion = state.questions[state.currentQuestionIndex] || null;
-  console.log(currentQuestion);
+
+  // Play a sound effect
+  const playSound = (soundRef) => {
+    if (soundRef.current) {
+      soundRef.current.currentTime = 0; // Reset sound to beginning
+      soundRef.current.play().catch((error) => {
+        // Handle autoplay restrictions
+        console.warn("Failed to play sound:", error);
+      });
+    }
+  };
 
   const handleOptionSelect = (optionId: string) => {
     if (state.isChecked) return;
+
+    // Play option select sound
+    playSound(selectSoundRef);
 
     const questionId = currentQuestion?.id || "";
     const isMultiple = currentQuestion?.type === "multiple";
@@ -101,58 +171,67 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
     }));
   };
 
-const handleCheck = () => {
-  if (!currentQuestion) return;
+  const handleCheck = () => {
+    if (!currentQuestion) return;
 
-  const questionId = currentQuestion.id;
+    const questionId = currentQuestion.id;
 
-  // Skip scoring if already scored
-  if (state.scoredQuestions[questionId]) {
+    // Skip scoring if already scored
+    if (state.scoredQuestions[questionId]) {
+      setState((prev) => ({
+        ...prev,
+        isChecked: true,
+      }));
+      return;
+    }
+
+    const selectedIds = state.selectedOptions[questionId] || [];
+    const correctOptionIds = currentQuestion.options
+      .filter((opt) => opt.isCorrect)
+      .map((opt) => opt.id);
+
+    let isCorrect = false;
+
+    if (currentQuestion.type === "single") {
+      isCorrect =
+        selectedIds.length === 1 && correctOptionIds.includes(selectedIds[0]);
+    } else {
+      const allCorrectSelected = correctOptionIds.every((id) =>
+        selectedIds.includes(id)
+      );
+      const noIncorrectSelected = selectedIds.every((id) =>
+        correctOptionIds.includes(id)
+      );
+      isCorrect = allCorrectSelected && noIncorrectSelected;
+    }
+
+    // Play correct or wrong sound based on answer
+    if (isCorrect) {
+      playSound(correctSoundRef);
+    } else {
+      playSound(wrongSoundRef);
+    }
+
+    const scoreIncrease = isCorrect ? currentQuestion.marks : 0;
+
     setState((prev) => ({
       ...prev,
       isChecked: true,
+      score: prev.score + scoreIncrease,
+      scoredQuestions: {
+        ...prev.scoredQuestions,
+        ...(isCorrect && !prev.scoredQuestions[questionId]
+          ? { [questionId]: true }
+          : {}),
+      },
     }));
-    return;
-  }
-
-  const selectedIds = state.selectedOptions[questionId] || [];
-  const correctOptionIds = currentQuestion.options
-    .filter((opt) => opt.isCorrect)
-    .map((opt) => opt.id);
-
-  let isCorrect = false;
-
-  if (currentQuestion.type === "single") {
-    isCorrect =
-      selectedIds.length === 1 && correctOptionIds.includes(selectedIds[0]);
-  } else {
-    const allCorrectSelected = correctOptionIds.every((id) =>
-      selectedIds.includes(id)
-    );
-    const noIncorrectSelected = selectedIds.every((id) =>
-      correctOptionIds.includes(id)
-    );
-    isCorrect = allCorrectSelected && noIncorrectSelected;
-  }
-
-  const scoreIncrease = isCorrect ? currentQuestion.marks : 0;
-
-  setState((prev) => ({
-    ...prev,
-    isChecked: true,
-    score: prev.score + scoreIncrease,
-    scoredQuestions: {
-      ...prev.scoredQuestions,
-      ...(isCorrect && !prev.scoredQuestions[questionId]
-        ? { [questionId]: true }
-        : {}),
-    },
-  }));
-};
-
+  };
 
   const handleNext = () => {
     if (state.currentQuestionIndex >= state.questions.length - 1) return;
+
+    // Play navigation sound
+    playSound(navigationSoundRef);
 
     setState((prev) => ({
       ...prev,
@@ -164,6 +243,9 @@ const handleCheck = () => {
   const handlePrevious = () => {
     if (state.currentQuestionIndex <= 0) return;
 
+    // Play navigation sound
+    playSound(navigationSoundRef);
+
     setState((prev) => ({
       ...prev,
       currentQuestionIndex: prev.currentQuestionIndex - 1,
@@ -172,6 +254,9 @@ const handleCheck = () => {
   };
 
   const handleSubmit = () => {
+    // Play navigation sound for submit
+    playSound(navigationSoundRef);
+
     const finalScore = state.score;
     const percentage = (finalScore / subconceptMaxscore) * 100;
 
@@ -190,11 +275,6 @@ const handleCheck = () => {
     }, 100);
   };
 
-
-  // const handleTimeUp = () => {
-  //   setIsQuizCompleted(true);
-  // };
-
   if (state.questions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -204,30 +284,6 @@ const handleCheck = () => {
       </div>
     );
   }
-
-  // if (isQuizCompleted) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-  //       <div className="max-w-md bg-white rounded-xl shadow-lg p-8 w-full">
-  //         <h1 className="text-xl font-bold text-center mb-6">Quiz Completed</h1>
-  //         <div className="flex justify-center mb-6">
-  //           <ScoreDisplay score={state.score} total={state.totalMarks} />
-  //         </div>
-  //         <p className="text-center text-lg mb-4">
-  //           Your final score: <span className="font-bold">{state.score}</span>{" "}
-  //           out of {state.totalMarks}
-  //         </p>
-  //         <p className="text-center text-gray-600">
-  //           {state.score === state.totalMarks
-  //             ? "Perfect score! Excellent work!"
-  //             : state.score >= state.totalMarks * 0.7
-  //             ? "Great job!"
-  //             : "Keep practicing!"}
-  //         </p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   if (!currentQuestion) return null;
 
@@ -239,30 +295,12 @@ const handleCheck = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-green-200 py-10 px-4">
       <div className="bg-gradient-to-b from-[#b8eea5] to-white border border-green-200 shadow-md rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {/* Question {state.currentQuestionIndex + 1} of{" "}
-            {state.questions.length} */}
-          </h2>
-          {/* <button
-            onClick={handleSubmit}
-            className={`px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-500 ${
-              !(state.currentQuestionIndex === state.questions.length - 1) &&
-              "hidden"
-            }`}
-          >
-            Submit
-          </button> */}
+          {activitiesHeaderText && (
+            <h2 className="text-xl font-semibold text-green-800 mb-6">
+              {activitiesHeaderText}
+            </h2>
+          )}
         </div>
-
-        {/* <div className="flex justify-between items-center mb-6">
-          <Timer initialTime={state.timeRemaining} onTimeUp={handleTimeUp} />
-          <button
-            onClick={handleSubmit}
-            className="px-6 py-2 bg-green-800 text-white rounded-md hover:bg-green-700 transition-all"
-          >
-            Submit
-          </button>
-        </div> */}
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           {/* Score on top for small, right for md+ */}
@@ -275,6 +313,7 @@ const handleCheck = () => {
               question={currentQuestion}
               currentIndex={state.currentQuestionIndex}
               totalQuestions={state.questions.length}
+              activitiesHeaderText={activitiesHeaderText}
             />
 
             <Options

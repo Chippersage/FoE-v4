@@ -58,6 +58,7 @@ import { useSession } from "@/context/TimerContext";
 import Default from "@/components/activityIcons/Default";
 import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSentences";
 import BackButton from "@/components/BackButton";
+import toast from "react-hot-toast";
 
 interface Subconcept {
   subconceptId: string;
@@ -449,7 +450,7 @@ export default function SubConceptsPage() {
   return (
     <>
       <Header2 />
-      <BackButton className="fixed top-28 left-4 z-20" /> {/* Add this line */}
+      <BackButton className="fixed top-28 left-4 z-20" />
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -461,7 +462,6 @@ export default function SubConceptsPage() {
         <audio
           src="/youaresuperb.mp3"
           autoPlay
-
           // onEnded={() => setShowConfetti(false)}
         />
       )}
@@ -469,84 +469,29 @@ export default function SubConceptsPage() {
         ref={scrollableDivRef}
         className="relative w-full h-auto overflow-y-auto"
       >
-        {/* Background image */}
+        {/* Background image - lowest z-index */}
         <div
-          className="fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none top-24 sm:top-0 z-0"
+          className="fixed inset-0 bg-center md:bg-cover bg-no-repeat pointer-events-none top-24 sm:top-0 z-0 blur-[1.7px] opacity-80"
           style={{
             backgroundImage: `url(${backgroundUrl})`,
           }}
         />
 
-        {/* Black overlay on top of the background */}
+        {/* Black overlay on top of ONLY the background - z-index 1 */}
         {backgroundUrl === "/images/PET-New-Bg.jpg" && (
-        <div className="fixed inset-0 bg-black opacity-25 pointer-events-none top-24 sm:top-0 z-10" />
-        )}
-        
-        {/* Confetti Animation */}
-        {showConfetti && (
-          <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
-            <DotLottieReact
-              src="/animation.lottie"
-              loop
-              autoplay
-              style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
-            />
-            <div className="absolute bg-white p-6 rounded shadow-lg text-center max-w-[300px] sm:max-w-xl">
-              <h2 className="text-2xl font-bold text-green-500">
-                Congratulations!
-              </h2>
-              <p>You have completed this unit successfully!</p>
-              <p className="text-sm text-gray-500 mt-2">
-                You will be redirected to the home page. From there, you can
-                continue to the next unit to keep learning!
-              </p>
-            </div>
-          </div>
+          <div className="fixed inset-0 bg-black opacity-25 pointer-events-none top-24 sm:top-0 z-1" />
         )}
 
-        {/* Audio Element */}
-        {audioPlaying && (
-          <audio
-            src="/youaresuperb.mp3"
-            autoPlay
-            onEnded={() => setAudioPlaying(false)}
-          />
-        )}
-
-        {/* Current Unit Title */}
-        <div
-          className="fixed z-[20] top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
-          style={{ maxWidth: "90%" }} // Ensures text doesn't overflow
-        >
-          <div>{unitName || "Loading Unit..."}</div>
-          <div className=" text-xs sm:text-xs md:text-xs  font-normal opacity-80 italic truncate">
-            {unitDescription || "Loading description..."}
-          </div>
-        </div>
-        {/* Session Time */}
-        {formattedElapsedTime && (
-          <div className="fixed z-[10] top-[200px] sm:top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
-            <Clock className="h-4 w-4 text-green-600" />
-            <span className="font-medium text-green-600 tabular-nums">
-              Session time: {formattedElapsedTime}
-            </span>
-          </div>
-        )}
-        {/* Scrollable SVG Container */}
+        {/* SVG Container - higher z-index than background and overlay */}
         {pathData && (
-          <div className="w-full min-h-full relative flex items-center justify-center">
+          <div className="w-full min-h-full relative flex items-center justify-center z-15">
             <svg
               className="w-full h-auto"
               viewBox={`0 0 ${pathWidth} ${pathData.dynamicHeight}`}
               preserveAspectRatio="xMinYMin meet"
             >
               <path
-                d={
-                  pathData.path
-                  // totalSteps <= 5 && window.innerWidth > 728
-                  //   ? getSinglePath()
-                  //   : getPath(totalSteps > 8 ? (totalSteps > 14 ? 3 : 2) : 1)
-                }
+                d={pathData.path}
                 fill="none"
                 stroke="white"
                 strokeWidth="5"
@@ -579,24 +524,15 @@ export default function SubConceptsPage() {
                 const isCompleted =
                   subconcept && subconcept.completionStatus === "yes";
                 const isEnabled =
-                  // @ts-ignore
-                  // started &&
                   index === 0 ||
                   (index === totalSteps - 1 &&
                     subconcepts.every((s) => s.completionStatus === "yes")) ||
                   (subconcept?.completionStatus !== "disabled" &&
                     index !== totalSteps - 1);
 
-                // // Find the first incomplete subconcept index
-                // const firstIncompleteIndex = subconcepts.findIndex(
-                //   (s) => s.completionStatus === "incomplete"
-                // );
-                // const targetIndex = firstIncompleteIndex + 1; // Adjust for the offset
-
                 return (
                   <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
                     <Link
-                      // @ts-ignore
                       to={
                         index === totalSteps - 1 &&
                         nextUnitId &&
@@ -604,7 +540,15 @@ export default function SubConceptsPage() {
                           unitCompletionStatus.toLowerCase() ===
                             "unit completed without assignments")
                           ? `/home`
-                          : isEnabled && index !== totalSteps - 1 && index !== 0
+                          : isEnabled &&
+                            index !== totalSteps - 1 &&
+                            index !== 0 &&
+                            !(
+                              subconcept?.subconceptType
+                                ?.toLowerCase()
+                                .startsWith("assessment") &&
+                              subconcept?.completionStatus === "yes"
+                            )
                           ? `/subconcept/${subconcept?.subconceptId}`
                           : null
                       }
@@ -640,6 +584,32 @@ export default function SubConceptsPage() {
                           !nextUnitId
                         ) {
                           openModal();
+                        } else if (
+                          subconcept?.subconceptType
+                            ?.toLowerCase()
+                            .startsWith("assessment") &&
+                          subconcept?.completionStatus === "yes"
+                        ) {
+                          e.preventDefault(); // prevent navigation
+                          toast(
+                            (t) => (
+                              <div className="text-yellow-800 font-medium text-md">
+                                Assessment already completed, you can attempt
+                                only once!
+                              </div>
+                            ),
+                            {
+                              icon: "⚠️",
+                              position: "top-center",
+                              style: {
+                                border: "1px solid #facc15",
+                                padding: "12px 16px",
+                                color: "#78350f",
+                                background: "#fef9c3",
+                                borderRadius: "8px",
+                              },
+                            }
+                          );
                         }
                       }}
                     >
@@ -808,6 +778,58 @@ export default function SubConceptsPage() {
                 );
               })}
             </svg>
+          </div>
+        )}
+
+        {/* Confetti Animation - highest z-index */}
+        {showConfetti && (
+          <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
+            <DotLottieReact
+              src="/animation.lottie"
+              loop
+              autoplay
+              style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
+            />
+            <div className="absolute bg-white p-6 rounded shadow-lg text-center max-w-[300px] sm:max-w-xl">
+              <h2 className="text-2xl font-bold text-green-500">
+                Congratulations!
+              </h2>
+              <p>You have completed this unit successfully!</p>
+              <p className="text-sm text-gray-500 mt-2">
+                You will be redirected to the home page. From there, you can
+                continue to the next unit to keep learning!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Audio Element */}
+        {audioPlaying && (
+          <audio
+            src="/youaresuperb.mp3"
+            autoPlay
+            onEnded={() => setAudioPlaying(false)}
+          />
+        )}
+
+        {/* Current Unit Title - high z-index to stay above everything */}
+        <div
+          className="fixed z-[20] top-[160px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center font-semibold text-white bg-[#E26291] px-4 py-2 rounded-[2px] max-w-full truncate text-sm sm:text-sm "
+          style={{ maxWidth: "90%" }}
+        >
+          <div>{unitName || "Loading Unit..."}</div>
+          <div className=" text-xs sm:text-xs md:text-xs  font-normal opacity-80 italic truncate">
+            {unitDescription || "Loading description..."}
+          </div>
+        </div>
+
+        {/* Session Time - high z-index */}
+        {formattedElapsedTime && (
+          <div className="fixed z-[20] top-[200px] sm:top-[140px] right-2 flex items-center gap-2 rounded-full bg-green-50 px-2">
+            <Clock className="h-4 w-4 text-green-600" />
+            <span className="font-medium text-green-600 tabular-nums">
+              Session time: {formattedElapsedTime}
+            </span>
           </div>
         )}
       </div>

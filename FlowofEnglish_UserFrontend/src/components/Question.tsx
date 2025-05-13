@@ -5,17 +5,19 @@ interface QuestionProps {
   question: QuestionType;
   currentIndex: number;
   totalQuestions: number;
+  activitiesHeaderText: string | null;
 }
 
 const Question: React.FC<QuestionProps> = ({
   question,
   currentIndex,
   totalQuestions,
+  activitiesHeaderText,
 }) => {
   return (
     <div className="mb-6 animate-fadeIn">
-      {/* Header Text Above */}
-      {question.headerText && (
+      {/* If there's a question-specific headerText and no activities headerText, show it here */}
+      {question.headerText && !activitiesHeaderText && (
         <h2 className="text-xl font-semibold text-green-800 mb-6">
           {question.headerText}
         </h2>
