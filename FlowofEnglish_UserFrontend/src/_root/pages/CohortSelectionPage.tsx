@@ -50,6 +50,17 @@ export default function Dashboard() {
   const [showAssignments, setShowAssignments] = useState(false);
   // const [notificationCounts, setNotificationCounts] = useState({});
   // const tempSessionId = localStorage.getItem("tempSessionId");
+  const progressFetchedRef = useRef({});
+  const prevDependenciesRef = useRef({
+    userCohortsLength: 0,
+    userId: null,
+    apiBaseUrl: null,
+  });
+  const renderCountRef = useRef(0);
+  const [debugLogs, setDebugLogs] = useState([]);
+
+  // For development debugging - add a log view
+  const showDebugLogs = false; // Set to true to see logs in the UI
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,38 +70,169 @@ export default function Dashboard() {
     return () => clearTimeout(timer); // cleanup on unmount
   }, []);
 
+  // Replace the progress fetch useEffect with this:
   useEffect(() => {
-    if (!user?.cohorts) return;
+    // Increment render count
+    renderCountRef.current += 1;
 
-    user.cohorts.forEach((cohort) => {
+    const addLog = (message) => {
+      const logMessage = `[Render #${renderCountRef.current}] ${message}`;
+      // console.log(logMessage);
+      setDebugLogs((prev) => [
+        ...prev,
+        `${new Date().toISOString().slice(11, 19)}: ${logMessage}`,
+      ]);
+    };
+
+    // Check which dependencies changed
+    const currentDeps = {
+      userCohortsLength: user?.cohorts?.length || 0,
+      userId: user?.userId,
+      apiBaseUrl: API_BASE_URL,
+    };
+
+    const changedDeps = [];
+
+    if (
+      currentDeps.userCohortsLength !==
+      prevDependenciesRef.current.userCohortsLength
+    ) {
+      changedDeps.push(
+        `cohorts length: ${prevDependenciesRef.current.userCohortsLength} → ${currentDeps.userCohortsLength}`
+      );
+    }
+
+    if (currentDeps.userId !== prevDependenciesRef.current.userId) {
+      changedDeps.push(
+        `userId: ${prevDependenciesRef.current.userId} → ${currentDeps.userId}`
+      );
+    }
+
+    if (currentDeps.apiBaseUrl !== prevDependenciesRef.current.apiBaseUrl) {
+      changedDeps.push(
+        `API URL: ${prevDependenciesRef.current.apiBaseUrl} → ${currentDeps.apiBaseUrl}`
+      );
+    }
+
+    // Update the previous dependencies ref for next comparison
+    prevDependenciesRef.current = currentDeps;
+
+    // Log which dependencies changed
+    if (changedDeps.length > 0) {
+      addLog(`Effect triggered due to changes in: ${changedDeps.join(", ")}`);
+    } else {
+      addLog(
+        `Effect triggered (initial render or no visible dependency change)`
+      );
+    }
+
+    // Guard clause
+    if (!user?.cohorts || !user?.userId) {
+      addLog(
+        `Skipping effect: ${
+          !user
+            ? "user is null"
+            : !user.cohorts
+            ? "cohorts is null"
+            : "userId is null"
+        }`
+      );
+      return;
+    }
+
+    addLog(`Processing ${user.cohorts.length} cohorts`);
+
+    // Create a batch of promises for cohorts that haven't been fetched yet
+    const fetchPromises = [];
+
+    user.cohorts.forEach((cohort, index) => {
       const programId = cohort?.program?.programId;
-      const userId = user?.userId;
-      if (!programId || !userId) return;
+      if (!programId) {
+        addLog(`Cohort at index ${index} has no programId, skipping`);
+        return;
+      }
+
+      // Skip if we've already fetched this programId in this component instance
+      if (progressFetchedRef.current[programId]) {
+        addLog(`Skipping duplicate fetch for programId: ${programId}`);
+        return;
+      }
+
+      // Mark as being fetched
+      progressFetchedRef.current[programId] = true;
 
       // Set loading state
       setLoading((prev) => ({ ...prev, [programId]: true }));
 
-      // Fetch progress data
-      fetch(
-        `${API_BASE_URL}/reports/program/${programId}/user/${userId}/progress`
+      addLog(`Fetching progress for programId: ${programId}`);
+
+      // Add the fetch promise to our array
+      const fetchPromise = fetch(
+        `${API_BASE_URL}/reports/program/${programId}/user/${user.userId}/progress`
       )
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok)
+            throw new Error(
+              `Failed to fetch progress for program ${programId}`
+            );
+          return res.json();
+        })
         .then((data) => {
+          addLog(`Received data for programId: ${programId}`);
           const { completedSubconcepts, totalSubconcepts } = data;
           const progress =
             totalSubconcepts > 0
               ? (completedSubconcepts / totalSubconcepts) * 100
               : 0;
 
-          // Update progress state
-          setProgressData((prev) => ({ ...prev, [programId]: progress }));
+          // Update the progress data state
+          setProgressData((prev) => ({
+            ...prev,
+            [programId]: progress,
+          }));
+
+          return programId;
         })
-        .catch((error) => console.error("Error fetching progress:", error))
+        .catch((error) => {
+          addLog(
+            `Error fetching progress for programId ${programId}: ${error.message}`
+          );
+          console.error(
+            `Error fetching progress for program ${programId}:`,
+            error
+          );
+          return programId;
+        })
         .finally(() => {
-          setLoading((prev) => ({ ...prev, [programId]: false }));
+          // Reset loading state for this programId
+          setLoading((prev) => ({
+            ...prev,
+            [programId]: false,
+          }));
         });
+
+      fetchPromises.push(fetchPromise);
     });
-  }, [user?.cohorts]);
+
+    if (fetchPromises.length > 0) {
+      addLog(`Started ${fetchPromises.length} fetch requests`);
+
+      Promise.all(fetchPromises)
+        .then(() => {
+          addLog("All progress data fetched successfully");
+        })
+        .catch((error) => {
+          addLog(`Error in batch fetch: ${error.message}`);
+        });
+    } else {
+      addLog("No new progress data to fetch");
+    }
+
+    // Cleanup function to handle component unmount
+    return () => {
+      addLog("Effect cleanup - component unmounting or dependencies changed");
+    };
+  }, [user?.cohorts, API_BASE_URL, user?.userId]); // Dependencies
 
   // useEffect(() => {
   //   if (!user?.cohorts) return;
@@ -142,7 +284,7 @@ export default function Dashboard() {
   });
 
   const handleResume = async (cohortWithProgram: string) => {
-    console.log("resume clicked");
+    // console.log("resume clicked");
     setSelectedCohortWithProgram(cohortWithProgram);
     // When setting the cohort
     localStorage.setItem(
