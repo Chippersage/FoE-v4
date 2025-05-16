@@ -542,7 +542,16 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       {showErrorPopup && renderOverlay("error")}
       {/* Rest of the component */}
       {/* @ts-ignore */}
-      <div className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full fixed">
+      <div
+        className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full fixed"
+        style={{
+          backgroundImage: "url('/images/cohort-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+        }}
+      >
         <h1 className="pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
           {subconceptData?.subconceptType === "video" ||
           subconceptData?.subconceptType === "youtube"

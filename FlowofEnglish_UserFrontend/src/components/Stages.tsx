@@ -81,14 +81,14 @@ export default function Stages({
           setRunTour={setRunTour}
         />
       )}
-      <div className="w-full max-h-[480px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]  no-scrollbar relative learning-path-section">
+      <div className="w-full max-h-[520px] max-w-lg mx-auto py-5 px-6 bg-white bg-opacity-50 rounded-[3px]  no-scrollbar relative learning-path-section">
         {/* Fixed Title */}
         <div className="mb-4">
           <h3 className="text-xl font-semibold font-openSans">
             Your Learning Path
           </h3>
           {programCompletionStatus === "yes" && (
-            <div className="bg-emerald-50 text-emerald-600 px-4 py-2 text-sm font-medium flex items-center gap-2">
+            <div className="bg-emerald-50 text-emerald-600 px-4 py-2 text-sm font-medium flex items-center gap-2 mt-2">
               <Trophy className="w-4 h-4" />
               All Stages Complete!
             </div>

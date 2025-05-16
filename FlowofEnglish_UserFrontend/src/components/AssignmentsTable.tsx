@@ -28,6 +28,9 @@ import {
   DialogActions,
   TablePagination,
   InputAdornment,
+  TableSortLabel,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import axios from "axios";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -36,6 +39,8 @@ import EmptyStateIcon from "@mui/icons-material/FolderOff";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import SortIcon from "@mui/icons-material/Sort";
 import { format } from "date-fns";
 import { debounce } from "lodash"; // Add lodash for debouncing
 
@@ -333,6 +338,11 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
 
+  // Sorting states
+  const [order, setOrder] = useState("asc");
+  const [orderBy, setOrderBy] = useState("user.userId");
+  const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState(null);
+
   const [statistics, setStatistics] = useState({
     correctedAssignments: 0,
     totalAssignments: 0,
@@ -362,6 +372,41 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const HOVER_COLOR = "#f5f5f5";
   const DEPENDENCY_CHIP_COLOR = "#f0e6ff";
 
+  // Define sortable columns with their data paths and labels
+  const sortableColumns = [
+    {
+      id: "user.userId",
+      label: "User ID",
+      path: (a) => a.user.userId.toLowerCase(),
+    },
+    {
+      id: "subconcept.subconceptDesc",
+      label: "Topic",
+      path: (a) => a.subconcept.subconceptDesc.toLowerCase(),
+    },
+    {
+      id: "subconcept.subconceptMaxscore",
+      label: "Max Score",
+      path: (a) => a.subconcept.subconceptMaxscore,
+    },
+    {
+      id: "submittedDate",
+      label: "Submitted Date",
+      path: (a) => a.submittedDate,
+    },
+    { id: "score", label: "Score", path: (a) => a.score || 0 },
+    {
+      id: "correctedDate",
+      label: "Date of Correction",
+      path: (a) => a.correctedDate || 0,
+    },
+    {
+      id: "status",
+      label: "Status",
+      path: (a) => (a.correctedDate ? "Corrected" : "Pending"),
+    },
+  ];
+
   useEffect(() => {
     fetchAssignments();
   }, [cohortId]);
@@ -381,6 +426,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         );
       });
       setFilteredAssignments(filtered);
+      sortData(filtered, orderBy, order);
       setPage(0); // Reset to first page when search changes
     }
   }, [searchQuery, assignments]);
@@ -426,6 +472,64 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Generic function to get a nested property value using a path like 'user.userId'
+  const getNestedValue = (obj, path) => {
+    const pathArray = path.split(".");
+    return pathArray.reduce(
+      (acc, key) => (acc && acc[key] !== undefined ? acc[key] : null),
+      obj
+    );
+  };
+
+  // Sorting function that handles nested properties
+  const sortData = (data, property, sortOrder) => {
+    const column = sortableColumns.find((col) => col.id === property);
+    if (!column) return [...data]; // Return copy if no valid column found
+
+    const sortedData = [...data].sort((a, b) => {
+      const valueA = column.path(a);
+      const valueB = column.path(b);
+
+      // Handle nulls/undefined
+      if (valueA === null || valueA === undefined)
+        return sortOrder === "asc" ? -1 : 1;
+      if (valueB === null || valueB === undefined)
+        return sortOrder === "asc" ? 1 : -1;
+
+      // Sort numbers
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
+      }
+
+      // Default string comparison
+      return sortOrder === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+
+    setFilteredAssignments(sortedData);
+    return sortedData;
+  };
+
+  // Handle sort request
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === "asc";
+    const newOrder = isAsc ? "desc" : "asc";
+    setOrder(newOrder);
+    setOrderBy(property);
+    sortData(filteredAssignments, property, newOrder);
+    handleCloseSortMenu();
+  };
+
+  // Sort menu handlers
+  const handleOpenSortMenu = (event) => {
+    setSortMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseSortMenu = () => {
+    setSortMenuAnchorEl(null);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -560,12 +664,11 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
 
       setAssignments(updatedAssignments);
 
-      // Update filtered assignments as well
-      setFilteredAssignments(
-        filteredAssignments.map((assignment) =>
-          assignment.assignmentId === assignmentId ? response.data : assignment
-        )
+      // Update filtered assignments and maintain current sort
+      const updatedFiltered = filteredAssignments.map((assignment) =>
+        assignment.assignmentId === assignmentId ? response.data : assignment
       );
+      sortData(updatedFiltered, orderBy, order);
 
       // Update statistics
       setStatistics((prevStats) => ({
@@ -659,6 +762,12 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     editedAssignments,
   ]);
 
+  // Get current sort column name for display
+  const getCurrentSortColumnName = () => {
+    const column = sortableColumns.find((col) => col.id === orderBy);
+    return column ? column.label : "";
+  };
+
   return (
     <Card sx={{ p: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
       <Box
@@ -697,10 +806,14 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         </Box>
       </Box>
 
-      {/* Search Bar */}
-      <Box mb={3}>
+      {/* Search and Sort Controls */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <TextField
-          fullWidth
           size="small"
           label="Search assignments by user, topic, or reference"
           variant="outlined"
@@ -714,22 +827,80 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             ),
           }}
           sx={{
-            maxWidth: "600px",
+            width: "50%",
+            minWidth: "300px",
             "& .MuiOutlinedInput-root": {
               borderRadius: "8px",
             },
           }}
         />
-        {searchQuery && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 1, display: "block" }}
+
+        <Box>
+          <Button
+            variant="outlined"
+            startIcon={<SortIcon />}
+            onClick={handleOpenSortMenu}
+            size="medium"
+            sx={{
+              textTransform: "none",
+              mr: 1,
+              borderRadius: "8px",
+            }}
           >
-            Showing {filteredCount} results matching "{searchQuery}"
-          </Typography>
-        )}
+            Sort by: {getCurrentSortColumnName()} (
+            {order === "asc" ? "Ascending" : "Descending"})
+          </Button>
+          <Menu
+            anchorEl={sortMenuAnchorEl}
+            open={Boolean(sortMenuAnchorEl)}
+            onClose={handleCloseSortMenu}
+            PaperProps={{
+              style: {
+                maxHeight: 48 * 7.5,
+                width: "250px",
+              },
+            }}
+          >
+            {sortableColumns.map((column) => (
+              <MenuItem
+                key={column.id}
+                onClick={() => handleRequestSort(column.id)}
+                selected={orderBy === column.id}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                {column.label}
+                {orderBy === column.id && (
+                  <Box component="span" sx={{ color: "primary.main", ml: 2 }}>
+                    {order === "asc" ? "↑" : "↓"}
+                  </Box>
+                )}
+              </MenuItem>
+            ))}
+            <Divider />
+            <MenuItem
+              onClick={() => {
+                handleRequestSort(orderBy); // Toggle current sort direction
+              }}
+            >
+              Toggle Order ({order === "asc" ? "Descending" : "Ascending"})
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
+
+      {searchQuery && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mb: 2, display: "block" }}
+        >
+          Showing {filteredCount} results matching "{searchQuery}"
+        </Typography>
+      )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" my={8}>
@@ -753,17 +924,75 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
-                  <TableCell>User ID</TableCell>
-                  <TableCell sx={{ width: "25%" }}>Topic</TableCell>
-                  <TableCell>Reference</TableCell>
-                  <TableCell>Max Score</TableCell>
-                  <TableCell>Submitted Date</TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "user.userId"}
+                      direction={orderBy === "user.userId" ? order : "asc"}
+                      onClick={() => handleRequestSort("user.userId")}
+                    >
+                      User ID
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ width: "25%" }}>
+                    <TableSortLabel
+                      active={orderBy === "subconcept.subconceptDesc"}
+                      direction={
+                        orderBy === "subconcept.subconceptDesc" ? order : "asc"
+                      }
+                      onClick={() =>
+                        handleRequestSort("subconcept.subconceptDesc")
+                      }
+                    >
+                      Topic
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>References</TableCell>
+                  <TableCell align="center">
+                    <TableSortLabel
+                      active={orderBy === "subconcept.subconceptMaxscore"}
+                      direction={
+                        orderBy === "subconcept.subconceptMaxscore"
+                          ? order
+                          : "asc"
+                      }
+                      onClick={() =>
+                        handleRequestSort("subconcept.subconceptMaxscore")
+                      }
+                    >
+                      Max Score
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "submittedDate"}
+                      direction={orderBy === "submittedDate" ? order : "asc"}
+                      onClick={() => handleRequestSort("submittedDate")}
+                    >
+                      Submitted Date
+                    </TableSortLabel>
+                  </TableCell>
                   <TableCell>Submitted File</TableCell>
-                  <TableCell>Score</TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "score"}
+                      direction={orderBy === "score" ? order : "asc"}
+                      onClick={() => handleRequestSort("score")}
+                    >
+                      Score
+                    </TableSortLabel>
+                  </TableCell>
                   <TableCell>Remarks</TableCell>
                   <TableCell>Correction File</TableCell>
-                  <TableCell>Date of correction</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === "correctedDate"}
+                      direction={orderBy === "correctedDate" ? order : "asc"}
+                      onClick={() => handleRequestSort("correctedDate")}
+                    >
+                      Date of Correction
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -786,166 +1015,71 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             </Table>
           </TableContainer>
 
-          {/* Pagination */}
           <TablePagination
+            rowsPerPageOptions={[10, 20, 50, 100]}
             component="div"
             count={filteredAssignments.length}
+            rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 20, 50, 100]}
             sx={{
-              mt: 2,
-              ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows":
+              "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
                 {
-                  my: 1,
+                  m: 0,
                 },
             }}
           />
         </>
       )}
 
-      {/* Content Dialog for viewing subconcept content */}
+      {/* Content Dialog */}
       <Dialog
         open={contentDialog.open}
         onClose={handleCloseContent}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ borderBottom: "1px solid #e0e0e0" }}>
-          {contentDialog.title}
-        </DialogTitle>
-        <DialogContent>
-          {contentDialog.content && (
-            <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
-              {contentDialog.content}
+        <DialogTitle>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" component="span">
+              {contentDialog.title}
             </Typography>
-          )}
-
-          {contentDialog.link && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Content Link:
-              </Typography>
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: "#f5f5f5",
-                  borderRadius: 1,
-                  overflow: "auto",
-                  maxHeight: "500px",
-                  position: "relative",
-                }}
-              >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
-                    zIndex: 10,
-                    display: "flex",
-                    gap: 1,
-                    backgroundColor: "rgba(255,255,255,0.7)",
-                    borderRadius: "4px",
-                    padding: "4px",
-                  }}
+            {contentDialog.link && (
+              <Tooltip title="Open resource link">
+                <IconButton
+                  component="a"
+                  href={contentDialog.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() =>
-                      setZoomLevel((prevZoom) => Math.min(prevZoom + 0.25, 2))
-                    }
-                  >
-                    Zoom +
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => setZoomLevel(1)}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() =>
-                      setZoomLevel((prevZoom) => Math.max(prevZoom - 0.25, 0.5))
-                    }
-                  >
-                    Zoom -
-                  </Button>
-                </Box>
-                <Box
-                  sx={{
-                    transform: `scale(${zoomLevel})`,
-                    transformOrigin: "top left",
-                    transition: "transform 0.2s ease",
-                  }}
-                >
-                  {contentDialog.type === "image" ||
-                  contentDialog.type === "assignment_image" ? (
-                    <img
-                      src={contentDialog.link}
-                      alt={contentDialog.title}
-                      style={{
-                        width: "100%",
-                        height: "auto",
-                        maxHeight: "400px",
-                        objectFit: "contain",
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "4px",
-                      }}
-                    />
-                  ) : contentDialog.type === "video" ||
-                    contentDialog.type === "video_assignment" ? (
-                    <video
-                      controls
-                      style={{
-                        width: "100%",
-                        maxHeight: "400px",
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      <source src={contentDialog.link} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <iframe
-                      src={contentDialog.link}
-                      title="Subconcept Content"
-                      width="100%"
-                      height="400px"
-                      style={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "4px",
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-          )}
+                  <LinkIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography
+            variant="body1"
+            component="div"
+            sx={{ whiteSpace: "pre-wrap" }}
+          >
+            {contentDialog.content}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseContent} color="primary">
             Close
           </Button>
-          {contentDialog.link && (
-            <Button
-              href={contentDialog.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              color="primary"
-              variant="contained"
-            ></Button>
-          )}
         </DialogActions>
       </Dialog>
 
-      {/* Alert message */}
+      {/* Snackbar Alert */}
       <Snackbar
         open={alert.open}
         autoHideDuration={6000}
@@ -955,7 +1089,8 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         <Alert
           onClose={() => setAlert({ ...alert, open: false })}
           severity={alert.severity}
-          sx={{ width: "100%", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}
+          variant="filled"
+          sx={{ width: "100%" }}
         >
           {alert.message}
         </Alert>

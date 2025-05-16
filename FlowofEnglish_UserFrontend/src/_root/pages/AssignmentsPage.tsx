@@ -109,7 +109,18 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans p-4">
+    <div
+      className="min-h-screen bg-slate-100 font-sans p-4 relative"
+      style={{
+        backgroundImage: "url('/images/cohort-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/10 z-0" />
       <Joyride
         steps={steps}
         run={runTour}
@@ -136,7 +147,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
         disableScrolling
       />
 
-      <main className="container mx-auto max-w-[100rem] py-10">
+      <main className="container mx-auto max-w-[100rem] relative z-10">
         <header className="mb-6">
           {/* Add the BackButton component here */}
           <div className="flex items-center mb-4">
