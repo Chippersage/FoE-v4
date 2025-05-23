@@ -189,7 +189,7 @@ function Dashboard() {
   }, [programInfo]);
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-2 px-2 pb-10">
+    <div className="w-full flex flex-col md:flex-row gap-2 px-2 pb-10 items-start">
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}

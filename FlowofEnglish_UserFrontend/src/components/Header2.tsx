@@ -129,6 +129,7 @@ export default function Header() {
       bgColor: "bg-teal-100",
       textColor: "text-teal-600",
       onClick: () => navigateTo("/profile"),
+      disabled: true, // 👈 disable this item
     },
     {
       id: "analytics",
@@ -147,6 +148,7 @@ export default function Header() {
       bgColor: "bg-indigo-100",
       textColor: "text-indigo-600",
       onClick: () => navigateTo("/about-program"),
+      disabled: true, // 👈 disable this item
     },
     {
       id: "help",
@@ -156,6 +158,7 @@ export default function Header() {
       bgColor: "bg-indigo-100",
       textColor: "text-indigo-600",
       onClick: () => navigateTo("/help"),
+      disabled: true, // 👈 disable this item
     },
     {
       id: "terms-of-use",
@@ -165,6 +168,7 @@ export default function Header() {
       bgColor: "bg-indigo-100",
       textColor: "text-indigo-600",
       onClick: () => navigateTo("/terms-of-use"),
+      disabled: true, // 👈 disable this item
     },
     {
       id: "logout",
@@ -290,31 +294,50 @@ export default function Header() {
 
                     {/* Menu Links */}
                     <div className="py-2">
-                      {menuItems.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          className={`flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                            item.danger ? "hover:bg-red-50 text-red-600" : ""
-                          }`}
-                          onClick={item.onClick}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.1 + index * 0.05 }}
-                          whileHover={{ x: 5 }}
-                        >
-                          <div
-                            className={`w-8 h-8 rounded-full ${item.bgColor} flex items-center justify-center ${item.textColor}`}
+                      {menuItems.map((item, index) => {
+                        const isDisabled = item.disabled;
+
+                        return (
+                          <motion.div
+                            key={item.id}
+                            className={`
+        flex items-center px-4 py-3 transition-colors
+        ${isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+        ${!isDisabled && item.danger ? "hover:bg-red-50 text-red-600" : ""}
+        ${!isDisabled && !item.danger ? "hover:bg-gray-50" : ""}
+      `}
+                            onClick={() => {
+                              if (!isDisabled && item.onClick) item.onClick();
+                            }}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 + index * 0.05 }}
+                            whileHover={isDisabled ? {} : { x: 5 }}
                           >
-                            {item.icon}
-                          </div>
-                          <div className="ml-3">
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-xs text-gray-500">
-                              {item.description}
-                            </p>
-                          </div>
-                        </motion.div>
-                      ))}
+                            <div
+                              className={`
+          w-8 h-8 rounded-full flex items-center justify-center
+          ${item.bgColor} ${item.textColor}
+          ${isDisabled ? "opacity-40" : ""}
+        `}
+                            >
+                              {item.icon}
+                            </div>
+                            <div className="ml-3">
+                              <p
+                                className={`font-medium ${
+                                  isDisabled ? "text-gray-400" : ""
+                                }`}
+                              >
+                                {item.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {item.description}
+                              </p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </motion.div>
                 )}
