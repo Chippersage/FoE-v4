@@ -413,21 +413,21 @@ export default function Dashboard() {
 
   // Daily challenge data
   const wordOfDay = {
-    word: "Serendipity",
+    word: "Epiphany",
     partOfSpeech: "noun",
-    definition:
-      "The occurrence and development of events by chance in a happy or beneficial way.",
+    definition: "A moment of sudden and profound understanding or realization.",
     example:
-      "A fortunate stroke of serendipity came my way when I met my business partner at a conference.",
-    pronunciation: "/ˌsɛr(ə)nˈdɪpɪti/",
+      "In the quiet of the library, she had an epiphany that changed the course of her career.",
+    pronunciation: "/ɪˈpɪfəni/",
   };
 
   const riddle = {
     question:
-      "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
-    answer: "An echo",
-    hint: "Think about what happens when you shout in a canyon.",
+      "I have keys but no locks, I have space but no room, you can enter but can’t go outside. What am I?",
+    answer: "A keyboard",
+    hint: "Think of something essential to computers.",
   };
+  
 
   // Count cohorts that are ending soon (<=15 days) or have ended
   const endingSoonCohorts =
@@ -532,7 +532,7 @@ export default function Dashboard() {
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/10 z-0" />
 
-        <main className="relative z-10 container mx-auto max-w-screen p-4">
+        <main className="relative z-10 container mx-auto p-4">
           {/* Notification for ending soon cohorts */}
           {/* Sequential Notification for ending soon cohorts */}
           <AnimatePresence>

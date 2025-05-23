@@ -11,8 +11,8 @@ import CohortSelectionPage from "./_root/pages/CohortSelectionPage";
 import { SessionProvider } from "./context/TimerContext";
 import NotFoundPage from "./components/NotFoundPage";
 import { Toaster } from "react-hot-toast";
-import AssignmentsTable from "./components/AssignmentsTable";
 import AssignmentsPage from "./_root/pages/AssignmentsPage";
+import ViewProgressPage from "./_root/pages/ViewProgressPage";
 
 export default function App() {
   const { isAuthenticated } = useUserContext();
@@ -83,6 +83,7 @@ export default function App() {
 
             {/* Main protected routes */}
             <Route path="/home" element={<HomePage />} />
+            <Route path="/view-progress" element={<ViewProgressPage />} />
             <Route path="/subconcepts/:unitId" element={<SubConceptsPage />} />
             <Route
               path="/subconcept/:subconceptId"
