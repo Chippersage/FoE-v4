@@ -7,7 +7,7 @@ import axios from 'axios';
 
 import { Table, Button, TextField, Checkbox, Modal, Snackbar, Box, Typography, Paper, Grid, Card, TableBody, TableCell, TableHead, TableRow,
   TableSortLabel, CircularProgress, IconButton, Menu, MenuItem, Stack, TablePagination, TableContainer, Container, FormControl, InputLabel,
-  Select, } from '@mui/material';
+  Select, FormHelperText, } from '@mui/material';
 
 import { styled } from '@mui/material/styles';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -29,7 +29,8 @@ const TABLE_HEAD = [
   { id: 'learnerId', label: 'Learner Id', alignRight: false },
   { id: 'learnerName', label: 'Learner Name', alignRight: false },
   { id: 'leaderboardScore', label: 'Leaderboard Score', alignRight: false },
-  // { id: 'actions', label: 'Actions', alignRight: true },
+  { id: 'status', label: 'Status', alignRight: false },
+  { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
 // -----------------------------------------------------------------------
@@ -108,7 +109,12 @@ const UserCohortPage = () => {
     cohortId: '',
     leaderboardScore: '',
   });
-  
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [updateFormValues, setUpdateFormValues] = useState({
+    status: 'ACTIVE',
+    leaderboardScore: '',
+    deactivatedReason: '',
+  });
   useEffect(() => {
   //  console.log('Organization ID from useLocation or default:', orgId);
     if (orgId) {
@@ -178,34 +184,59 @@ const UserCohortPage = () => {
     });
     setCurrentRecord(null);
   };
-
-  const handleCreateOrUpdate = async () => {
+const resetUpdateForm = () => {
+    setUpdateFormValues({
+      status: 'ACTIVE',
+      leaderboardScore: '',
+      deactivatedReason: '',
+    });
+  };
+    const handleCreate = async () => {
     try {
-      if (currentRecord) {
-        if (!formValues.leaderboardScore) {
-          showSnackbar('Leaderboard score is required for updates', 'error');
-          return;
-        }
-        await updateUserCohortMapping(currentRecord.userCohortId, {
-          ...formValues,
-          cohortId,
-        });
-        showSnackbar('Record updated successfully');
-      } else {
-        await createUserCohortMapping({
-          ...formValues,
-          cohortId,
-        });
-        showSnackbar('Record created successfully');
+      await createUserCohortMapping({
+        ...formValues,
+        cohortId,
+      });
+      showSnackbar('Learner added to cohort successfully');
+      fetchUserCohortData(cohortId);
+      setIsModalOpen(false);
+      resetForm();
+    } catch (error) {
+      showSnackbar('Error adding learner to cohort', 'error');
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      // Validation for deactivation reason
+      if (updateFormValues.status === 'DISABLED' && 
+          (!updateFormValues.deactivatedReason || updateFormValues.deactivatedReason.trim() === '')) {
+        showSnackbar('Deactivation reason is required when disabling a user', 'error');
+        return;
       }
-      // Refresh the cohort data after creating or updating a record
-    fetchUserCohortData(cohortId);
-    setIsModalOpen(false);
-    resetForm();
-  } catch (error) {
-    showSnackbar('Error saving data', 'error');
-  }
-};
+
+      // Prepare update payload
+      const updatePayload = {
+        status: updateFormValues.status,
+        leaderboardScore: updateFormValues.leaderboardScore !== '' ? 
+                          parseFloat(updateFormValues.leaderboardScore) : 
+                          currentRecord.leaderboardScore,
+        deactivatedReason: updateFormValues.status === 'DISABLED' ? 
+                          updateFormValues.deactivatedReason : 
+                          null
+      };
+
+      await updateUserCohortMapping(currentRecord.userId, currentRecord.cohortId, updatePayload);
+
+      showSnackbar('Learner updated successfully');
+      fetchUserCohortData(cohortId);
+      setIsUpdateModalOpen(false);
+      resetUpdateForm();
+    } catch (error) {
+      console.error('Error updating learner:', error);
+      showSnackbar('Error updating learner', 'error');
+    }
+  };
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
@@ -231,12 +262,12 @@ const UserCohortPage = () => {
     setSelected(newSelected);
   };
 
-
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
+
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
   };
@@ -256,7 +287,6 @@ const UserCohortPage = () => {
       setIsEmailSending(true);
       showSnackbar('Processing assignments and preparing email...', 'info');
       
-      // Call only the new API endpoint that sends CSV by email
       const response = await axios.get(`${apiUrl}/assignments/send-csv-report`, {
         params: { cohortId }
       });
@@ -274,45 +304,43 @@ const UserCohortPage = () => {
       setIsEmailSending(false);
     }
   };
-// Then, modify the handleDownloadAssignments function
-const handleDownloadAssignments = async () => {
-  try {
-    setIsEmailSending(true);
-    showSnackbar('Processing assignments and preparing email...', 'info');
-    
-    // First API call - download assignments
+
+  const handleDownloadAssignments = async () => {
     try {
-      await axios.get(`${apiUrl}/assignments/bulk-download`, {
-        params: { cohortId }
-      });
+      setIsEmailSending(true);
+      showSnackbar('Processing assignments and preparing email...', 'info');
       
-      // If we get here, it means the first call was successful
-      // Now make the second API call to send email
       try {
-        const emailResponse = await axios.get(`${apiUrl}/assignments/bulk-download-send`, {
+        await axios.get(`${apiUrl}/assignments/bulk-download`, {
           params: { cohortId }
         });
         
-        if (emailResponse.status === 200) {
-          showSnackbar('Assignments downloaded and email sent to mentor', 'success');
-        } else {
-          showSnackbar('Assignments downloaded but email status unknown', 'warning');
+        try {
+          const emailResponse = await axios.get(`${apiUrl}/assignments/bulk-download-send`, {
+            params: { cohortId }
+          });
+          
+          if (emailResponse.status === 200) {
+            showSnackbar('Assignments downloaded and email sent to mentor', 'success');
+          } else {
+            showSnackbar('Assignments downloaded but email status unknown', 'warning');
+          }
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+          showSnackbar('Assignments downloaded but failed to send email', 'warning');
         }
-      } catch (emailError) {
-        console.error('Error sending email:', emailError);
-        showSnackbar('Assignments downloaded but failed to send email', 'warning');
+      } catch (downloadError) {
+        console.error('Error downloading assignments:', downloadError);
+        showSnackbar('Failed to download assignments', 'error');
       }
-    } catch (downloadError) {
-      console.error('Error downloading assignments:', downloadError);
-      showSnackbar('Failed to download assignments', 'error');
+    } catch (error) {
+      console.error('General error:', error);
+      showSnackbar('An unexpected error occurred', 'error');
+    } finally {
+      setIsEmailSending(false);
     }
-  } catch (error) {
-    console.error('General error:', error);
-    showSnackbar('An unexpected error occurred', 'error');
-  } finally {
-    setIsEmailSending(false);
-  }
-};
+  };
+
   const handleOpenModal = () => {
     resetForm();
     setIsModalOpen(true);
@@ -321,6 +349,22 @@ const handleDownloadAssignments = async () => {
   const handleCloseModal = () => {
     resetForm();
     setIsModalOpen(false);
+  };
+
+  const handleOpenUpdateModal = (record) => {
+    setCurrentRecord(record);
+    setUpdateFormValues({
+      status: record.status || 'ACTIVE',
+      leaderboardScore: record.leaderboardScore || '',
+      deactivatedReason: record.deactivatedReason || '',
+    });
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    resetUpdateForm();
+    setIsUpdateModalOpen(false);
+    setCurrentRecord(null);
   };
 
   const openMenu = (event, userCohortId) => {
@@ -333,15 +377,11 @@ const handleDownloadAssignments = async () => {
     setActiveRowId(null);
   };
 
-  const openCreateModal = () => {
-    setCurrentRecord(null);
-    setFormValues({ userId: '', cohortId: '', leaderboardScore: '' });
-    setIsModalOpen(true);
+  // Toggle function for assignments table view
+  const toggleAssignmentsTable = () => {
+    setShowAssignmentsTable(!showAssignmentsTable);
   };
-// Toggle function for assignments table view
-const toggleAssignmentsTable = () => {
-  setShowAssignmentsTable(!showAssignmentsTable);
-};
+
   const filteredUserCohortData = applySortFilter(userCohortData, getComparator(order, orderBy), filterName);
   const isNotFound = !filteredUserCohortData.length && !!filterName;
 
@@ -417,25 +457,6 @@ const toggleAssignmentsTable = () => {
                 <input type="file" hidden onChange={(e) => importUserCohortMappings(e.target.files[0])} />
               </Button>
               
-              {/* <Button 
-                variant="contained" 
-                onClick={handleDownloadAssignments}
-                startIcon={isEmailSending ? <CircularProgress size={20} color="inherit" /> : <Iconify icon="eva:archive-fill" />}
-                disabled={isEmailSending}
-                sx={{
-                  bgcolor: '#5bc3cd',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  '&:hover': {
-                    bgcolor: '#DB5788',
-                  },
-                  py: 1.5,
-                  px: 2,
-                  borderRadius: '8px',
-                }}
-              >
-                {isEmailSending ? 'Sending email...' : 'Download Assignments'}
-              </Button> */}
               <Button 
                 variant="contained" 
                 onClick={handleDownloadAssignmentsCSV}
@@ -470,99 +491,120 @@ const toggleAssignmentsTable = () => {
               >
                 View Assignments
               </Button>
-          <CSVLink data={userCohortData} filename="users.csv" className="btn btn-primary">
-          <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
-            sx={{
-              bgcolor: '#5bc3cd', // Default background color
-              color: 'white', // Text color
-              fontWeight: 'bold', // Font weight
-              '&:hover': {
-                bgcolor: '#DB5788', // Hover background color
-              },
-              py: 1.5, // Padding Y
-              px: 2, // Padding X
-              borderRadius: '8px', // Border radius
-            }}>Export Learners</Button>
-          </CSVLink>
-        </Stack>
-        <Card>
-          <UserListToolbar
-            numSelected={selected.length}
-            filterName={filterName}
-            onFilterName={(e) => setFilterName(e.target.value)}
-          />
+              <CSVLink data={userCohortData} filename="users.csv" className="btn btn-primary">
+                <Button variant="contained" startIcon={<Iconify icon="eva:download-fill" />}
+                  sx={{
+                    bgcolor: '#5bc3cd',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      bgcolor: '#DB5788',
+                    },
+                    py: 1.5,
+                    px: 2,
+                    borderRadius: '8px',
+                  }}>
+                  Export Learners
+                </Button>
+              </CSVLink>
+            </Stack>
+            <Card>
+              <UserListToolbar
+                numSelected={selected.length}
+                filterName={filterName}
+                onFilterName={(e) => setFilterName(e.target.value)}
+              />
 
-          <Scrollbar>
-            {loading && <CircularProgress />}
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <UserListHead
-                  order={order}
-                  orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={userCohortData.length}
-                  numSelected={selected.length}
-                  onRequestSort={handleRequestSort}
-                  onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-          {applySortFilter( userCohortData, getComparator(order, orderBy), filterName ).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-          .map((row) => {
-          const { userId } = row;
-          const selectedUser = selected.indexOf(userId) !== -1;
-          return (
-          <TableRow hover key={row.userId} tabIndex={-1} role="checkbox" selected={selectedUser}>
-          <TableCell padding="checkbox">
-          <Checkbox checked={selected.includes(row.userId)} onChange={() => handleClick(row.userId)} />
-          </TableCell>
-          <TableCell>{row.userId}</TableCell>
-          <TableCell>{row.userName}</TableCell>
-          <TableCell>{row.leaderboardScore}</TableCell>
-          </TableRow>
-          );
-          })}
-          </TableBody>
+              <Scrollbar>
+                {loading && <CircularProgress />}
+                <TableContainer sx={{ minWidth: 800 }}>
+                  <Table>
+                    <UserListHead
+                      order={order}
+                      orderBy={orderBy}
+                      headLabel={TABLE_HEAD}
+                      rowCount={userCohortData.length}
+                      numSelected={selected.length}
+                      onRequestSort={handleRequestSort}
+                      onSelectAllClick={handleSelectAllClick}
+                    />
+                    <TableBody>
+                      {applySortFilter(userCohortData, getComparator(order, orderBy), filterName)
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((row) => {
+                          const { userId } = row;
+                          const selectedUser = selected.indexOf(userId) !== -1;
+                          return (
+                            <TableRow hover key={row.userId} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                              <TableCell padding="checkbox">
+                                <Checkbox checked={selected.includes(row.userId)} onChange={() => handleClick(row.userId)} />
+                              </TableCell>
+                              <TableCell>{row.userId}</TableCell>
+                              <TableCell>{row.userName}</TableCell>
+                              <TableCell>{row.leaderboardScore}</TableCell>
+                              <TableCell>
+                                <Typography 
+                                  variant="subtitle2" 
+                                  sx={{
+                                    color: row.status === 'ACTIVE' ? 'green' : 'red',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  {row.status || 'ACTIVE'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <IconButton 
+                                  size="large" 
+                                  color="inherit" 
+                                  onClick={() => handleOpenUpdateModal(row)}
+                                >
+                                  <Iconify icon="eva:edit-fill" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
 
-                {isNotFound && (
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <Paper sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" paragraph>
-                            Not found
-                          </Typography>
-                          <Typography variant="body2">
-                            No results found for &quot;{filterName}&quot;. Try checking for typos or using complete
-                            words.
-                          </Typography>
-                        </Paper>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredUserCohortData.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(event, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
-            // Add this to ensure selected items are reset when pagination changes
-  onChangeRowsPerPage={(event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to the first page
-  }}
-          />
-        </Card>
-        </>
+                    {isNotFound && (
+                      <TableBody>
+                        <TableRow>
+                          <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                            <Paper sx={{ textAlign: 'center' }}>
+                              <Typography variant="h6" paragraph>
+                                Not found
+                              </Typography>
+                              <Typography variant="body2">
+                                No results found for &quot;{filterName}&quot;. Try checking for typos or using complete
+                                words.
+                              </Typography>
+                            </Paper>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    )}
+                  </Table>
+                </TableContainer>
+              </Scrollbar>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredUserCohortData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setRowsPerPage(parseInt(event.target.value, 10));
+                  setPage(0);
+                }}
+              />
+            </Card>
+          </>
         )}
       </Container>
 
-      
+      {/* Add Learner Modal */}
       <Modal open={isModalOpen} onClose={handleCloseModal}>
         <Box
           sx={{
@@ -577,12 +619,12 @@ const toggleAssignmentsTable = () => {
           }}
         >
           <Typography variant="h6" gutterBottom>
-            {currentRecord ? 'Update Learner' : 'Add Learner to Cohort'}
+            Add Learner to Cohort
           </Typography>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleCreateOrUpdate();
+              handleCreate();
             }}
           >
             <FormControl fullWidth margin="normal">
@@ -591,18 +633,17 @@ const toggleAssignmentsTable = () => {
                 value={formValues.userId}
                 onChange={(e) => setFormValues({ ...formValues, userId: e.target.value })}
                 required
-                disabled={!!currentRecord}
-                >
+              >
                 {Array.isArray(orgUsers) &&
-                orgUsers
-                .filter(user => !userCohortData?.some(
-                cohortUser => cohortUser.userId === user.userId
-                ))
-                .map(user => (
-                <MenuItem key={user.userId} value={user.userId}>
-                {user.userName}  ({user.userId})
-                </MenuItem>
-                ))
+                  orgUsers
+                    .filter(user => !userCohortData?.some(
+                      cohortUser => cohortUser.userId === user.userId
+                    ))
+                    .map(user => (
+                      <MenuItem key={user.userId} value={user.userId}>
+                        {user.userName} ({user.userId})
+                      </MenuItem>
+                    ))
                 }
               </Select>
             </FormControl>
@@ -614,10 +655,106 @@ const toggleAssignmentsTable = () => {
               disabled
             />
             
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{
-bgcolor: '#5bc3cd', color: 'white', fontWeight: 'bold', '&:hover': { bgcolor: '#DB5788',},
-py: 1.5, px: 2, borderRadius: '8px', mt: 2, }}>
-              {currentRecord ? 'Update' : 'Create'}
+            <Button 
+              type="submit" 
+              variant="contained" 
+              fullWidth 
+              sx={{
+                bgcolor: '#5bc3cd', 
+                color: 'white', 
+                fontWeight: 'bold', 
+                '&:hover': { bgcolor: '#DB5788' },
+                py: 1.5, 
+                px: 2, 
+                borderRadius: '8px', 
+                mt: 2, 
+              }}
+            >
+              Create
+            </Button>
+          </form>
+        </Box>
+      </Modal>
+
+      {/* Update Learner Modal */}
+      <Modal open={isUpdateModalOpen} onClose={handleCloseUpdateModal}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bgcolor: 'background.paper',
+            padding: 3,
+            borderRadius: 1,
+            width: 400,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Update Learner: {currentRecord?.userName}
+          </Typography>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdate();
+            }}
+          >
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={updateFormValues.status}
+                onChange={(e) => setUpdateFormValues({ ...updateFormValues, status: e.target.value })}
+                required
+              >
+                <MenuItem value="ACTIVE">ACTIVE</MenuItem>
+                <MenuItem value="DISABLED">DISABLED</MenuItem>
+              </Select>
+            </FormControl>
+            
+            {updateFormValues.status === 'DISABLED' && (
+              <TextField
+                label="Deactivation Reason"
+                value={updateFormValues.deactivatedReason}
+                onChange={(e) => setUpdateFormValues({ ...updateFormValues, deactivatedReason: e.target.value })}
+                fullWidth
+                margin="normal"
+                required
+                error={updateFormValues.status === 'DISABLED' && !updateFormValues.deactivatedReason}
+                helperText={updateFormValues.status === 'DISABLED' && !updateFormValues.deactivatedReason ? 
+                  "Deactivation reason is required" : ""}
+              />
+            )}
+            
+            <TextField
+              label="Leaderboard Score"
+              type="number"
+              value={updateFormValues.leaderboardScore}
+              onChange={(e) => setUpdateFormValues({ ...updateFormValues, leaderboardScore: e.target.value })}
+              fullWidth
+              margin="normal"
+              InputProps={{ inputProps: { min: 0 } }}
+            />
+            
+            <FormHelperText sx={{ mb: 2 }}>
+              Note: User ID, Cohort ID, Organization ID, and creation date cannot be modified.
+            </FormHelperText>
+            
+            <Button 
+              type="submit" 
+              variant="contained"
+              fullWidth 
+              sx={{
+                bgcolor: '#5bc3cd', 
+                color: 'white', 
+                fontWeight: 'bold', 
+                '&:hover': { bgcolor: '#DB5788' },
+                py: 1.5, 
+                px: 2, 
+                borderRadius: '8px', 
+                mt: 2, 
+              }}
+            >
+              Update
             </Button>
           </form>
         </Box>

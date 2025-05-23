@@ -30,4 +30,16 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
     @Query("SELECT u FROM UserCohortMapping u WHERE u.user.userId = :userId AND u.cohort.cohortId IN " +
            "(SELECT cp.cohort.cohortId FROM CohortProgram cp WHERE cp.program.programId = :programId)")
     Optional<UserCohortMapping> findByUserUserIdAndProgramId(@Param("userId") String userId, @Param("programId") String programId);
+ // Updated method to check if user is active in any cohort using status field instead of isActive property
+    boolean existsByUserUserIdAndStatusEquals(String userId, String status);
+    
+    // Find all active users in a cohort
+    List<UserCohortMapping> findByCohortCohortIdAndStatusEquals(String cohortId, String status);
+    
+    // Count Active users in a cohort
+    @Query("SELECT COUNT(u) FROM UserCohortMapping u WHERE u.cohort.cohortId = :cohortId AND u.status = 'ACTIVE'")
+    int countActiveByCohortCohortId(@Param("cohortId") String cohortId);
+    
+    // Find all active mappings for a user
+    List<UserCohortMapping> findByUserUserIdAndStatusEquals(String userId, String status);
 }

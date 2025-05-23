@@ -1,5 +1,7 @@
 package com.FlowofEnglish.dto;
 
+import java.time.OffsetDateTime;
+
 public class UserDTO {
 
     private String userId;
@@ -8,7 +10,10 @@ public class UserDTO {
     private String userName;
     private String userPhoneNumber;
     private String userType;
-    
+    private String status;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime deactivatedAt;
+    private String deactivatedReason;
     private OrganizationDTO organization;
     private CohortDTO cohort;
     private ProgramDTO program;
@@ -64,7 +69,40 @@ public class UserDTO {
         this.userPhoneNumber = userPhoneNumber;
     }
 
-    public OrganizationDTO getOrganization() {
+	
+    public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public OffsetDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(OffsetDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public OffsetDateTime getDeactivatedAt() {
+		return deactivatedAt;
+	}
+
+	public void setDeactivatedAt(OffsetDateTime deactivatedAt) {
+		this.deactivatedAt = deactivatedAt;
+	}
+
+	public String getDeactivatedReason() {
+		return deactivatedReason;
+	}
+
+	public void setDeactivatedReason(String deactivatedReason) {
+		this.deactivatedReason = deactivatedReason;
+	}
+
+	public OrganizationDTO getOrganization() {
         return organization;
     }
 

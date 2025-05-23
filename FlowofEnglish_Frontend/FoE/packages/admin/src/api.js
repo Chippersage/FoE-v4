@@ -286,13 +286,42 @@ export async function getUser(id) {
   return null;
 }
 
+// API function to update user
 export async function updateUser(id, data) {
   try {
+    // Make sure status is uppercase for consistency
+    if (data.status) {
+      data.status = data.status.toUpperCase();
+    }
+    
     const res = await axios.put(`${apiUrl}/users/${id}`, data);
     return res.data;
   } catch (err) {
     console.log('Error in updateUser:', err);
-    return { success: false, message: 'Server error occurred during update' }; 
+    // Return more detailed error message from the server if available
+    return { 
+      success: false, 
+      message: err.response?.data?.message || 'Server error occurred during update'
+    };
+  }
+}
+
+// API function to get user status options
+export function getUserStatusOptions() {
+  return [
+    { value: "ACTIVE", label: "Active" },
+    { value: "DISABLED", label: "Disabled" }
+  ];
+}
+
+// API function to check if user is active in any cohort
+export async function isUserActiveInAnyCohort(userId) {
+  try {
+    const res = await axios.get(`${apiUrl}/users/${userId}/active-in-cohorts`);
+    return res.data;
+  } catch (err) {
+    console.log('Error checking if user is active in cohorts:', err);
+    return { active: false };
   }
 }
 
@@ -371,15 +400,16 @@ export async function createUserCohortMapping(data) {
 }
 
 
-export async function updateUserCohortMapping(userId, data) {
+export async function updateUserCohortMapping(userId, cohortId, data) {
   try {
-    const response = await axios.put(`${apiUrl}/user-cohort-mappings/user/${userId}`, data);
+    const response = await axios.put(`${apiUrl}/user-cohort-mappings/user/${userId}/cohort/${cohortId}`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating UserCohortMapping:", error);
   }
   return null;
 }
+
 
 export async function importUserCohortMappings(file) {
   try {

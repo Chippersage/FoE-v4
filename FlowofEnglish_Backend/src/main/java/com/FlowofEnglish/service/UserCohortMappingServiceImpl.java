@@ -1,27 +1,16 @@
 package com.FlowofEnglish.service;
 
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.FlowofEnglish.dto.UserCohortMappingDTO;
-import com.FlowofEnglish.model.Cohort;
-import com.FlowofEnglish.model.CohortProgram;
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.model.UserCohortMapping;
-import com.FlowofEnglish.repository.CohortProgramRepository;
-import com.FlowofEnglish.repository.CohortRepository;
-import com.FlowofEnglish.repository.UserCohortMappingRepository;
-import com.FlowofEnglish.repository.UserRepository;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
 
 @Service
@@ -40,8 +29,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     @Autowired
     private EmailService emailService;
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory
-            .getLogger(UserCohortMappingServiceImpl.class);
+    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCohortMappingServiceImpl.class);
 
     @Override
     public UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd) {
@@ -267,16 +256,88 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
-    public UserCohortMapping updateUserCohortMapping(String userId, UserCohortMapping userCohortMapping) {
-        return userCohortMappingRepository.findByUserUserId(userId).map(existingMapping -> {
-            if (!userCohortMapping.getUser().getOrganization()
-                    .equals(userCohortMapping.getCohort().getOrganization())) {
-                throw new IllegalArgumentException("User and Cohort must belong to the same organization.");
+    public UserCohortMapping updateUserCohortMapping(String userId, String cohortId, UserCohortMapping userCohortMapping) {
+        logger.info("Updating user-cohort mapping for userId: {}, cohortId: {}", userId, cohortId);
+        
+        // Find existing mapping
+        Optional<UserCohortMapping> existingMappingOpt = 
+                userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+        
+        if (existingMappingOpt.isEmpty()) {
+            logger.error("User-cohort mapping not found for userId: {}", userId);
+            throw new RuntimeException("User-cohort mapping not found for userId: " + userId);
+        }
+        
+        UserCohortMapping existingMapping = existingMappingOpt.get();
+        
+        // Preserve immutable fields
+        if (userCohortMapping.getCreatedAt() != null && 
+                !userCohortMapping.getCreatedAt().equals(existingMapping.getCreatedAt())) {
+            logger.warn("Attempt to modify createdAt timestamp was ignored for userId: {}", userId);
+            // Ignore the attempt to modify createdAt
+        }
+        
+        // Validate organization consistency
+        if (userCohortMapping.getCohort() != null && 
+                !userCohortMapping.getUser().getOrganization().getOrganizationId()
+                .equals(userCohortMapping.getCohort().getOrganization().getOrganizationId())) {
+            logger.error("User and Cohort must belong to the same organization. User Org: {}, Cohort Org: {}", 
+                    userCohortMapping.getUser().getOrganization().getOrganizationId(),
+                    userCohortMapping.getCohort().getOrganization().getOrganizationId());
+            throw new IllegalArgumentException("User and Cohort must belong to the same organization.");
+        }
+        
+        // Handle status changes
+        if (userCohortMapping.getStatus() != null) {
+            String newStatus = userCohortMapping.getStatus().toUpperCase();
+            
+            // Validate status is one of the allowed values
+            if (!newStatus.equals("ACTIVE") && !newStatus.equals("DISABLED")) {
+                logger.error("Invalid status value: {}. Only ACTIVE or DISABLED are allowed.", newStatus);
+                throw new IllegalArgumentException("Invalid status value. Only ACTIVE or DISABLED are allowed.");
             }
+            
+            // Handle status transition to DISABLED
+            if (newStatus.equals("DISABLED") && existingMapping.isActive()) {
+                logger.info("Deactivating user: {} in cohort: {}", 
+                        existingMapping.getUser().getUserName(),
+                        existingMapping.getCohort().getCohortName());
+                
+                if (userCohortMapping.getDeactivatedReason() == null || userCohortMapping.getDeactivatedReason().trim().isEmpty()) {
+                    logger.error("Deactivation reason is required when disabling a user");
+                    throw new IllegalArgumentException("Deactivation reason is required when disabling a user.");
+                }
+                
+                existingMapping.disable(userCohortMapping.getDeactivatedReason());
+            }
+            
+            // Handle status transition to ACTIVE
+            else if (newStatus.equals("ACTIVE") && !existingMapping.isActive()) {
+                logger.info("Reactivating user: {} in cohort: {}", 
+                        existingMapping.getUser().getUserName(),
+                        existingMapping.getCohort().getCohortName());
+                
+                existingMapping.setStatus("ACTIVE");
+                existingMapping.setDeactivatedAt(null);
+                existingMapping.setDeactivatedReason(null);
+            }
+        }
+        
+        // Update mutable fields
+        if (userCohortMapping.getCohort() != null) {
             existingMapping.setCohort(userCohortMapping.getCohort());
+        }
+        
+        if (userCohortMapping.getLeaderboardScore() > 0) {
             existingMapping.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
-            return userCohortMappingRepository.save(existingMapping);
-        }).orElseThrow(() -> new RuntimeException("UserCohortMapping not found for userId: " + userId));
+        }
+        
+        // Save and return updated mapping
+        UserCohortMapping updatedMapping = userCohortMappingRepository.save(existingMapping);
+        logger.info("Successfully updated user-cohort mapping for userId: {}, status: {}", 
+                userId, updatedMapping.getStatus());
+        
+        return updatedMapping;
     }
 
     @Override
@@ -388,6 +449,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         dto.setUserEmail(userCohortMapping.getUser().getUserEmail());
         dto.setCohortName(userCohortMapping.getCohort().getCohortName());
         dto.setLeaderboardScore(userCohortMapping.getLeaderboardScore());
+        dto.setStatus(userCohortMapping.getStatus());
 
         return dto;
     }

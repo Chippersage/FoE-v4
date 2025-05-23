@@ -13,7 +13,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Button, Card, Checkbox, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Link, Box,
   Menu, MenuItem, Modal, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField,
-  Tooltip, Typography } from '@mui/material';
+  Tooltip, Typography, FormControl, InputLabel, Select, FormHelperText, InputAdornment  } from '@mui/material';
 
 // Custom Components
 import Iconify from '../components/iconify';
@@ -27,7 +27,8 @@ import {
   deleteUsers,
   getOrgCohorts,
   getOrgUsers,
-  updateUser
+  updateUser,
+  getUserStatusOptions
 } from '../api';
 
 // Constants
@@ -35,6 +36,7 @@ const TABLE_HEAD = [
   { id: 'learner Id', label: 'Learner Id', alignRight: false },
   { id: 'learnerName', label: 'Learner Name', alignRight: false },
   { id: 'cohortId', label: 'CohortIds', alignRight: false },
+  { id: 'status', label: 'Status', alignRight: false },
   { id: 'actions', label: 'Actions', alignRight: true }
 ];
 
@@ -58,7 +60,17 @@ const buttonStyles = {
   px: 2,
   borderRadius: '8px',
 };
-
+// Status Chip Styles
+const StatusChip = styled('div')(({ status }) => ({
+  display: 'inline-block',
+  padding: '4px 8px',
+  borderRadius: '16px',
+  fontSize: '0.75rem',
+  fontWeight: 'bold',
+  textTransform: 'uppercase',
+  backgroundColor: status === 'ACTIVE' ? '#4caf50' : '#f44336',
+  color: 'white',
+}));
 
 // Helper Functions
 const descendingComparator = (a, b, orderBy) => {
@@ -130,10 +142,13 @@ const OrgUserCreate = () => {
   const [userType, setUserType] = React.useState('');
   const [userPassword, setUserPassword] = useState('');
   const [organizationId, setOrganizationId] = React.useState(id);
+  const [userStatus, setUserStatus] = useState('ACTIVE');
+  const [deactivatedReason, setDeactivatedReason] = useState('');
   const [cohortId, setCohortId] = React.useState('');
   const [isFormValid, setIsFormValid] = React.useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const summaryRef = useRef(null);
+  const [statusOptions] = useState(getUserStatusOptions());
 
 
   useEffect(() => {
@@ -201,6 +216,8 @@ const resetFormState = () => {
   setUserAddress('');
   setUserType('');
   setCohortId('');
+  setUserStatus('ACTIVE');
+  setDeactivatedReason('');
   setSelectedUserId(null);
 };
 
@@ -225,6 +242,7 @@ const handleCreateUser = async () => {
           userEmail: userEmail || null, // Allow null value if email is not provided
           userType,
           userPhoneNumber,
+          status: 'ACTIVE', // New users are always active
           userAddress,
           organization: { organizationId }
       },
@@ -276,6 +294,16 @@ useEffect(() => {
   }
 }, [organizationId]);
 
+// Handle Status Change with validation for deactivation reason
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setUserStatus(newStatus);
+    
+    // Reset deactivation reason when changing to ACTIVE
+    if (newStatus === 'ACTIVE') {
+      setDeactivatedReason('');
+    }
+  };
 
 
 // Use the ID from URL params to set organization ID initially
@@ -299,6 +327,13 @@ if (userEmail && !validateEmail(userEmail)) {
   setOpenSnackbar(true);
   return;
 }
+
+// Validate deactivation reason when disabling a user
+    if (userStatus === 'DISABLED' && (!deactivatedReason || deactivatedReason.trim() === '')) {
+      setSnackbarMessage('Deactivation reason is required when disabling a user');
+      setOpenSnackbar(true);
+      return;
+    }
     const updatedUser = {
         userId: selectedUserId,
         userName,
@@ -307,6 +342,8 @@ if (userEmail && !validateEmail(userEmail)) {
         userAddress,
         userPassword,
         userType,
+        status: userStatus,
+        deactivatedReason: userStatus === 'DISABLED' ? deactivatedReason : null,
         organization: { organizationId }
     };
     try {
@@ -336,7 +373,9 @@ if (userEmail && !validateEmail(userEmail)) {
     setUserPhoneNumber(user.userPhoneNumber);
     setUserAddress(user.userAddress);
     setUserType(user.userType);
-    setUserPassword(user.userPassword);
+    setUserStatus(user.status || 'ACTIVE');
+    setDeactivatedReason(user.deactivatedReason || '');
+    setUserPassword(''); // Don't pre-fill password for security reasons
     setOpenUpdateDialog(true);
   };
 
@@ -677,6 +716,11 @@ const confirmDelete = async () => {
                           </Typography>
                         </Tooltip>
                       </TableCell>
+                      <TableCell>
+                      <StatusChip status={row.status}>
+                      {row.status || 'ACTIVE'}
+                      </StatusChip>
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton 
                         aria-label="Open action menu"
@@ -790,7 +834,7 @@ const confirmDelete = async () => {
 
         {renderTable()}
          {/* CSV Upload Response Section */}
-         {isFileUploaded && bulkCreateResponse && (
+        {isFileUploaded && bulkCreateResponse && (
           <div ref={summaryRef}>
             <CSVUploadResponse 
               response={bulkCreateResponse} 
@@ -879,6 +923,24 @@ sx={{
 <MenuItem value="Mentor">Mentor</MenuItem>
 <MenuItem value="Learner">Learner</MenuItem>
 </TextField>
+          <FormControl fullWidth style={{ marginBottom: '10px' }}>
+            <InputLabel>Status</InputLabel>
+            <Select value={userStatus} onChange={handleStatusChange} label="Status">
+              {statusOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* Deactivation reason field - only shown when status is DISABLED */}
+          {userStatus === 'DISABLED' && (
+<TextField label="Deactivation Reason" fullWidth value={deactivatedReason} onChange={(e) => setDeactivatedReason(e.target.value)} required
+              error={userStatus === 'DISABLED' && !deactivatedReason}
+              helperText={userStatus === 'DISABLED' && !deactivatedReason ? "Deactivation reason is required" : ""}
+              style={{ marginBottom: '10px' }}
+            />
+          )}
 {/* <TextField label="Learner Password" fullWidth value={userPassword} onChange={ (e) => setUserPassword(e.target.value)} style={{ marginBottom: '10px' }} /> */}
 <div style={{ position: 'relative', marginBottom: '10px' }}>
   <TextField
@@ -923,7 +985,7 @@ sx={{
   borderRadius: '4px',
 }}
 >Cancel</Button>
-<Button onClick={handleUpdateUser} disabled={!userName}
+<Button onClick={handleUpdateUser} disabled={!userName || (userStatus === 'DISABLED' && !deactivatedReason)}
 sx={{
   bgcolor: '#5bc3cd', // Default background color
   color: 'white', // Text color
@@ -957,8 +1019,8 @@ sx={{
                     bgcolor: '#DB5788', // Hover background color
                   },
                   py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
+                  px: 1, // Padding X
+                  borderRadius: '4px', // Border radius
                 }}
               >
                 Delete

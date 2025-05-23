@@ -6,6 +6,7 @@ import com.FlowofEnglish.service.UserCohortMappingService;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,11 +97,24 @@ public class UserCohortMappingController {
         }
     }
 
-    // PUT (update) an existing mapping by userId
-    @PutMapping("/user/{userId}")
-    public ResponseEntity<UserCohortMapping> updateUserCohortMapping(@PathVariable String userId, @RequestBody UserCohortMapping userCohortMapping) {
-        return ResponseEntity.ok(userCohortMappingService.updateUserCohortMapping(userId, userCohortMapping));
+ // PUT (update) an existing mapping by userId
+    @PutMapping("/user/{userId}/cohort/{cohortId}")
+    public ResponseEntity<UserCohortMapping> updateUserCohortMapping(
+            @PathVariable String userId,
+            @PathVariable String cohortId,
+            @RequestBody UserCohortMapping userCohortMapping) {
+        try {
+            UserCohortMapping updatedMapping = userCohortMappingService.updateUserCohortMapping(userId, cohortId, userCohortMapping);
+            return ResponseEntity.ok(updatedMapping);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
+
     
     // DELETE a specific mapping by userId
     @DeleteMapping("/user/{userId}")

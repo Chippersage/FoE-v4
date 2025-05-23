@@ -8,6 +8,7 @@ public class UserCohortMappingDTO {
     private String userType;
     private String userEmail;
     private String cohortName;
+    private String status;
     private int leaderboardScore; 
     
  // Getters and Setters
@@ -59,6 +60,15 @@ public class UserCohortMappingDTO {
 
 	public void setUserEmail(String userEmail) {
 		this.userEmail = userEmail;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	} 
+	
 	
 }

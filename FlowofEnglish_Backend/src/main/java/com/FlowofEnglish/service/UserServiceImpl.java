@@ -5,10 +5,15 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
 
+import jakarta.transaction.Transactional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +53,8 @@ public class UserServiceImpl implements UserService {
 
     // The default password that every new user is assigned
     private final String DEFAULT_PASSWORD = "Welcome123";
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     
     @Override
     public List<UserGetDTO> getAllUsers() {
@@ -95,6 +102,10 @@ public class UserServiceImpl implements UserService {
         userDTO.setUserPhoneNumber(user.getUserPhoneNumber());
         userDTO.setUserAddress(user.getUserAddress());
         userDTO.setUserType(user.getUserType());
+        userDTO.setStatus(user.getStatus());
+        userDTO.setCreatedAt(user.getCreatedAt());
+        userDTO.setDeactivatedAt(user.getDeactivatedAt());
+        userDTO.setDeactivatedReason(user.getDeactivatedReason());
         
         // Set organization details in UserDTO
         userDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
@@ -415,31 +426,114 @@ public class UserServiceImpl implements UserService {
     }
 
     
-    @Override
+    @Transactional
     public User updateUser(String userId, User updatedUser) {
+        logger.info("Updating user with ID: {}", userId);
         return userRepository.findById(userId)
-                .map(user -> {
-                	// Validate userType
-                	String userType = updatedUser.getUserType();
-                    if (!"Mentor".equals(userType) && !"Learner".equals(userType)) {
-                        throw new IllegalArgumentException("Invalid userType. Only 'Mentor' or 'Learner' are allowed.");
+            .map(user -> {
+                // Prevent updates to immutable fields
+                if (updatedUser.getUserId() != null && !updatedUser.getUserId().equals(userId)) {
+                    logger.error("Attempt to modify userId was ignored");
+                    // Ignore the attempt to modify userId
+                }
+                
+                if (updatedUser.getCreatedAt() != null && 
+                        !updatedUser.getCreatedAt().equals(user.getCreatedAt())) {
+                    logger.warn("Attempt to modify createdAt timestamp was ignored");
+                    // Ignore the attempt to modify createdAt
+                }
+                
+                if (updatedUser.getUuid() != null && 
+                        !updatedUser.getUuid().equals(user.getUuid())) {
+                    logger.warn("Attempt to modify UUID was ignored");
+                    // Ignore the attempt to modify UUID
+                }
+                
+                // Validate userType
+                String userType = updatedUser.getUserType();
+                if (userType != null && !"Mentor".equals(userType) && !"Learner".equals(userType)) {
+                    logger.error("Invalid userType provided: {}", userType);
+                    throw new IllegalArgumentException("Invalid userType. Only 'Mentor' or 'Learner' are allowed.");
+                }
+
+                // Handle user status changes
+                if (updatedUser.getStatus() != null) {
+                    String currentStatus = user.getStatus();
+                    String newStatus = updatedUser.getStatus().toUpperCase();
+
+                    // Validate status is one of the allowed values
+                    if (!newStatus.equals("ACTIVE") && !newStatus.equals("DISABLED")) {
+                        logger.error("Invalid status value: {}. Only ACTIVE or DISABLED are allowed.", newStatus);
+                        throw new IllegalArgumentException("Invalid status value. Only ACTIVE or DISABLED are allowed.");
                     }
                     
-                    user.setUserAddress(updatedUser.getUserAddress());
-                    user.setUserEmail(updatedUser.getUserEmail());
-                    user.setUserName(updatedUser.getUserName());
-                    user.setUserPhoneNumber(updatedUser.getUserPhoneNumber());
-                    user.setUserType(userType);
-                 // Check if the password is being updated
-                    if (updatedUser.getUserPassword() != null && !updatedUser.getUserPassword().isEmpty()) {
-                        user.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword()));
+                    // Handle deactivation
+                    if ("ACTIVE".equals(currentStatus) && "DISABLED".equals(newStatus)) {
+                        logger.info("Deactivating user: {}", userId);
+                        if (updatedUser.getDeactivatedReason() == null || updatedUser.getDeactivatedReason().trim().isEmpty()) {
+                            logger.error("Deactivation reason is required");
+                            throw new IllegalArgumentException("Deactivation reason is required");
+                        }
+                        
+                        // Use the disable method to set status, deactivatedAt, and reason 
+                        user.disable(updatedUser.getDeactivatedReason());
+                        
+                        // Deactivate all cohort mappings
+                        int deactivatedMappings = 0;
+                        for (UserCohortMapping mapping : user.getUserCohortMappings()) {
+                            if (mapping.isActive()) {
+                                mapping.disable("User account deactivated: " + updatedUser.getDeactivatedReason());
+                                userCohortMappingRepository.save(mapping);
+                                deactivatedMappings++;
+                            }
+                        }
+                        
+                        logger.info("Deactivated {} cohort mappings for user '{}' (ID: {})", 
+                                deactivatedMappings, user.getUserName(), userId);
                     }
-                    user.setOrganization(updatedUser.getOrganization());
-                    return userRepository.save(user);
-                })
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    }
+                    // Handle reactivation
+                    else if ("DISABLED".equals(currentStatus) && "ACTIVE".equals(newStatus)) {
+                        logger.info("Reactivating user: {}", userId);
+                        user.setStatus("ACTIVE");
+                        user.setDeactivatedAt(null);
+                        user.setDeactivatedReason(null);
+                        
+                        // NOTE: This does not automatically reactivate the user in any cohorts
+                        // as per the logic in reactivateUser method
+                        logger.info("User reactivated, but cohort mappings were not automatically reactivated");
+                    }
+                }
 
+                // Update other user fields
+                if (updatedUser.getUserAddress() != null) user.setUserAddress(updatedUser.getUserAddress());
+                if (updatedUser.getUserEmail() != null) user.setUserEmail(updatedUser.getUserEmail());
+                if (updatedUser.getUserName() != null) user.setUserName(updatedUser.getUserName());
+                if (updatedUser.getUserPhoneNumber() != null) user.setUserPhoneNumber(updatedUser.getUserPhoneNumber());
+                if (updatedUser.getUserType() != null) user.setUserType(userType);
+
+                // Check if the password is being updated
+                if (updatedUser.getUserPassword() != null && !updatedUser.getUserPassword().isEmpty()) {
+                    logger.info("Updating password for user: {}", userId);
+                    user.setUserPassword(passwordEncoder.encode(updatedUser.getUserPassword()));
+                }
+
+                // Organization should not be updateable
+                if (updatedUser.getOrganization() != null && 
+                        !updatedUser.getOrganization().getOrganizationId().equals(user.getOrganization().getOrganizationId())) {
+                    logger.warn("Attempt to modify organization was ignored");
+                    // Ignore attempt to modify organization
+                }
+
+                logger.info("User updated successfully: {}", userId);
+                return userRepository.save(user);
+            })
+            .orElseThrow(() -> {
+                logger.error("User not found with ID: {}", userId);
+                return new IllegalArgumentException("User not found");
+            });
+    }
+    
+    
     @Override
     public String deleteUser(String userId) {
         // First, retrieve the user to get their details before deletion
@@ -486,6 +580,215 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    
+    @Override
+    @Transactional
+    public String deactivateUser(String userId) {
+        logger.info("Attempting to deactivate user with ID: {}", userId);
+        
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for deactivation with ID: {}", userId);
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+        if (!user.isActive()) {
+            logger.info("User '{}' (ID: {}) is already deactivated", user.getUserName(), userId);
+            return "User '" + user.getUserName() + "' is already deactivated.";
+        }
+
+        // Deactivate user
+        user.setStatus("DISABLED");
+        user.setDeactivatedAt(OffsetDateTime.now());
+        userRepository.save(user);
+        
+        logger.info("User '{}' (ID: {}) has been deactivated", user.getUserName(), userId);
+
+     // Deactivate all cohort mappings
+        int deactivatedMappings = 0;
+        for (UserCohortMapping mapping : user.getUserCohortMappings()) {
+            if (mapping.isActive()) {
+                mapping.disable("User account deactivated");
+                userCohortMappingRepository.save(mapping);
+                deactivatedMappings++;
+            }
+        }
+        
+        logger.info("Deactivated {} cohort mappings for user '{}' (ID: {})", 
+                deactivatedMappings, user.getUserName(), userId);
+
+        return "User '" + user.getUserName() + "' with ID: " + user.getUserId() + " has been deactivated from all cohorts.";
+    }
+
+    @Override
+    @Transactional
+    public String deactivateUserFromCohort(String userId, String cohortId) {
+        logger.info("Attempting to deactivate user ID: {} from cohort ID: {}", userId, cohortId);
+        
+        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository
+                .findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+
+        if (mappingOpt.isEmpty()) {
+            logger.warn("User-cohort mapping not found for user ID: {} and cohort ID: {}", userId, cohortId);
+            throw new IllegalArgumentException("User not found in specified cohort");
+        }
+
+        UserCohortMapping mapping = mappingOpt.get();
+        if (!mapping.isActive()) {
+            logger.info("User '{}' is already deactivated from cohort '{}'", 
+                    mapping.getUser().getUserName(), mapping.getCohort().getCohortName());
+            return "User is already deactivated from this cohort.";
+        }
+
+        mapping.disable("User deactivated from cohort");
+        mapping.setDeactivatedAt(OffsetDateTime.now());
+        userCohortMappingRepository.save(mapping);
+        
+        logger.info("User '{}' has been deactivated from cohort '{}'", 
+                mapping.getUser().getUserName(), mapping.getCohort().getCohortName());
+
+        return "User '" + mapping.getUser().getUserName() + "' has been deactivated from cohort '"
+                + mapping.getCohort().getCohortName() + "'";
+    }
+
+    @Override
+    @Transactional
+    public String reactivateUser(String userId) {
+        logger.info("Attempting to reactivate user with ID: {}", userId);
+        
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for reactivation with ID: {}", userId);
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+        if (user.isActive()) {
+            logger.info("User '{}' (ID: {}) is already active", user.getUserName(), userId);
+            return "User '" + user.getUserName() + "' is already active.";
+        }
+
+        user.setStatus("ACTIVE");
+        user.setDeactivatedAt(null);
+        user.setDeactivatedReason(null);
+        userRepository.save(user);
+        
+        logger.info("User '{}' (ID: {}) has been reactivated", user.getUserName(), userId);
+
+        return "User '" + user.getUserName() + "' with ID: " + user.getUserId() + " has been reactivated. Note: This does not automatically reactivate the user in any cohorts.";
+    }
+
+    @Override
+    @Transactional
+    public String reactivateUserInCohort(String userId, String cohortId) {
+        logger.info("Attempting to reactivate user ID: {} in cohort ID: {}", userId, cohortId);
+        
+        // First, check if the user is active
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for cohort reactivation with ID: {}", userId);
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+        
+        User user = userOpt.get();
+        if (!user.isActive()) {
+            logger.warn("Cannot reactivate in cohort - user '{}' (ID: {}) is currently deactivated", 
+                    user.getUserName(), userId);
+            throw new IllegalArgumentException("User account is deactivated. Please reactivate the user account first.");
+        }
+        
+        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository
+                .findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+
+        if (mappingOpt.isEmpty()) {
+            logger.warn("User-cohort mapping not found for user ID: {} and cohort ID: {}", userId, cohortId);
+            throw new IllegalArgumentException("User not found in specified cohort");
+        }
+
+        UserCohortMapping mapping = mappingOpt.get();
+        if (mapping.isActive()) {
+            logger.info("User '{}' is already active in cohort '{}'", 
+                    mapping.getUser().getUserName(), mapping.getCohort().getCohortName());
+            return "User is already active in this cohort.";
+        }
+
+        mapping.setStatus("ACTIVE");
+        mapping.setDeactivatedAt(null);
+        mapping.setDeactivatedReason(null);
+        userCohortMappingRepository.save(mapping);
+        
+        logger.info("User '{}' has been reactivated in cohort '{}'", 
+                mapping.getUser().getUserName(), mapping.getCohort().getCohortName());
+
+        return "User '" + mapping.getUser().getUserName() + "' has been reactivated in cohort '"
+                + mapping.getCohort().getCohortName() + "'";
+    }
+    
+ // Helper method to check if a user is active in any cohort
+    public boolean isUserActiveInAnyCohort(String userId) {
+        logger.debug("Checking if user ID: {} is active in any cohort", userId);
+        return userCohortMappingRepository.existsByUserUserIdAndStatusEquals(userId, "ACTIVE");
+    }
+
+//    @Override
+//    @Transactional
+//    public String deleteUser(String userId) {
+//        Optional<User> userOpt = userRepository.findById(userId);
+//        
+//        if (userOpt.isPresent()) {
+//            User user = userOpt.get();
+//            
+//            // First delete cohort mappings
+//            userCohortMappingRepository.deleteByUser_UserId(userId);
+//            
+//            // Then delete the user
+//            userRepository.deleteById(userId);
+//            
+//            return "User '" + user.getUserName() + "' with ID: " + user.getUserId() + " has been deleted.";
+//        } else {
+//            throw new IllegalArgumentException("User not found with ID: " + userId);
+//        }
+//    }
+//
+//    @Override
+//    @Transactional
+//    public String deleteUsers(List<String> userIds) {
+//        List<User> deletedUsers = new ArrayList<>();
+//        
+//        for (String userId : userIds) {
+//            Optional<User> userOpt = userRepository.findById(userId);
+//            if (userOpt.isPresent()) {
+//                User user = userOpt.get();
+//                
+//                // First delete cohort mappings
+//                userCohortMappingRepository.deleteByUser_UserId(userId);
+//                
+//                // Then delete the user
+//                userRepository.deleteById(userId);
+//                
+//                deletedUsers.add(user);
+//            }
+//        }
+//        
+//        int deletedCount = deletedUsers.size();
+//        if (deletedCount == 1) {
+//            User deletedUser = deletedUsers.get(0);
+//            return "User '" + deletedUser.getUserName() + "' with ID: " + deletedUser.getUserId() + " has been deleted.";
+//        } else if (deletedCount > 1) {
+//            StringBuilder message = new StringBuilder();
+//            message.append(deletedCount).append(" users have been deleted. The following users were deleted:\n");
+//            for (User deletedUser : deletedUsers) {
+//                message.append("User Name: ").append(deletedUser.getUserName())
+//                      .append(", User ID: ").append(deletedUser.getUserId()).append("\n");
+//            }
+//            return message.toString();
+//        } else {
+//            return "No users were deleted.";
+//        }
+//    }
+
+    
     
 
     @Override
@@ -562,6 +865,10 @@ public class UserServiceImpl implements UserService {
         dto.setUserName(user.getUserName());
         dto.setUserPhoneNumber(user.getUserPhoneNumber());
         dto.setUserType(user.getUserType());
+        dto.setStatus(user.getStatus());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setDeactivatedAt(user.getDeactivatedAt());
+        dto.setDeactivatedReason(user.getDeactivatedReason());
         
         // Set organization
         if (user.getOrganization() != null) {

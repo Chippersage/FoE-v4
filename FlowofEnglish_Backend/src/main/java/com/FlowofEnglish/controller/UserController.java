@@ -55,7 +55,7 @@ public class UserController {
     @Autowired
     private UserCohortMappingService userCohortMappingService; 
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserController.class);
 
     @GetMapping
     public List<UserGetDTO> getAllUsers() {
@@ -129,18 +129,52 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateUser(@PathVariable String id, @RequestBody User user) {
         Map<String, Object> response = new HashMap<>();
+        logger.info("Received request to update user: {}", id);
+
         try {
+            // Check for deactivation reason when status is being set to DISABLED
+            if (user.getStatus() != null && "DISABLED".equals(user.getStatus())) {
+                if (user.getDeactivatedReason() == null || user.getDeactivatedReason().trim().isEmpty()) {
+                    logger.error("Deactivation reason is required when disabling a user");
+                    response.put("success", false);
+                    response.put("message", "Deactivation reason is required when disabling a user");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                }
+            }
+
             User updatedUser = userService.updateUser(id, user);
+
             response.put("success", true);
+
+            // Provide specific messages for status changes
+            if (user.getStatus() != null) {
+                if ("DISABLED".equals(user.getStatus())) {
+                    response.put("message", "User has been deactivated successfully along with all associated cohort mappings");
+                    logger.info("User {} has been deactivated with reason: {}", id, user.getDeactivatedReason());
+                } else if ("ACTIVE".equals(user.getStatus())) {
+                    response.put("message", "User has been activated successfully. Note: This does not reactivate cohort mappings.");
+                    logger.info("User {} has been activated", id);
+                } else {
+                    response.put("message", "User updated successfully");
+                }
+            } else {
+                response.put("message", "User updated successfully");
+            }
+
             response.put("data", updatedUser);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            logger.error("Error updating user {}: {}", id, e.getMessage());
             response.put("success", false);
-            response.put("message", "User not found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Unexpected error updating user {}: {}", id, e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable("id") String userId) {
@@ -252,171 +286,560 @@ public class UserController {
 //            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 //        }
 //    }
+//    @PostMapping("/signin")
+//    public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData) {
+//        String userId = loginData.get("userId");
+//        String userPassword = loginData.get("userPassword");
+//        String expectedUserType = loginData.get("userType");
+//        logger.debug("Login attempt - userId: {}, userType: {}", userId, expectedUserType);
+//        // Debug logging
+//        System.out.println("Received userId: " + userId);
+//        System.out.println("Received password: " + userPassword);
+//        System.out.println("Received userType: " + expectedUserType);
+//        
+//        // Initialize response map
+//        Map<String, Object> response = new HashMap<>();
+//        
+//     // Check if required fields are provided
+//        if (userId == null || userPassword == null || expectedUserType == null) {
+//            response.put("error", "User ID, password, and user type are required");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//        
+//        // Perform a case-sensitive lookup in the database
+//        Optional<User> userOpt = userRepository.findByUserId(userId);
+//
+//        if (userOpt.isPresent()) {
+//            User user = userOpt.get();
+//            
+//            // Validate exact case-sensitive userId
+//            if (!user.getUserId().equals(userId)) {
+//                response.put("error", "Invalid userId. Please enter the correct case-sensitive userId.");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//            
+//            // Check user type
+//            if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
+//                response.put("error", "Invalid userType.");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//            
+//            // Debugging the user type
+//            System.out.println("User Type: " + user.getUserType());
+//
+//            if (userService.verifyPassword(userPassword, user.getUserPassword())) {
+//                UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
+//
+//                response.put("message", "Successfully logged in as " + user.getUserType() + ".");
+//                response.put("userType", user.getUserType());
+//                response.put("userDetails", userDetailsDTO);
+//                
+//                // Add assignment statistics for mentor login only
+//                if ("mentor".equalsIgnoreCase(user.getUserType())) {
+//                    Map<String, Object> assignmentStats = new HashMap<>();
+//                    
+//                    // Get all cohorts associated with this mentor
+//                    List<String> mentorCohortIds = new ArrayList<>();
+//                    if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+//                        for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+//                            mentorCohortIds.add(cohort.getCohortId());
+//                        }
+//                    }
+//                    
+//                    // Aggregated statistics across all mentor's cohorts
+//                    int totalCohortUserCount = 0;
+//                    int totalAssignments = 0;
+//                    int totalCorrectedAssignments = 0;
+//                    int totalPendingAssignments = 0;
+//                    
+//                    // Detailed statistics per cohort
+//                    Map<String, Map<String, Object>> cohortStatistics = new HashMap<>();
+//                    
+//                    // Calculate statistics for each cohort
+//                    for (String cohortId : mentorCohortIds) {
+//                        // Get user count for this cohort
+//                        int cohortUserCount = getUserCountInCohort(cohortId);
+//                        totalCohortUserCount += cohortUserCount;
+//                        
+//                        // Get assignments for this cohort
+//                        List<UserAssignment> assignments = userAssignmentService.getAssignmentsByCohortId(cohortId);
+//                        int cohortTotalAssignments = assignments.size();
+//                        totalAssignments += cohortTotalAssignments;
+//                        
+//                        // Count corrected vs pending assignments
+//                        int cohortCorrectedAssignments = 0;
+//                        int cohortPendingAssignments = 0;
+//                        
+//                        for (UserAssignment assignment : assignments) {
+//                            if (assignment.getCorrectedDate() != null) {
+//                                cohortCorrectedAssignments++;
+//                                totalCorrectedAssignments++;
+//                            } else {
+//                                cohortPendingAssignments++;
+//                                totalPendingAssignments++;
+//                            }
+//                        }
+//                        
+//                        // Store cohort-specific statistics
+//                        Map<String, Object> cohortStats = new HashMap<>();
+//                        cohortStats.put("cohortUserCount", cohortUserCount);
+//                        cohortStats.put("totalAssignments", cohortTotalAssignments);
+//                        cohortStats.put("correctedAssignments", cohortCorrectedAssignments);
+//                        cohortStats.put("pendingAssignments", cohortPendingAssignments);
+//                        
+//                        // Add to cohort statistics map
+//                        cohortStatistics.put(cohortId, cohortStats);
+//                    }
+//                    
+//                    // Create aggregate statistics
+//                    assignmentStats.put("totalCohortUserCount", totalCohortUserCount);
+//                    assignmentStats.put("totalAssignments", totalAssignments);
+//                    assignmentStats.put("correctedAssignments", totalCorrectedAssignments);
+//                    assignmentStats.put("pendingAssignments", totalPendingAssignments);
+//                    assignmentStats.put("cohortDetails", cohortStatistics);
+//                    
+//                    // Add assignment statistics to response
+//                    response.put("assignmentStatistics", assignmentStats);
+//                }
+//
+//                // Add cohort end-date reminders for all active cohorts
+//                List<String> cohortReminders = new ArrayList<>();
+//                List<String> endedCohortReminders = new ArrayList<>();
+//                
+//                OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+//                OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+//
+//                if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+//                    for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+//                        if (cohort.getCohortEndDate() != null) {
+//                            OffsetDateTime cohortEndDate = cohort.getCohortEndDate().truncatedTo(ChronoUnit.DAYS);
+//                            long daysUntilEnd = ChronoUnit.DAYS.between(nowDateOnly, cohortEndDate);
+//
+//                            // Check for upcoming end dates
+//                            if (daysUntilEnd > 0 && daysUntilEnd <= 15) {
+//                                cohortReminders.add(String.format(
+//                                    "Your cohort '%s' ends in %d day(s). Make sure to complete your assignments and activities.",
+//                                    cohort.getCohortName(), daysUntilEnd));
+//                            } 
+//                            // Check for cohorts ending today
+//                            else if (daysUntilEnd == 0) {
+//                                cohortReminders.add(String.format(
+//                                    "Your cohort '%s' ends today! Please complete any pending work immediately.",
+//                                    cohort.getCohortName()));
+//                            }
+//                            // Check for ended cohorts
+//                            else if (cohortEndDate.isBefore(nowDateOnly)) {
+//                                endedCohortReminders.add(String.format(
+//                                    "Your cohort '%s' has ended on %s. No further activities are possible.",
+//                                    cohort.getCohortName(), 
+//                                    cohort.getCohortEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+//                            }
+//                        }
+//                    }
+//                    
+//                    // Add reminders to response
+//                    if (!cohortReminders.isEmpty()) {
+//                        response.put("cohortReminders", cohortReminders);
+//                    }
+//                    
+//                    // Add ended cohort reminders to response
+//                    if (!endedCohortReminders.isEmpty()) {
+//                        response.put("endedCohortReminders", endedCohortReminders);
+//                    }
+//                }
+//                
+//                return ResponseEntity.ok(response);
+//            
+//            } else {
+//                response.put("error", "Invalid userpassword");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//            }
+//        } else {
+//            response.put("error", "Invalid userId");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//    }
+//
+//    /**
+//     * Helper method to get the count of users in a cohort
+//     * @param cohortId the ID of the cohort
+//     * @return the number of users in the cohort
+//     */
+//    private int getUserCountInCohort(String cohortId) {
+//        // Use a repository method to get the count
+//        return userCohortMappingRepository.countByCohortCohortId(cohortId);
+//    }
+//    
+//    @PostMapping("/select-cohort")
+//    public ResponseEntity<?> selectCohort(@RequestBody Map<String, String> cohortData) {
+//        // Get values from request body
+//        String selectedCohortId = cohortData.get("cohortId");
+//        String userId = cohortData.get("userId");
+//        logger.info("Request userId: {}", userId);
+//        
+//        Map<String, Object> response = new HashMap<>();
+//        
+//        
+//        // Validate cohortId
+//        if (selectedCohortId == null || selectedCohortId.trim().isEmpty()) {
+//            response.put("error", "CohortId is required");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//        
+//        // Fetch user and validate cohort assignment
+//        Optional<User> userOpt = userRepository.findByUserId(userId);
+//        if (!userOpt.isPresent()) {
+//            response.put("error", "User not found");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//        
+//        User user = userOpt.get();
+//        
+//        // Fetch user's cohorts to validate if the selected cohort is assigned to the user
+//        UserDetailsWithCohortsAndProgramsDTO userDetails = 
+//            userService.getUserDetailsWithCohortsAndPrograms(userId);
+//        
+//        boolean cohortFound = false;
+//        if (userDetails.getAllCohortsWithPrograms() != null) {
+//            cohortFound = userDetails.getAllCohortsWithPrograms().stream()
+//                .anyMatch(cohort -> cohort.getCohortId().equals(selectedCohortId));
+//        }
+//        
+//        if (!cohortFound) {
+//            response.put("error", "Selected cohort is not assigned to the user");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//        
+//        // Fetch cohort
+//        Optional<Cohort> cohortOpt = cohortRepository.findById(selectedCohortId);
+//        if (!cohortOpt.isPresent()) {
+//            response.put("error", "Invalid cohort");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        }
+//        
+//        Cohort selectedCohort = cohortOpt.get();
+//
+//     // Check if cohort end date is today or in the past
+//     OffsetDateTime cohortEndDate = selectedCohort.getCohortEndDate();
+//     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+//     
+//     // Truncate both dates to remove time components
+//     OffsetDateTime endDateOnly = cohortEndDate != null 
+//         ? cohortEndDate.withHour(0).withMinute(0).withSecond(0).withNano(0)
+//         : null;
+//     OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+//        
+//  // If cohort end date is null, proceed with selection
+//     if (cohortEndDate == null) {
+//         // Proceed with cohort selection
+//         try {
+//             // Check for existing active sessions
+//             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+//             
+//             // Create new session
+//             UserSessionMapping userSession = new UserSessionMapping();
+//             String newSessionId = UUID.randomUUID().toString();
+//             userSession.setSessionId(newSessionId);
+//             userSession.setUser(user);
+//             userSession.setCohort(selectedCohort);
+//             userSession.setSessionStartTimestamp(now);
+//             userSession.setUuid(UUID.randomUUID().toString());
+//             
+//             // Save new session
+//             userSessionMappingService.createUserSessionMapping(userSession);
+//             
+//             // Update session attributes
+//             session.setAttribute("userId", userId);
+//             session.setAttribute("cohortId", selectedCohortId);
+//             session.setAttribute("sessionId", newSessionId);
+//        
+//             response.put("message", "Cohort selected successfully");
+//             response.put("sessionId", newSessionId);
+//             response.put("cohortId", selectedCohortId);
+//             response.put("userId", userId);
+//             
+//             return ResponseEntity.ok(response);
+//             
+//         } catch (Exception e) {
+//             response.put("error", "Error creating session: " + e.getMessage());
+//             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+//         }
+//     }
+//
+//     // Check if cohort end date is exactly today
+//     if (endDateOnly.isEqual(nowDateOnly)) {
+//         // Cohort is ending today, allow selection
+//         try {
+//             // Check for existing active sessions
+//             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+//             
+//             // Create new session
+//             UserSessionMapping userSession = new UserSessionMapping();
+//             String newSessionId = UUID.randomUUID().toString();
+//             userSession.setSessionId(newSessionId);
+//             userSession.setUser(user);
+//             userSession.setCohort(selectedCohort);
+//             userSession.setSessionStartTimestamp(now);
+//             userSession.setUuid(UUID.randomUUID().toString());
+//             
+//             // Save new session
+//             userSessionMappingService.createUserSessionMapping(userSession);
+//             
+//             // Update session attributes
+//             session.setAttribute("userId", userId);
+//             session.setAttribute("cohortId", selectedCohortId);
+//             session.setAttribute("sessionId", newSessionId);
+//        
+//             response.put("message", "Cohort selected successfully on its final day");
+//             response.put("sessionId", newSessionId);
+//             response.put("cohortId", selectedCohortId);
+//             response.put("userId", userId);
+//             
+//             return ResponseEntity.ok(response);
+//             
+//         } catch (Exception e) {
+//             response.put("error", "Error creating session: " + e.getMessage());
+//             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+//         }
+//     }
+//
+//     // Check if cohort end date has passed
+//     if (endDateOnly.isBefore(nowDateOnly)) {
+//         // Cohort has ended
+//         response.put("error", String.format("This cohort has ended on %s. You cannot select this cohort.", 
+//             cohortEndDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+//         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//     }
+//
+//     // If cohort end date is in the future, proceed with selection
+//     try {
+//         // Check for existing active sessions
+//         userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+//         
+//         // Create new session
+//         UserSessionMapping userSession = new UserSessionMapping();
+//         String newSessionId = UUID.randomUUID().toString();
+//         userSession.setSessionId(newSessionId);
+//         userSession.setUser(user);
+//         userSession.setCohort(selectedCohort);
+//         userSession.setSessionStartTimestamp(now);
+//         userSession.setUuid(UUID.randomUUID().toString());
+//         
+//         // Save new session
+//         userSessionMappingService.createUserSessionMapping(userSession);
+//         
+//         // Update session attributes
+//         session.setAttribute("userId", userId);
+//         session.setAttribute("cohortId", selectedCohortId);
+//         session.setAttribute("sessionId", newSessionId);
+//    
+//         response.put("message", "Cohort selected successfully");
+//         response.put("sessionId", newSessionId);
+//         response.put("cohortId", selectedCohortId);
+//         response.put("userId", userId);
+//         
+//         return ResponseEntity.ok(response);
+//         
+//     } catch (Exception e) {
+//         response.put("error", "Error creating session: " + e.getMessage());
+//         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+//     }
+// }
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody Map<String, String> loginData) {
         String userId = loginData.get("userId");
         String userPassword = loginData.get("userPassword");
         String expectedUserType = loginData.get("userType");
         
-        // Debug logging
-        System.out.println("Received userId: " + userId);
-        System.out.println("Received password: " + userPassword);
-        System.out.println("Received userType: " + expectedUserType);
+        logger.debug("Login attempt - userId: {}, userType: {}", userId, expectedUserType);
         
         // Initialize response map
         Map<String, Object> response = new HashMap<>();
         
+        // Check if required fields are provided
+        if (userId == null || userPassword == null || expectedUserType == null) {
+            response.put("error", "User ID, password, and user type are required");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        
         // Perform a case-sensitive lookup in the database
         Optional<User> userOpt = userRepository.findByUserId(userId);
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            
-            // Validate exact case-sensitive userId
-            if (!user.getUserId().equals(userId)) {
-                response.put("error", "Invalid userId. Please enter the correct case-sensitive userId.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            // Check user type
-            if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
-                response.put("error", "Invalid userType.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            // Debugging the user type
-            System.out.println("User Type: " + user.getUserType());
-
-            if (userService.verifyPassword(userPassword, user.getUserPassword())) {
-                UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
-
-                response.put("message", "Successfully logged in as " + user.getUserType() + ".");
-                response.put("userType", user.getUserType());
-                response.put("userDetails", userDetailsDTO);
-                
-                // Add assignment statistics for mentor login only
-                if ("mentor".equalsIgnoreCase(user.getUserType())) {
-                    Map<String, Object> assignmentStats = new HashMap<>();
-                    
-                    // Get all cohorts associated with this mentor
-                    List<String> mentorCohortIds = new ArrayList<>();
-                    if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
-                        for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
-                            mentorCohortIds.add(cohort.getCohortId());
-                        }
-                    }
-                    
-                    // Aggregated statistics across all mentor's cohorts
-                    int totalCohortUserCount = 0;
-                    int totalAssignments = 0;
-                    int totalCorrectedAssignments = 0;
-                    int totalPendingAssignments = 0;
-                    
-                    // Detailed statistics per cohort
-                    Map<String, Map<String, Object>> cohortStatistics = new HashMap<>();
-                    
-                    // Calculate statistics for each cohort
-                    for (String cohortId : mentorCohortIds) {
-                        // Get user count for this cohort
-                        int cohortUserCount = getUserCountInCohort(cohortId);
-                        totalCohortUserCount += cohortUserCount;
-                        
-                        // Get assignments for this cohort
-                        List<UserAssignment> assignments = userAssignmentService.getAssignmentsByCohortId(cohortId);
-                        int cohortTotalAssignments = assignments.size();
-                        totalAssignments += cohortTotalAssignments;
-                        
-                        // Count corrected vs pending assignments
-                        int cohortCorrectedAssignments = 0;
-                        int cohortPendingAssignments = 0;
-                        
-                        for (UserAssignment assignment : assignments) {
-                            if (assignment.getCorrectedDate() != null) {
-                                cohortCorrectedAssignments++;
-                                totalCorrectedAssignments++;
-                            } else {
-                                cohortPendingAssignments++;
-                                totalPendingAssignments++;
-                            }
-                        }
-                        
-                        // Store cohort-specific statistics
-                        Map<String, Object> cohortStats = new HashMap<>();
-                        cohortStats.put("cohortUserCount", cohortUserCount);
-                        cohortStats.put("totalAssignments", cohortTotalAssignments);
-                        cohortStats.put("correctedAssignments", cohortCorrectedAssignments);
-                        cohortStats.put("pendingAssignments", cohortPendingAssignments);
-                        
-                        // Add to cohort statistics map
-                        cohortStatistics.put(cohortId, cohortStats);
-                    }
-                    
-                    // Create aggregate statistics
-                    assignmentStats.put("totalCohortUserCount", totalCohortUserCount);
-                    assignmentStats.put("totalAssignments", totalAssignments);
-                    assignmentStats.put("correctedAssignments", totalCorrectedAssignments);
-                    assignmentStats.put("pendingAssignments", totalPendingAssignments);
-                    assignmentStats.put("cohortDetails", cohortStatistics);
-                    
-                    // Add assignment statistics to response
-                    response.put("assignmentStatistics", assignmentStats);
-                }
-
-                // Add cohort end-date reminders for all active cohorts
-                List<String> cohortReminders = new ArrayList<>();
-                List<String> endedCohortReminders = new ArrayList<>();
-                
-                OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-                OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
-
-                if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
-                    for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
-                        if (cohort.getCohortEndDate() != null) {
-                            OffsetDateTime cohortEndDate = cohort.getCohortEndDate().truncatedTo(ChronoUnit.DAYS);
-                            long daysUntilEnd = ChronoUnit.DAYS.between(nowDateOnly, cohortEndDate);
-
-                            // Check for upcoming end dates
-                            if (daysUntilEnd > 0 && daysUntilEnd <= 15) {
-                                cohortReminders.add(String.format(
-                                    "Your cohort '%s' ends in %d day(s). Make sure to complete your assignments and activities.",
-                                    cohort.getCohortName(), daysUntilEnd));
-                            } 
-                            // Check for cohorts ending today
-                            else if (daysUntilEnd == 0) {
-                                cohortReminders.add(String.format(
-                                    "Your cohort '%s' ends today! Please complete any pending work immediately.",
-                                    cohort.getCohortName()));
-                            }
-                            // Check for ended cohorts
-                            else if (cohortEndDate.isBefore(nowDateOnly)) {
-                                endedCohortReminders.add(String.format(
-                                    "Your cohort '%s' has ended on %s. No further activities are possible.",
-                                    cohort.getCohortName(), 
-                                    cohort.getCohortEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
-                            }
-                        }
-                    }
-                    
-                    // Add reminders to response
-                    if (!cohortReminders.isEmpty()) {
-                        response.put("cohortReminders", cohortReminders);
-                    }
-                    
-                    // Add ended cohort reminders to response
-                    if (!endedCohortReminders.isEmpty()) {
-                        response.put("endedCohortReminders", endedCohortReminders);
-                    }
-                }
-                
-                return ResponseEntity.ok(response);
-            
-            } else {
-                response.put("error", "Invalid userpassword");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-        } else {
-            response.put("error", "Invalid userId");
+        if (userOpt.isEmpty()) {
+            logger.debug("Login failed - User ID not found: {}", userId);
+            response.put("error", "Invalid username or password. Please try again.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        User user = userOpt.get();
+        
+        // Check if user is active - IMPLEMENTED CHECK
+        if (!user.isActive()) {
+            logger.debug("Login failed - User account deactivated: {}", userId);
+            response.put("error", "Your account has been deactivated. Please contact your administrator for assistance.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        // Validate exact case-sensitive userId
+        if (!user.getUserId().equals(userId)) {
+            logger.debug("Login failed - Case mismatch for userId: {} vs {}", userId, user.getUserId());
+            response.put("error", "Invalid username or password. Please try again.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        // Check user type
+        if (!user.getUserType().equalsIgnoreCase(expectedUserType)) {
+            logger.debug("Login failed - User type mismatch for {}: expected {}, found {}", 
+                    userId, expectedUserType, user.getUserType());
+            response.put("error", "Invalid user type. Please ensure you're logging in with the correct user type.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        // Verify password
+        if (!userService.verifyPassword(userPassword, user.getUserPassword())) {
+            logger.debug("Login failed - Invalid password for user: {}", userId);
+            response.put("error", "Invalid username or password. Please try again.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        // Authentication successful - proceed with creating response
+        logger.info("Successful login - User: {}, Type: {}", userId, user.getUserType());
+        UserDetailsWithCohortsAndProgramsDTO userDetailsDTO = userService.getUserDetailsWithCohortsAndPrograms(userId);
+
+        response.put("message", "Successfully logged in as " + user.getUserType() + ".");
+        response.put("userType", user.getUserType());
+        response.put("userDetails", userDetailsDTO);
+        
+        // Add assignment statistics for mentor login only
+        if ("mentor".equalsIgnoreCase(user.getUserType())) {
+            addMentorAssignmentStatistics(response, userDetailsDTO);
+        }
+
+        // Add cohort end-date reminders for all active cohorts
+        addCohortEndDateReminders(response, userDetailsDTO);
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Helper method to add mentor assignment statistics to the response
+     */
+    private void addMentorAssignmentStatistics(Map<String, Object> response, 
+                                              UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
+        Map<String, Object> assignmentStats = new HashMap<>();
+        
+        // Get all cohorts associated with this mentor
+        List<String> mentorCohortIds = new ArrayList<>();
+        if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+            for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+                mentorCohortIds.add(cohort.getCohortId());
+            }
+        }
+        
+        // Aggregated statistics across all mentor's cohorts
+        int totalCohortUserCount = 0;
+        int totalAssignments = 0;
+        int totalCorrectedAssignments = 0;
+        int totalPendingAssignments = 0;
+        
+        // Detailed statistics per cohort
+        Map<String, Map<String, Object>> cohortStatistics = new HashMap<>();
+        
+        // Calculate statistics for each cohort
+        for (String cohortId : mentorCohortIds) {
+            // Get user count for this cohort
+            int cohortUserCount = getUserCountInCohort(cohortId);
+            totalCohortUserCount += cohortUserCount;
+            
+            // Get assignments for this cohort
+            List<UserAssignment> assignments = userAssignmentService.getAssignmentsByCohortId(cohortId);
+            int cohortTotalAssignments = assignments.size();
+            totalAssignments += cohortTotalAssignments;
+            
+            // Count corrected vs pending assignments
+            int cohortCorrectedAssignments = 0;
+            int cohortPendingAssignments = 0;
+            
+            for (UserAssignment assignment : assignments) {
+                if (assignment.getCorrectedDate() != null) {
+                    cohortCorrectedAssignments++;
+                    totalCorrectedAssignments++;
+                } else {
+                    cohortPendingAssignments++;
+                    totalPendingAssignments++;
+                }
+            }
+            
+            // Store cohort-specific statistics
+            Map<String, Object> cohortStats = new HashMap<>();
+            cohortStats.put("cohortUserCount", cohortUserCount);
+            cohortStats.put("totalAssignments", cohortTotalAssignments);
+            cohortStats.put("correctedAssignments", cohortCorrectedAssignments);
+            cohortStats.put("pendingAssignments", cohortPendingAssignments);
+            
+            // Add to cohort statistics map
+            cohortStatistics.put(cohortId, cohortStats);
+        }
+        
+        // Create aggregate statistics
+        assignmentStats.put("totalCohortUserCount", totalCohortUserCount);
+        assignmentStats.put("totalAssignments", totalAssignments);
+        assignmentStats.put("correctedAssignments", totalCorrectedAssignments);
+        assignmentStats.put("pendingAssignments", totalPendingAssignments);
+        assignmentStats.put("cohortDetails", cohortStatistics);
+        
+        // Add assignment statistics to response
+        response.put("assignmentStatistics", assignmentStats);
+    }
+    
+    /**
+     * Helper method to add cohort reminders to the response
+     */
+    private void addCohortEndDateReminders(Map<String, Object> response, 
+                                          UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
+        List<String> cohortReminders = new ArrayList<>();
+        List<String> endedCohortReminders = new ArrayList<>();
+        
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+        if (userDetailsDTO.getAllCohortsWithPrograms() != null) {
+            for (CohortProgramDTO cohort : userDetailsDTO.getAllCohortsWithPrograms()) {
+                if (cohort.getCohortEndDate() != null) {
+                    OffsetDateTime cohortEndDate = cohort.getCohortEndDate().truncatedTo(ChronoUnit.DAYS);
+                    long daysUntilEnd = ChronoUnit.DAYS.between(nowDateOnly, cohortEndDate);
+
+                    // Check for upcoming end dates
+                    if (daysUntilEnd > 0 && daysUntilEnd <= 15) {
+                        cohortReminders.add(String.format(
+                            "Your cohort '%s' ends in %d day(s). Make sure to complete your assignments and activities.",
+                            cohort.getCohortName(), daysUntilEnd));
+                    } 
+                    // Check for cohorts ending today
+                    else if (daysUntilEnd == 0) {
+                        cohortReminders.add(String.format(
+                            "Your cohort '%s' ends today! Please complete any pending work immediately.",
+                            cohort.getCohortName()));
+                    }
+                    // Check for ended cohorts
+                    else if (cohortEndDate.isBefore(nowDateOnly)) {
+                        endedCohortReminders.add(String.format(
+                            "Your cohort '%s' has ended on %s. No further activities are possible.",
+                            cohort.getCohortName(), 
+                            cohort.getCohortEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    }
+                }
+            }
+            
+            // Add reminders to response
+            if (!cohortReminders.isEmpty()) {
+                response.put("cohortReminders", cohortReminders);
+            }
+            
+            // Add ended cohort reminders to response
+            if (!endedCohortReminders.isEmpty()) {
+                response.put("endedCohortReminders", endedCohortReminders);
+            }
         }
     }
 
@@ -435,25 +858,48 @@ public class UserController {
         // Get values from request body
         String selectedCohortId = cohortData.get("cohortId");
         String userId = cohortData.get("userId");
-        logger.info("Request userId: {}", userId);
+        logger.info("Select cohort request - userId: {}, cohortId: {}", userId, selectedCohortId);
         
         Map<String, Object> response = new HashMap<>();
         
-        
-        // Validate cohortId
+        // Validate inputs
         if (selectedCohortId == null || selectedCohortId.trim().isEmpty()) {
-            response.put("error", "CohortId is required");
+            response.put("error", "Cohort ID is required");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
-        // Fetch user and validate cohort assignment
+        if (userId == null || userId.trim().isEmpty()) {
+            response.put("error", "User ID is required");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        
+        // Fetch user
         Optional<User> userOpt = userRepository.findByUserId(userId);
-        if (!userOpt.isPresent()) {
-            response.put("error", "User not found");
+        if (userOpt.isEmpty()) {
+            logger.warn("Select cohort failed - User not found: {}", userId);
+            response.put("error", "User not found. Please check the user ID and try again.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
         User user = userOpt.get();
+        
+        // Check if user is active
+        if (!user.isActive()) {
+            logger.warn("Select cohort failed - User account deactivated: {}", userId);
+            response.put("error", "Your account has been deactivated. Please contact your administrator for assistance.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        // Check if user is active in this cohort - IMPLEMENTED CHECK
+        Optional<UserCohortMapping> cohortMapping = userCohortMappingRepository
+            .findByUser_UserIdAndCohort_CohortId(userId, selectedCohortId);
+        
+        if (cohortMapping.isEmpty() || !cohortMapping.get().isActive()) {
+            logger.warn("Select cohort failed - User not active in cohort - userId: {}, cohortId: {}", 
+                    userId, selectedCohortId);
+            response.put("error", "You are not active in this cohort. Please contact your administrator for assistance.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
         
         // Fetch user's cohorts to validate if the selected cohort is assigned to the user
         UserDetailsWithCohortsAndProgramsDTO userDetails = 
@@ -466,146 +912,116 @@ public class UserController {
         }
         
         if (!cohortFound) {
-            response.put("error", "Selected cohort is not assigned to the user");
+            logger.warn("Select cohort failed - Cohort not assigned to user - userId: {}, cohortId: {}", 
+                    userId, selectedCohortId);
+            response.put("error", "Selected cohort is not assigned to your account. Please select a valid cohort.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
         // Fetch cohort
         Optional<Cohort> cohortOpt = cohortRepository.findById(selectedCohortId);
-        if (!cohortOpt.isPresent()) {
-            response.put("error", "Invalid cohort");
+        if (cohortOpt.isEmpty()) {
+            logger.warn("Select cohort failed - Invalid cohort ID: {}", selectedCohortId);
+            response.put("error", "Invalid cohort. Please select a valid cohort.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         
         Cohort selectedCohort = cohortOpt.get();
 
-     // Check if cohort end date is today or in the past
-     OffsetDateTime cohortEndDate = selectedCohort.getCohortEndDate();
-     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-     
-     // Truncate both dates to remove time components
-     OffsetDateTime endDateOnly = cohortEndDate != null 
-         ? cohortEndDate.withHour(0).withMinute(0).withSecond(0).withNano(0)
-         : null;
-     OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
-        
-  // If cohort end date is null, proceed with selection
-     if (cohortEndDate == null) {
-         // Proceed with cohort selection
-         try {
-             // Check for existing active sessions
-             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
-             
-             // Create new session
-             UserSessionMapping userSession = new UserSessionMapping();
-             String newSessionId = UUID.randomUUID().toString();
-             userSession.setSessionId(newSessionId);
-             userSession.setUser(user);
-             userSession.setCohort(selectedCohort);
-             userSession.setSessionStartTimestamp(now);
-             userSession.setUuid(UUID.randomUUID().toString());
-             
-             // Save new session
-             userSessionMappingService.createUserSessionMapping(userSession);
-             
-             // Update session attributes
-             session.setAttribute("userId", userId);
-             session.setAttribute("cohortId", selectedCohortId);
-             session.setAttribute("sessionId", newSessionId);
-        
-             response.put("message", "Cohort selected successfully");
-             response.put("sessionId", newSessionId);
-             response.put("cohortId", selectedCohortId);
-             response.put("userId", userId);
-             
-             return ResponseEntity.ok(response);
-             
-         } catch (Exception e) {
-             response.put("error", "Error creating session: " + e.getMessage());
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-         }
-     }
-
-     // Check if cohort end date is exactly today
-     if (endDateOnly.isEqual(nowDateOnly)) {
-         // Cohort is ending today, allow selection
-         try {
-             // Check for existing active sessions
-             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
-             
-             // Create new session
-             UserSessionMapping userSession = new UserSessionMapping();
-             String newSessionId = UUID.randomUUID().toString();
-             userSession.setSessionId(newSessionId);
-             userSession.setUser(user);
-             userSession.setCohort(selectedCohort);
-             userSession.setSessionStartTimestamp(now);
-             userSession.setUuid(UUID.randomUUID().toString());
-             
-             // Save new session
-             userSessionMappingService.createUserSessionMapping(userSession);
-             
-             // Update session attributes
-             session.setAttribute("userId", userId);
-             session.setAttribute("cohortId", selectedCohortId);
-             session.setAttribute("sessionId", newSessionId);
-        
-             response.put("message", "Cohort selected successfully on its final day");
-             response.put("sessionId", newSessionId);
-             response.put("cohortId", selectedCohortId);
-             response.put("userId", userId);
-             
-             return ResponseEntity.ok(response);
-             
-         } catch (Exception e) {
-             response.put("error", "Error creating session: " + e.getMessage());
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-         }
-     }
-
-     // Check if cohort end date has passed
-     if (endDateOnly.isBefore(nowDateOnly)) {
-         // Cohort has ended
-         response.put("error", String.format("This cohort has ended on %s. You cannot select this cohort.", 
-             cohortEndDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
-         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-     }
-
-     // If cohort end date is in the future, proceed with selection
-     try {
-         // Check for existing active sessions
-         userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+        // Check cohort end date
+        OffsetDateTime cohortEndDate = selectedCohort.getCohortEndDate();
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
          
-         // Create new session
-         UserSessionMapping userSession = new UserSessionMapping();
-         String newSessionId = UUID.randomUUID().toString();
-         userSession.setSessionId(newSessionId);
-         userSession.setUser(user);
-         userSession.setCohort(selectedCohort);
-         userSession.setSessionStartTimestamp(now);
-         userSession.setUuid(UUID.randomUUID().toString());
-         
-         // Save new session
-         userSessionMappingService.createUserSessionMapping(userSession);
-         
-         // Update session attributes
-         session.setAttribute("userId", userId);
-         session.setAttribute("cohortId", selectedCohortId);
-         session.setAttribute("sessionId", newSessionId);
+        // Truncate both dates to remove time components
+        OffsetDateTime endDateOnly = cohortEndDate != null 
+            ? cohortEndDate.withHour(0).withMinute(0).withSecond(0).withNano(0)
+            : null;
+        OffsetDateTime nowDateOnly = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+            
+        // If cohort end date is null, proceed with selection
+        if (cohortEndDate == null) {
+            return createSessionAndRespond(user, selectedCohort, userId, selectedCohortId, response);
+        }
+
+        // Check if cohort end date is exactly today
+        if (endDateOnly.isEqual(nowDateOnly)) {
+            logger.info("User selecting cohort on its final day - userId: {}, cohortId: {}", 
+                    userId, selectedCohortId);
+            return createSessionAndRespond(user, selectedCohort, userId, selectedCohortId, response, true);
+        }
+
+        // Check if cohort end date has passed
+        if (endDateOnly.isBefore(nowDateOnly)) {
+            // Cohort has ended
+            String formattedEndDate = cohortEndDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            logger.warn("Select cohort failed - Cohort has ended on {} - userId: {}, cohortId: {}", 
+                    formattedEndDate, userId, selectedCohortId);
+            response.put("error", String.format("This cohort has ended on %s. You cannot access this cohort anymore.", 
+                formattedEndDate));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        // If cohort end date is in the future, proceed with selection
+        return createSessionAndRespond(user, selectedCohort, userId, selectedCohortId, response);
+    }
     
-         response.put("message", "Cohort selected successfully");
-         response.put("sessionId", newSessionId);
-         response.put("cohortId", selectedCohortId);
-         response.put("userId", userId);
-         
-         return ResponseEntity.ok(response);
-         
-     } catch (Exception e) {
-         response.put("error", "Error creating session: " + e.getMessage());
-         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-     }
- }
-
+    /**
+     * Helper method to create a session and respond to the client
+     */
+    private ResponseEntity<?> createSessionAndRespond(User user, Cohort selectedCohort, 
+                                                     String userId, String selectedCohortId, 
+                                                     Map<String, Object> response) {
+        return createSessionAndRespond(user, selectedCohort, userId, selectedCohortId, response, false);
+    }
+    
+    /**
+     * Helper method to create a session and respond to the client with optional final day message
+     */
+    private ResponseEntity<?> createSessionAndRespond(User user, Cohort selectedCohort, 
+                                                     String userId, String selectedCohortId, 
+                                                     Map<String, Object> response, boolean isFinalDay) {
+        try {
+            // Check for existing active sessions
+            userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);
+            
+            // Create new session
+            UserSessionMapping userSession = new UserSessionMapping();
+            String newSessionId = UUID.randomUUID().toString();
+            userSession.setSessionId(newSessionId);
+            userSession.setUser(user);
+            userSession.setCohort(selectedCohort);
+            userSession.setSessionStartTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+            userSession.setUuid(UUID.randomUUID().toString());
+            
+            // Save new session
+            userSessionMappingService.createUserSessionMapping(userSession);
+            
+            // Update session attributes
+            session.setAttribute("userId", userId);
+            session.setAttribute("cohortId", selectedCohortId);
+            session.setAttribute("sessionId", newSessionId);
+        
+            // Create appropriate message
+            String message = isFinalDay 
+                ? "Cohort selected successfully. Note: This is the final day of your cohort."
+                : "Cohort selected successfully. Welcome to " + selectedCohort.getCohortName() + "!";
+                
+            response.put("message", message);
+            response.put("sessionId", newSessionId);
+            response.put("cohortId", selectedCohortId);
+            response.put("userId", userId);
+            
+            logger.info("Cohort selection successful - userId: {}, cohortId: {}, sessionId: {}", 
+                userId, selectedCohortId, newSessionId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error creating session for user: {}, cohort: {}", userId, selectedCohortId, e);
+            response.put("error", "Unable to create session. Please try again later.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpSession session) {
         String sessionId = session.getId();
@@ -847,5 +1263,108 @@ public class UserController {
         }
    }
   
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<?> deactivateUser(@PathVariable("id") String userId) {
+        Map<String, Object> response = new HashMap<>();
+        logger.info("Request to deactivate user: {}", userId);
+        
+        try {
+            String message = userService.deactivateUser(userId);
+            logger.info("User successfully deactivated: {}", userId);
+            response.put("message", message);
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to deactivate user: {}, reason: {}", userId, e.getMessage());
+            response.put("error", e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            logger.error("Unexpected error deactivating user: {}", userId, e);
+            response.put("error", "An unexpected error occurred. Please try again later.");
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    @PostMapping("/{userId}/cohorts/{cohortId}/deactivate")
+    public ResponseEntity<?> deactivateUserFromCohort(
+            @PathVariable String userId, 
+            @PathVariable String cohortId) {
+        Map<String, Object> response = new HashMap<>();
+        logger.info("Request to deactivate user: {} from cohort: {}", userId, cohortId);
+        
+        try {
+            String message = userService.deactivateUserFromCohort(userId, cohortId);
+            logger.info("User successfully deactivated from cohort - userId: {}, cohortId: {}", userId, cohortId);
+            response.put("message", message);
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to deactivate user from cohort - userId: {}, cohortId: {}, reason: {}", 
+                    userId, cohortId, e.getMessage());
+            response.put("error", e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            logger.error("Unexpected error deactivating user from cohort - userId: {}, cohortId: {}", 
+                    userId, cohortId, e);
+            response.put("error", "An unexpected error occurred. Please try again later.");
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<?> reactivateUser(@PathVariable("id") String userId) {
+        Map<String, Object> response = new HashMap<>();
+        logger.info("Request to reactivate user: {}", userId);
+        
+        try {
+            String message = userService.reactivateUser(userId);
+            logger.info("User successfully reactivated: {}", userId);
+            response.put("message", message);
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to reactivate user: {}, reason: {}", userId, e.getMessage());
+            response.put("error", e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            logger.error("Unexpected error reactivating user: {}", userId, e);
+            response.put("error", "An unexpected error occurred. Please try again later.");
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    @PostMapping("/{userId}/cohorts/{cohortId}/reactivate")
+    public ResponseEntity<?> reactivateUserInCohort(
+            @PathVariable String userId, 
+            @PathVariable String cohortId) {
+        Map<String, Object> response = new HashMap<>();
+        logger.info("Request to reactivate user: {} in cohort: {}", userId, cohortId);
+        
+        try {
+            String message = userService.reactivateUserInCohort(userId, cohortId);
+            logger.info("User successfully reactivated in cohort - userId: {}, cohortId: {}", userId, cohortId);
+            response.put("message", message);
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to reactivate user in cohort - userId: {}, cohortId: {}, reason: {}", 
+                    userId, cohortId, e.getMessage());
+            response.put("error", e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            logger.error("Unexpected error reactivating user in cohort - userId: {}, cohortId: {}", 
+                    userId, cohortId, e);
+            response.put("error", "An unexpected error occurred. Please try again later.");
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
     
 }

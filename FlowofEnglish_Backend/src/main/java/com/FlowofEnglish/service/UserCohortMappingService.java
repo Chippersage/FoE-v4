@@ -14,8 +14,6 @@ public interface UserCohortMappingService {
 
     UserCohortMapping updateUserCohortMappingByCohortId(String cohortId, UserCohortMapping userCohortMapping);
 
-    UserCohortMapping updateUserCohortMapping(String userId, UserCohortMapping userCohortMapping);
-
     UserCohortMapping createUserCohortMapping(String userId, String cohortId);
 
     UserCohortMapping createUserCohortMapping(UserCohortMapping userCohortMapping);
@@ -43,4 +41,6 @@ public interface UserCohortMappingService {
     void updateUserCohortMapping(int userCohortId, UserCohortMapping userCohortMapping);
 
     UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd);
+
+	UserCohortMapping updateUserCohortMapping(String userId, String cohortId, UserCohortMapping userCohortMapping);
 }

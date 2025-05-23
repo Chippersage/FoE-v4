@@ -28,4 +28,9 @@ public interface UserService {
     boolean verifyPassword(String plainPassword, String encodedPassword);
 	boolean resetPassword(String userId, String newPassword);
     
+	// new methods for active and deactivate users 
+    String deactivateUser(String userId);
+    String deactivateUserFromCohort(String userId, String cohortId);
+    String reactivateUser(String userId);
+    String reactivateUserInCohort(String userId, String cohortId);
 }
