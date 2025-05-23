@@ -667,23 +667,47 @@ public class UserController {
 
         if (userOpt.isEmpty()) {
             logger.debug("Login failed - User ID not found: {}", userId);
-            response.put("error", "Invalid username or password. Please try again.");
+            response.put("error", "Oops! Invalid userId");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         
         User user = userOpt.get();
         
-        // Check if user is active - IMPLEMENTED CHECK
+     // Check if user is active - IMPLEMENTED CHECK
         if (!user.isActive()) {
             logger.debug("Login failed - User account deactivated: {}", userId);
-            response.put("error", "Your account has been deactivated. Please contact your administrator for assistance.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+
+            // Get organization admin contact details
+            Organization userOrganization = user.getOrganization();
+            String adminContactMessage;
+
+            if (userOrganization != null) {
+                String adminName = userOrganization.getOrganizationAdminName();
+                String adminEmail = userOrganization.getOrganizationAdminEmail();
+                String adminPhone = userOrganization.getOrganizationAdminPhone();
+
+                adminContactMessage = String.format(
+                    " Please contact %s at %s or %s for help.",
+                    adminName != null ? adminName : "your administrator",
+                    adminEmail != null ? adminEmail : "email not available",
+                    adminPhone != null ? adminPhone : "phone not available"
+                );
+            } else {
+                adminContactMessage = " Please contact your administrator for help.";
+            }
+
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("error", "Your account has been deactivated.");
+            errorDetails.put("deactivationDetails", user.getDeactivationDetails());
+            errorDetails.put("contactInfo", adminContactMessage);
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetails);
         }
-        
+
         // Validate exact case-sensitive userId
         if (!user.getUserId().equals(userId)) {
             logger.debug("Login failed - Case mismatch for userId: {} vs {}", userId, user.getUserId());
-            response.put("error", "Invalid username or password. Please try again.");
+            response.put("error", "Oops! User ID not found. Please check the User ID");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         
@@ -695,10 +719,10 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
-        // Verify password
+     // Verify password
         if (!userService.verifyPassword(userPassword, user.getUserPassword())) {
             logger.debug("Login failed - Invalid password for user: {}", userId);
-            response.put("error", "Invalid username or password. Please try again.");
+            response.put("error", "Oops! Invalid userpassword");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         
@@ -885,9 +909,31 @@ public class UserController {
         
         // Check if user is active
         if (!user.isActive()) {
-            logger.warn("Select cohort failed - User account deactivated: {}", userId);
-            response.put("error", "Your account has been deactivated. Please contact your administrator for assistance.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            logger.warn("Select cohort failed - User cohort deactivated: {}", userId);
+         // Get organization admin contact details
+            Organization userOrganization = user.getOrganization();
+            String adminContactMessage;
+            if (userOrganization != null) {
+                String adminName = userOrganization.getOrganizationAdminName();
+                String adminEmail = userOrganization.getOrganizationAdminEmail();
+                String adminPhone = userOrganization.getOrganizationAdminPhone();
+                
+                adminContactMessage = String.format(
+                        " Please contact %s at %s or %s for help.",
+                        adminName != null ? adminName : "your administrator",
+                        adminEmail != null ? adminEmail : "email not available",
+                        adminPhone != null ? adminPhone : "phone not available"
+                    );
+                } else {
+                    adminContactMessage = " Please contact your administrator for help.";
+                }
+            
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("error", "Your account has been deactivated.");
+            errorDetails.put("deactivationDetails", user.getDeactivationDetails());
+            errorDetails.put("contactInfo", adminContactMessage);
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetails);
         }
         
         // Check if user is active in this cohort - IMPLEMENTED CHECK
@@ -897,8 +943,35 @@ public class UserController {
         if (cohortMapping.isEmpty() || !cohortMapping.get().isActive()) {
             logger.warn("Select cohort failed - User not active in cohort - userId: {}, cohortId: {}", 
                     userId, selectedCohortId);
-            response.put("error", "You are not active in this cohort. Please contact your administrator for assistance.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+         // Get organization admin contact details for cohort access issue
+            Organization userOrganization = user.getOrganization();
+            String adminContactMessage;
+            if (userOrganization != null) {
+                String adminName = userOrganization.getOrganizationAdminName();
+                String adminEmail = userOrganization.getOrganizationAdminEmail();
+                String adminPhone = userOrganization.getOrganizationAdminPhone();
+                
+                adminContactMessage = String.format(
+                        " Please contact %s at %s or %s for help.",
+                        adminName != null ? adminName : "your administrator",
+                        adminEmail != null ? adminEmail : "email not available",
+                        adminPhone != null ? adminPhone : "phone not available"
+                    );
+                } else {
+                    adminContactMessage = " Please contact your administrator for help.";
+                }
+            
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("error", "Your access to this program has been deactivated.");
+            
+            if (cohortMapping.isPresent()) {
+                errorDetails.put("deactivationDetails", 
+                    cohortMapping.get().getDeactivationDetails());
+            }
+            
+            errorDetails.put("contactInfo", adminContactMessage);
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetails);
         }
         
         // Fetch user's cohorts to validate if the selected cohort is assigned to the user

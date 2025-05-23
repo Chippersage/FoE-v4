@@ -2,6 +2,7 @@ package com.FlowofEnglish.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Entity
@@ -159,6 +160,16 @@ public class UserCohortMapping  {
        this.status = "DISABLED";
        this.deactivatedAt = OffsetDateTime.now();
        this.deactivatedReason = reason;
+   }
+   
+   public String getDeactivationDetails() {
+       if (!isActive() && deactivatedAt != null) {
+           DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+           return String.format("Program access deactivated on %s. Reason: %s", 
+               deactivatedAt.format(formatter), 
+               deactivatedReason != null ? deactivatedReason : "Not specified");
+       }
+       return "";
    }
 	// Method to ensure UUID and generate leaderboardScore before persisting
     @PrePersist

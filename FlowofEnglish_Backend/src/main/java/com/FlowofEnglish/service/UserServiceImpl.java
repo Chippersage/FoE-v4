@@ -941,6 +941,10 @@ public class UserServiceImpl implements UserService {
         userDetailsDTO.setUserPhoneNumber(user.getUserPhoneNumber());
         userDetailsDTO.setUserAddress(user.getUserAddress());
         userDetailsDTO.setUserType(user.getUserType());
+        userDetailsDTO.setCreatedAt(user.getCreatedAt());
+        userDetailsDTO.setStatus(user.getStatus());
+        userDetailsDTO.setDeactivatedAt(user.getDeactivatedAt());
+        userDetailsDTO.setDeactivatedReason(user.getDeactivatedReason());
         userDetailsDTO.setOrganization(convertOrganizationToDTO(user.getOrganization()));
 
         // Fetch all cohorts and their programs for the user
