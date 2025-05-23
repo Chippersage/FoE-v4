@@ -39,6 +39,8 @@ import CohortTour from "@/components/tours/CohortTour";
 import { Badge } from "@/components/ui/badge";
 import formatUnixToDate from "@/utils/formatUnixToDate";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-hot-toast";
+import { ErrorModal } from "@/components/ErrorModal";
 
 const courseColors = [
   "from-pink-500 to-rose-500",
@@ -144,12 +146,16 @@ export default function Dashboard() {
   // const [expandedCohortId, setExpandedCohortId] = useState(null);
   const [notificationsShown, setNotificationsShown] = useState(false);
   const [notificationExpanded, setNotificationExpanded] = useState(true);
-  const { toast } = useToast(); // If you're using a toast system
+  // const { toast } = useToast(); // If you're using a toast system
 
   const MotionCard = motion(Card);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [expandedCohortId, setExpandedCohortId] = useState(null);
   // const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [showErrorModalOpen, setShowErrorModalOpen] = useState(false);
+  const [errorModalData, setErrorModalData] = useState(
+    null
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -354,24 +360,15 @@ export default function Dashboard() {
   });
 
   const handleResume = async (cohortWithProgram) => {
-    // Check if cohort is disabled
     const daysRemaining = calculateDaysRemaining(
       cohortWithProgram.cohortEndDate
     );
     const status = getCohortStatus(daysRemaining).status;
 
     if (status === "ended" || daysRemaining < 0) {
-      // Show a toast or alert that the cohort has ended
-      console.log("This cohort has ended and is no longer accessible");
+      toast.error("This cohort has ended and is no longer accessible");
       return;
     }
-
-    setSelectedCohortWithProgram(cohortWithProgram);
-    // When setting the cohort
-    localStorage.setItem(
-      "selectedCohortWithProgram",
-      JSON.stringify(cohortWithProgram)
-    );
 
     try {
       const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
@@ -379,12 +376,39 @@ export default function Dashboard() {
         cohortId: cohortWithProgram?.cohortId,
       });
 
-      localStorage.setItem("sessionId", response.data.sessionId); // Store real session ID
+        setSelectedCohortWithProgram(cohortWithProgram);
+        localStorage.setItem(
+          "selectedCohortWithProgram",
+          JSON.stringify(cohortWithProgram)
+        );
+        localStorage.setItem("sessionId", response.data.sessionId);
 
-      navigate("/home"); // Navigate after session ID is set
-    } catch (error) {
-      console.error("Error fetching session ID:", error);
-    }
+        navigate("/home");
+      
+      } catch (error) {
+        let errorMessage = "An unexpected error occurred.";
+        let deactivationDetails = "";
+        let contactInfo = "";
+      
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+      
+          // Optional: you can structure this however your backend sends data
+          deactivationDetails = error.response.data.deactivationDetails || "Please contact support.";
+          contactInfo = error.response.data.contactInfo || "support@example.com or 1234567890";
+        } else if (error.request) {
+          errorMessage = "No response from server. Please try again later.";
+        } else {
+          errorMessage = error.message || "Unexpected error occurred.";
+        }
+      
+        setErrorModalData({
+          error: errorMessage,
+          deactivationDetails,
+          contactInfo,
+        });
+        setShowErrorModalOpen(true);
+      }
   };
 
   const handleScroll = () => {
@@ -413,21 +437,21 @@ export default function Dashboard() {
 
   // Daily challenge data
   const wordOfDay = {
-    word: "Serendipity",
+    word: "Epiphany",
     partOfSpeech: "noun",
-    definition:
-      "The occurrence and development of events by chance in a happy or beneficial way.",
+    definition: "A moment of sudden and profound understanding or realization.",
     example:
-      "A fortunate stroke of serendipity came my way when I met my business partner at a conference.",
-    pronunciation: "/ˌsɛr(ə)nˈdɪpɪti/",
+      "In the quiet of the library, she had an epiphany that changed the course of her career.",
+    pronunciation: "/ɪˈpɪfəni/",
   };
 
   const riddle = {
     question:
-      "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
-    answer: "An echo",
-    hint: "Think about what happens when you shout in a canyon.",
+      "I have keys but no locks, I have space but no room, you can enter but can’t go outside. What am I?",
+    answer: "A keyboard",
+    hint: "Think of something essential to computers.",
   };
+  
 
   // Count cohorts that are ending soon (<=15 days) or have ended
   const endingSoonCohorts =
@@ -443,23 +467,23 @@ export default function Dashboard() {
     }) || [];
 
   // Play sound and show notification when component mounts
-  useEffect(() => {
-    if (endingSoonCohorts.length > 0 && !notificationsShown) {
-      setTimeout(() => {
-        playNotificationSound();
-        setNotificationsShown(true);
+  // useEffect(() => {
+  //   if (endingSoonCohorts.length > 0 && !notificationsShown) {
+  //     setTimeout(() => {
+  //       playNotificationSound();
+  //       setNotificationsShown(true);
 
-        // Optional: Show toast notification
-        toast({
-          title: "Cohort Access Alert",
-          description: `You have ${endingSoonCohorts.length} cohort${
-            endingSoonCohorts.length !== 1 ? "s" : ""
-          } ending soon.`,
-          variant: "warning",
-        });
-      }, 1000); // Delay the notification by 1 second after page load
-    }
-  }, [endingSoonCohorts.length]);
+  //       // Optional: Show toast notification
+  //       toast({
+  //         title: "Cohort Access Alert",
+  //         description: `You have ${endingSoonCohorts.length} cohort${
+  //           endingSoonCohorts.length !== 1 ? "s" : ""
+  //         } ending soon.`,
+  //         variant: "warning",
+  //       });
+  //     }, 1000); // Delay the notification by 1 second after page load
+  //   }
+  // }, [endingSoonCohorts.length]);
 
   // Auto-rotate notifications every 2 seconds
   useEffect(() => {
@@ -519,6 +543,14 @@ export default function Dashboard() {
         />
       )}
 
+      {showErrorModalOpen && (
+        <ErrorModal
+          isOpen={showErrorModalOpen}
+          onClose={() => setShowErrorModalOpen(false)}
+          errorModalData={errorModalData || undefined}
+        />
+      )}
+
       <div
         className="min-h-screen bg-slate-100 font-sans relative"
         style={{
@@ -532,7 +564,7 @@ export default function Dashboard() {
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/10 z-0" />
 
-        <main className="relative z-10 container mx-auto max-w-screen p-4">
+        <main className="relative z-10 container mx-auto p-4">
           {/* Notification for ending soon cohorts */}
           {/* Sequential Notification for ending soon cohorts */}
           <AnimatePresence>

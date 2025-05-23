@@ -178,13 +178,28 @@ const checkAuthUser = async () => {
       navigate("/sign-in");
     } else {
       checkAuthUser();
-      // Only navigate to cohort selection if no cohort is selected AND we're not on the assignments page
+
       const currentPath = window.location.pathname;
-      if (!selectedCohortWithProgram && !currentPath.includes("/cohorts/")) {
+
+      const excludedPaths = [
+        "/cohorts/",
+        "/view-progress",
+        "/profile",
+        "/organization-details",
+        "/about-us",
+        // Add more substrings here that should skip cohort selection
+      ];
+
+      const shouldSkipCohortSelection = excludedPaths.some((path) =>
+        currentPath.includes(path)
+      );
+
+      if (!selectedCohortWithProgram && !shouldSkipCohortSelection) {
         navigate("/select-cohort");
       }
     }
   }, [navigate, selectedCohortWithProgram]);
+  
 
   // Value to be provided by the context
   const value = {

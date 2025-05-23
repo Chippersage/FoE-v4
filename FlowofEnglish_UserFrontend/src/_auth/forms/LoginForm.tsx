@@ -5,6 +5,7 @@ import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import mainLogo from "@/assets/Img/main-logo.png";
+import { ErrorModal } from "@/components/ErrorModal";
 
 
 export default function LoginPage() {
@@ -22,6 +23,10 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [userRole, setUserRole] = useState("Learner");
+  const [showErrorModalOpen, setShowErrorModalOpen] = useState(false);
+    const [errorModalData, setErrorModalData] = useState(
+      null
+    );
 
   // Fetch programs from API when the component mounts
     useEffect(() => {
@@ -92,6 +97,32 @@ export default function LoginPage() {
       }
     } catch (error) {
       // @ts-ignore
+      let errorMessage = "An unexpected error occurred.";
+      let deactivationDetails = "";
+      let contactInfo = "";
+
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+
+        // Optional: you can structure this however your backend sends data
+        deactivationDetails = error.response.data.deactivationDetails;
+        contactInfo = error.response.data.contactInfo;
+      } else if (error.request) {
+        errorMessage = "No response from server. Please try again later.";
+      } else {
+        errorMessage = error.message || "Unexpected error occurred.";
+      }
+
+      // Only show ErrorModal if there are additional details beyond just the error message
+      if (deactivationDetails || contactInfo) {
+        setErrorModalData({
+          error: errorMessage,
+          deactivationDetails,
+          contactInfo,
+        });
+        setShowErrorModalOpen(true);
+      }
+
       setError(error.response.data.error);
       // console.log(error);
     } finally {
@@ -104,51 +135,59 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
-      <div className="mb-8 mt-8">
-        <img src={mainLogo} alt="flowofenglish Logo" className="h-15" />
-      </div>
+    <>
+      {showErrorModalOpen && (
+        <ErrorModal
+          isOpen={showErrorModalOpen}
+          onClose={() => setShowErrorModalOpen(false)}
+          errorModalData={errorModalData || undefined}
+        />
+      )}
+      <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
+        <div className="mb-8 mt-8">
+          <img src={mainLogo} alt="flowofenglish Logo" className="h-15" />
+        </div>
 
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
-        <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
-          Login to your <br /> Account
-        </h2>
+        <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
+          <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
+            Login to your <br /> Account
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <input
-              type="text"
-              placeholder="User ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <input
+                type="text"
+                placeholder="User ID"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+                required
+              />
+            </div>
 
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
-              required
-            />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            >
-              {showPassword ? (
-                <EyeSlashIcon className="h-5 w-5 text-gray-500" />
-              ) : (
-                <EyeIcon className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
-          </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <EyeIcon className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
 
-          {/* <div className="relative">
+            {/* <div className="relative">
             <button
               type="button"
               onClick={() => {
@@ -183,62 +222,63 @@ export default function LoginPage() {
             )}
           </div> */}
 
-          <div className="flex justify-between items-center text-sm text-gray-600 px-4">
-            <label className="font-medium">Sign in as:</label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="userRole"
-                  value="Learner"
-                  checked={userRole === "Learner"}
-                  onChange={() => setUserRole("Learner")}
-                  className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
-                />
-                Learner
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="userRole"
-                  value="Mentor"
-                  checked={userRole === "Mentor"}
-                  onChange={() => setUserRole("Mentor")}
-                  className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
-                />
-                Mentor
-              </label>
+            <div className="flex justify-between items-center text-sm text-gray-600 px-4">
+              <label className="font-medium">Sign in as:</label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userRole"
+                    value="Learner"
+                    checked={userRole === "Learner"}
+                    onChange={() => setUserRole("Learner")}
+                    className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
+                  />
+                  Learner
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userRole"
+                    value="Mentor"
+                    checked={userRole === "Mentor"}
+                    onChange={() => setUserRole("Mentor")}
+                    className="mr-2 rounded-sm border-gray-400 focus:ring-[#5bc3cd] text-sm"
+                  />
+                  Mentor
+                </label>
+              </div>
             </div>
+
+            <p className="text-red-600 text-center text-sm font-medium mt-8">
+              {error}
+            </p>
+
+            <button
+              type="submit"
+              className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              {isSubmitting ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center space-y-2">
+            <a
+              href="mailto:support@thechippersage.com?subject=Flow%20Of%20English%3A%20Help%20Request"
+              className="text-[#5bc3cd] hover:underline block"
+            >
+              Need help? Click here
+            </a>
+            <a
+              href="mailto:support@thechippersage.com?subject=Flow%20Of%20English%3A%20Create%20a%20new%20Account"
+              className="text-[#5bc3cd] hover:underline block"
+            >
+              Want to signup? Click here
+            </a>
           </div>
-
-          <p className="text-red-600 text-center text-sm font-medium mt-8">
-            {error}
-          </p>
-
-          <button
-            type="submit"
-            className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center space-y-2">
-          <a
-            href="mailto:support@thechippersage.com?subject=Flow%20Of%20English%3A%20Help%20Request"
-            className="text-[#5bc3cd] hover:underline block"
-          >
-            Need help? Click here
-          </a>
-          <a
-            href="mailto:support@thechippersage.com?subject=Flow%20Of%20English%3A%20Create%20a%20new%20Account"
-            className="text-[#5bc3cd] hover:underline block"
-          >
-            Want to signup? Click here
-          </a>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

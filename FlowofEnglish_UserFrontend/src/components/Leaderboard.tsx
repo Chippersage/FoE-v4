@@ -57,7 +57,7 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
                 {/* Avatar Section */}
                 <Avatar src={avatar_icon} />
                 <div className="ml-2">
-                  <div className="font-semibold text-primary truncate max-w-[140px]">
+                  <div className="font-semibold text-black truncate max-w-[140px]">
                     {entry.userName}
                   </div>
                 </div>
