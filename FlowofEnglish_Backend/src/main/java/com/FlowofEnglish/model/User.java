@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -43,6 +45,7 @@ public class User {
     private String status = "ACTIVE"; // Default value: ACTIVE
     
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private OffsetDateTime createdAt;
     
     @Column(name = "deactivated_at")

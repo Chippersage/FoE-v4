@@ -26,4 +26,34 @@ public interface UserAttemptsRepository extends JpaRepository<UserAttempts, Long
              "WHERE ua.user.userId = :userId " +
              "GROUP BY ua.subconcept.subconceptId")
       List<Object[]> findMaxScoresByUser(@Param("userId") String userId);
+      
+      /**
+       * Find UserAttempts by user, program, stage, unit, and subconcept
+       * This helps identify the specific attempt that corresponds to an assignment
+       */
+      List<UserAttempts> findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(
+          String userId, 
+          String programId, 
+          String stageId, 
+          String unitId, 
+          String subconceptId
+      );
+      
+      /**
+       * Alternative method to find the most recent attempt for a specific user and subconcept
+       * Ordered by attempt end timestamp descending
+       */
+      @Query("SELECT ua FROM UserAttempts ua WHERE ua.user.userId = :userId " +
+             "AND ua.program.programId = :programId " +
+             "AND ua.stage.stageId = :stageId " +
+             "AND ua.unit.unitId = :unitId " +
+             "AND ua.subconcept.subconceptId = :subconceptId " +
+             "ORDER BY ua.userAttemptEndTimestamp DESC")
+      List<UserAttempts> findLatestUserAttemptsByUserAndSubconcept(
+          @Param("userId") String userId,
+          @Param("programId") String programId,
+          @Param("stageId") String stageId,
+          @Param("unitId") String unitId,
+          @Param("subconceptId") String subconceptId
+      );
 }

@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
 @Table(name = "UserCohortMapping",
         uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "user_id"}))
@@ -40,6 +42,7 @@ public class UserCohortMapping  {
     private String deactivatedReason;
     
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private OffsetDateTime createdAt;
     
     // Default constructor
