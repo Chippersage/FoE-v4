@@ -32,7 +32,7 @@ const BackButton: React.FC<BackButtonProps> = ({ className = "" }) => {
           className="transform transition-transform duration-300 group-hover:-translate-x-1"
         />
       </span>
-      <span className="font-medium transform transition-all duration-300 group-hover:translate-x-1">
+      <span className="font-medium transform transition-all duration-300 group-hover:translate-x-1 hidden sm:block">
         Back
       </span>
     </button>

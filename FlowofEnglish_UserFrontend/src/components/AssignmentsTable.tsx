@@ -47,189 +47,169 @@ import { debounce } from "lodash"; // Add lodash for debouncing
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Memoized Assignment Row Component
-const AssignmentRow = React.memo(({ 
-  assignment, 
-  editedAssignments, 
-  onScoreChange, 
-  onRemarksChange, 
-  onFileChange,
-  onCorrectedDateChange,
-  onSubmitCorrection,
-  formatDateTime,
-  handleOpenContent,
-  updating,
-}) => {
-  const LIGHT_TEAL = "#e6f5f5";
-  const DEPENDENCY_CHIP_COLOR = "#f0e6ff";
-  const HOVER_COLOR = "#f5f5f5";
+const AssignmentRow = React.memo(
+  ({
+    assignment,
+    editedAssignments,
+    onScoreChange,
+    onRemarksChange,
+    onFileChange,
+    onCorrectedDateChange,
+    onSubmitCorrection,
+    formatDateTime,
+    handleOpenContent,
+    updating,
+    fieldErrors,
+  }) => {
+    const LIGHT_TEAL = "#e6f5f5";
+    const DEPENDENCY_CHIP_COLOR = "#f0e6ff";
+    const HOVER_COLOR = "#f5f5f5";
 
-  // Debounced handlers to reduce state updates
-  const debouncedScoreChange = useCallback(
-    debounce((value) => {
-      onScoreChange(assignment.assignmentId, value);
-    }, 300),
-    [assignment.assignmentId, onScoreChange]
-  );
+    // Debounced handlers to reduce state updates
+    const debouncedScoreChange = useCallback(
+      debounce((value) => {
+        onScoreChange(assignment.assignmentId, value);
+      }, 300),
+      [assignment.assignmentId, onScoreChange]
+    );
 
-  const debouncedRemarksChange = useCallback(
-    debounce((value) => {
-      onRemarksChange(assignment.assignmentId, value);
-    }, 300),
-    [assignment.assignmentId, onRemarksChange]
-  );
+    const debouncedRemarksChange = useCallback(
+      debounce((value) => {
+        onRemarksChange(assignment.assignmentId, value);
+      }, 300),
+      [assignment.assignmentId, onRemarksChange]
+    );
 
-  // Local state for input values to make UI responsive
-  const [localScore, setLocalScore] = useState(
-    editedAssignments[assignment.assignmentId]?.score || ""
-  );
-  const [localRemarks, setLocalRemarks] = useState(
-    editedAssignments[assignment.assignmentId]?.remarks || ""
-  );
+    // Local state for input values to make UI responsive
+    const [localScore, setLocalScore] = useState(
+      editedAssignments[assignment.assignmentId]?.score || ""
+    );
+    const [localRemarks, setLocalRemarks] = useState(
+      editedAssignments[assignment.assignmentId]?.remarks || ""
+    );
 
-  // Handle local state changes
-  const handleLocalScoreChange = (e) => {
-    const value = e.target.value;
-    setLocalScore(value);
-    debouncedScoreChange(value);
-  };
+    // Handle local state changes
+    const handleLocalScoreChange = (e) => {
+      const value = e.target.value;
+      setLocalScore(value);
+      debouncedScoreChange(value);
+    };
 
-  const handleLocalRemarksChange = (e) => {
-    // Limit input to 150 characters
-    const input = e.target.value.slice(0, 150);
-    setLocalRemarks(input);
-    debouncedRemarksChange(input);
-  };
+    const handleLocalRemarksChange = (e) => {
+      // Limit input to 150 characters
+      const input = e.target.value.slice(0, 150);
+      setLocalRemarks(input);
+      debouncedRemarksChange(input);
+    };
 
-  return (
-    <TableRow
-      sx={{
-        backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
-        color: assignment.correctedDate ? "black" : "inherit",
-        transition: "background-color 0.2s ease",
-      }}
-    >
-      <TableCell>
-        <Tooltip title={`User name: ${assignment.user.userName}`}>
-          <span>{assignment.user.userId}</span>
-        </Tooltip>
-      </TableCell>
-      <TableCell sx={{ width: "25%" }}>
-        <Tooltip
-          title={assignment.subconcept.subconceptDesc}
-          placement="top-start"
-          arrow
-          enterDelay={500}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              color: "text.primary",
-              lineHeight: 1.3,
-              maxHeight: "2.6em", // Approximately two lines
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2, // Limit to two lines
-              WebkitBoxOrient: "vertical",
-              wordBreak: "break-word",
-            }}
-            data-tour-id="topic"
+    return (
+      <TableRow
+        sx={{
+          backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
+          color: assignment.correctedDate ? "black" : "inherit",
+          transition: "background-color 0.2s ease",
+        }}
+      >
+        <TableCell>
+          <Tooltip title={`User name: ${assignment.user.userName}`}>
+            <span>{assignment.user.userId}</span>
+          </Tooltip>
+        </TableCell>
+        <TableCell sx={{ width: "25%" }}>
+          <Tooltip
+            title={assignment.subconcept.subconceptDesc}
+            placement="top-start"
+            arrow
+            enterDelay={500}
           >
-            {assignment.subconcept.subconceptDesc}  
-          </Typography>
-        </Tooltip>
-      </TableCell>
-      <TableCell>
-        {assignment.subconcept.dependencies &&
-        assignment.subconcept.dependencies.length > 0 ? (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {assignment.subconcept.dependencies.map((dep, index) => (
-              <Chip
-                key={index}
-                label={dep.subconceptId}
-                size="small"
-                sx={{
-                  bgcolor: DEPENDENCY_CHIP_COLOR,
-                  cursor: "pointer",
-                  "&:hover": { opacity: 0.8 },
-                }}
-                onClick={() =>
-                  handleOpenContent(
-                    dep.subconceptId,
-                    dep.subconceptDesc,
-                    dep.subconceptLink,
-                    dep.subconceptType
-                  )
-                }
-                data-tour-id="reference"
-              />
-            ))}
-          </Box>
-        ) : (
-          <Typography variant="caption" color="text.secondary">
-            None
-          </Typography>
-        )}
-      </TableCell>
-      <TableCell align="center">
-        <Chip
-          label={assignment.subconcept.subconceptMaxscore}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
-      </TableCell>
-      <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
-      <TableCell>
-        {assignment.submittedFile && (
-          <Button
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: "text.primary",
+                lineHeight: 1.3,
+                maxHeight: "2.6em", // Approximately two lines
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "-webkit-box",
+                WebkitLineClamp: 2, // Limit to two lines
+                WebkitBoxOrient: "vertical",
+                wordBreak: "break-word",
+              }}
+              data-tour-id="topic"
+            >
+              {assignment.subconcept.subconceptDesc}
+            </Typography>
+          </Tooltip>
+        </TableCell>
+        <TableCell>
+          {assignment.subconcept.dependencies &&
+          assignment.subconcept.dependencies.length > 0 ? (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {assignment.subconcept.dependencies.map((dep, index) => (
+                <Chip
+                  key={index}
+                  label={dep.subconceptId}
+                  size="small"
+                  sx={{
+                    bgcolor: DEPENDENCY_CHIP_COLOR,
+                    cursor: "pointer",
+                    "&:hover": { opacity: 0.8 },
+                  }}
+                  onClick={() =>
+                    handleOpenContent(
+                      dep.subconceptId,
+                      dep.subconceptDesc,
+                      dep.subconceptLink,
+                      dep.subconceptType
+                    )
+                  }
+                  data-tour-id="reference"
+                />
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="caption" color="text.secondary">
+              None
+            </Typography>
+          )}
+        </TableCell>
+        <TableCell align="center">
+          <Chip
+            label={assignment.subconcept.subconceptMaxscore}
+            size="small"
+            color="primary"
             variant="outlined"
-            size="small"
-            data-tour-id="view-submitted-assignment-button"
-            startIcon={<CloudUploadIcon />}
-            href={assignment.submittedFile.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View
-          </Button>
-        )}
-      </TableCell>
-      <TableCell>
-        <TextField
-          type="number"
-          size="small"
-          value={localScore}
-          onChange={handleLocalScoreChange}
-          inputProps={{
-            min: 0,
-            max: assignment.subconcept.subconceptMaxscore,
-            style: { width: "60px" },
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                borderColor: "rgba(0, 0, 0, 0.2)",
-              },
-              "&:hover fieldset": {
-                borderColor: "primary.main",
-              },
-            },
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <Box sx={{ position: "relative" }}>
+          />
+        </TableCell>
+        <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
+        <TableCell>
+          {assignment.submittedFile && (
+            <Button
+              variant="outlined"
+              size="small"
+              data-tour-id="view-submitted-assignment-button"
+              startIcon={<CloudUploadIcon />}
+              href={assignment.submittedFile.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View
+            </Button>
+          )}
+        </TableCell>
+        <TableCell>
           <TextField
+            type="number"
             size="small"
-            multiline
-            maxRows={3}
-            value={localRemarks}
-            onChange={handleLocalRemarksChange}
+            value={localScore}
+            onChange={handleLocalScoreChange}
+            error={fieldErrors?.score === true}
+            helperText={fieldErrors?.score ? "Score is required" : ""}
             inputProps={{
-              style: { width: "150px" },
-              maxLength: 150, // HTML attribute for max length
+              min: 0,
+              max: assignment.subconcept.subconceptMaxscore,
+              style: { width: "60px" },
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
@@ -242,94 +222,135 @@ const AssignmentRow = React.memo(({
               },
             }}
           />
-          <Typography
-            variant="caption"
-            sx={{
-              position: "absolute",
-              bottom: "2px",
-              right: "8px",
-              fontSize: "0.7rem",
-              color: "text.secondary",
-              backgroundColor: "rgba(255, 255, 255, 0.8)",
-              padding: "0 2px",
-              borderRadius: "2px",
-            }}
-          >
-            {localRemarks.length}/150
-          </Typography>
-        </Box>
-      </TableCell>
-      <TableCell>
-        <Box display="flex" alignItems="center">
-          <label htmlFor={`correction-file-${assignment.assignmentId}`}>
-            <input
-              accept="*/*"
-              id={`correction-file-${assignment.assignmentId}`}
-              type="file"
-              style={{ display: "none" }}
-              onChange={(e) => onFileChange(assignment.assignmentId, e.target.files[0])}
+        </TableCell>
+        <TableCell>
+          <Box sx={{ position: "relative" }}>
+            <TextField
+              size="small"
+              multiline
+              maxRows={3}
+              value={localRemarks}
+              onChange={handleLocalRemarksChange}
+              error={fieldErrors?.remarks === true}
+              helperText={fieldErrors?.remarks ? "Remark is required" : ""}
+              inputProps={{
+                style: { width: "150px" },
+                maxLength: 150, // HTML attribute for max length
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "rgba(0, 0, 0, 0.2)",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "primary.main",
+                  },
+                },
+              }}
             />
-            <Tooltip title="Upload correction file">
-              <IconButton component="span" color="primary" size="small">
-                <CloudUploadIcon />
-              </IconButton>
-            </Tooltip>
-          </label>
-          {editedAssignments[assignment.assignmentId]?.file?.name ? (
-            <Typography variant="caption" noWrap sx={{ ml: 1, maxWidth: 100 }}>
-              {editedAssignments[assignment.assignmentId].file.name}
+            <Typography
+              variant="caption"
+              sx={{
+                position: "absolute",
+                bottom: "2px",
+                right: "8px",
+                fontSize: "0.7rem",
+                color: "text.secondary",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                padding: "0 2px",
+                borderRadius: "2px",
+              }}
+            >
+              {localRemarks.length}/150
             </Typography>
-          ) : (
-            assignment.correctedFile && (
-              <Button
-                variant="text"
-                size="small"
-                href={assignment.correctedFile.downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ ml: 1, textTransform: "none" }}
+          </Box>
+        </TableCell>
+        <TableCell>
+          <Box display="flex" alignItems="center">
+            <label htmlFor={`correction-file-${assignment.assignmentId}`}>
+              <input
+                accept="*/*"
+                id={`correction-file-${assignment.assignmentId}`}
+                type="file"
+                style={{ display: "none" }}
+                onChange={(e) =>
+                  onFileChange(assignment.assignmentId, e.target.files[0])
+                }
+              />
+              <Tooltip title="Upload correction file">
+                <IconButton component="span" color="primary" size="small">
+                  <CloudUploadIcon />
+                </IconButton>
+              </Tooltip>
+            </label>
+            {editedAssignments[assignment.assignmentId]?.file?.name ? (
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ ml: 1, maxWidth: 100 }}
               >
-                View File
-              </Button>
-            )
+                {editedAssignments[assignment.assignmentId].file.name}
+              </Typography>
+            ) : (
+              assignment.correctedFile && (
+                <Button
+                  variant="text"
+                  size="small"
+                  href={assignment.correctedFile.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ ml: 1, textTransform: "none" }}
+                >
+                  View File
+                </Button>
+              )
+            )}
+          </Box>
+        </TableCell>
+        <TableCell>
+          {assignment.correctedDate ? (
+            formatDateTime(assignment.correctedDate)
+          ) : (
+            <TextField
+              type="date"
+              size="small"
+              value={
+                editedAssignments[assignment.assignmentId]?.correctedDate || ""
+              }
+              onChange={(e) =>
+                onCorrectedDateChange(assignment.assignmentId, e.target.value)
+              }
+              sx={{ width: 130 }}
+            />
           )}
-        </Box>
-      </TableCell>
-      <TableCell>
-        {assignment.correctedDate ? (
-          formatDateTime(assignment.correctedDate)
-        ) : (
-          <TextField
-            type="date"
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="contained"
+            color="primary"
             size="small"
-            value={editedAssignments[assignment.assignmentId]?.correctedDate || ""}
-            onChange={(e) => onCorrectedDateChange(assignment.assignmentId, e.target.value)}
-            sx={{ width: 130 }}
-          />
-        )}
-      </TableCell>
-      <TableCell>
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={() => onSubmitCorrection(assignment.assignmentId)}
-          disabled={updating || assignment.correctedDate}
-          sx={{
-            textTransform: "none",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            "&:hover": {
-              boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-            },
-          }}
-          data-tour-id="save"
-        >
-          {updating ? "Saving..." : assignment.correctedDate ? "Corrected" : "Save"}
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
-});
+            onClick={() => onSubmitCorrection(assignment.assignmentId)}
+            disabled={updating || assignment.correctedDate}
+            sx={{
+              textTransform: "none",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              "&:hover": {
+                boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+              },
+            }}
+            data-tour-id="save"
+          >
+            {updating
+              ? "Saving..."
+              : assignment.correctedDate
+              ? "Corrected"
+              : "Save"}
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  }
+);
 
 const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const [assignments, setAssignments] = useState([]);
@@ -365,6 +386,8 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     type: "",
   });
   const [zoomLevel, setZoomLevel] = useState(1); // Default zoom level (1 = 100%)
+  const [fieldErrors, setFieldErrors] = useState({});
+
 
   // Theme colors
   const LIGHT_TEAL = "#e6f5f5";
@@ -589,7 +612,37 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const handleSubmitCorrection = async (assignmentId) => {
     const editedData = editedAssignments[assignmentId];
     const assignment = assignments.find((a) => a.assignmentId === assignmentId);
-
+  
+    const errors = {
+      score: !editedData.score || editedData.score.toString().trim() === "",
+      remarks: !editedData.remarks || editedData.remarks.trim() === "",
+    };
+  
+    if (!editedData.score || editedData.score.toString().trim() === "") {
+      errors.score = true;
+    }
+  
+    if (!editedData.remarks || editedData.remarks.trim() === "") {
+      errors.remarks = true;
+    }
+  
+    // Set visual error states
+    setFieldErrors((prev) => ({
+      ...prev,
+      [assignmentId]: errors,
+    }));
+  
+    // If any errors found, show alert and return
+    if (errors.score || errors.remarks) {
+      setAlert({
+        open: true,
+        message: "Please fill in both Score and Remarks before submitting.",
+        severity: "error",
+      });
+      return;
+    }
+  
+    // Validate file or score (optional but already in your code)
     if (!editedData.score && !editedData.file) {
       setAlert({
         open: true,
@@ -598,7 +651,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       });
       return;
     }
-
+  
     // Validate score against max score
     if (
       editedData.score &&
@@ -615,11 +668,11 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         return;
       }
     }
-
+  
     // Validate correction date
     if (editedData.correctedDate && assignment.submittedDate) {
       const correctedDate = new Date(editedData.correctedDate);
-      const submittedDate = new Date(assignment.submittedDate * 1000); // Convert timestamp to Date
+      const submittedDate = new Date(assignment.submittedDate * 1000);
       if (correctedDate < submittedDate) {
         setAlert({
           open: true,
@@ -629,23 +682,22 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         return;
       }
     }
-
+  
+    // Continue with submission
     setUpdating(true);
     const formData = new FormData();
-
+  
     if (editedData.file) {
       formData.append("file", editedData.file);
     }
-
+  
     formData.append("score", editedData.score);
     formData.append("remarks", editedData.remarks);
     if (editedData.correctedDate) {
-      const correctedDateTime = new Date(
-        editedData.correctedDate
-      ).toISOString();
+      const correctedDateTime = new Date(editedData.correctedDate).toISOString();
       formData.append("correctedDate", correctedDateTime);
     }
-
+  
     try {
       const response = await axios.post(
         `${API_BASE_URL}/assignments/${assignmentId}/correct`,
@@ -656,32 +708,36 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
           },
         }
       );
-
-      // Update the local state with the corrected assignment
+  
+      // Update local state
       const updatedAssignments = assignments.map((assignment) =>
         assignment.assignmentId === assignmentId ? response.data : assignment
       );
-
+  
       setAssignments(updatedAssignments);
-
-      // Update filtered assignments and maintain current sort
+  
       const updatedFiltered = filteredAssignments.map((assignment) =>
         assignment.assignmentId === assignmentId ? response.data : assignment
       );
       sortData(updatedFiltered, orderBy, order);
-
-      // Update statistics
+  
       setStatistics((prevStats) => ({
         ...prevStats,
         correctedAssignments: prevStats.correctedAssignments + 1,
         pendingAssignments: prevStats.pendingAssignments - 1,
       }));
-
+  
       setAlert({
         open: true,
         message: "Assignment successfully corrected",
         severity: "success",
       });
+  
+      // Clear error state after success
+      setFieldErrors((prev) => ({
+        ...prev,
+        [assignmentId]: {},
+      }));
     } catch (error) {
       console.error("Error correcting assignment:", error);
       setAlert({
@@ -693,6 +749,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       setUpdating(false);
     }
   };
+  
 
   const formatDateTime = (timestamp) => {
     if (!timestamp) return "-";
@@ -978,10 +1035,16 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
                       direction={orderBy === "score" ? order : "asc"}
                       onClick={() => handleRequestSort("score")}
                     >
-                      Score
+                      <span>
+                        Score <span style={{ color: "red" }}>*</span>
+                      </span>
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>Remarks</TableCell>
+                  <TableCell>
+                    <span>
+                      Remarks <span style={{ color: "red" }}>*</span>
+                    </span>
+                  </TableCell>
                   <TableCell>Correction File</TableCell>
                   <TableCell>
                     <TableSortLabel
@@ -1009,6 +1072,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
                     formatDateTime={memoizedFormatDateTime}
                     handleOpenContent={memoizedHandleOpenContent}
                     updating={updating}
+                    fieldErrors={fieldErrors[assignment.assignmentId] || {}}
                   />
                 ))}
               </TableBody>

@@ -653,6 +653,7 @@ export default function Dashboard() {
                     </Badge>
 
                     {/* Action buttons */}
+                    {endingSoonCohorts.length > 1 && (
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
@@ -675,7 +676,7 @@ export default function Dashboard() {
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         onClick={() =>
@@ -688,8 +689,9 @@ export default function Dashboard() {
                         ) : (
                           <ChevronDown className="h-4 w-4" />
                         )}
-                      </Button>
+                      </Button> */}
                     </div>
+                    )}
 
                     {/* Dismiss Button */}
                     <Button
