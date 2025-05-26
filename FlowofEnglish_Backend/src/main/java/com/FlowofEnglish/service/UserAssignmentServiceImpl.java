@@ -2,6 +2,9 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+
+import jakarta.transaction.Transactional;
+
 import com.FlowofEnglish.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,6 +64,9 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
 
     @Autowired
     private S3StorageService s3StorageService;
+    
+    @Autowired
+    private UserAttemptsRepository userAttemptsRepository;
     
 //    @Autowired
 //    private S3Client s3Client;
@@ -217,13 +223,17 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
 
     
     @Override
+    @Transactional
     public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
                                                    MultipartFile correctedFile, 
                                                    String remarks, OffsetDateTime correctedDate) throws IOException {
         UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
             .orElseThrow(() -> new RuntimeException("Assignment not found"));
         
-     // Check if score exceeds max score
+        // Store the old score for leaderboard calculation
+        Integer oldScore = assignment.getScore() != null ? assignment.getScore() : 0;
+        
+        // Check if score exceeds max score
         if (score != null && assignment.getSubconcept() != null) {
             Integer maxScore = assignment.getSubconcept().getSubconceptMaxscore();
             if (maxScore != null && score > maxScore) {
@@ -240,7 +250,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
 
         if (correctedFile != null && !correctedFile.isEmpty()) {
             validateFileSize(correctedFile);
-         // Upload corrected file to S3
+            // Upload corrected file to S3
             String s3Key = s3StorageService.uploadFile(
                 correctedFile, 
                 assignment.getCohort().getCohortId(), 
@@ -260,13 +270,22 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         assignment.setScore(score);
         assignment.setRemarks(remarks);  // Save remarks
 
-     // Save the assignment
+        // Save the assignment
         UserAssignment savedAssignment = userAssignmentRepository.save(assignment);
         
-        // Update leaderboard score in UserCohortMapping
+        // Update the corresponding UserAttempts entry with the corrected score
         if (score != null) {
-            updateLeaderboardScore(assignment.getUser().getUserId(), assignment.getCohort().getCohortId(), score);
+            updateUserAttemptsScore(assignment, score, oldScore);
+            
+            // Calculate the score difference for leaderboard update
+            int scoreDifference = score - oldScore;
+            if (scoreDifference != 0) {
+                updateLeaderboardScore(assignment.getUser().getUserId(), 
+                                     assignment.getCohort().getCohortId(), 
+                                     scoreDifference);
+            }
         }
+        
         // Send notification email to the user
         try {
             emailService.sendAssignmentCorrectionEmail(assignmentId);
@@ -274,22 +293,66 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
             logger.warn("Failed to send correction notification email: {}", e.getMessage());
             // Don't throw exception to prevent disrupting the main process
         }
+        
         return savedAssignment;
     }
-    private void updateLeaderboardScore(String userId, String cohortId, Integer score) {
+    
+    /**
+     * Update the corresponding UserAttempts entry with the corrected score
+     */
+    private void updateUserAttemptsScore(UserAssignment assignment, Integer newScore, Integer oldScore) {
+        try {
+            // Find the UserAttempts entry that corresponds to this assignment
+            List<UserAttempts> userAttempts = userAttemptsRepository
+                .findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(
+                    assignment.getUser().getUserId(),
+                    assignment.getProgram().getProgramId(),
+                    assignment.getStage().getStageId(),
+                    assignment.getUnit().getUnitId(),
+                    assignment.getSubconcept().getSubconceptId()
+                );
+            
+            if (!userAttempts.isEmpty()) {
+                // Get the most recent attempt (in case there are multiple)
+                UserAttempts latestAttempt = userAttempts.stream()
+                    .max((a1, a2) -> a1.getUserAttemptEndTimestamp().compareTo(a2.getUserAttemptEndTimestamp()))
+                    .orElse(userAttempts.get(0));
+                
+                // Update the score
+                latestAttempt.setUserAttemptScore(newScore);
+                userAttemptsRepository.save(latestAttempt);
+                
+                logger.info("Updated UserAttempts score from {} to {} for attemptId: {}, userId: {}, subconceptId: {}", 
+                           oldScore, newScore, latestAttempt.getUserAttemptId(), 
+                           assignment.getUser().getUserId(), assignment.getSubconcept().getSubconceptId());
+            } else {
+                logger.warn("No UserAttempts entry found for userId: {}, subconceptId: {} to update score", 
+                           assignment.getUser().getUserId(), assignment.getSubconcept().getSubconceptId());
+            }
+        } catch (Exception e) {
+            logger.error("Error updating UserAttempts score for userId: {}, subconceptId: {}, Error: {}", 
+                        assignment.getUser().getUserId(), assignment.getSubconcept().getSubconceptId(), e.getMessage(), e);
+            // Don't throw exception to prevent disrupting the main correction process
+        }
+    }
+    
+    private void updateLeaderboardScore(String userId, String cohortId, Integer scoreDifference) {
         // Find the UserCohortMapping entry
         UserCohortMapping mapping = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId)
             .orElseThrow(() -> new RuntimeException("User-Cohort mapping not found"));
         
-        // Update the leaderboard score
+        // Update the leaderboard score with the difference
         int currentScore = mapping.getLeaderboardScore();
-        mapping.setLeaderboardScore(currentScore + score);
+        mapping.setLeaderboardScore(currentScore + scoreDifference);
         
         // Save the updated mapping
         userCohortMappingRepository.save(mapping);
+        
+        logger.info("Updated leaderboard score by {} for userId: {}, cohortId: {}, newTotal: {}", 
+                   scoreDifference, userId, cohortId, mapping.getLeaderboardScore());
     }
     
- // Helper method to validate file size based on type
+    // Helper method to validate file size based on type
     private void validateFileSize(MultipartFile file) {
         long fileSize = file.getSize();
         String fileType = file.getContentType();
@@ -308,13 +371,12 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         }
     }
 
-
     private String saveFileToSystem(MultipartFile file) throws IOException {
         // Define the directory path where the files will be saved
         String directory = BUCKET_NAME + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "/";
         String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
         Path path = Paths.get(directory + filename);
-     // Ensure the directory exists
+        // Ensure the directory exists
         Path parentPath = path.getParent();
         if (!Files.exists(parentPath)) {
             Files.createDirectories(parentPath); // This will create the directory if it does not exist
@@ -335,7 +397,6 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         
         return mediaFileRepository.save(mediaFile);
     }
-
 
     
     @Override
