@@ -1,6 +1,6 @@
 // BackButton.tsx
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 interface BackButtonProps {
@@ -9,10 +9,20 @@ interface BackButtonProps {
 
 const BackButton: React.FC<BackButtonProps> = ({ className = "" }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBack = () => {
+    const match = /^\/subconcepts\/[^/]+$/.test(location.pathname);
+    if (match) {
+      navigate("/home");
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <button
-      onClick={() => navigate(-1)}
+      onClick={handleBack}
       className={`group flex items-center gap-2 px-3 py-2 text-emerald-700 rounded-lg transition-all duration-300 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 ${className}`}
       aria-label="Go back"
     >
