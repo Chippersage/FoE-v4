@@ -18,4 +18,5 @@ public interface SubconceptService {
     Subconcept updateSubconcept(String subconceptId, Subconcept subconcept);
     void deleteSubconcept(String subconceptId); 
     Map<String, Object> uploadSubconceptsCSV(MultipartFile file);
+    Map<String, Object> updateSubconceptsCSV(MultipartFile file);
 }

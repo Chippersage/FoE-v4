@@ -1,181 +1,270 @@
-2025-05-26T10:44:34.353+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 15948 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
-2025-05-26T10:44:34.363+05:30 DEBUG 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
-2025-05-26T10:44:34.365+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
-2025-05-26T10:44:34.492+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
-2025-05-26T10:44:34.494+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
-2025-05-26T10:44:39.444+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-05-26T10:44:39.735+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 269 ms. Found 20 JPA repository interfaces.
-2025-05-26T10:44:40.699+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
-2025-05-26T10:44:40.835+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
-2025-05-26T10:44:42.516+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-05-26T10:44:42.561+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-05-26T10:44:42.562+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
-2025-05-26T10:44:42.733+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-05-26T10:44:42.734+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 8238 ms
-2025-05-26T10:44:43.584+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-05-26T10:44:43.883+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
-2025-05-26T10:44:44.069+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-05-26T10:44:45.158+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-05-26T10:44:45.249+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-05-26T10:44:45.918+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2ecc52db
-2025-05-26T10:44:45.925+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-05-26T10:44:46.155+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-05-26T10:44:49.276+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-05-26T10:44:50.722+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T10:44:51.636+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2025-05-26T10:44:58.932+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+2025-05-29T10:23:54.909+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T10:23:54.937+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T10:23:54.944+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T10:23:55.157+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-05-29T10:23:55.157+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-05-29T10:24:00.822+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T10:24:01.374+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 496 ms. Found 20 JPA repository interfaces.
+2025-05-29T10:24:03.438+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T10:24:03.642+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T10:24:07.182+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T10:24:07.229+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T10:24:07.230+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T10:24:07.468+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T10:24:07.470+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 12311 ms
+2025-05-29T10:24:09.041+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T10:24:09.693+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-05-29T10:24:10.041+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T10:24:12.429+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T10:24:12.640+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-29T10:24:14.098+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7a43c811
+2025-05-29T10:24:14.110+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-29T10:24:14.569+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T10:24:20.211+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T10:24:21.952+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T10:24:23.473+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-05-29T10:24:31.530+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: 814bffdb-2737-4a11-a6bf-e4bc840bf8b6
-
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
-
-2025-05-26T10:44:58.959+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-05-26T10:44:59.307+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2025-05-26T10:45:00.038+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
-2025-05-26T10:45:01.683+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
-2025-05-26T10:45:01.869+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-05-26T10:45:01.921+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 28.586 seconds (process running for 30.967)
-2025-05-26T10:45:02.601+05:30  INFO 15948 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-05-26T10:45:02.602+05:30  INFO 15948 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-05-26T10:45:02.606+05:30  INFO 15948 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
-2025-05-26T11:50:34.194+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-8] c.F.controller.UserController            : Received request to update user: Aadhya10
-2025-05-26T11:50:34.200+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-8] c.FlowofEnglish.service.UserServiceImpl  : Updating user with ID: Aadhya10
-2025-05-26T11:50:34.209+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-8] c.FlowofEnglish.service.UserServiceImpl  : User updated successfully: Aadhya10
-2025-05-26T11:50:34.310+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-8] c.F.controller.UserController            : User Aadhya10 has been deactivated with reason: User is no longer enrolled at the school.
-2025-05-26T11:50:53.772+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.F.controller.UserController            : Received request to update user: Ahalya06
-2025-05-26T11:50:53.774+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.FlowofEnglish.service.UserServiceImpl  : Updating user with ID: Ahalya06
-2025-05-26T11:50:53.777+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.FlowofEnglish.service.UserServiceImpl  : Deactivating user: Ahalya06
-2025-05-26T11:50:53.780+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.FlowofEnglish.service.UserServiceImpl  : Deactivated 1 cohort mappings for user 'Ahalya' (ID: Ahalya06)
-2025-05-26T11:50:53.781+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.FlowofEnglish.service.UserServiceImpl  : User updated successfully: Ahalya06
-2025-05-26T11:50:54.016+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] c.F.controller.UserController            : User Ahalya06 has been deactivated with reason: User is no longer enrolled at the school.
-2025-05-26T11:51:36.175+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.F.controller.UserController            : Received request to update user: Dikshansh01
-2025-05-26T11:51:36.177+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.FlowofEnglish.service.UserServiceImpl  : Updating user with ID: Dikshansh01
-2025-05-26T11:51:36.181+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.FlowofEnglish.service.UserServiceImpl  : Deactivating user: Dikshansh01
-2025-05-26T11:51:36.181+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.FlowofEnglish.service.UserServiceImpl  : Deactivated 1 cohort mappings for user 'Dikshansh' (ID: Dikshansh01)
-2025-05-26T11:51:36.182+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.FlowofEnglish.service.UserServiceImpl  : User updated successfully: Dikshansh01
-2025-05-26T11:51:36.211+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.F.controller.UserController            : User Dikshansh01 has been deactivated with reason: User is no longer enrolled at the school.
-2025-05-26T14:14:29.054+05:30  WARN 15948 --- [FlowofEnglish_Backend] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=21m39s988ms666µs100ns).
-2025-05-26T15:23:02.901+05:30  INFO 15948 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
-2025-05-26T15:23:04.079+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-5] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:23:04.190+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2025-05-26T15:23:04.225+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
-2025-05-26T15:23:05.246+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 15948 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
-2025-05-26T15:23:05.246+05:30 DEBUG 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
-2025-05-26T15:23:05.247+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
-2025-05-26T15:23:10.270+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-05-26T15:23:10.579+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 305 ms. Found 20 JPA repository interfaces.
-2025-05-26T15:23:11.043+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
-2025-05-26T15:23:11.052+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
-2025-05-26T15:23:11.622+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-05-26T15:23:11.626+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-05-26T15:23:11.626+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
-2025-05-26T15:23:11.880+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-05-26T15:23:11.882+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6629 ms
-2025-05-26T15:23:12.473+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-05-26T15:23:12.490+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-05-26T15:23:12.559+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-05-26T15:23:12.563+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
-2025-05-26T15:23:12.627+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@36f9a2b8
-2025-05-26T15:23:12.628+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
-2025-05-26T15:23:12.634+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-05-26T15:23:13.387+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-05-26T15:23:14.522+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:23:15.891+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
-
-Using generated security password: d2d80b9a-a49f-492f-a901-8c8849a122cc
+Using generated security password: c517b222-5c3e-4227-8864-6c179803c168
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2025-05-26T15:23:15.896+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-05-26T15:23:15.976+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2025-05-26T15:23:16.612+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
-2025-05-26T15:23:17.723+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
-2025-05-26T15:23:17.826+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-05-26T15:23:17.853+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 12.765 seconds (process running for 16726.903)
-2025-05-26T15:23:17.858+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
-2025-05-26T15:23:19.269+05:30  INFO 15948 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
-2025-05-26T15:23:19.568+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-7] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:23:19.570+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-7] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
-2025-05-26T15:23:19.580+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-7] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
-2025-05-26T15:23:19.826+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 15948 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
-2025-05-26T15:23:19.826+05:30 DEBUG 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
-2025-05-26T15:23:19.826+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
-2025-05-26T15:23:20.585+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-05-26T15:23:20.682+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 96 ms. Found 20 JPA repository interfaces.
-2025-05-26T15:23:20.859+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
-2025-05-26T15:23:20.862+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
-2025-05-26T15:23:21.063+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-05-26T15:23:21.064+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-05-26T15:23:21.064+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
-2025-05-26T15:23:21.152+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-05-26T15:23:21.152+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1322 ms
-2025-05-26T15:23:21.471+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-05-26T15:23:21.481+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-05-26T15:23:21.501+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-05-26T15:23:21.503+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
-2025-05-26T15:23:21.536+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5e5b30e4
-2025-05-26T15:23:21.536+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
-2025-05-26T15:23:21.539+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-05-26T15:23:22.028+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-05-26T15:23:22.780+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:23:23.708+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+2025-05-29T10:24:31.573+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T10:24:31.983+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T10:24:33.065+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T10:24:35.197+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T10:24:35.444+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T10:24:35.502+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 42.716 seconds (process running for 46.38)
+2025-05-29T10:24:36.420+05:30  INFO 11712 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-29T10:24:36.421+05:30  INFO 11712 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-29T10:24:36.428+05:30  INFO 11712 --- [FlowofEnglish_Backend] [RMI TCP Connection(4)-127.0.0.1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2025-05-29T10:57:12.596+05:30  WARN 11712 --- [FlowofEnglish_Backend] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2m57s842ms787µs100ns).
+2025-05-29T12:31:40.594+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 2 class path changes (0 additions, 0 deletions, 2 modifications)
+2025-05-29T12:31:41.819+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-5] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:31:41.994+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-05-29T12:31:42.051+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-05-29T12:31:43.262+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T12:31:43.263+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T12:31:43.264+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T12:31:50.353+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T12:31:50.500+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 146 ms. Found 20 JPA repository interfaces.
+2025-05-29T12:31:50.679+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T12:31:50.683+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T12:31:51.482+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T12:31:51.487+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T12:31:51.488+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T12:31:52.100+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T12:31:52.101+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 8819 ms
+2025-05-29T12:31:52.581+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T12:31:52.591+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T12:31:52.627+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T12:31:52.630+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2025-05-29T12:31:52.670+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@28729019
+2025-05-29T12:31:52.671+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2025-05-29T12:31:52.678+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T12:31:53.376+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T12:31:54.487+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:31:55.834+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: 2ea605e7-b1d2-4f41-90f7-1808010908dd
-
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
-
-2025-05-26T15:23:23.724+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-05-26T15:23:23.862+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2025-05-26T15:23:24.510+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
-2025-05-26T15:23:25.024+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
-2025-05-26T15:23:25.087+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-05-26T15:23:25.108+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 5.328 seconds (process running for 16734.158)
-2025-05-26T15:23:25.114+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
-2025-05-26T15:23:53.845+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-3] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-05-26T15:23:53.845+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-05-26T15:23:53.851+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
-2025-05-26T15:25:16.610+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.F.s.UserCohortMappingServiceImpl       : Updating user-cohort mapping for userId: Harikrishna05, cohortId: COMM-SVCE-3
-2025-05-26T15:25:16.634+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.F.s.UserCohortMappingServiceImpl       : Reactivating user: Harikrishna in cohort: Communicative English - 3
-2025-05-26T15:25:18.034+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-5] c.F.s.UserCohortMappingServiceImpl       : Successfully updated user-cohort mapping for userId: Harikrishna05, status: ACTIVE
-2025-05-26T15:26:39.411+05:30  INFO 15948 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
-2025-05-26T15:26:39.706+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-11] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:26:39.707+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-11] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
-2025-05-26T15:26:39.721+05:30  INFO 15948 --- [FlowofEnglish_Backend] [Thread-11] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
-2025-05-26T15:26:39.933+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 15948 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
-2025-05-26T15:26:39.933+05:30 DEBUG 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
-2025-05-26T15:26:39.934+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
-2025-05-26T15:26:40.746+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-05-26T15:26:40.871+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 124 ms. Found 20 JPA repository interfaces.
-2025-05-26T15:26:41.046+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
-2025-05-26T15:26:41.048+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
-2025-05-26T15:26:41.269+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-05-26T15:26:41.270+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-05-26T15:26:41.270+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
-2025-05-26T15:26:41.345+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-05-26T15:26:41.346+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1410 ms
-2025-05-26T15:26:41.703+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-05-26T15:26:41.710+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-05-26T15:26:41.728+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-05-26T15:26:41.730+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Starting...
-2025-05-26T15:26:41.755+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-4 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7136d836
-2025-05-26T15:26:41.755+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Start completed.
-2025-05-26T15:26:41.758+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-05-26T15:26:42.243+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-05-26T15:26:42.786+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-05-26T15:26:43.684+05:30  WARN 15948 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
-
-Using generated security password: 7eb96472-1d8a-4356-9de0-9a1767d69650
+Using generated security password: 61b45512-6ad8-462c-99dc-4a4f66c285a6
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2025-05-26T15:26:43.689+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-05-26T15:26:43.728+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2025-05-26T15:26:44.055+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
-2025-05-26T15:26:44.682+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
-2025-05-26T15:26:44.751+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-05-26T15:26:44.782+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 4.904 seconds (process running for 16933.832)
-2025-05-26T15:26:44.787+05:30  INFO 15948 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
-2025-05-26T15:27:00.783+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-05-26T15:27:00.783+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-05-26T15:27:00.788+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
-2025-05-26T15:29:42.374+05:30  INFO 15948 --- [FlowofEnglish_Backend] [http-nio-8080-exec-4] com.FlowofEnglish.service.EmailService   : Updated UserAttempts score from 0 to 10 for attemptId: 7053, userId: Harikrishna05, subconceptId: 21C-0122
+2025-05-29T12:31:55.844+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T12:31:55.937+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T12:31:56.519+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T12:31:57.513+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T12:31:57.575+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T12:31:57.604+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 14.451 seconds (process running for 7688.486)
+2025-05-29T12:31:57.610+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-05-29T12:32:13.473+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2025-05-29T12:32:14.041+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-7] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:32:14.043+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-7] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2025-05-29T12:32:14.054+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-7] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2025-05-29T12:32:14.241+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T12:32:14.242+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T12:32:14.244+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T12:32:15.211+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T12:32:15.437+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 225 ms. Found 20 JPA repository interfaces.
+2025-05-29T12:32:15.697+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T12:32:15.702+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T12:32:15.980+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T12:32:15.982+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T12:32:15.983+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T12:32:16.052+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T12:32:16.054+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1806 ms
+2025-05-29T12:32:16.514+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T12:32:16.529+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T12:32:16.561+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T12:32:16.567+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2025-05-29T12:32:16.618+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@102baba6
+2025-05-29T12:32:16.618+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2025-05-29T12:32:16.620+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T12:32:17.210+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T12:32:18.102+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:32:19.228+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 08afd5b4-89f0-4a73-aff3-39fc5ccd2929
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-29T12:32:19.231+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T12:32:19.265+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T12:32:20.114+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T12:32:20.600+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T12:32:20.652+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T12:32:20.668+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 6.481 seconds (process running for 7711.551)
+2025-05-29T12:32:20.673+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-05-29T12:32:27.668+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2025-05-29T12:32:27.942+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-11] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:32:27.943+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-11] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2025-05-29T12:32:27.954+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-11] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+2025-05-29T12:32:28.146+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T12:32:28.149+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T12:32:28.149+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T12:32:28.773+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T12:32:28.877+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 104 ms. Found 20 JPA repository interfaces.
+2025-05-29T12:32:29.023+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T12:32:29.025+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T12:32:29.214+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T12:32:29.216+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T12:32:29.216+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T12:32:29.285+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T12:32:29.286+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1133 ms
+2025-05-29T12:32:29.759+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T12:32:29.773+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T12:32:29.800+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T12:32:29.803+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Starting...
+2025-05-29T12:32:29.828+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-4 - Added connection com.mysql.cj.jdbc.ConnectionImpl@75b405ca
+2025-05-29T12:32:29.829+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Start completed.
+2025-05-29T12:32:29.833+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T12:32:30.312+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T12:32:30.995+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:32:32.006+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: f420bd17-80b6-42c1-adef-063ba59b6a2c
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-29T12:32:32.013+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T12:32:32.049+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T12:32:32.350+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T12:32:32.879+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T12:32:32.945+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T12:32:32.966+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 4.882 seconds (process running for 7723.848)
+2025-05-29T12:32:32.973+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-05-29T12:33:29.125+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2025-05-29T12:33:29.484+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-15] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:33:29.485+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-15] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown initiated...
+2025-05-29T12:33:29.494+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-15] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown completed.
+2025-05-29T12:33:29.722+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T12:33:29.722+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T12:33:29.723+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T12:33:30.423+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T12:33:30.523+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 98 ms. Found 20 JPA repository interfaces.
+2025-05-29T12:33:30.691+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T12:33:30.693+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T12:33:30.852+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T12:33:30.854+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T12:33:30.854+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T12:33:30.926+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T12:33:30.926+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1195 ms
+2025-05-29T12:33:31.268+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T12:33:31.275+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T12:33:31.289+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T12:33:31.291+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Starting...
+2025-05-29T12:33:31.314+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7fbaeba4
+2025-05-29T12:33:31.314+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Start completed.
+2025-05-29T12:33:31.319+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T12:33:31.630+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T12:33:32.191+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T12:33:33.118+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 63b4444b-b057-41d5-8a10-7ef6c054016e
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-29T12:33:33.123+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T12:33:33.156+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T12:33:33.479+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T12:33:34.045+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T12:33:34.124+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T12:33:34.144+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 4.494 seconds (process running for 7785.026)
+2025-05-29T12:33:34.148+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-05-29T14:46:50.524+05:30  WARN 11712 --- [FlowofEnglish_Backend] [HikariPool-5 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Thread starvation or clock leap detected (housekeeper delta=31m17s577ms69µs700ns).
+2025-05-29T14:49:12.275+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2025-05-29T14:49:13.012+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-19] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T14:49:13.145+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-19] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown initiated...
+2025-05-29T14:49:13.166+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-19] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown completed.
+2025-05-29T14:49:15.259+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T14:49:15.260+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T14:49:15.260+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T14:49:16.311+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T14:49:16.419+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 107 ms. Found 20 JPA repository interfaces.
+2025-05-29T14:49:16.897+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T14:49:16.917+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T14:49:17.776+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T14:49:17.777+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T14:49:17.777+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T14:49:17.900+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T14:49:17.900+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2629 ms
+2025-05-29T14:49:18.377+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T14:49:18.383+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T14:49:18.398+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T14:49:18.399+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Starting...
+2025-05-29T14:49:18.433+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-6 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3b07c19f
+2025-05-29T14:49:18.433+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Start completed.
+2025-05-29T14:49:18.437+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T14:49:18.900+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T14:49:19.951+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T14:49:21.187+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: aecba4fd-d6b3-44a0-b507-8b6269b7ad23
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-29T14:49:21.196+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T14:49:21.242+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T14:49:21.656+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T14:49:22.368+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T14:49:22.422+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T14:49:22.447+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 7.355 seconds (process running for 15933.333)
+2025-05-29T14:49:22.453+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2025-05-29T14:51:00.363+05:30  INFO 11712 --- [FlowofEnglish_Backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2025-05-29T14:51:00.653+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-23] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T14:51:00.655+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-23] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown initiated...
+2025-05-29T14:51:00.669+05:30  INFO 11712 --- [FlowofEnglish_Backend] [Thread-23] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown completed.
+2025-05-29T14:51:00.872+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Starting FlowofEnglishBackendApplication using Java 17.0.11 with PID 11712 (C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend\target\classes started by Admin in C:\Users\Admin\Downloads\FlowofEnglish\FlowofEnglish_Backend)
+2025-05-29T14:51:00.873+05:30 DEBUG 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Running with Spring Boot v3.3.3, Spring v6.1.12
+2025-05-29T14:51:00.873+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-29T14:51:01.509+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-29T14:51:01.600+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 91 ms. Found 20 JPA repository interfaces.
+2025-05-29T14:51:01.736+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2025-05-29T14:51:01.737+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-05-29T14:51:01.916+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-29T14:51:01.918+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-29T14:51:01.918+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.28]
+2025-05-29T14:51:01.975+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-29T14:51:01.975+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1098 ms
+2025-05-29T14:51:02.206+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-29T14:51:02.211+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-29T14:51:02.225+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-29T14:51:02.226+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Starting...
+2025-05-29T14:51:02.253+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-7 - Added connection com.mysql.cj.jdbc.ConnectionImpl@668e37ee
+2025-05-29T14:51:02.254+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Start completed.
+2025-05-29T14:51:02.259+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-29T14:51:02.681+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-29T14:51:03.341+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-29T14:51:04.191+05:30  WARN 11712 --- [FlowofEnglish_Backend] [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: bf6ea035-bc08-4150-b829-b82434c04fa8
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-29T14:51:04.196+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-29T14:51:04.241+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-05-29T14:51:04.574+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 16 endpoints beneath base path '/actuator'
+2025-05-29T14:51:05.121+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-29T14:51:05.167+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-05-29T14:51:05.191+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] c.F.FlowofEnglishBackendApplication      : Started FlowofEnglishBackendApplication in 4.366 seconds (process running for 16036.077)
+2025-05-29T14:51:05.195+05:30  INFO 11712 --- [FlowofEnglish_Backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
