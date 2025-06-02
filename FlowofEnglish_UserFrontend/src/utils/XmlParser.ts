@@ -23,6 +23,7 @@ export const fetchAndParseQuestionsFromXML = async (
     const rawText = questionNode.getAttribute("desc") || "";
     const questionText = rawText.replace(/^\{\s*|\s*\}$/g, "");
     const headerText = questionNode.getAttribute("headertext") || "";
+    const reference = questionNode.getAttribute("reference") || null; // Parse reference attribute
 
     const optionNodes = questionNode.getElementsByTagName("option");
     const options: Option[] = [];
@@ -51,6 +52,7 @@ export const fetchAndParseQuestionsFromXML = async (
       id: questionId,
       text: questionText,
       headerText, // Individual question headerText
+      reference, // Add reference to the question object
       options,
       type,
       marks: 1,

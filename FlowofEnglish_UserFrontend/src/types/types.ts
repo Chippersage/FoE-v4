@@ -11,6 +11,7 @@ export interface Question {
   options: Option[];
   type: "single" | "multiple";
   marks: number;
+  reference: string | null; // Reference to the question, can be null if not provided
 }
 
 export interface QuizState {
