@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +49,38 @@ public class SubconceptController {
     @PutMapping("/{subconceptId}")
     public ResponseEntity<Subconcept> updateSubconcept(@PathVariable String subconceptId, @RequestBody Subconcept subconcept) {
         return ResponseEntity.ok(subconceptService.updateSubconcept(subconceptId, subconcept));
+    }
+    
+    @PutMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> updateSubconceptsBulk(@RequestParam("file") MultipartFile file) {
+        try {
+            // Validate file
+            if (file.isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "File is empty");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            // Check file type
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.equals("text/csv") && !contentType.equals("application/vnd.ms-excel"))) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid file type. Please upload a CSV file.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            Map<String, Object> response = subconceptService.updateSubconceptsCSV(file);
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
 
     @DeleteMapping("/{subconceptId}")

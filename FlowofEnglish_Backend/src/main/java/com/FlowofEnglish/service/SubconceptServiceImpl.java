@@ -143,6 +143,215 @@ public class SubconceptServiceImpl implements SubconceptService {
         }).orElseThrow(() -> new RuntimeException("Subconcept not found"));
     }
 
+ 
+
+    @Override
+    public Map<String, Object> updateSubconceptsCSV(MultipartFile file) {
+        Map<String, Object> result = new HashMap<>();
+        int updatedCount = 0;
+        int failedCount = 0;
+        int notFoundCount = 0;
+        List<String> failedIds = new ArrayList<>();
+        List<String> notFoundIds = new ArrayList<>();
+        List<String> updateLogs = new ArrayList<>();
+
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+            List<String[]> records = reader.readAll();
+            
+            // Validate header row exists
+            if (records.isEmpty()) {
+                throw new RuntimeException("CSV file is empty");
+            }
+            
+            // Read and validate header row
+            String[] headers = records.get(0);
+            Map<String, Integer> headerMap = new HashMap<>();
+            
+            // Create header mapping
+            for (int i = 0; i < headers.length; i++) {
+                headerMap.put(headers[i].trim().toLowerCase(), i);
+            }
+            
+            // Validate required subconceptId column exists
+            if (!headerMap.containsKey("subconceptid")) {
+                throw new RuntimeException("CSV must contain 'subconceptId' column");
+            }
+            
+            int subconceptIdIndex = headerMap.get("subconceptid");
+            
+            // Process data rows
+            for (int i = 1; i < records.size(); i++) {
+                String[] record = records.get(i);
+                
+                // Skip rows with insufficient data
+                if (record.length <= subconceptIdIndex) {
+                    failedCount++;
+                    failedIds.add("Row " + (i + 1) + ": Missing subconceptId column");
+                    continue;
+                }
+                
+                String subconceptId = record[subconceptIdIndex].trim();
+                
+                // Skip empty subconcept IDs
+                if (subconceptId.isEmpty()) {
+                    failedCount++;
+                    failedIds.add("Row " + (i + 1) + ": Empty SubconceptId");
+                    continue;
+                }
+
+                // Check if subconcept exists
+                Optional<Subconcept> existingSubconceptOpt = subconceptRepository.findById(subconceptId);
+                if (existingSubconceptOpt.isEmpty()) {
+                    notFoundCount++;
+                    notFoundIds.add("SubconceptId: " + subconceptId + " not found");
+                    continue;
+                }
+
+                try {
+                    Subconcept existingSubconcept = existingSubconceptOpt.get();
+                    List<String> updatedFields = new ArrayList<>();
+                    boolean hasUpdates = false;
+                    
+                    // Update dependency if provided and not empty
+                    if (headerMap.containsKey("dependency") && 
+                        record.length > headerMap.get("dependency") && 
+                        !record[headerMap.get("dependency")].trim().isEmpty()) {
+                        existingSubconcept.setDependency(record[headerMap.get("dependency")].trim());
+                        updatedFields.add("dependency");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update showTo if provided and not empty
+                    if (headerMap.containsKey("showto") && 
+                        record.length > headerMap.get("showto") && 
+                        !record[headerMap.get("showto")].trim().isEmpty()) {
+                        existingSubconcept.setShowTo(record[headerMap.get("showto")].trim());
+                        updatedFields.add("showTo");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update subconceptDesc if provided and not empty
+                    if (headerMap.containsKey("subconceptdesc") && 
+                        record.length > headerMap.get("subconceptdesc") && 
+                        !record[headerMap.get("subconceptdesc")].trim().isEmpty()) {
+                        existingSubconcept.setSubconceptDesc(record[headerMap.get("subconceptdesc")].trim());
+                        updatedFields.add("subconceptDesc");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update subconceptDesc2 if provided and not empty
+                    if (headerMap.containsKey("subconceptdesc2") && 
+                        record.length > headerMap.get("subconceptdesc2") && 
+                        !record[headerMap.get("subconceptdesc2")].trim().isEmpty()) {
+                        existingSubconcept.setSubconceptDesc2(record[headerMap.get("subconceptdesc2")].trim());
+                        updatedFields.add("subconceptDesc2");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update subconceptGroup if provided and not empty
+                    if (headerMap.containsKey("subconceptgroup") && 
+                        record.length > headerMap.get("subconceptgroup") && 
+                        !record[headerMap.get("subconceptgroup")].trim().isEmpty()) {
+                        existingSubconcept.setSubconceptGroup(record[headerMap.get("subconceptgroup")].trim());
+                        updatedFields.add("subconceptGroup");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update subconceptLink if provided and not empty
+                    if (headerMap.containsKey("subconceptlink") && 
+                        record.length > headerMap.get("subconceptlink") && 
+                        !record[headerMap.get("subconceptlink")].trim().isEmpty()) {
+                        existingSubconcept.setSubconceptLink(record[headerMap.get("subconceptlink")].trim());
+                        updatedFields.add("subconceptLink");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update subconceptType if provided and not empty
+                    if (headerMap.containsKey("subconcepttype") && 
+                        record.length > headerMap.get("subconcepttype") && 
+                        !record[headerMap.get("subconcepttype")].trim().isEmpty()) {
+                        existingSubconcept.setSubconceptType(record[headerMap.get("subconcepttype")].trim());
+                        updatedFields.add("subconceptType");
+                        hasUpdates = true;
+                    }
+                    
+                    // Update numQuestions if provided and not empty
+                    if (headerMap.containsKey("numquestions") && 
+                        record.length > headerMap.get("numquestions") && 
+                        !record[headerMap.get("numquestions")].trim().isEmpty()) {
+                        try {
+                            int numQuestions = Integer.parseInt(record[headerMap.get("numquestions")].trim());
+                            if (numQuestions < 0) {
+                                failedCount++;
+                                failedIds.add("SubconceptId: " + subconceptId + " failed - NumQuestions cannot be negative");
+                                continue;
+                            }
+                            existingSubconcept.setNumQuestions(numQuestions);
+                            updatedFields.add("numQuestions");
+                            hasUpdates = true;
+                        } catch (NumberFormatException e) {
+                            failedCount++;
+                            failedIds.add("SubconceptId: " + subconceptId + " failed - Invalid number format for NumQuestions");
+                            continue;
+                        }
+                    }
+                    
+                    // Update subconceptMaxscore if provided and not empty
+                    if (headerMap.containsKey("subconceptmaxscore") && 
+                        record.length > headerMap.get("subconceptmaxscore") && 
+                        !record[headerMap.get("subconceptmaxscore")].trim().isEmpty()) {
+                        try {
+                            int maxScore = Integer.parseInt(record[headerMap.get("subconceptmaxscore")].trim());
+                            if (maxScore < 0) {
+                                failedCount++;
+                                failedIds.add("SubconceptId: " + subconceptId + " failed - MaxScore cannot be negative");
+                                continue;
+                            }
+                            existingSubconcept.setSubconceptMaxscore(maxScore);
+                            updatedFields.add("subconceptMaxscore");
+                            hasUpdates = true;
+                        } catch (NumberFormatException e) {
+                            failedCount++;
+                            failedIds.add("SubconceptId: " + subconceptId + " failed - Invalid number format for MaxScore");
+                            continue;
+                        }
+                    }
+
+                    // Note: Concept and Content are not updated as per requirement
+                    // These fields are ignored even if present in CSV
+                    
+                    // Save only if there are updates
+                    if (hasUpdates) {
+                        subconceptRepository.save(existingSubconcept);
+                        updatedCount++;
+                        updateLogs.add("SubconceptId: " + subconceptId + " updated fields: " + String.join(", ", updatedFields));
+                    } else {
+                        updateLogs.add("SubconceptId: " + subconceptId + " - No fields to update (all provided fields were empty)");
+                    }
+                    
+                } catch (Exception e) {
+                    failedCount++;
+                    failedIds.add("SubconceptId: " + subconceptId + " failed - " + e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process CSV file: " + e.getMessage());
+        }
+
+        // Prepare result summary
+        result.put("updatedCount", updatedCount);
+        result.put("failedCount", failedCount);
+        result.put("notFoundCount", notFoundCount);
+        result.put("totalProcessed", updatedCount + failedCount + notFoundCount);
+        result.put("failedIds", failedIds);
+        result.put("notFoundIds", notFoundIds);
+        result.put("updateLogs", updateLogs);
+        result.put("message", "Update completed. Only non-empty fields were updated, existing data preserved for empty fields.");
+        
+        return result;
+    }
+    
     @Override
     public void deleteSubconcept(String subconceptId) {
         subconceptRepository.deleteById(subconceptId);
