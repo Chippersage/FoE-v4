@@ -33,7 +33,8 @@ export const fetchAndParseQuestionsFromXML = async (
       const optionNode = optionNodes[j];
       const optionId =
         optionNode.getAttribute("slno") || `${questionId}_option_${j}`;
-      const isCorrect = optionNode.getAttribute("correct") === "true";
+        const isCorrect =
+          optionNode.getAttribute("correct")?.toLowerCase() === "true";
       const optionText = optionNode.getAttribute("desc") || "";
 
       if (isCorrect) correctCount++;
