@@ -6,6 +6,7 @@ import MediaContent from "@/components/MediaContent";
 import ActivityCompletionModal from "@/components/ActivityCompletionModal";
 import VocabularyActivity from "@/components/activityComponents/VocabularyActivity";
 import QuizActivity from "@/components/activityComponents/QuizActivity";
+import VocabularyLearning from "@/components/activityComponents/vocabulary-learning/vocabulary-learning";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -120,6 +121,7 @@ const SingleSubconcept = () => {
       "youtube",
       "mtf", 
       "mcq", 
+      "word", 
     ].includes(subconcept?.subconceptType)
   );
   // const [showSubmit, setShowSubmit] = useState(
@@ -261,7 +263,8 @@ const SingleSubconcept = () => {
 
     if (
       subconcept?.subconceptType?.toLowerCase() === "mtf" ||
-      subconcept?.subconceptType?.toLowerCase() === "mcq"
+      subconcept?.subconceptType?.toLowerCase() === "mcq" ||
+      subconcept?.subconceptType?.toLowerCase() === "word"
     ) {
       // Only proceed if we have a valid submission payload
       if (!submissionPayload) {
@@ -326,7 +329,8 @@ const SingleSubconcept = () => {
             iframe.contentWindow?.postMessage("postSuccess", "*");
           } else if (
             subconcept?.subconceptType?.toLowerCase() === "mtf" ||
-            subconcept?.subconceptType?.toLowerCase() === "mcq"
+            subconcept?.subconceptType?.toLowerCase() === "mcq" ||
+            subconcept?.subconceptType?.toLowerCase() === "word"
           ) {
             setSuccessOverlay(true);
           }
@@ -416,6 +420,18 @@ const SingleSubconcept = () => {
                   subconceptMaxscore={subconcept?.subconceptMaxscore}
                 />
               );
+            } else if (subconcept?.subconceptType === "word") {
+              return (
+                <VocabularyLearning
+                  triggerSubmit={() => {
+                    submitBtnRef.current?.click();
+                  }}
+                  xmlUrl={subconcept?.subconceptLink}
+                  setSubmissionPayload={setSubmissionPayload}
+                  setScorePercentage={setScorePercentage}
+                  subconceptMaxscore={subconcept?.subconceptMaxscore}
+                />
+              );
             } else if (showIframe) {
               return (
                 <iframe
@@ -480,9 +496,10 @@ const SingleSubconcept = () => {
           </div>
         )}
 
-        {/* Hidden external Submit Button for MTF type only */}
+        {/* Hidden external Submit Button for New React Activity components type only */}
         {(subconcept?.subconceptType === "mtf" ||
-          subconcept?.subconceptType === "mcq") && (
+          subconcept?.subconceptType === "mcq" ||
+          subconcept?.subconceptType === "word") && (
           <button
             ref={submitBtnRef}
             onClick={handleSubmit}
