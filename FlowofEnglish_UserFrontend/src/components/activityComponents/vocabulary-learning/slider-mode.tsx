@@ -341,7 +341,7 @@ export default function SliderMode({
     });
 
     setTimeout(() => {
-      setShowCelebration(false)
+      setShowCelebration(false);
       triggerSubmit();
     }, 4000);
   };
@@ -401,10 +401,10 @@ export default function SliderMode({
 
       {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center z-30 animate-fade-in">
+        <div className="fixed inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 flex items-center justify-center z-30 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center animate-celebration-bounce shadow-2xl">
             <div className="text-8xl mb-6 animate-spin-slow">🎊</div>
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">
               Outstanding Achievement!
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-lg">
@@ -417,26 +417,21 @@ export default function SliderMode({
       {/* Enhanced Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300 animate-pulse">
+          <span className="text-sm font-medium text-green-600 dark:text-green-300 animate-pulse">
             Vocabulary
           </span>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <span className="text-sm font-medium text-green-600 dark:text-green-300">
             {currentIndex + 1} / {words.length}
           </span>
         </div>
-        <Progress value={progress} className="h-4 animate-pulse-progress" />
+        <Progress
+          value={progress}
+          className="h-4 animate-pulse-progress bg-green-100 [&>[role=progressbar]]:bg-gradient-to-r [&>[role=progressbar]]:from-green-400 [&>[role=progressbar]]:to-emerald-500"
+        />
       </div>
 
       {/* Enhanced Word Slider */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-2xl mb-8 border border-gray-200 dark:border-gray-700">
-        {/* Auto Mode Indicator */}
-        {/* {autoPlay && (
-          <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse z-10 shadow-lg">
-            <Zap className="w-4 h-4 inline mr-1" />
-            AUTO LEARNING
-          </div>
-        )} */}
-
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-800/20 dark:to-emerald-900/20 shadow-2xl mb-8 border border-green-200 dark:border-green-700">
         <div
           className="flex transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -449,12 +444,12 @@ export default function SliderMode({
               }`}
             >
               {/* Background Animation */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 animate-gradient-shift opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 animate-gradient-shift opacity-50" />
 
               <div className="space-y-8 relative z-10">
                 <div className="flex items-center justify-center gap-4">
                   <h2
-                    className={`text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-text-glow ${
+                    className={`text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent animate-text-glow ${
                       index === currentIndex ? "animate-bounce-in" : ""
                     }`}
                   >
@@ -464,7 +459,7 @@ export default function SliderMode({
                     variant="ghost"
                     size="sm"
                     onClick={() => speakWord(word.term)}
-                    className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:scale-110 transition-transform duration-300"
+                    className="text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-white hover:scale-110 transition-transform duration-300"
                   >
                     <Volume2 className="w-6 h-6" />
                   </Button>
@@ -480,48 +475,26 @@ export default function SliderMode({
                   {showMeaning && index === currentIndex && (
                     <div className="space-y-6 animate-fade-in-up">
                       <div className="flex items-center justify-center gap-4">
-                        <p className="text-2xl text-gray-700 dark:text-gray-200 font-medium animate-text-reveal">
+                        <p className="text-2xl text-green-700 dark:text-green-200 font-medium animate-text-reveal">
                           {word.meaning}
                         </p>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => speakWord(word.meaning)}
-                          className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white hover:scale-110 transition-transform duration-300"
+                          className="text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-white hover:scale-110 transition-transform duration-300"
                         >
                           <Volume2 className="w-5 h-5" />
                         </Button>
                       </div>
                       {word.example && (
-                        <p className="text-xl italic text-gray-600 dark:text-gray-400 max-w-3xl mx-auto animate-fade-in-up animation-delay-300 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                        <p className="text-xl italic text-green-600 dark:text-green-400 max-w-3xl mx-auto animate-fade-in-up animation-delay-300 bg-green-50 dark:bg-green-800/30 p-4 rounded-lg">
                           "{word.example}"
                         </p>
                       )}
                     </div>
                   )}
                 </div>
-
-                {/* <Button
-                  onClick={handleReveal}
-                  disabled={autoPlay}
-                  className={`mt-8 px-10 py-4 text-lg font-semibold rounded-full transition-all duration-500 transform hover:scale-110 ${
-                    showMeaning
-                      ? "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 animate-pulse-button"
-                      : "bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 animate-bounce-subtle"
-                  } text-white shadow-lg`}
-                >
-                  {showMeaning ? (
-                    <>
-                      <EyeOff className="w-5 h-5 mr-2" />
-                      Hide Meaning
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-5 h-5 mr-2" />
-                      {autoPlay ? "Auto-revealing..." : "Reveal Meaning"}
-                    </>
-                  )}
-                </Button> */}
               </div>
             </div>
           ))}
@@ -539,10 +512,10 @@ export default function SliderMode({
               }}
               className={`w-4 h-4 rounded-full transition-all duration-500 transform hover:scale-125 ${
                 index === currentIndex
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 scale-150 animate-pulse"
+                  ? "bg-gradient-to-r from-green-400 to-emerald-500 scale-150 animate-pulse"
                   : completedWords.has(index)
                   ? "bg-gradient-to-r from-green-400 to-emerald-500 animate-bounce-subtle"
-                  : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400"
+                  : "bg-gray-300 dark:bg-gray-600 hover:bg-green-400"
               }`}
             />
           ))}
@@ -555,42 +528,15 @@ export default function SliderMode({
           variant="outline"
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 hover:scale-110 transition-all duration-300 px-6 py-3"
+          className="flex items-center gap-2 hover:scale-110 transition-all duration-300 px-6 py-3 border-green-300 hover:border-green-400 text-green-700"
         >
           <ChevronLeft className="w-5 h-5" />
           Previous
         </Button>
 
-        {/* <Button
-          variant="outline"
-          onClick={() => setAutoPlay(!autoPlay)}
-          className={`flex items-center gap-2 transition-all duration-300 hover:scale-110 px-6 py-3 ${
-            autoPlay
-              ? "bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700 border-orange-300 animate-pulse"
-              : "hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
-          }`}
-        >
-          {autoPlay ? (
-            <Pause className="w-5 h-5" />
-          ) : (
-            <Play className="w-5 h-5" />
-          )}
-          {autoPlay ? "Stop Auto" : "Auto Learn"}
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          className="flex items-center gap-2 hover:scale-110 transition-all duration-300 px-6 py-3"
-        >
-          <RotateCcw className="w-5 h-5" />
-          Reset
-        </Button> */}
-
         <Button
           onClick={handleNext}
-          // disabled={currentIndex === words.length - 1}
-          className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 hover:scale-110 transition-all duration-300 px-6 py-3 animate-pulse-button"
+          className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 hover:scale-110 transition-all duration-300 px-6 py-3 animate-pulse-button text-white"
         >
           {currentIndex === words.length - 1 ? "Submit" : "Next"}
           <ChevronRight className="w-5 h-5" />

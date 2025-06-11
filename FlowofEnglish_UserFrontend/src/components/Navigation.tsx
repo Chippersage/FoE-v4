@@ -22,48 +22,48 @@ const Navigation: React.FC<NavigationProps> = ({
   canCheck,
 }) => {
   return (
-    <div className="flex justify-between mt-6">
+    <div className="flex justify-between items-center mt-8 flex-wrap gap-4">
       <button
         onClick={onPrevious}
         disabled={isFirstQuestion}
-        className={`px-6 py-2 rounded-md transition-all ${
-          isFirstQuestion
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-        }`}
+        className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2
+          ${
+            isFirstQuestion
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-white text-green-700 border border-green-300 hover:border-green-400 hover:bg-green-50 hover:scale-105"
+          }`}
       >
-        Prev
+        ←<span>Previous</span>
       </button>
 
-      <div>
-        {isLastQuestion ? (
-          <button
-            onClick={onSubmit}
-            className="px-6 py-2 bg-green-800 text-white rounded-md hover:bg-green-700 transition-all"
-          >
-            Submit
-          </button>
-        ) : isChecked ? (
-          <button
-            onClick={onNext}
-            className="px-6 py-2 bg-green-800 text-white rounded-md hover:bg-green-700 transition-all"
-          >
-            Next
-          </button>
-        ) : (
-          <button
-            onClick={onCheck}
-            disabled={!canCheck}
-            className={`px-6 py-2 rounded-md transition-all ${
+      {!isChecked ? (
+        <button
+          onClick={onCheck}
+          disabled={!canCheck}
+          className={`px-6 py-2 rounded-lg font-medium transition-all duration-300
+            ${
               canCheck
-                ? "bg-green-800 text-white hover:bg-green-700"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white hover:from-green-500 hover:to-emerald-600 hover:scale-105 shadow-md"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
-          >
-            Check
-          </button>
-        )}
-      </div>
+        >
+          Check Answer
+        </button>
+      ) : isLastQuestion ? (
+        <button
+          onClick={onSubmit}
+          className="px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-green-400 to-emerald-500 text-white hover:from-green-500 hover:to-emerald-600 hover:scale-105 transition-all duration-300 shadow-md"
+        >
+          Submit Quiz
+        </button>
+      ) : (
+        <button
+          onClick={onNext}
+          className="px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-green-400 to-emerald-500 text-white hover:from-green-500 hover:to-emerald-600 hover:scale-105 transition-all duration-300 shadow-md flex items-center gap-2"
+        >
+          <span>Next</span>→
+        </button>
+      )}
     </div>
   );
 };

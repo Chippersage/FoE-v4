@@ -292,8 +292,8 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
 
   if (state.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-pulse text-lg text-gray-600">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+        <div className="animate-pulse text-lg text-green-600">
           Loading quiz...
         </div>
       </div>
@@ -307,11 +307,11 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
   const canCheck = selectedOptions.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-green-200 py-10 px-4 relative">
-      <div className="bg-gradient-to-b from-[#b8eea5] to-white border border-green-200 shadow-md rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 py-10 px-4 relative">
+      <div className="max-w-7xl mx-auto border border-green-200 shadow-lg rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/80 backdrop-blur-sm">
         <div className="flex justify-between items-center mb-6">
           {activitiesHeaderText && (
-            <h2 className="text-xl font-semibold text-green-800 mb-6">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
               {activitiesHeaderText}
             </h2>
           )}

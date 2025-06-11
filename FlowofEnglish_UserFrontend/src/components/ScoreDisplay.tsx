@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 
 interface ScoreDisplayProps {
   score: number;
@@ -6,60 +6,23 @@ interface ScoreDisplayProps {
 }
 
 const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ score, total }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Set canvas dimensions
-    const size = 100;
-    canvas.width = size;
-    canvas.height = size;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, size, size);
-
-    // Calculate percentage
-    const percentage = total > 0 ? score / total : 0;
-
-    // Draw background circle
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, 40, 0, 2 * Math.PI);
-    ctx.strokeStyle = "#e6e6e6";
-    ctx.lineWidth = 8;
-    ctx.stroke();
-
-    // Draw progress arc
-    const startAngle = -0.5 * Math.PI; // Start at top
-    const endAngle = startAngle + 2 * Math.PI * percentage;
-
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, 40, startAngle, endAngle);
-    ctx.strokeStyle = "#1b4332";
-    ctx.lineWidth = 8;
-    ctx.lineCap = "round";
-    ctx.stroke();
-
-    // Draw text
-    ctx.font = "bold 24px sans-serif";
-    ctx.fillStyle = "#1b4332";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`${score}/${total}`, size / 2, size / 2);
-  }, [score, total]);
+  const percentage = (score / total) * 100;
 
   return (
-    <div className="relative">
-      <canvas
-        ref={canvasRef}
-        width="100"
-        height="100"
-        className="w-[100px] h-[100px]"
-      ></canvas>
+    <div className="flex flex-col items-center bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-xl border border-green-200 shadow-md min-w-[200px]">
+      <h3 className="text-lg font-medium text-green-700 mb-2">Your Score</h3>
+      <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+        {score}/{total}
+      </div>
+      <div className="text-sm text-green-600 mt-1">
+        {percentage.toFixed(0)}%
+      </div>
+      <div className="w-full h-2 bg-green-100 rounded-full mt-2 overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500 ease-out"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
     </div>
   );
 };

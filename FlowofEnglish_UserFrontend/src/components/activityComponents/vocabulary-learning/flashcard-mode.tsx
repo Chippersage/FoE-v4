@@ -311,7 +311,7 @@ export default function FlashcardMode({
       {particles.map((particle) => (
         <div
           key={particle.id}
-          className="absolute w-3 h-3 bg-yellow-400 rounded-full animate-particle-burst pointer-events-none z-20"
+          className="absolute w-3 h-3 bg-emerald-400 rounded-full animate-particle-burst pointer-events-none z-20"
           style={{
             left: particle.x,
             top: particle.y,
@@ -321,13 +321,13 @@ export default function FlashcardMode({
 
       {/* Success Overlay */}
       {showSuccess && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-30 animate-fade-in">
+        <div className="fixed inset-0 bg-green-900/50 flex items-center justify-center z-30 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center animate-bounce-in">
             <div className="text-6xl mb-4">🎉</div>
-            <h3 className="text-2xl font-bold text-green-600 mb-2">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
               Fantastic!
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-emerald-600 dark:text-emerald-300">
               You've mastered all the words!
             </p>
           </div>
@@ -337,24 +337,27 @@ export default function FlashcardMode({
       {/* Enhanced Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <span className="text-sm font-medium text-green-600 dark:text-green-300">
             Progress
           </span>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <span className="text-sm font-medium text-green-600 dark:text-green-300">
             {currentIndex + 1} / {words.length}
           </span>
         </div>
-        <Progress value={progress} className="h-3 animate-pulse-progress" />
+        <Progress
+          value={progress}
+          className="h-3 animate-pulse-progress bg-green-100 [&>[role=progressbar]]:bg-gradient-to-r [&>[role=progressbar]]:from-green-400 [&>[role=progressbar]]:to-emerald-500"
+        />
         <div className="flex justify-center mt-2">
           {words.map((_, index) => (
             <div
               key={index}
               className={`w-2 h-2 mx-1 rounded-full transition-all duration-500 ${
                 index === currentIndex
-                  ? "bg-blue-600 scale-150 animate-pulse"
+                  ? "bg-gradient-to-r from-green-400 to-emerald-500 scale-150 animate-pulse"
                   : completedWords.has(index)
                   ? "bg-green-500 animate-bounce-subtle"
-                  : "bg-gray-300 dark:bg-gray-600"
+                  : "bg-gray-200 dark:bg-gray-600"
               }`}
             />
           ))}
@@ -370,14 +373,14 @@ export default function FlashcardMode({
           onClick={!autoMode ? handleFlip : undefined}
         >
           {/* Front of card */}
-          <div className="absolute inset-0 w-full h-full backface-hidden rounded-xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 shadow-2xl flex items-center justify-center p-8 animate-gradient-shift">
+          <div className="absolute inset-0 w-full h-full backface-hidden rounded-xl bg-gradient-to-br from-green-400 via-emerald-500 to-green-600 shadow-2xl flex items-center justify-center p-8 animate-gradient-shift">
             <div className="text-center">
               <div className="animate-float mb-4">
                 <h2 className="text-3xl font-bold text-white mb-4 animate-text-glow">
                   {currentWord.term}
                 </h2>
               </div>
-              <p className="text-blue-100 text-lg animate-fade-in-up">
+              <p className="text-green-100 text-lg animate-fade-in-up">
                 {autoMode ? "Auto-revealing..." : "Click to reveal meaning"}
               </p>
               <Button
@@ -395,7 +398,7 @@ export default function FlashcardMode({
           </div>
 
           {/* Back of card */}
-          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-xl bg-gradient-to-br from-green-500 via-teal-600 to-blue-500 shadow-2xl flex items-center justify-center p-8 animate-gradient-shift">
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-xl bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-2xl flex items-center justify-center p-8 animate-gradient-shift">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-4 animate-text-glow">
                 {currentWord.term}
@@ -404,7 +407,7 @@ export default function FlashcardMode({
                 {currentWord.meaning}
               </p>
               {currentWord.example && (
-                <p className="text-green-100 italic animate-fade-in-up animation-delay-200">
+                <p className="text-emerald-100 italic animate-fade-in-up animation-delay-200">
                   "{currentWord.example}"
                 </p>
               )}
@@ -425,7 +428,7 @@ export default function FlashcardMode({
 
         {/* Auto Mode Indicator */}
         {autoMode && (
-          <div className="absolute -top-4 -right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold animate-pulse z-10">
+          <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse z-10 shadow-lg">
             <Zap className="w-4 h-4 inline mr-1" />
             AUTO
           </div>
@@ -438,7 +441,7 @@ export default function FlashcardMode({
           variant="outline"
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 hover:scale-110 transition-transform duration-300"
+          className="flex items-center gap-2 hover:scale-110 transition-transform duration-300 border-green-300 hover:border-green-400 text-green-700"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
@@ -448,7 +451,9 @@ export default function FlashcardMode({
           variant="outline"
           onClick={() => setAutoMode(!autoMode)}
           className={`flex items-center gap-2 transition-all duration-300 hover:scale-110 ${
-            autoMode ? "bg-yellow-100 text-yellow-700 animate-pulse" : ""
+            autoMode
+              ? "bg-green-100 text-green-700 border-green-300 animate-pulse"
+              : "border-green-300 text-green-700"
           }`}
         >
           {autoMode ? (
@@ -462,7 +467,7 @@ export default function FlashcardMode({
         <Button
           variant="outline"
           onClick={handleReset}
-          className="flex items-center gap-2 hover:scale-110 transition-transform duration-300"
+          className="flex items-center gap-2 hover:scale-110 transition-transform duration-300 border-green-300 hover:border-green-400 text-green-700"
         >
           <RotateCcw className="w-4 h-4" />
           Reset
@@ -471,7 +476,7 @@ export default function FlashcardMode({
         <Button
           onClick={handleNext}
           disabled={currentIndex === words.length - 1}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 hover:scale-110 transition-all duration-300 animate-pulse-button"
+          className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white hover:scale-110 transition-all duration-300 animate-pulse-button"
         >
           Next
           <ChevronRight className="w-4 h-4" />
@@ -480,8 +485,8 @@ export default function FlashcardMode({
 
       {/* Completion Message */}
       {currentIndex === words.length - 1 && isFlipped && (
-        <div className="mt-8 text-center p-6 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900 rounded-lg animate-bounce-in">
-          <h3 className="text-2xl font-bold text-green-800 dark:text-green-200 mb-2 animate-text-glow">
+        <div className="mt-8 text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg animate-bounce-in border border-green-200">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2 animate-text-glow">
             🎉 Congratulations!
           </h3>
           <p className="text-green-600 dark:text-green-300">

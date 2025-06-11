@@ -173,17 +173,15 @@ export default function VocabularyLearning({
     }
   };
 
-
-
   if (showWelcome && vocabularyData) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-500/90 to-purple-600/90 flex items-center justify-center z-50 animate-fade-in">
+      <div className="fixed inset-0 bg-gradient-to-br from-green-400/90 to-emerald-600/90 flex items-center justify-center z-50 animate-fade-in">
         <div className="text-center text-white animate-bounce-in">
           <div className="text-8xl mb-6 animate-spin-slow">🎓</div>
-          <h2 className="text-4xl font-bold mb-4 animate-text-glow">
+          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-200 to-emerald-100 bg-clip-text ">
             Let's Build Your Vocabulary!
           </h2>
-          <p className="text-xl mb-6 animate-fade-in-up">
+          <p className="text-xl mb-6 animate-fade-in-up text-emerald-50">
             Unlock the power of {vocabularyData.words.length} incredible new
             words
           </p>

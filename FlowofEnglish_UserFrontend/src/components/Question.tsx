@@ -20,17 +20,17 @@ const Question: React.FC<QuestionProps> = ({
     <div className="mb-6 animate-fadeIn">
       {/* If there's a question-specific headerText and no activities headerText, show it here */}
       {question.headerText && !activitiesHeaderText && (
-        <h2 className="text-xl font-semibold text-green-800 mb-6">
+        <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
           {question.headerText}
         </h2>
       )}
 
       {/* Reference section - displays when question has reference property */}
       {question.reference && (
-        <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
           <div className="flex items-center mb-2">
             <svg
-              className="w-5 h-5 text-blue-600 mr-2"
+              className="w-5 h-5 text-green-600 mr-2"
               fill="currentColor"
               viewBox="0 0 20 20"
               xmlns="http://www.w3.org/2000/svg"
@@ -41,9 +41,9 @@ const Question: React.FC<QuestionProps> = ({
                 clipRule="evenodd"
               />
             </svg>
-            <h4 className="text-sm font-medium text-blue-800">Reference</h4>
+            <h4 className="text-sm font-medium text-green-800">Reference</h4>
           </div>
-          <p className="text-sm text-blue-700 leading-relaxed">
+          <p className="text-sm text-green-700 leading-relaxed">
             {question.reference}
           </p>
         </div>
@@ -61,19 +61,19 @@ const Question: React.FC<QuestionProps> = ({
               onClick={() => onImageClick(question.img)}
             />
             <div className="absolute left-1/2 -translate-x-1/2 bottom-2 z-10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200">
-              <span className="bg-gray-900 text-white text-xs rounded px-3 py-1 shadow-lg whitespace-nowrap">
-                Click on the image to zoom
+              <span className="bg-green-900 text-white text-xs rounded px-3 py-1 shadow-lg whitespace-nowrap">
+                Click to zoom
               </span>
             </div>
           </div>
         </div>
       )}
 
-      <div className="mb-2 text-sm text-gray-600">
+      <div className="mb-2 text-sm text-green-600">
         Question {currentIndex + 1} of {totalQuestions}
       </div>
 
-      <h3 className="text-lg font-medium text-gray-900">{question.text}</h3>
+      <h3 className="text-lg font-medium text-green-800">{question.text}</h3>
     </div>
   );
 };
