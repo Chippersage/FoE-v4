@@ -23,6 +23,7 @@ export interface Question {
   type: "single" | "multiple";
   marks: number;
   reference: string | null; // Reference to the question, can be null if not provided
+  img?: string | null; // Optional image attribute for the question
 }
 
 export interface QuizState {

@@ -52,6 +52,10 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
     string | null
   >(null);
 
+  // Add state for image overlay
+  const [showImgOverlay, setShowImgOverlay] = useState(false);
+  const [overlayImageSrc, setOverlayImageSrc] = useState<string>("");
+
   // Create refs for audio elements
   const loadSoundRef = useRef<HTMLAudioElement | null>(null);
   const selectSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -132,6 +136,17 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
         console.warn("Failed to play sound:", error);
       });
     }
+  };
+
+  // Handle image overlay
+  const handleImageClick = (imageSrc: string) => {
+    setOverlayImageSrc(imageSrc);
+    setShowImgOverlay(true);
+  };
+
+  const handleCloseImageOverlay = () => {
+    setShowImgOverlay(false);
+    setOverlayImageSrc("");
   };
 
   const handleOptionSelect = (optionId: string) => {
@@ -292,7 +307,7 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
   const canCheck = selectedOptions.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-green-200 py-10 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-green-200 py-10 px-4 relative">
       <div className="bg-gradient-to-b from-[#b8eea5] to-white border border-green-200 shadow-md rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative">
         <div className="flex justify-between items-center mb-6">
           {activitiesHeaderText && (
@@ -314,6 +329,7 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
               currentIndex={state.currentQuestionIndex}
               totalQuestions={state.questions.length}
               activitiesHeaderText={activitiesHeaderText}
+              onImageClick={handleImageClick}
             />
 
             <Options
@@ -344,6 +360,31 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Image Overlay - positioned relative to the entire quiz container */}
+      {showImgOverlay && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm"
+          onClick={handleCloseImageOverlay}
+        >
+          <img
+            src={overlayImageSrc}
+            alt="Full question visual"
+            className="max-h-[90vh] max-w-[95vw] w-auto rounded shadow-lg border-4 border-white"
+            style={{ objectFit: "contain" }}
+          />
+          <button
+            className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-70 rounded-full px-3 py-1 hover:bg-opacity-90 focus:outline-none transition-all duration-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCloseImageOverlay();
+            }}
+            aria-label="Close image overlay"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 };

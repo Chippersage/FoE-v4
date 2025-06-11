@@ -6,6 +6,7 @@ interface QuestionProps {
   currentIndex: number;
   totalQuestions: number;
   activitiesHeaderText: string | null;
+  onImageClick: (imageSrc: string) => void;
 }
 
 const Question: React.FC<QuestionProps> = ({
@@ -13,8 +14,8 @@ const Question: React.FC<QuestionProps> = ({
   currentIndex,
   totalQuestions,
   activitiesHeaderText,
+  onImageClick,
 }) => {
-  console.log("question", question);
   return (
     <div className="mb-6 animate-fadeIn">
       {/* If there's a question-specific headerText and no activities headerText, show it here */}
@@ -45,6 +46,26 @@ const Question: React.FC<QuestionProps> = ({
           <p className="text-sm text-blue-700 leading-relaxed">
             {question.reference}
           </p>
+        </div>
+      )}
+
+      {/* Render image if present */}
+      {question.img && (
+        <div className="mb-4 flex justify-center">
+          <div className="relative group">
+            <img
+              src={question.img}
+              alt="Question related visual"
+              className="max-h-80 max-w-2xl w-full rounded shadow cursor-pointer transition-transform duration-200 group-hover:scale-105"
+              style={{ objectFit: "contain" }}
+              onClick={() => onImageClick(question.img)}
+            />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-2 z-10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200">
+              <span className="bg-gray-900 text-white text-xs rounded px-3 py-1 shadow-lg whitespace-nowrap">
+                Click on the image to zoom
+              </span>
+            </div>
+          </div>
         </div>
       )}
 

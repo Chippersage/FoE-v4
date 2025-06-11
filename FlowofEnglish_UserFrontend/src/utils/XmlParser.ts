@@ -24,6 +24,7 @@ export const fetchAndParseQuestionsFromXML = async (
     const questionText = rawText.replace(/^\{\s*|\s*\}$/g, "");
     const headerText = questionNode.getAttribute("headertext") || "";
     const reference = questionNode.getAttribute("reference") || null; // Parse reference attribute
+    const img = questionNode.getAttribute("img") || null; // Parse img attribute
 
     const optionNodes = questionNode.getElementsByTagName("option");
     const options: Option[] = [];
@@ -33,8 +34,8 @@ export const fetchAndParseQuestionsFromXML = async (
       const optionNode = optionNodes[j];
       const optionId =
         optionNode.getAttribute("slno") || `${questionId}_option_${j}`;
-        const isCorrect =
-          optionNode.getAttribute("correct")?.toLowerCase() === "true";
+      const isCorrect =
+        optionNode.getAttribute("correct")?.toLowerCase() === "true";
       const optionText = optionNode.getAttribute("desc") || "";
 
       if (isCorrect) correctCount++;
@@ -54,6 +55,7 @@ export const fetchAndParseQuestionsFromXML = async (
       text: questionText,
       headerText, // Individual question headerText
       reference, // Add reference to the question object
+      img, // Add img to the question object
       options,
       type,
       marks: 1,
