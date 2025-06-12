@@ -34,7 +34,7 @@ export default function VocabularyLearning({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [showWelcome, setShowWelcome] = useState(true);
+  // const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     // Play encouraging startup sound
@@ -66,16 +66,16 @@ export default function VocabularyLearning({
     fetchData();
   }, [xmlUrl]);
 
-  useEffect(() => {
-    if (vocabularyData) {
-      // Show welcome message for 3 seconds
-      const timer = setTimeout(() => {
-        setShowWelcome(false);
-      }, 3000);
+  // useEffect(() => {
+  //   if (vocabularyData) {
+  //     // Show welcome message for 3 seconds
+  //     const timer = setTimeout(() => {
+  //       setShowWelcome(false);
+  //     }, 3000);
 
-      return () => clearTimeout(timer);
-    }
-  }, [vocabularyData]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [vocabularyData]);
 
   const playStartupSound = () => {
     const audioContext = new (window.AudioContext ||
@@ -173,28 +173,28 @@ export default function VocabularyLearning({
     }
   };
 
-  if (showWelcome && vocabularyData) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-green-400/90 to-emerald-600/90 flex items-center justify-center z-50 animate-fade-in">
-        <div className="text-center text-white animate-bounce-in">
-          <div className="text-8xl mb-6 animate-spin-slow">🎓</div>
-          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-200 to-emerald-100 bg-clip-text ">
-            Let's Build Your Vocabulary!
-          </h2>
-          <p className="text-xl mb-6 animate-fade-in-up text-emerald-50">
-            Unlock the power of {vocabularyData.words.length} incredible new
-            words
-          </p>
-          {/* <div className="text-lg animate-pulse">
-            {vocabularyData.type === "flashcard"
-              ? "🃏 Flashcard Mode"
-              : "🎠 Slider Mode"}{" "}
-            Ready!
-          </div> */}
-        </div>
-      </div>
-    );
-  }
+  // if (showWelcome && vocabularyData) {
+  //   return (
+  //     <div className="fixed inset-0 bg-gradient-to-br from-green-400/90 to-emerald-600/90 flex items-center justify-center z-50 animate-fade-in">
+  //       <div className="text-center text-white animate-bounce-in">
+  //         <div className="text-8xl mb-6 animate-spin-slow">🎓</div>
+  //         <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-200 to-emerald-100 bg-clip-text ">
+  //           Let's Build Your Vocabulary!
+  //         </h2>
+  //         <p className="text-xl mb-6 animate-fade-in-up text-emerald-50">
+  //           Unlock the power of {vocabularyData.words.length} incredible new
+  //           words
+  //         </p>
+  //         {/* <div className="text-lg animate-pulse">
+  //           {vocabularyData.type === "flashcard"
+  //             ? "🃏 Flashcard Mode"
+  //             : "🎠 Slider Mode"}{" "}
+  //           Ready!
+  //         </div> */}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (loading) {
     return (

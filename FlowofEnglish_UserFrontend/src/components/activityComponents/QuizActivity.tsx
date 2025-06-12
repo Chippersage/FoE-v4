@@ -307,56 +307,69 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
   const canCheck = selectedOptions.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 py-10 px-4 relative">
-      <div className="max-w-7xl mx-auto border border-green-200 shadow-lg rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/80 backdrop-blur-sm">
-        <div className="flex justify-between items-center mb-6">
-          {activitiesHeaderText && (
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
-              {activitiesHeaderText}
-            </h2>
-          )}
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          {/* Score on top for small, right for md+ */}
-          <div className="block md:hidden">
-            <ScoreDisplay score={state.score} total={state.totalMarks} />
+    <div
+      className="min-h-screen bg-slate-100 font-sans p-4 relative"
+      style={{
+        backgroundImage: "url('/images/cohort-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/10 z-0" />
+      <div className="relative z-10 w-full py-10 px-4">
+        <div className="max-w-7xl mx-auto border border-green-200 shadow-lg rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/80 backdrop-blur-sm z-10">
+          <div className="flex justify-between items-center mb-6">
+            {activitiesHeaderText && (
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
+                {activitiesHeaderText}
+              </h2>
+            )}
           </div>
 
-          <div className="flex flex-col flex-grow">
-            <Question
-              question={currentQuestion}
-              currentIndex={state.currentQuestionIndex}
-              totalQuestions={state.questions.length}
-              activitiesHeaderText={activitiesHeaderText}
-              onImageClick={handleImageClick}
-            />
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Score on top for small, right for md+ */}
+            <div className="block md:hidden">
+              <ScoreDisplay score={state.score} total={state.totalMarks} />
+            </div>
 
-            <Options
-              options={currentQuestion.options}
-              selectedOptions={selectedOptions}
-              isMultiple={currentQuestion.type === "multiple"}
-              isChecked={state.isChecked}
-              onSelect={handleOptionSelect}
-            />
+            <div className="flex flex-col flex-grow">
+              <Question
+                question={currentQuestion}
+                currentIndex={state.currentQuestionIndex}
+                totalQuestions={state.questions.length}
+                activitiesHeaderText={activitiesHeaderText}
+                onImageClick={handleImageClick}
+              />
 
-            <Navigation
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-              onCheck={handleCheck}
-              onSubmit={handleSubmit}
-              isFirstQuestion={state.currentQuestionIndex === 0}
-              isLastQuestion={
-                state.currentQuestionIndex === state.questions.length - 1
-              }
-              isChecked={state.isChecked}
-              canCheck={canCheck}
-            />
-          </div>
+              <Options
+                options={currentQuestion.options}
+                selectedOptions={selectedOptions}
+                isMultiple={currentQuestion.type === "multiple"}
+                isChecked={state.isChecked}
+                onSelect={handleOptionSelect}
+              />
 
-          {/* Score on right for md+ */}
-          <div className="hidden md:flex md:items-center md:justify-center">
-            <ScoreDisplay score={state.score} total={state.totalMarks} />
+              <Navigation
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                onCheck={handleCheck}
+                onSubmit={handleSubmit}
+                isFirstQuestion={state.currentQuestionIndex === 0}
+                isLastQuestion={
+                  state.currentQuestionIndex === state.questions.length - 1
+                }
+                isChecked={state.isChecked}
+                canCheck={canCheck}
+              />
+            </div>
+
+            {/* Score on right for md+ */}
+            <div className="hidden md:flex md:items-center md:justify-center">
+              <ScoreDisplay score={state.score} total={state.totalMarks} />
+            </div>
           </div>
         </div>
       </div>

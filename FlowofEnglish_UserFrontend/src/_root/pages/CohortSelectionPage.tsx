@@ -32,6 +32,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ErrorModal } from "@/components/ErrorModal";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import toast from "react-hot-toast";
 import axios from "axios";
 // import WordOfTheDay from "@/components/WordADay";
 import { AnimatePresence, motion } from "framer-motion";
@@ -39,8 +42,6 @@ import CohortTour from "@/components/tours/CohortTour";
 import { Badge } from "@/components/ui/badge";
 import formatUnixToDate from "@/utils/formatUnixToDate";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "react-hot-toast";
-import { ErrorModal } from "@/components/ErrorModal";
 
 const courseColors = [
   "from-pink-500 to-rose-500",
@@ -65,7 +66,6 @@ const calculateDaysRemaining = (endDateStr) => {
   const diffTime = endDate - today;
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // return signed number
 };
-
 
 // Function to get status based on days remaining
 const getCohortStatus = (daysRemaining) => {
@@ -114,9 +114,9 @@ const getCohortStatus = (daysRemaining) => {
 
 // Sound effect function - place at the beginning of your component
 const playNotificationSound = () => {
-  const audio = new Audio('/sounds/notification.mp3'); // You'll need to add this sound file to your public folder
+  const audio = new Audio("/sounds/notification.mp3"); // You'll need to add this sound file to your public folder
   audio.volume = 0.5;
-  audio.play().catch(err => console.error("Error playing sound:", err));
+  audio.play().catch((err) => console.error("Error playing sound:", err));
 };
 
 export default function Dashboard() {
@@ -153,9 +153,8 @@ export default function Dashboard() {
   const [expandedCohortId, setExpandedCohortId] = useState(null);
   // const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [showErrorModalOpen, setShowErrorModalOpen] = useState(false);
-  const [errorModalData, setErrorModalData] = useState(
-    null
-  );
+  const [errorModalData, setErrorModalData] = useState(null);
+  const [isResuming, setIsResuming] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -370,45 +369,63 @@ export default function Dashboard() {
       return;
     }
 
+    setIsResuming(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
         userId: user?.userId,
         cohortId: cohortWithProgram?.cohortId,
       });
 
-        setSelectedCohortWithProgram(cohortWithProgram);
-        localStorage.setItem(
-          "selectedCohortWithProgram",
-          JSON.stringify(cohortWithProgram)
-        );
-        localStorage.setItem("sessionId", response.data.sessionId);
+      setSelectedCohortWithProgram(cohortWithProgram);
+      localStorage.setItem(
+        "selectedCohortWithProgram",
+        JSON.stringify(cohortWithProgram)
+      );
+      localStorage.setItem("sessionId", response.data.sessionId);
 
-        navigate("/home");
-      
-      } catch (error) {
-        let errorMessage = "An unexpected error occurred.";
-        let deactivationDetails = "";
-        let contactInfo = "";
-      
-        if (error.response?.data?.error) {
-          errorMessage = error.response.data.error;
-      
-          // Optional: you can structure this however your backend sends data
-          deactivationDetails = error.response.data.deactivationDetails || "Please contact support.";
-          contactInfo = error.response.data.contactInfo || "support@example.com or 1234567890";
-        } else if (error.request) {
-          errorMessage = "No response from server. Please try again later.";
-        } else {
-          errorMessage = error.message || "Unexpected error occurred.";
+      navigate("/home");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Server is down or not responding (network error)
+        if (!error.response) {
+          toast.error(
+            "Unable to connect to server. Please check your internet connection and try again."
+          );
+          return;
         }
-      
-        setErrorModalData({
-          error: errorMessage,
-          deactivationDetails,
-          contactInfo,
-        });
-        setShowErrorModalOpen(true);
+
+        // Server errors (500+ range)
+        if (error.response.status >= 500) {
+          let errorMessage =
+            "An internal server error occurred. Please try again later.";
+          if (error.response.status === 503) {
+            errorMessage =
+              "Service is temporarily unavailable. Please try again later.";
+          }
+          toast.error(errorMessage);
+          return;
+        }
+
+        // Business logic errors (400 range) - show in modal
+        if (error.response.status >= 400 && error.response.status < 500) {
+          const data = error.response.data;
+          setErrorModalData({
+            error: data?.error || "An unexpected error occurred.",
+            deactivationDetails:
+              data?.deactivationDetails ||
+              "Please contact support for assistance.",
+            contactInfo: data?.contactInfo,
+          });
+          setShowErrorModalOpen(true);
+          return;
+        }
       }
+
+      // Fallback for any other unexpected errors
+      toast.error("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsResuming(false);
+    }
   };
 
   const handleScroll = () => {
@@ -451,7 +468,6 @@ export default function Dashboard() {
     answer: "A keyboard",
     hint: "Think of something essential to computers.",
   };
-  
 
   // Count cohorts that are ending soon (<=15 days) or have ended
   const endingSoonCohorts =
@@ -498,7 +514,6 @@ export default function Dashboard() {
     }
   }, [endingSoonCohorts.length, expandedCohortId]);
 
-
   // Function to toggle expanded state of a notification
   const toggleExpandCohort = (cohortId) => {
     setExpandedCohortId(expandedCohortId === cohortId ? null : cohortId);
@@ -533,6 +548,8 @@ export default function Dashboard() {
 
   return (
     <>
+      {isResuming && <LoadingOverlay />}
+
       {/* Render tour only if the user hasn't seen it before */}
       {!hasSeenProductTour && (
         <CohortTour
@@ -654,29 +671,29 @@ export default function Dashboard() {
 
                     {/* Action buttons */}
                     {endingSoonCohorts.length > 1 && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handlePreviousNotification}
-                        className="text-gray-600 hover:bg-orange-50 h-7 w-7 p-0"
-                        disabled={currentNotificationIndex === 0}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleNextNotification}
-                        className="text-gray-600 hover:bg-orange-50 h-7 w-7 p-0"
-                        disabled={
-                          currentNotificationIndex ===
-                          endingSoonCohorts.length - 1
-                        }
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      {/* <Button
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handlePreviousNotification}
+                          className="text-gray-600 hover:bg-orange-50 h-7 w-7 p-0"
+                          disabled={currentNotificationIndex === 0}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleNextNotification}
+                          className="text-gray-600 hover:bg-orange-50 h-7 w-7 p-0"
+                          disabled={
+                            currentNotificationIndex ===
+                            endingSoonCohorts.length - 1
+                          }
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        {/* <Button
                         variant="ghost"
                         size="sm"
                         onClick={() =>
@@ -690,7 +707,7 @@ export default function Dashboard() {
                           <ChevronDown className="h-4 w-4" />
                         )}
                       </Button> */}
-                    </div>
+                      </div>
                     )}
 
                     {/* Dismiss Button */}
@@ -790,8 +807,13 @@ export default function Dashboard() {
                                     : "bg-gradient-to-r from-emerald-500 to-green-500"
                                 } text-white hover:opacity-90`}
                                 onClick={() => handleResume(currentCohort)}
+                                disabled={isResuming}
                               >
-                                Resume Now
+                                {isResuming
+                                  ? "Resuming..."
+                                  : progress === 0
+                                  ? "Start"
+                                  : "Resume"}
                               </Button>
 
                               {/* <Button

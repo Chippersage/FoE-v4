@@ -60,6 +60,7 @@ import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSent
 import BackButton from "@/components/BackButton";
 import toast from "react-hot-toast";
 import Word from "@/components/activityIcons/Word";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 interface Subconcept {
   subconceptId: string;
@@ -442,7 +443,7 @@ export default function SubConceptsPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay />;
   }
 
   if (error) {
