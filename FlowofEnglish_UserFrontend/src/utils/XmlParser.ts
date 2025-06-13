@@ -21,7 +21,8 @@ export const fetchAndParseQuestionsFromXML = async (
     const questionNode = questionNodes[i];
     const questionId = questionNode.getAttribute("id") || `question_${i}`;
     const rawText = questionNode.getAttribute("desc") || "";
-    const questionText = rawText.replace(/^\{\s*|\s*\}$/g, "");
+    // Don't strip curly braces from the middle of the text
+    const questionText = rawText;
     const headerText = questionNode.getAttribute("headertext") || "";
     const reference = questionNode.getAttribute("reference") || null; // Parse reference attribute
     const img = questionNode.getAttribute("img") || null; // Parse img attribute

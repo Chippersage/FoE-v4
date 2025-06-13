@@ -78,14 +78,19 @@ const useSoundEffects = () => {
     if (typeof window !== "undefined") {
       // Set sources
       if (dragStartSound.current)
-        dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
+        // dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
+        dragStartSound.current.src = "";
       if (dropSound.current)
-        dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
+        // dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
+        dropSound.current.src = "";
       if (correctSound.current)
-        correctSound.current.src = "/sounds/correct.ogg";
-      if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
+        // correctSound.current.src = "/sounds/correct.ogg";
+        correctSound.current.src = "";
+      // if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
+      if (wrongSound.current) wrongSound.current.src = "";
       if (allCorrectSound.current)
-        allCorrectSound.current.src = "/sounds/correct.ogg";
+        // allCorrectSound.current.src = "/sounds/correct.ogg";
+        allCorrectSound.current.src = "";
 
       // Preload sounds
       const loadPromises = [

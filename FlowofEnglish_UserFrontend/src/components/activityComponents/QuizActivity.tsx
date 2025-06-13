@@ -24,8 +24,8 @@ interface QuizActivityProps {
 const SOUND_EFFECTS = {
   QUIZ_LOAD: "/",
   OPTION_SELECT: "/",
-  CORRECT_ANSWER: "/duolingo-correct.mp3",
-  WRONG_ANSWER: "/duolingo-wrong.mp3",
+  CORRECT_ANSWER: "",
+  WRONG_ANSWER: "",
   NAVIGATION: "/",
 };
 

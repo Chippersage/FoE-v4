@@ -449,9 +449,14 @@ export default function SliderMode({
               <div className="space-y-8 relative z-10">
                 <div className="flex items-center justify-center gap-4">
                   <h2
-                    className={`text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent animate-text-glow ${
+                    className={`text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent animate-text-glow leading-tight pb-2 ${
                       index === currentIndex ? "animate-bounce-in" : ""
                     }`}
+                    style={{
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                      paddingBottom: "0.25rem", // Extra padding for descenders
+                    }}
                   >
                     {word.term}
                   </h2>
