@@ -9,10 +9,10 @@ const Header = () => {
   return (
     <div>
       <div className="header">
-        <Link to={"/home"}>
+        <Link to={"/dashboard"}>
           <img src={main_logo} alt="" className="company-logo" />
         </Link>
-        
+
         <img src={chipper_sage_logo} alt="" className="chipper-logo" />
         {/* <div className="logout-button">
         <Logout />

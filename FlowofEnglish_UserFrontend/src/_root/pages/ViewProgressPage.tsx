@@ -25,6 +25,17 @@ import { fetchUserProgress } from "@/lib/api";
 import { processUserData } from "@/lib/data-processing";
 import type { UserProgressData, ProcessedUserData } from "@/types/types";
 import { useUserContext } from "@/context/AuthContext";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+// Define types for cohort data
+interface CohortData {
+  cohortId: string;
+  program: {
+    programId: string;
+    programName: string;
+  };
+}
 
 export default function ViewProgressPage() {
   const [loading, setLoading] = useState(true);
@@ -33,40 +44,75 @@ export default function ViewProgressPage() {
     null
   );
   const [activeTab, setActiveTab] = useState("overview");
-  const { user } = useUserContext(); // where cohorts is: [{ id: 'c1', name: 'CC-8' }, ...]
+  const { user } = useUserContext();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
+  // New state for cohort fetching
+  const [fetchedCohorts, setFetchedCohorts] = useState<CohortData[]>([]);
+  const [isLoadingCohorts, setIsLoadingCohorts] = useState(false);
+
+  // You'll need to define your API_BASE_URL - either import it or define it here
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "your-api-base-url";
+
+  // Fetch cohorts from API
   useEffect(() => {
-    if (user && user?.cohorts && user?.cohorts.length > 0 && !selectedProgram) {
-      setSelectedProgram(user?.cohorts[0]?.program?.programId);
+    const fetchCohorts = async () => {
+      try {
+        setIsLoadingCohorts(true);
+        const response = await axios.get(
+          `${API_BASE_URL}/users/${user?.userId}/cohorts`
+        );
+        console.log("Fetched cohorts:", response.data);
+        setFetchedCohorts(
+          response.data.userDetails.allCohortsWithPrograms || response.data
+        );
+      } catch (error) {
+        console.error("Failed to fetch cohorts:", error);
+        toast.error("Failed to load cohorts");
+      } finally {
+        setIsLoadingCohorts(false);
+      }
+    };
+
+    if (user?.userId) {
+      fetchCohorts();
     }
-  }, [user]);
+  }, [user?.userId, API_BASE_URL]);
 
+  // Set default selected program when cohorts are loaded
+  useEffect(() => {
+    if (fetchedCohorts && fetchedCohorts.length > 0 && !selectedProgram) {
+      setSelectedProgram(fetchedCohorts[0]?.program?.programId);
+    }
+  }, [fetchedCohorts, selectedProgram]);
 
- useEffect(() => {
-   const loadData = async () => {
-     if (!selectedProgram) return;
+  // Load user progress data
+  useEffect(() => {
+    const loadData = async () => {
+      if (!selectedProgram) return;
 
-     try {
-       setLoading(true);
-       const data = await fetchUserProgress(selectedProgram, user?.userId);
-       console.log(data)
-       setUserData(data);
-       const processed = processUserData(data?.concepts);
-       console.log(processed)
-       setProcessedData(processed);
-     } catch (error) {
-       console.error("Failed to fetch user progress:", error);
-     } finally {
-       setLoading(false);
-     }
-   };
+      try {
+        setLoading(true);
+        const data = await fetchUserProgress(selectedProgram, user?.userId);
+        console.log(data);
+        setUserData(data);
+        const processed = processUserData(data?.concepts);
+        console.log(processed);
+        setProcessedData(processed);
+      } catch (error) {
+        console.error("Failed to fetch user progress:", error);
+        toast.error("Failed to load progress data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-   loadData();
- }, [selectedProgram]);
+    loadData();
+  }, [selectedProgram, user?.userId]);
 
-
-  if (loading || !processedData) {
+  // Show loading skeleton while loading cohorts or progress data
+  if (isLoadingCohorts || loading || !processedData) {
     return <DashboardSkeleton />;
   }
 
@@ -80,6 +126,12 @@ export default function ViewProgressPage() {
     areasToImprove,
     skillScores,
   } = processedData;
+
+  // Get current program name
+  const currentProgramName =
+    fetchedCohorts?.find(
+      (cohort) => cohort?.program?.programId === selectedProgram
+    )?.program?.programName || "";
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden">
@@ -99,15 +151,11 @@ export default function ViewProgressPage() {
       <div className="container mx-auto py-8 px-4">
         <UserHeader
           username={user?.userName}
-          programName={
-            user?.cohorts?.find(
-              (c) => c?.program?.programId === selectedProgram
-            )?.program?.programName || ""
-          }
+          programName={currentProgramName}
           overallCompletion={overallCompletion}
         />
 
-        {user?.cohorts && user?.cohorts.length > 0 && (
+        {fetchedCohorts && fetchedCohorts.length > 0 && (
           <div className="mb-4 max-w-sm">
             <label className="block mb-1 text-sm font-medium text-gray-700">
               Select Program
@@ -116,8 +164,9 @@ export default function ViewProgressPage() {
               className="w-full p-2 border rounded-md bg-white dark:bg-black"
               value={selectedProgram ?? ""}
               onChange={(e) => setSelectedProgram(e.target.value)}
+              disabled={isLoadingCohorts}
             >
-              {user?.cohorts.map((cohort) => (
+              {fetchedCohorts.map((cohort) => (
                 <option
                   key={cohort.cohortId}
                   value={cohort?.program?.programId}
@@ -126,6 +175,11 @@ export default function ViewProgressPage() {
                 </option>
               ))}
             </select>
+            {isLoadingCohorts && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Loading programs...
+              </p>
+            )}
           </div>
         )}
 

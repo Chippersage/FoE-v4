@@ -3,6 +3,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import Joyride, { STATUS, Step, CallBackProps } from "react-joyride";
 import CohortCustomTooltip from "./CohortCustomTooltip";
+import { useUserContext } from "@/context/AuthContext";
 
 interface CohortTourProps {
   onResumeClick: () => void;
@@ -14,6 +15,7 @@ const CohortTour: React.FC<CohortTourProps> = ({
   firstCohortProgress,
 }: CohortTourProps) => {
   const [runTour, setRunTour] = useState(false);
+  const { user } = useUserContext(); // Import useUserContext();
 
   useEffect(() => {
     // Check if tour has been shown in this session
@@ -47,7 +49,7 @@ const CohortTour: React.FC<CohortTourProps> = ({
     //   disableBeacon: true,
     // },
 
-    ...(localStorage.getItem("userType")?.toLowerCase() === "mentor"
+    ...(user?.userType.toLowerCase() === "mentor"
       ? [
           {
             target: ".manage-cohort-assignments-section",

@@ -11,7 +11,7 @@ export const SessionProvider = ({ children }) => {
 
   // Detect if we are inside private routes
   const isPrivateRoute =
-    location.pathname.startsWith("/home") ||
+    location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/subconcept");
 
   // Function to check if the page was refreshed

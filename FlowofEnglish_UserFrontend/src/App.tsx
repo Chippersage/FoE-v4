@@ -13,21 +13,22 @@ import NotFoundPage from "./components/NotFoundPage";
 import { Toaster } from "react-hot-toast";
 import AssignmentsPage from "./_root/pages/AssignmentsPage";
 import ViewProgressPage from "./_root/pages/ViewProgressPage";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 export default function App() {
-  const { isAuthenticated } = useUserContext();
+  const { user, isLoading } = useUserContext();
   const selectedCohortWithProgram = localStorage.getItem(
     "selectedCohortWithProgram"
   );
-  const user = localStorage.getItem("user");
-  const userType = localStorage.getItem("userType");
 
   const isValidUserType =
-    userType === "Learner" ||
-    userType === "Mentor" ||
-    userType === "learner" ||
-    userType === "mentor";
-  const isAuthenticatedAndValid = user && isValidUserType;
+    user?.userType?.toLowerCase() === "learner" ||
+    user?.userType?.toLowerCase() === "mentor" ||
+    user?.userType?.toLowerCase() === "Learner" ||
+    user?.userType?.toLowerCase() === "Mentor";
+
+  const isAuthenticatedAndValid = user?.userId && isValidUserType;
+  console.log(isAuthenticatedAndValid);
 
   useEffect(() => {
     // @ts-ignore
@@ -40,6 +41,10 @@ export default function App() {
       document.removeEventListener("contextmenu", disableRightClick);
     };
   }, []);
+
+  if (isLoading) {
+    return <LoadingOverlay />;
+  }
 
   return (
     <SessionProvider>
@@ -54,7 +59,11 @@ export default function App() {
               element={
                 isAuthenticatedAndValid ? (
                   <Navigate
-                    to={selectedCohortWithProgram ? "/home" : "/select-cohort"}
+                    to={
+                      selectedCohortWithProgram
+                        ? "/dashboard"
+                        : "/select-cohort"
+                    }
                   />
                 ) : (
                   <LoginForm />
@@ -64,25 +73,29 @@ export default function App() {
           </Route>
 
           {/* Protected routes with headers */}
-          <Route element={<RootLayout />}>
+          <Route
+            element={
+              isAuthenticatedAndValid ? (
+                <RootLayout />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          >
             {/* Cohort selection page */}
             <Route
               path="/select-cohort"
               element={
-                isAuthenticatedAndValid ? (
-                  selectedCohortWithProgram ? (
-                    <Navigate to="/home" />
-                  ) : (
-                    <CohortSelectionPage />
-                  )
+                selectedCohortWithProgram ? (
+                  <Navigate to="/dashboard" />
                 ) : (
-                  <Navigate to="/sign-in" />
+                  <CohortSelectionPage />
                 )
               }
             />
 
             {/* Main protected routes */}
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/dashboard" element={<HomePage />} />
             <Route path="/view-progress" element={<ViewProgressPage />} />
             <Route path="/subconcepts/:unitId" element={<SubConceptsPage />} />
             <Route
@@ -101,7 +114,7 @@ export default function App() {
             element={
               isAuthenticatedAndValid ? (
                 selectedCohortWithProgram ? (
-                  <Navigate to="/home" />
+                  <Navigate to="/dashboard" />
                 ) : (
                   <Navigate to="/select-cohort" />
                 )

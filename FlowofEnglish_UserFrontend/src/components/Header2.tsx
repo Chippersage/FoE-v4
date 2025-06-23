@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
@@ -14,29 +15,24 @@ import {
   LogOut,
   HelpCircle,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
-import { useUserContext } from "@/context/AuthContext";
-
-// These would be replaced with your actual context hooks
-// const useUserContext = () => {
-//   return {
-//     user: { userName: "John Doe", email: "john@example.com" },
-//     selectedCohortWithProgram: { program: { programName: "Web Development" } },
-//     setIsAuthenticated: () => {},
-//   };
-// };
-
-const useSession = () => {
-  return { resetSession: () => {} };
-};
+import { useUserContext, INITIAL_USER_STATE } from "@/context/AuthContext";
+import LoadingOverlay from "./LoadingOverlay";
 
 export default function Header() {
-  const { user, selectedCohortWithProgram, setIsAuthenticated } =
-    useUserContext();
+  const {
+    user,
+    selectedCohortWithProgram,
+    setIsAuthenticated,
+    setUser,
+    setSelectedCohortWithProgram,
+  } = useUserContext();
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isLoading, setIsLoading] = useState(false);
 
   const isSelectCohortPage = currentPath === "/select-cohort";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -68,16 +64,53 @@ export default function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  const handleNavigation = async () => {
+    if (currentPath === "/dashboard") {
+      setIsLoading(true);
+      try {
+        await axios.post(
+          `${API_BASE_URL}/users/logout`,
+          {},
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-  const handleNavigation = () => {
-    if (selectedCohortWithProgram && selectedCohortWithProgram !== "null") {
-      navigate("/home");
+        // First update the context
+        setSelectedCohortWithProgram(null);
+
+        // Then remove from localStorage
+        const userDataStr = localStorage.getItem("user");
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          userData.selectedCohortWithProgram = null;
+          localStorage.setItem("user", JSON.stringify(userData));
+        }
+        localStorage.removeItem("selectedCohortWithProgram");
+
+        // Finally navigate
+        navigate("/select-cohort", { replace: true });
+      } catch (error) {
+        console.error("Error during logout:", error);
+        toast.error("Something went wrong. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (
+      selectedCohortWithProgram &&
+      selectedCohortWithProgram !== "null"
+    ) {
+      navigate("/dashboard");
     } else {
       console.log("Cohort not selected or is null.");
     }
   };
 
   const handleLogout = async () => {
+    setIsLoading(true);
     try {
       await axios.post(
         `${API_BASE_URL}/users/logout`,
@@ -90,23 +123,20 @@ export default function Header() {
         }
       );
 
+      // Then clear localStorage
+      localStorage.clear(); // This will clear all localStorage items
+
+      // Clear context state after successful logout
       setIsAuthenticated(false);
-      localStorage.removeItem("userType");
-      localStorage.removeItem("user");
-      localStorage.removeItem("hasSeenWelcome");
-      localStorage.removeItem("cohortReminder");
-      localStorage.removeItem("selectedProgramId");
-      localStorage.removeItem("allUnitsOfCurrentStage");
-      localStorage.removeItem("currentUnit");
-      localStorage.removeItem("isProgramCompletionAlreadyCelebrated");
-      localStorage.removeItem("userData");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("selectedCohortWithProgram");
-      // localStorage.removeItem("hasSeenDashboardTour");
-      // resetSession();
-      navigate("/sign-in");
+      setUser(INITIAL_USER_STATE);
+
+      // Navigate last
+      navigate("/sign-in", { replace: true });
     } catch (error) {
       console.error("Error logging out:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -197,11 +227,21 @@ export default function Header() {
             whileTap={{ scale: 0.95 }}
             className="cursor-pointer"
           >
-            <Home
-              className="w-6 h-6 text-white"
-              onClick={handleNavigation}
-              aria-label="Go to Home"
-            />
+            {(isSelectCohortPage || isLoading) ? (
+              <Home
+                className="w-6 h-6 text-white"
+                aria-label="Go to Select Cohort"
+              />
+            ) : (
+              <button
+                onClick={!isLoading ? handleNavigation : undefined}
+                className="disabled:opacity-50"
+                disabled={isLoading}
+                aria-label="Go to Home"
+              >
+                <ArrowLeft className="w-6 h-6 text-white" />
+              </button>
+            )}
           </motion.div>
 
           <motion.h2
