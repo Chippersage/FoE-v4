@@ -1,40 +1,47 @@
 "use client";
 
-import { ErrorModal } from "@/components/ErrorModal";
-import LoadingOverlay from "@/components/LoadingOverlay";
+import { useState, useRef, useEffect } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  BookOpen,
+  Brain,
+  Sparkles,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Calendar,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  Lock,
+  Bell,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip, TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
 import { useUserContext } from "@/context/AuthContext";
-import axios from "axios";
-import {
-  AlertCircle,
-  ArrowRight,
-  Bell,
-  BookOpen,
-  Brain,
-  Calendar,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  Clock,
-  Lock
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useNavigate } from "react-router-dom";
+import { Tooltip } from "@/components/ui/tooltip";
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ErrorModal } from "@/components/ErrorModal";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import toast from "react-hot-toast";
+import axios from "axios";
 // import WordOfTheDay from "@/components/WordADay";
+import { AnimatePresence, motion } from "framer-motion";
 import CohortTour from "@/components/tours/CohortTour";
 import { Badge } from "@/components/ui/badge";
 import formatUnixToDate from "@/utils/formatUnixToDate";
-import { AnimatePresence, motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 const courseColors = [
   "from-pink-500 to-rose-500",

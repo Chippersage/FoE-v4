@@ -6,6 +6,8 @@ import MediaContent from "@/components/MediaContent";
 import ActivityCompletionModal from "@/components/ActivityCompletionModal";
 import VocabularyActivity from "@/components/activityComponents/VocabularyActivity";
 import QuizActivity from "@/components/activityComponents/QuizActivity";
+import VocabularyLearning from "@/components/activityComponents/vocabulary-learning/vocabulary-learning";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -100,6 +102,8 @@ const SingleSubconcept = () => {
   const [successOverlay, setSuccessOverlay] = useState(false);
   const [errorOverlay, setErrorOverlay] = useState(false);
   const [onFrameLoad, setOnFrameLoad] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
+  const [iframeError, setIframeError] = useState(false);
   const sessionId = localStorage.getItem("sessionId");
   const subconcept = location.state?.subconcept;
   const [showGoBack, setShowGoBack] = useState(
@@ -118,8 +122,9 @@ const SingleSubconcept = () => {
       "assignment_image",
       "assessment",
       "youtube",
-      "mtf", 
-      "mcq", 
+      "mtf",
+      "mcq",
+      "word",
     ].includes(subconcept?.subconceptType)
   );
   // const [showSubmit, setShowSubmit] = useState(
@@ -256,12 +261,12 @@ const SingleSubconcept = () => {
   // };
 
   const handleSubmit = () => {
-
     // To uncomment for new mtf activity component
 
     if (
       subconcept?.subconceptType?.toLowerCase() === "mtf" ||
-      subconcept?.subconceptType?.toLowerCase() === "mcq"
+      subconcept?.subconceptType?.toLowerCase() === "mcq" ||
+      subconcept?.subconceptType?.toLowerCase() === "word"
     ) {
       // Only proceed if we have a valid submission payload
       if (!submissionPayload) {
@@ -326,7 +331,8 @@ const SingleSubconcept = () => {
             iframe.contentWindow?.postMessage("postSuccess", "*");
           } else if (
             subconcept?.subconceptType?.toLowerCase() === "mtf" ||
-            subconcept?.subconceptType?.toLowerCase() === "mcq"
+            subconcept?.subconceptType?.toLowerCase() === "mcq" ||
+            subconcept?.subconceptType?.toLowerCase() === "word"
           ) {
             setSuccessOverlay(true);
           }
@@ -416,20 +422,65 @@ const SingleSubconcept = () => {
                   subconceptMaxscore={subconcept?.subconceptMaxscore}
                 />
               );
+            } else if (subconcept?.subconceptType === "word") {
+              return (
+                <VocabularyLearning
+                  triggerSubmit={() => {
+                    submitBtnRef.current?.click();
+                  }}
+                  xmlUrl={subconcept?.subconceptLink}
+                  setSubmissionPayload={setSubmissionPayload}
+                  setScorePercentage={setScorePercentage}
+                  subconceptMaxscore={subconcept?.subconceptMaxscore}
+                />
+              );
             } else if (showIframe) {
               return (
-                <iframe
-                  id="embeddedContent"
-                  src={subconcept?.subconceptLink}
-                  // src={"/PET-Practice%20Drills/MCQ/MCQs/CC/21C-0007.html"} // or use: src={subconcept?.subconceptLink}
-                  title="Embedded Content"
-                  className={`w-full min-h-[500px] sm:min-h-[800px]`}
-                  onLoad={() => {
-                    setShowGoBack(true);
-                    setOnFrameLoad(true);
-                  }}
-                  allow="autoplay"
-                />
+                <div className="relative w-full min-h-[500px] sm:min-h-[800px]">
+                  {isIframeLoading && <LoadingOverlay />}
+                  {iframeError ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <div className="text-center">
+                        <p className="text-red-500 text-xl mb-4">
+                          Failed to load content
+                        </p>
+                        <button
+                          onClick={() => {
+                            setIframeError(false);
+                            setIsIframeLoading(true);
+                            // Force iframe reload by updating key
+                            const iframe = document.getElementById(
+                              "embeddedContent"
+                            ) as HTMLIFrameElement;
+                            if (iframe) {
+                              iframe.src = iframe.src;
+                            }
+                          }}
+                          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <iframe
+                      id="embeddedContent"
+                      src={subconcept?.subconceptLink}
+                      title="Embedded Content"
+                      className={`w-full min-h-[500px] sm:min-h-[800px]`}
+                      onLoad={() => {
+                        setShowGoBack(true);
+                        setOnFrameLoad(true);
+                        setIsIframeLoading(false);
+                      }}
+                      onError={() => {
+                        setIframeError(true);
+                        setIsIframeLoading(false);
+                      }}
+                      allow="autoplay"
+                    />
+                  )}
+                </div>
               );
             } else {
               return (
@@ -480,9 +531,10 @@ const SingleSubconcept = () => {
           </div>
         )}
 
-        {/* Hidden external Submit Button for MTF type only */}
+        {/* Hidden external Submit Button for New React Activity components type only */}
         {(subconcept?.subconceptType === "mtf" ||
-          subconcept?.subconceptType === "mcq") && (
+          subconcept?.subconceptType === "mcq" ||
+          subconcept?.subconceptType === "word") && (
           <button
             ref={submitBtnRef}
             onClick={handleSubmit}

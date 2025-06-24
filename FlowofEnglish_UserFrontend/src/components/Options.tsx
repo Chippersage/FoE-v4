@@ -1,9 +1,8 @@
 import React from "react";
-import { Option as OptionType } from "../types/types";
-import { CheckCircle, XCircle } from "lucide-react"; // Optional: if using Lucide icons
+import { Option } from "@/types/types";
 
 interface OptionsProps {
-  options: OptionType[];
+  options: Option[];
   selectedOptions: string[];
   isMultiple: boolean;
   isChecked: boolean;
@@ -17,61 +16,90 @@ const Options: React.FC<OptionsProps> = ({
   isChecked,
   onSelect,
 }) => {
-  const getOptionClass = (option: OptionType) => {
+  const getOptionClass = (option: Option): string => {
     const isSelected = selectedOptions.includes(option.id);
-
-    let baseClass =
-      "border rounded-md p-4 flex items-center cursor-pointer transition-all duration-300 relative";
+    const baseClass =
+      "relative p-4 rounded-lg cursor-pointer transition-all duration-300 border hover:shadow-md";
 
     if (!isChecked) {
       return `${baseClass} ${
-        isSelected ? "border-green-700 bg-green-50" : "border-gray-200"
+        isSelected
+          ? "border-green-400 bg-green-50 shadow-md"
+          : "border-gray-200 hover:border-green-300 hover:bg-green-50/50"
       }`;
     }
 
-    if (isSelected && option.isCorrect) {
-      return `${baseClass} border-green-600 bg-green-100 text-green-800`;
-    } else if (isSelected && !option.isCorrect) {
-      return `${baseClass} border-red-600 bg-red-100 text-red-800`;
-    } else if (!isSelected && option.isCorrect) {
-      return `${baseClass} border-green-600 bg-green-50 text-green-800 opacity-70`;
+    if (option.isCorrect) {
+      return `${baseClass} border-green-500 bg-green-100 shadow-md`;
     }
 
-    return `${baseClass} border-gray-200 opacity-70`;
+    if (isSelected && !option.isCorrect) {
+      return `${baseClass} border-red-500 bg-red-100 shadow-md`;
+    }
+
+    return `${baseClass} border-gray-200 opacity-50`;
   };
 
-  const renderIcon = (option: OptionType) => {
-    if (!isChecked || !selectedOptions.includes(option.id)) return null;
+  const getCheckmarkClass = (option: Option): string => {
+    if (!isChecked) {
+      return selectedOptions.includes(option.id)
+        ? "bg-green-500"
+        : "border-2 border-gray-300";
+    }
 
     if (option.isCorrect) {
-      return (
-        <CheckCircle className="ml-2 text-green-600 animate-bounce" size={20} />
-      );
-    } else {
-      return <XCircle className="ml-2 text-red-600 animate-ping" size={20} />;
+      return "bg-green-500";
     }
-  };
 
-  const letterMapping: Record<number, string> = {
-    0: "A",
-    1: "B",
-    2: "C",
-    3: "D",
+    return selectedOptions.includes(option.id) && !option.isCorrect
+      ? "bg-red-500"
+      : "border-2 border-gray-300";
   };
 
   return (
-    <div className="space-y-3 mt-4">
-      {options.map((option, index) => (
+    <div className="space-y-4 my-8">
+      {options.map((option) => (
         <div
           key={option.id}
           className={getOptionClass(option)}
           onClick={() => !isChecked && onSelect(option.id)}
         >
-          <div className="mr-3 font-medium w-6">{letterMapping[index]}.</div>
-          <div className="flex-grow">{option.text}</div>
+          <div className="flex items-center">
+            <div
+              className={`w-5 h-5 ${
+                isMultiple ? "rounded" : "rounded-full"
+              } mr-4 flex items-center justify-center transition-colors duration-300 ${getCheckmarkClass(
+                option
+              )}`}
+            >
+              {selectedOptions.includes(option.id) && (
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </div>
+            <span className="text-green-800 text-lg">{option.text}</span>
+          </div>
 
-          {/* Tick or Cross Animation */}
-          {renderIcon(option)}
+          {isChecked && (
+            <div
+              className={`absolute right-4 top-4 ${
+                option.isCorrect ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {option.isCorrect ? "✓" : "✗"}
+            </div>
+          )}
         </div>
       ))}
     </div>

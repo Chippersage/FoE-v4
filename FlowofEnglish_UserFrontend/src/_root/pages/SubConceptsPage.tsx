@@ -59,6 +59,8 @@ import Default from "@/components/activityIcons/Default";
 import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSentences";
 import BackButton from "@/components/BackButton";
 import toast from "react-hot-toast";
+import Word from "@/components/activityIcons/Word";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 interface Subconcept {
   subconceptId: string;
@@ -106,6 +108,7 @@ const iconMap = {
   text_from_picture: TextFromImage,
   text_from_text: TextFromText,
   writer_general_sentences: WriterGeneralSentences,
+  word: Word,
 
   passage_read: Read,
   passage_jw: JumbledWords,
@@ -440,7 +443,7 @@ export default function SubConceptsPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay />;
   }
 
   if (error) {

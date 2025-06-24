@@ -11,8 +11,8 @@ import { ErrorModal } from "@/components/ErrorModal";
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [programs, setPrograms] = useState([]);
-  const [isProgramsOpen, setIsProgramsOpen] = useState(false);
+  // const [programs, setPrograms] = useState([]);
+  // const [isProgramsOpen, setIsProgramsOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const { checkAuthUser } = useUserContext();
@@ -29,20 +29,20 @@ export default function LoginPage() {
     );
 
   // Fetch programs from API when the component mounts
-    useEffect(() => {
-      const fetchPrograms = async () => {
-        try {
-          const response = await axios.get(`${API_BASE_URL}/programs`);
-          setPrograms(response.data);
-          // console.log(response.data)
-        } catch (err) {
-          console.error("Error fetching programs:", err);
-          setError("Unable to fetch programs. Please try again.");
-        }
-      };
+    // useEffect(() => {
+    //   const fetchPrograms = async () => {
+    //     try {
+    //       const response = await axios.get(`${API_BASE_URL}/programs`);
+    //       setPrograms(response.data);
+    //       // console.log(response.data)
+    //     } catch (err) {
+    //       console.error("Error fetching programs:", err);
+    //       setError("Unable to fetch programs. Please try again.");
+    //     }
+    //   };
 
-      fetchPrograms();
-    }, []);
+    //   fetchPrograms();
+    // }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

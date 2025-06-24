@@ -78,14 +78,19 @@ const useSoundEffects = () => {
     if (typeof window !== "undefined") {
       // Set sources
       if (dragStartSound.current)
-        dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
+        // dragStartSound.current.src = "/sounds/cloudstilepickup1.ogg";
+        dragStartSound.current.src = "";
       if (dropSound.current)
-        dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
+        // dropSound.current.src = "/sounds/cloudstiledrop2.ogg";
+        dropSound.current.src = "";
       if (correctSound.current)
-        correctSound.current.src = "/sounds/correct.ogg";
-      if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
+        // correctSound.current.src = "/sounds/correct.ogg";
+        correctSound.current.src = "";
+      // if (wrongSound.current) wrongSound.current.src = "/sounds/wrong.ogg";
+      if (wrongSound.current) wrongSound.current.src = "";
       if (allCorrectSound.current)
-        allCorrectSound.current.src = "/sounds/correct.ogg";
+        // allCorrectSound.current.src = "/sounds/correct.ogg";
+        allCorrectSound.current.src = "";
 
       // Preload sounds
       const loadPromises = [
@@ -937,131 +942,148 @@ export default function VocabularyActivity({
   // }
 
   return (
-    <div className="relative w-full mx-auto min-h-screen bg-gradient-to-b from-[#b8eea5] to-white rounded-xl shadow-xl p-8 pt-[120px] pb-28">
-      <h2 className="text-xl font-bold text-black mb-4 text-center">
-        {headerText}
-      </h2>
+    <div
+      className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 font-sans p-4 relative"
+      style={{
+        backgroundImage: "url('/images/cohort-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-green-900/5 z-0" />
+      <div className="relative z-10 w-full py-10 px-4">
+        <div className="max-w-7xl mx-auto border border-green-200 shadow-lg rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/90 backdrop-blur-sm">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6 text-center">
+            {headerText}
+          </h2>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        modifiers={[restrictToWindowEdges]}
-      >
-        <div className="mb-8 mt-10 max-w-4xl mx-auto">
-          <Card className="p-4 bg-[#64CE80] bg-opacity-50 backdrop-blur-sm rounded-3xl sm:min-h-[100px] content-center">
-            <div
-              id="keywordArea"
-              className="grid grid-cols-3 md:grid-cols-5 gap-3"
-            >
-              {currentKeywords.map(
-                (keyword) =>
-                  keywordPositions[keyword.id] === "keywordArea" && (
-                    <DraggableKeyword
-                      key={keyword.id}
-                      id={keyword.id}
-                      content={keyword.content}
-                      isDisabled={isSubmitted}
-                    />
-                  )
-              )}
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-4 mb-11 max-w-4xl mx-auto">
-          {currentDefinitions.map((definition) => (
-            <DroppableZone
-              key={definition.id}
-              id={definition.id}
-              definition={definition.text}
-              placedKeyword={placedKeywords[definition.id]}
-              isCorrect={isSubmitted ? results[definition.id] : null}
-              isSubmitted={isSubmitted}
-              showResult={showResults[definition.id]}
-            />
-          ))}
-        </div>
-      </DndContext>
-
-      {/* Fixed bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4 px-8 shadow-lg">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handlePrevQuestion}
-              disabled={currentQuestionIndex === 0}
-              className="bg-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-
-            {/* Compact pagination */}
-            <div className="flex items-center gap-1">
-              {/* Dynamically render first few pages based on questions length */}
-              {questions
-                .slice(0, Math.min(2, questions.length))
-                .map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentQuestionIndex(index)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                      currentQuestionIndex === index
-                        ? "bg-[#64CE80] text-white"
-                        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-
-              {/* Middle ellipsis */}
-              {questions.length > 3 && (
-                <span className="text-gray-400 mx-1">...</span>
-              )}
-
-              {/* Last page */}
-              {questions.length > 2 && (
-                <button
-                  onClick={() => setCurrentQuestionIndex(questions.length - 1)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                    currentQuestionIndex === questions.length - 1
-                      ? "bg-[#64CE80] text-white"
-                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                  }`}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            modifiers={[restrictToWindowEdges]}
+          >
+            <div className="mb-8 mt-10 max-w-4xl mx-auto">
+              <Card className="p-4 bg-gradient-to-r from-green-400/20 to-emerald-500/20 backdrop-blur-sm rounded-3xl sm:min-h-[100px] content-center border border-green-200 shadow-md">
+                <div
+                  id="keywordArea"
+                  className="grid grid-cols-3 md:grid-cols-5 gap-3"
                 >
-                  {questions.length}
-                </button>
-              )}
+                  {currentKeywords.map(
+                    (keyword) =>
+                      keywordPositions[keyword.id] === "keywordArea" && (
+                        <DraggableKeyword
+                          key={keyword.id}
+                          id={keyword.id}
+                          content={keyword.content}
+                          isDisabled={isSubmitted}
+                        />
+                      )
+                  )}
+                </div>
+              </Card>
             </div>
 
-            <Button
-              variant="outline"
-              onClick={handleNextQuestion}
-              disabled={currentQuestionIndex === questions.length - 1}
-              className="bg-white"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="space-y-4 mb-11 max-w-4xl mx-auto">
+              {currentDefinitions.map((definition) => (
+                <DroppableZone
+                  key={definition.id}
+                  id={definition.id}
+                  definition={definition.text}
+                  placedKeyword={placedKeywords[definition.id]}
+                  isCorrect={isSubmitted ? results[definition.id] : null}
+                  isSubmitted={isSubmitted}
+                  showResult={showResults[definition.id]}
+                />
+              ))}
+            </div>
+          </DndContext>
 
-          {/* Submit Button - Only show on last page */}
-          {currentQuestionIndex === questions.length - 1 && (
-            <Button
-              onClick={handleSubmit}
-              // disabled={
-              //   isSubmitted ||
-              //   !currentDefinitions.every(
-              //     (def) => placedKeywords[def.id] !== null
-              //   )
-              // }
-              className="bg-[#64CE80] text-white hover:bg-[#5bc3cd]"
-            >
-              Submit
-            </Button>
-          )}
+          {/* Fixed bottom navigation */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-green-200 py-4 px-8 shadow-lg">
+            <div className="max-w-4xl mx-auto flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevQuestion}
+                  disabled={currentQuestionIndex === 0}
+                  className="bg-white border-green-300 hover:border-green-400 text-green-700 disabled:opacity-50"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Compact pagination */}
+                <div className="flex items-center gap-1">
+                  {/* Dynamically render first few pages based on questions length */}
+                  {questions
+                    .slice(0, Math.min(2, questions.length))
+                    .map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                          currentQuestionIndex === index
+                            ? "bg-[#64CE80] text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+
+                  {/* Middle ellipsis */}
+                  {questions.length > 3 && (
+                    <span className="text-gray-400 mx-1">...</span>
+                  )}
+
+                  {/* Last page */}
+                  {questions.length > 2 && (
+                    <button
+                      onClick={() =>
+                        setCurrentQuestionIndex(questions.length - 1)
+                      }
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                        currentQuestionIndex === questions.length - 1
+                          ? "bg-[#64CE80] text-white"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                      }`}
+                    >
+                      {questions.length}
+                    </button>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={handleNextQuestion}
+                  disabled={currentQuestionIndex === questions.length - 1}
+                  className="bg-white"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Submit Button - Only show on last page */}
+              {currentQuestionIndex === questions.length - 1 && (
+                <Button
+                  onClick={handleSubmit}
+                  // disabled={
+                  //   isSubmitted ||
+                  //   !currentDefinitions.every(
+                  //     (def) => placedKeywords[def.id] !== null
+                  //   )
+                  // }
+                  className="bg-[#64CE80] text-white hover:bg-[#5bc3cd]"
+                >
+                  Submit
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
