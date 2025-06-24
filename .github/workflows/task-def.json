@@ -1,0 +1,49 @@
+{
+  "family": "chippersage-flowofenglish-backend-prod",
+  "executionRoleArn": "arn:aws:iam::325599888975:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::325599888975:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "chippersage-flowofenglish-backend-prod",
+      "image": "325599888975.dkr.ecr.ap-south-1.amazonaws.com/chippersage-flowofenglish-backend-prod:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:325599888975:secret:foe_prod-7rt8V8:DB_USERNAME:AWSCURRENT:"
+        },
+        {
+          "name": "DB_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:325599888975:secret:foe_prod-7rt8V8:DB_URL:AWSCURRENT:"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:325599888975:secret:foe_prod-7rt8V8:DB_PASSWORD:AWSCURRENT:"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/chippersage-flowofenglish-backend-prod",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
