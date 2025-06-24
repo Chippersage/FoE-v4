@@ -19,4 +19,12 @@ public interface ProgramConceptsMappingRepository extends JpaRepository<ProgramC
     @Query("SELECT pcm FROM ProgramConceptsMapping pcm WHERE pcm.unit.unitId = :unitId ORDER BY pcm.position ASC")
     List<ProgramConceptsMapping> findByUnit_UnitIdOrdered(@Param("unitId") String unitId);
 
+    @Query("SELECT DISTINCT pcm.unit.unitId FROM ProgramConceptsMapping pcm WHERE pcm.program.programId = :programId")
+    List<String> findDistinctUnitIdsByProgramId(@Param("programId") String programId);
+    
+    @Query("SELECT DISTINCT pcm.subconcept.subconceptId FROM ProgramConceptsMapping pcm WHERE pcm.program.programId = :programId")
+    List<String> findDistinctSubconceptIdsByProgramId(@Param("programId") String programId);
+
+    @Query("SELECT pcm.subconcept.subconceptId FROM ProgramConceptsMapping pcm WHERE pcm.unit.unitId = :unitId")
+    List<String> findSubconceptIdsByUnitId(@Param("unitId") String unitId);
 }

@@ -58,7 +58,7 @@ public class PaymentService {
                 orderRequest.put("notes", notes);
             }
 
-            Order order = razorpayClient.Orders.create(orderRequest);
+            Order order = razorpayClient.orders.create(orderRequest);
             
             // Create a pending subscription if we have program and organization info
             if (metadata != null && metadata.containsKey("program_id") && metadata.containsKey("organization_id")) {

@@ -1,25 +1,19 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.dto.ProgramResponseDTO;
-import com.FlowofEnglish.model.Cohort;
+import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
-import com.FlowofEnglish.service.OrganizationService;
+import com.FlowofEnglish.service.*;
 
 import jakarta.persistence.EntityNotFoundException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/organizations")
@@ -37,9 +31,10 @@ public class OrganizationController {
     
     @GetMapping("/{organizationId}")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable String organizationId) {
-        Organization organization = organizationService.getOrganizationById(organizationId);
-        if (organization != null) {
-            return ResponseEntity.ok(organization);
+    	Optional<Organization> organizationOpt = organizationService.getOrganizationById(organizationId);
+        
+        if (organizationOpt.isPresent()) {
+            return ResponseEntity.ok(organizationOpt.get());
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

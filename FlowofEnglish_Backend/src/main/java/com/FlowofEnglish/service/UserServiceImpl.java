@@ -7,9 +7,9 @@ import com.opencsv.CSVReader;
 
 import jakarta.transaction.Transactional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -57,19 +57,25 @@ public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     
     @Override
+    @Cacheable(value = "users", key = "'all_users'")
     public List<UserGetDTO> getAllUsers() {
+        logger.info("Fetching all users from database - cache miss");
         return userRepository.findAll().stream()
                 .map(this::convertToUserDTO)
                 .collect(Collectors.toList());
     }
     
     @Override
+    @Cacheable(value = "user", key = "#userId")
     public Optional<User> findByUserId(String userId) {
+        logger.info("Fetching user by ID from database - cache miss: {}", userId);
         return userRepository.findById(userId);
     }
     
     @Override
+    @Cacheable(value = "userDto", key = "#userId")
     public Optional<UserGetDTO> getUserById(String userId) {
+        logger.info("Fetching user DTO by ID from database - cache miss: {}", userId);
         Optional<User> userOpt = userRepository.findById(userId);
         
         if (userOpt.isPresent()) {
@@ -80,9 +86,10 @@ public class UserServiceImpl implements UserService {
         }
     }
     
-    
     @Override
+    @Cacheable(value = "usersByOrg", key = "#organizationId")
     public List<UserGetDTO> getUsersByOrganizationId(String organizationId) {
+        logger.info("Fetching users by organization ID from database - cache miss: {}", organizationId);
         return userRepository.findByOrganizationOrganizationId(organizationId).stream()
                 .map(this::convertToUserDTO)
                 .collect(Collectors.toList());
@@ -91,11 +98,14 @@ public class UserServiceImpl implements UserService {
     
  // New method to fetch user details based on selected program
     @Override
+    @Cacheable(value = "userProgram", key = "#userId + '_' + #programId")
     public UserDTO getUserDetailsWithProgram(String userId, String programId) {
+        logger.info("Fetching user details with program from database - cache miss: userId={}, programId={}", userId, programId);
+        
         UserDTO userDTO = new UserDTO();
         User user = findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
         
-     // Set basic user details
+        // Set basic user details
         userDTO.setUserId(user.getUserId());
         userDTO.setUserName(user.getUserName());
         userDTO.setUserEmail(user.getUserEmail());
@@ -116,7 +126,7 @@ public class UserServiceImpl implements UserService {
         if (userCohortMappingOpt.isPresent()) {
             UserCohortMapping userCohortMapping = userCohortMappingOpt.get();
             
-         // Set cohort details in CohortDTO
+            // Set cohort details in CohortDTO
             CohortDTO cohortDTO = new CohortDTO();
             cohortDTO.setCohortId(userCohortMapping.getCohort().getCohortId());
             cohortDTO.setCohortName(userCohortMapping.getCohort().getCohortName());
@@ -124,7 +134,7 @@ public class UserServiceImpl implements UserService {
             cohortDTO.setCohortEndDate(userCohortMapping.getCohort().getCohortEndDate());
             userDTO.setCohort(cohortDTO);
             
-         // Fetch the program from CohortProgramRepository
+            // Fetch the program from CohortProgramRepository
             Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(userCohortMapping.getCohort().getCohortId());
 
             if (cohortProgramOpt.isPresent()) {
@@ -154,6 +164,11 @@ public class UserServiceImpl implements UserService {
 
     
     @Override
+    @CacheEvict(value = {"users", "usersByOrg", "userCohorts", "cohortUsers"}, allEntries = true)
+    @Caching(put = {
+        @CachePut(value = "user", key = "#result.userId"),
+        @CachePut(value = "userDto", key = "#result.userId")
+    })
     public User createUser(UsercreateDTO userDTO) {
         User user = userDTO.getUser();
         String cohortId = userDTO.getCohortId();
@@ -204,6 +219,7 @@ public class UserServiceImpl implements UserService {
     }
    
     @Override
+    @CacheEvict(value = {"users", "usersByOrg", "userCohorts", "cohortUsers"}, allEntries = true)
     public Map<String, Object> parseAndCreateUsersFromCsv(CSVReader csvReader, List<String> errorMessages, List<String> warnings) {
         List<User> usersToCreate = new ArrayList<>();
         List<UserCohortMapping> userCohortMappingsToCreate = new ArrayList<>();
@@ -408,6 +424,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "userCohorts", key = "#userId + '_cohortId'")
     public String getCohortIdByUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId)
                 .map(userCohortMapping -> userCohortMapping.getCohort().getCohortId())
@@ -415,6 +432,7 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    @Cacheable(value = "userCohorts", key = "#userId + '_cohortIds'")
     public List<String> getCohortsByUserId(String userId) {
         List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(userId);
         if (userCohortMappings.isEmpty()) {
@@ -427,6 +445,12 @@ public class UserServiceImpl implements UserService {
 
     
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "user", key = "#userId"),
+        @CacheEvict(value = "userDto", key = "#userId"),
+        @CacheEvict(value = "users", key = "'all_users'"),
+        @CacheEvict(value = "usersByOrg", key = "#result.organization.organizationId")
+    })
     public User updateUser(String userId, User updatedUser) {
         logger.info("Updating user with ID: {}", userId);
         return userRepository.findById(userId)
@@ -535,6 +559,11 @@ public class UserServiceImpl implements UserService {
     
     
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "user", key = "#userId"),
+        @CacheEvict(value = "userDto", key = "#userId"),
+        @CacheEvict(value = "users", key = "'all_users'")
+    })
     public String deleteUser(String userId) {
         // First, retrieve the user to get their details before deletion
         Optional<User> userOpt = userRepository.findById(userId);
@@ -552,6 +581,7 @@ public class UserServiceImpl implements UserService {
 
     
     @Override
+    @CacheEvict(value = {"user", "userDto", "users"}, allEntries = true)
     public String deleteUsers(List<String> userIds) {
         List<User> deletedUsers = new ArrayList<>();
         for (String userId : userIds) {
@@ -583,6 +613,11 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "user", key = "#userId"),
+        @CacheEvict(value = "userDto", key = "#userId"),
+        @CacheEvict(value = "users", key = "'all_users'")
+    })
     public String deactivateUser(String userId) {
         logger.info("Attempting to deactivate user with ID: {}", userId);
         
@@ -623,6 +658,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"userCohortMapping"}, key = "#userId + '_' + #cohortId")
     public String deactivateUserFromCohort(String userId, String cohortId) {
         logger.info("Attempting to deactivate user ID: {} from cohort ID: {}", userId, cohortId);
         
@@ -654,6 +690,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "user", key = "#userId"),
+        @CacheEvict(value = "userDto", key = "#userId"),
+        @CacheEvict(value = "users", key = "'all_users'")
+    })
     public String reactivateUser(String userId) {
         logger.info("Attempting to reactivate user with ID: {}", userId);
         
@@ -681,6 +722,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CachePut(value = "userCohortMapping", key = "#userId + '_' + #cohortId")
     public String reactivateUserInCohort(String userId, String cohortId) {
         logger.info("Attempting to reactivate user ID: {} in cohort ID: {}", userId, cohortId);
         
@@ -724,74 +766,15 @@ public class UserServiceImpl implements UserService {
         return "User '" + mapping.getUser().getUserName() + "' has been reactivated in cohort '"
                 + mapping.getCohort().getCohortName() + "'";
     }
-    
  // Helper method to check if a user is active in any cohort
+    @Cacheable(value = "userActiveStatus", key = "#userId")
     public boolean isUserActiveInAnyCohort(String userId) {
         logger.debug("Checking if user ID: {} is active in any cohort", userId);
         return userCohortMappingRepository.existsByUserUserIdAndStatusEquals(userId, "ACTIVE");
     }
-
-//    @Override
-//    @Transactional
-//    public String deleteUser(String userId) {
-//        Optional<User> userOpt = userRepository.findById(userId);
-//        
-//        if (userOpt.isPresent()) {
-//            User user = userOpt.get();
-//            
-//            // First delete cohort mappings
-//            userCohortMappingRepository.deleteByUser_UserId(userId);
-//            
-//            // Then delete the user
-//            userRepository.deleteById(userId);
-//            
-//            return "User '" + user.getUserName() + "' with ID: " + user.getUserId() + " has been deleted.";
-//        } else {
-//            throw new IllegalArgumentException("User not found with ID: " + userId);
-//        }
-//    }
-//
-//    @Override
-//    @Transactional
-//    public String deleteUsers(List<String> userIds) {
-//        List<User> deletedUsers = new ArrayList<>();
-//        
-//        for (String userId : userIds) {
-//            Optional<User> userOpt = userRepository.findById(userId);
-//            if (userOpt.isPresent()) {
-//                User user = userOpt.get();
-//                
-//                // First delete cohort mappings
-//                userCohortMappingRepository.deleteByUser_UserId(userId);
-//                
-//                // Then delete the user
-//                userRepository.deleteById(userId);
-//                
-//                deletedUsers.add(user);
-//            }
-//        }
-//        
-//        int deletedCount = deletedUsers.size();
-//        if (deletedCount == 1) {
-//            User deletedUser = deletedUsers.get(0);
-//            return "User '" + deletedUser.getUserName() + "' with ID: " + deletedUser.getUserId() + " has been deleted.";
-//        } else if (deletedCount > 1) {
-//            StringBuilder message = new StringBuilder();
-//            message.append(deletedCount).append(" users have been deleted. The following users were deleted:\n");
-//            for (User deletedUser : deletedUsers) {
-//                message.append("User Name: ").append(deletedUser.getUserName())
-//                      .append(", User ID: ").append(deletedUser.getUserId()).append("\n");
-//            }
-//            return message.toString();
-//        } else {
-//            return "No users were deleted.";
-//        }
-//    }
-
     
-    
-
     @Override
+    @CacheEvict(value = "user", key = "#userId")
     public boolean resetPassword(String userId, String newPassword) {
         Optional<User> userOpt = userRepository.findById(userId);
 
@@ -812,7 +795,10 @@ public class UserServiceImpl implements UserService {
 
     
     @Override
+    @Cacheable(value = "userProgram", key = "#userId + '_default'")
     public UserDTO getUserDetailsWithProgram(String userId) {
+        logger.info("Fetching user details with default program from database - cache miss: {}", userId);
+        
         // Fetch the UserCohortMapping
         UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("UserCohortMapping not found"));
@@ -846,7 +832,7 @@ public class UserServiceImpl implements UserService {
 
         return dto;
     }
-
+    @Cacheable(value = "organizationDto", key = "#organization.organizationId")
     private OrganizationDTO convertOrganizationToDTO(Organization organization) {
         OrganizationDTO dto = new OrganizationDTO();
         dto.setOrganizationId(organization.getOrganizationId());
@@ -928,8 +914,10 @@ public class UserServiceImpl implements UserService {
         return dto;
     }
     @Override
+    @Cacheable(value = "userDetailsWithCohorts", key = "#userId")
     public UserDetailsWithCohortsAndProgramsDTO getUserDetailsWithCohortsAndPrograms(String userId) {
-        // Fetch the user
+        logger.info("Fetching user details with cohorts and programs from database - cache miss: {}", userId);
+         // Fetch the user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 

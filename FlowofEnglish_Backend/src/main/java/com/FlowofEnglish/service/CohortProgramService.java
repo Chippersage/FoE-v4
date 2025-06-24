@@ -1,8 +1,7 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.CohortProgram;
-import java.util.List;
-import java.util.Optional;
+import com.FlowofEnglish.model.*;
+import java.util.*;
 
 public interface CohortProgramService {
     List<CohortProgram> getAllCohortPrograms();

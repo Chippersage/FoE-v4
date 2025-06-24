@@ -1,58 +1,65 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.ContentMaster;
-import com.FlowofEnglish.repository.ContentMasterRepository;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
 import jakarta.transaction.Transactional;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.slf4j.*;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ContentMasterServiceImpl implements ContentMasterService {
 
+	private static final Logger logger = LoggerFactory.getLogger(ContentMasterServiceImpl.class);
+	
     @Autowired
     private ContentMasterRepository contentMasterRepository;
 
     @Override
+    @Cacheable(value = "contents", key = "'all'")
     public List<ContentMaster> getAllContents() {
+        logger.info("Cache miss for 'all' contents - fetching from DB");
         return contentMasterRepository.findAll();
     }
 
     @Override
+    @Cacheable(value = "contents", key = "#id")
     public Optional<ContentMaster> getContentById(int id) {
+        logger.info("Cache miss for content ID {} - fetching from DB", id);
         return contentMasterRepository.findById(id);
     }
 
     @Override
+    @CacheEvict(value = "contents", allEntries = true)
     public ContentMaster createContent(ContentMaster content) {
-        content.setUuid(UUID.randomUUID().toString()); // Ensure UUID generation
+        content.setUuid(UUID.randomUUID().toString());
+        logger.info("Creating new content with ID {}", content.getContentId());
         return contentMasterRepository.save(content);
     }
+
     @Override
     @Transactional
+    @CacheEvict(value = "contents", allEntries = true)
     public Map<String, Object> uploadContents(MultipartFile file) throws Exception {
         List<String> insertedIds = new ArrayList<>();
         List<String> duplicateIdsInCsv = new ArrayList<>();
         List<String> duplicateIdsInDatabase = new ArrayList<>();
         List<String> errorIds = new ArrayList<>();
         Set<Integer> seenIds = new HashSet<>(); // To track duplicate IDs in the CSV file itself
-
         List<ContentMaster> contentMasters = new ArrayList<>();
+        
+        logger.info("Starting content upload from CSV");
+
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
             String[] line;
             
@@ -84,21 +91,21 @@ public class ContentMasterServiceImpl implements ContentMasterService {
                     contentMasters.add(content);
 
                 } catch (Exception e) {
-                    errorIds.add(line[0]); // Add to error list if there's an issue parsing or creating the object
+                    logger.error("Error parsing line: {}, exception: {}", Arrays.toString(line), e.getMessage());
+                    errorIds.add(line[0]);
                 }
             }
         }
 
-        // Insert valid records into the database
         try {
             List<ContentMaster> savedContents = contentMasterRepository.saveAll(contentMasters);
             insertedIds = savedContents.stream().map(c -> String.valueOf(c.getContentId())).collect(Collectors.toList());
+            logger.info("Inserted {} new content records", insertedIds.size());
         } catch (DataIntegrityViolationException e) {
-            // Handle DB constraint violations if they occur
+            logger.error("Database constraint violation: {}", e.getMessage());
             errorIds.add("Database constraint violation occurred");
         }
 
-        // Prepare response data
         Map<String, Object> response = new HashMap<>();
         response.put("insertedIds", insertedIds);
         response.put("duplicateIdsInCsv", duplicateIdsInCsv);
@@ -110,9 +117,9 @@ public class ContentMasterServiceImpl implements ContentMasterService {
         return response;
     }
     
-   
-
     @Override
+    @CachePut(value = "contents", key = "#id")
+    @CacheEvict(value = "contents", key = "'all'")
     public ContentMaster updateContent(int id, ContentMaster updatedContent) {
         Optional<ContentMaster> existingContent = contentMasterRepository.findById(id);
         if (existingContent.isPresent()) {
@@ -127,6 +134,7 @@ public class ContentMasterServiceImpl implements ContentMasterService {
     }
 
     @Override
+    @CacheEvict(value = "contents", allEntries = true)
     public void deleteContent(int id) {
         contentMasterRepository.deleteById(id);
     }

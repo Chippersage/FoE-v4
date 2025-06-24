@@ -5,13 +5,14 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.service.*;
 import java.time.ZoneOffset;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/user-attempts")
@@ -37,9 +38,12 @@ public class UserAttemptsController {
 
     @Autowired
     private SubconceptService subconceptService;
-
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserAttemptsController.class);
+    
     @PostMapping
     public ResponseEntity<?> createUserAttempt(@RequestBody UserAttemptRequestDTO requestDTO) {
+    	try {
         // Fetch related entities based on IDs
         Optional<User> userOpt = userService.findByUserId(requestDTO.getUserId());
         Optional<Unit> unitOpt = unitService.findByUnitId(requestDTO.getUnitId());
@@ -69,15 +73,18 @@ public class UserAttemptsController {
         userAttempt.setSubconcept(subconceptOpt.get());
         // UUID will be generated automatically via @PrePersist
 
-        // Create the user attempt
-        try {
-            UserAttempts createdAttempt = userAttemptsService.createUserAttempt(userAttempt, requestDTO.getCohortId());
-            return new ResponseEntity<>(createdAttempt, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred while creating the user attempt.");
-        }
+     // Create the user attempt
+        UserAttempts createdAttempt = userAttemptsService.createUserAttempt(userAttempt, requestDTO.getCohortId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAttempt);
+        
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+        logger.error("Error creating user attempt", e);
+        return ResponseEntity.internalServerError()
+                .body("Failed to create attempt: " + e.getMessage());
     }
+}
     
     
     @GetMapping

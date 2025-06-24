@@ -19,4 +19,6 @@ public interface UserSessionMappingService {
     UserSessionMapping createUserSessionMapping(UserSessionMapping userSessionMapping);
     UserSessionMapping updateUserSessionMapping(String sessionId, UserSessionMapping userSessionMapping);
     void deleteUserSessionMapping(String sessionId);
+    void invalidateAllUserSessions(String userId);
+    List<UserSessionMapping> findActiveSessionsForCleanup();
 }

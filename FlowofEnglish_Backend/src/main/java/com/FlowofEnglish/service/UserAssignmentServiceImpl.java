@@ -126,8 +126,6 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         // Validate file size
         validateFileSize(file);
         
-//        String filePath = saveFileToSystem(file);
-//        MediaFile mediaFile = saveFileMetadata(file, filePath, user);
 
      // Upload to S3 and save metadata
         String s3Key = s3StorageService.uploadFile(file, cohortId, userId, programId, stageId, unitId, subconceptId, "submitted");
@@ -488,9 +486,6 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     safeString(assignment.getSubconcept().getSubconceptLink()),
                     assignment.getSubmittedFile() != null ? safeString(assignment.getSubmittedFile().getFileId()) : "",
                     safeString(submittedDate),
-//                    safeString(assignment.getProgram().getProgramName()),
-//                    safeString(assignment.getStage().getStageName()),
-//                    safeString(assignment.getUnit().getUnitName()),
                     maxScore != null ? maxScore.toString() : "",
                     assignment.getScore() != null ? assignment.getScore().toString() : "",
                     safeString(assignment.getRemarks()),
@@ -698,9 +693,6 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
                     safeString(assignment.getSubconcept().getSubconceptLink()),
                     assignment.getSubmittedFile() != null ? safeString(assignment.getSubmittedFile().getFileId()) : "",
                     safeString(submittedDate),
-//                    safeString(assignment.getProgram().getProgramName()),
-//                    safeString(assignment.getStage().getStageName()),
-//                    safeString(assignment.getUnit().getUnitName()),
                     maxScore != null ? maxScore.toString() : "",
                     assignment.getScore() != null ? assignment.getScore().toString() : "",
                     safeString(assignment.getRemarks()),
@@ -778,45 +770,3 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return assignmentOptional.orElse(null);
     }
 }
-
-
-
-//private MediaFile saveFileMetadata(MultipartFile file, String filePath, User user) {
-//MediaFile mediaFile = new MediaFile();
-//mediaFile.setFileName(file.getOriginalFilename());
-//mediaFile.setFileType(file.getContentType());
-//mediaFile.setFileSize(file.getSize());
-//mediaFile.setFilePath(filePath); // Save the local path
-//mediaFile.setUuid(UUID.randomUUID().toString());
-//mediaFile.setUser(user);
-//return mediaFileRepository.save(mediaFile);
-//}
-
-
-
-//@Override
-//public Resource downloadAllAssignments(String cohortId) throws IOException {
-//  List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortId(cohortId);
-//
-//  if (assignments.isEmpty()) {
-//      throw new RuntimeException("No assignments found for the cohort.");
-//  }
-//
-//  // Create a temporary zip file
-//  Path tempZipPath = Files.createTempFile("assignments_" + cohortId, ".zip");
-//  try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(tempZipPath))) {
-//      for (UserAssignment assignment : assignments) {
-//          MediaFile file = assignment.getSubmittedFile();
-//
-//          // Get the file from the EC2 file system
-//          Path filePath = Paths.get(file.getFilePath());
-//          if (Files.exists(filePath)) {
-//          	zipOut.putNextEntry(new ZipEntry(assignment.getUser().getUserId() + "_" + file.getFileName()));
-//              Files.copy(filePath, zipOut); // Copy file content directly into zip
-//              zipOut.closeEntry();
-//          }
-//      }
-//  }
-
-//  return new FileSystemResource(tempZipPath);
-//}

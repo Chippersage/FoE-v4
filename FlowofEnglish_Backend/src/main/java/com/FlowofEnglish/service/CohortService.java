@@ -1,10 +1,8 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.dto.CohortDTO;
-import com.FlowofEnglish.model.Cohort;
-
-import java.util.List;
-import java.util.Optional;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
+import java.util.*;
 
 public interface CohortService {
 
