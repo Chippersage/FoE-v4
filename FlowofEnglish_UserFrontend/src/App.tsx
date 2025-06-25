@@ -28,7 +28,7 @@ export default function App() {
     user?.userType?.toLowerCase() === "Mentor";
 
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
-  console.log(isAuthenticatedAndValid);
+  // console.log(isAuthenticatedAndValid);
 
   useEffect(() => {
     // @ts-ignore

@@ -336,7 +336,7 @@ export default function SubConceptsPage() {
     };
 
     fetchAndSetSubconcepts();
-  }, [user, unitId]);
+  }, [user?.userId, unitId]);
 
   useEffect(() => {
     setTotalSteps(subconcepts.length + 2); // Including start and end
