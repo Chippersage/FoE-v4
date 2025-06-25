@@ -708,14 +708,13 @@ public class ProgramReportServiceImpl implements ProgramReportService {
 
             logger.debug("Found {} stages for programId: {}", stages.size(), programId);
 
-            // Process each stage
-            boolean previousStageCompleted = true;
+            // Process each stage - FIXED LOGIC to match generateProgramReport()
             for (Stage stage : stages) {
                 List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
                 totalUnits += units.size();
 
-                boolean stageCompleted = true;
-                boolean previousUnitCompleted = true;
+                int stageCompletedUnits = 0;
+                int stageTotalUnits = units.size();
 
                 for (Unit unit : units) {
                     List<ProgramConceptsMapping> subconcepts = 
@@ -726,24 +725,20 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                         .findByUser_UserIdAndUnit_UnitId(userId, unit.getUnitId());
                     completedSubconcepts += completedSubconceptsList.size();
 
-                    boolean unitCompleted = previousUnitCompleted &&
-                        completedSubconceptsList.size() == subconcepts.size();
+                    // Check if unit is completed (all subconcepts completed)
+                    boolean unitCompleted = completedSubconceptsList.size() == subconcepts.size();
 
                     if (unitCompleted) {
                         completedUnits++;
-                    }
-
-                    previousUnitCompleted = unitCompleted;
-                    if (!unitCompleted) {
-                        stageCompleted = false;
+                        stageCompletedUnits++;
                     }
                 }
 
-                if (stageCompleted && previousStageCompleted) {
+                // FIXED: Stage is completed when ALL its units are completed
+                // No dependency on previous stages
+                if (stageCompletedUnits == stageTotalUnits && stageTotalUnits > 0) {
                     completedStages++;
                 }
-
-                previousStageCompleted = stageCompleted;
             }
 
             // Prepare response DTO
