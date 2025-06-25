@@ -5,25 +5,15 @@ import com.FlowofEnglish.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 @Service
 public class AssignmentNotificationService {
 
     @Autowired
     private UserAssignmentRepository userAssignmentRepository;
-    
-    @Autowired
-    private UserAssignmentService userAssignmentService;
-    
-    @Autowired
-    private CohortRepository cohortRepository;
 
     @Autowired
     private UserRepository userRepository;

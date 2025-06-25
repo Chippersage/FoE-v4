@@ -2,6 +2,9 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.model.UserSessionMapping;
 import com.FlowofEnglish.repository.UserSessionMappingRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,8 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
 
     @Autowired
     private UserSessionMappingRepository userSessionMappingRepository;
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserSessionMappingServiceImpl.class);
 
     @Override
     public List<UserSessionMapping> getAllUserSessionMappings() {
@@ -49,6 +54,13 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         // This should return all active sessions for the given userId and cohortId
         return userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(userId, cohortId);
     }
+    
+    @Override
+    public List<UserSessionMapping> findActiveSessionsForCleanup() {
+        // You'll need to add this method to your repository
+        return userSessionMappingRepository.findBySessionEndTimestampIsNull();
+    }
+    
     @Override
     public void invalidateSession(String sessionId) {
         Optional<UserSessionMapping> sessionOpt = userSessionMappingRepository.findById(sessionId);
@@ -92,5 +104,34 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     @Override
     public void deleteUserSessionMapping(String sessionId) {
         userSessionMappingRepository.deleteById(sessionId);
+    }
+    
+ // Add this method to your UserSessionMappingService implementation class
+
+    @Override
+    public void invalidateAllUserSessions(String userId) {
+        try {
+            logger.info("Invalidating all sessions for user: {}", userId);
+            
+            // Get all active sessions for the user
+            List<UserSessionMapping> userSessions = getUserSessionMappingsByUserId(userId);
+            
+            OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+            
+            for (UserSessionMapping session : userSessions) {
+                // Only invalidate sessions that are still active (no end timestamp)
+                if (session.getSessionEndTimestamp() == null) {
+                    session.setSessionEndTimestamp(now);
+                    userSessionMappingRepository.save(session);
+                    logger.debug("Invalidated session: {} for user: {}", session.getSessionId(), userId);
+                }
+            }
+            
+            logger.info("Successfully invalidated all active sessions for user: {}", userId);
+            
+        } catch (Exception e) {
+            logger.error("Error invalidating all sessions for user: {}", userId, e);
+            throw new RuntimeException("Failed to invalidate user sessions", e);
+        }
     }
 }

@@ -3,12 +3,12 @@ package com.FlowofEnglish.service;
 import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+import org.springframework.cache.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 import com.FlowofEnglish.exception.ResourceNotFoundException;
 
@@ -44,24 +44,81 @@ public class UnitServiceImpl implements UnitService {
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(ProgramService.class);
+    private static final Logger logger = LoggerFactory.getLogger(UnitServiceImpl.class);
 
     @Override
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
     public Unit createUnit(Unit unit) {
-        return unitRepository.save(unit);
+        try {
+            logger.info("Creating new unit");
+            
+            if (unit == null) {
+                logger.error("Unit object is null");
+                throw new IllegalArgumentException("Unit cannot be null");
+            }
+            
+            if (unit.getUnitId() == null || unit.getUnitId().trim().isEmpty()) {
+                logger.error("Unit ID is null or empty");
+                throw new IllegalArgumentException("Unit ID cannot be null or empty");
+            }
+            
+            logger.info("Creating new unit with ID: {}", unit.getUnitId());
+            Unit savedUnit = unitRepository.save(unit);
+            logger.info("Successfully created unit with ID: {}", savedUnit.getUnitId());
+            return savedUnit;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument for createUnit: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while creating unit: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create unit", e);
+        }
     }
     
     @Override
+    @Cacheable(value = "units", key = "#unitId")
     public Optional<Unit> findByUnitId(String unitId) {
-        return unitRepository.findByUnitId(unitId);
+        try {
+            logger.info("Retrieving unit with ID: {}", unitId);
+            
+            if (unitId == null || unitId.trim().isEmpty()) {
+                logger.warn("Unit ID is null or empty");
+                throw new IllegalArgumentException("Unit ID cannot be null or empty");
+            }
+            
+            logger.info("Cache miss for unit ID {} - fetching from DB", unitId);
+            Optional<Unit> unit = unitRepository.findByUnitId(unitId);
+            
+            if (unit.isPresent()) {
+                logger.info("Found unit with ID: {}", unitId);
+            } else {
+                logger.warn("Unit not found with ID: {}", unitId);
+            }
+            return unit;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument for findByUnitId: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving unit with ID {}: {}", unitId, e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve unit", e);
+        }
     }
 
     @Override
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
     public Map<String, Object> bulkUploadUnits(MultipartFile file) {
-        List<String> errorMessages = new ArrayList<>();
-        Set<String> csvUnitIds = new HashSet<>(); // To track unitIds within the CSV file
-        int successCount = 0;
-        int failCount = 0;
+        try {
+            logger.info("Starting bulk upload of units");
+            
+            if (file == null || file.isEmpty()) {
+                logger.error("File is null or empty");
+                throw new IllegalArgumentException("File cannot be null or empty");
+            }
+            
+            List<String> errorMessages = new ArrayList<>();
+            Set<String> csvUnitIds = new HashSet<>(); // To track unitIds within the CSV file
+            int successCount = 0;
+            int failCount = 0;
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -133,67 +190,205 @@ public class UnitServiceImpl implements UnitService {
                 // Add unitId to the CSV tracking set
                 csvUnitIds.add(unitId);
             }
-        } catch (Exception e) {
-            errorMessages.add("Failed to process file: " + e.getMessage());
-        }
-
+        } 
+        
         // Return response with success and error details
         Map<String, Object> response = new HashMap<>();
         response.put("successCount", successCount);
         response.put("failCount", failCount);
         response.put("errors", errorMessages);
 
+        logger.info("Bulk upload completed - Success: {}, Failed: {}", successCount, failCount);
         return response;
+    } catch (IllegalArgumentException e) {
+        logger.error("Invalid argument for bulkUploadUnits: {}", e.getMessage());
+        throw e;
+    } catch (Exception e) {
+        logger.error("Error occurred during bulk upload: {}", e.getMessage(), e);
+        throw new RuntimeException("Failed to process bulk upload", e);
     }
-
+}
     
     @Override
+    @CachePut(value = "units", key = "#unitId")
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, key = "'all'")
     public Unit updateUnit(String unitId, Unit unit) {
-        Optional<Unit> existingUnit = unitRepository.findById(unitId);
-        if (existingUnit.isPresent()) {
-            Unit updatedUnit = existingUnit.get();
-            updatedUnit.setUnitName(unit.getUnitName());
-            updatedUnit.setUnitDesc(unit.getUnitDesc());
-            updatedUnit.setProgram(unit.getProgram());
-            updatedUnit.setStage(unit.getStage());
-            return unitRepository.save(updatedUnit);
+        try {
+            logger.info("Updating unit with ID: {}", unitId);
+            
+            if (unitId == null || unitId.trim().isEmpty()) {
+                logger.error("Unit ID is null or empty for update");
+                throw new IllegalArgumentException("Unit ID cannot be null or empty");
+            }
+            
+            if (unit == null) {
+                logger.error("Updated unit object is null");
+                throw new IllegalArgumentException("Updated unit cannot be null");
+            }
+            
+            Optional<Unit> existingUnit = unitRepository.findById(unitId);
+            if (existingUnit.isPresent()) {
+                logger.debug("Found existing unit with ID: {}, updating fields", unitId);
+                
+                Unit updatedUnit = existingUnit.get();
+                updatedUnit.setUnitName(unit.getUnitName());
+                updatedUnit.setUnitDesc(unit.getUnitDesc());
+                updatedUnit.setProgram(unit.getProgram());
+                updatedUnit.setStage(unit.getStage());
+                
+                Unit savedUnit = unitRepository.save(updatedUnit);
+                logger.info("Successfully updated unit with ID: {}", unitId);
+                return savedUnit;
+            }
+            
+            logger.error("Unit not found with ID: {} for update", unitId);
+            throw new ResourceNotFoundException("Unit not found with id: " + unitId);
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            logger.error("Error during unit update: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while updating unit with ID {}: {}", unitId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update unit", e);
         }
-        throw new RuntimeException("Unit not found with id: " + unitId);
+    }
+
+
+    @Override
+    @Cacheable(value = "units", key = "#unitId")
+    public Unit getUnitById(String unitId) {
+        try {
+            logger.info("Retrieving unit by ID: {}", unitId);
+            
+            if (unitId == null || unitId.trim().isEmpty()) {
+                logger.error("Unit ID is null or empty");
+                throw new IllegalArgumentException("Unit ID cannot be null or empty");
+            }
+            
+            Unit unit = unitRepository.findById(unitId)
+                    .orElseThrow(() -> {
+                        logger.error("Unit not found with ID: {}", unitId);
+                        return new ResourceNotFoundException("Unit not found with id: " + unitId);
+                    });
+            
+            logger.info("Successfully retrieved unit with ID: {}", unitId);
+            return unit;
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            logger.error("Error retrieving unit: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving unit with ID {}: {}", unitId, e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve unit", e);
+        }
     }
 
     @Override
-    public Unit getUnitById(String unitId) {
-        return unitRepository.findById(unitId)
-                .orElseThrow(() -> new RuntimeException("Unit not found with id: " + unitId));
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
+    public void deleteUnit(String unitId) {
+        try {
+            logger.info("Deleting unit with ID: {}", unitId);
+            
+            if (unitId == null || unitId.trim().isEmpty()) {
+                logger.error("Unit ID is null or empty for deletion");
+                throw new IllegalArgumentException("Unit ID cannot be null or empty");
+            }
+            
+            if (!unitRepository.existsById(unitId)) {
+                logger.warn("Unit not found with ID: {} for deletion", unitId);
+                throw new ResourceNotFoundException("Unit not found with id: " + unitId);
+            }
+            
+            unitRepository.deleteById(unitId);
+            logger.info("Successfully deleted unit with ID: {}", unitId);
+            
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            logger.error("Error during unit deletion: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while deleting unit with ID {}: {}", unitId, e.getMessage(), e);
+            throw new RuntimeException("Failed to delete unit", e);
+        }
     }
     
-
     @Override
-    public void deleteUnit(String unitId) {
-        unitRepository.deleteById(unitId);
-    }
-
-    @Override
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
     public void deleteUnits(List<String> unitIds) {
-        unitRepository.deleteAllById(unitIds);
+        try {
+            logger.info("Deleting multiple units with IDs: {}", unitIds);
+            
+            if (unitIds == null || unitIds.isEmpty()) {
+                logger.error("Unit IDs list is null or empty");
+                throw new IllegalArgumentException("Unit IDs list cannot be null or empty");
+            }
+            
+            // Validate all unit IDs exist before deletion
+            List<String> nonExistentIds = unitIds.stream()
+                    .filter(id -> !unitRepository.existsById(id))
+                    .collect(Collectors.toList());
+            
+            if (!nonExistentIds.isEmpty()) {
+                logger.warn("Some units not found for deletion: {}", nonExistentIds);
+                throw new ResourceNotFoundException("Units not found with ids: " + nonExistentIds);
+            }
+            
+            unitRepository.deleteAllById(unitIds);
+            logger.info("Successfully deleted {} units", unitIds.size());
+            
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            logger.error("Error during bulk unit deletion: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while deleting units with IDs {}: {}", unitIds, e.getMessage(), e);
+            throw new RuntimeException("Failed to delete units", e);
+        }
     }
 
+
     @Override
+    @Cacheable(value = "allUnits", key = "'all'")
     public List<UnitResponseDTO> getAllUnits() {
-        return unitRepository.findAll().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+        try {
+            logger.info("Retrieving all units");
+            
+            List<Unit> units = unitRepository.findAll();
+            List<UnitResponseDTO> unitDTOs = units.stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+            
+            logger.info("Successfully retrieved {} units", unitDTOs.size());
+            return unitDTOs;
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving all units: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve units", e);
+        }
     }
 
     private UnitResponseDTO mapToDTO(Unit unit) {
-        UnitResponseDTO dto = new UnitResponseDTO();
-        dto.setUnitId(unit.getUnitId());
-        dto.setUnitName(unit.getUnitName());
-        dto.setUnitDesc(unit.getUnitDesc());
-        return dto;
+        try {
+            logger.debug("Converting unit to DTO: {}", unit != null ? unit.getUnitId() : "null");
+            
+            if (unit == null) {
+                logger.warn("Unit is null, cannot convert to DTO");
+                throw new IllegalArgumentException("Unit cannot be null");
+            }
+            
+            UnitResponseDTO dto = new UnitResponseDTO();
+            dto.setUnitId(unit.getUnitId());
+            dto.setUnitName(unit.getUnitName());
+            dto.setUnitDesc(unit.getUnitDesc());
+            
+            logger.debug("Successfully converted unit {} to DTO", unit.getUnitId());
+            return dto;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument for mapToDTO: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while converting unit to DTO: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to convert unit to DTO", e);
+        }
     }
     
     @Override 
+    @Cacheable(value = "programStagesUnits", key = "#userId + '_' + #programId")
     public ProgramDTO getProgramWithStagesAndUnits(String userId, String programId) {
         // Fetch the program details
         Program program = programRepository.findById(programId)
@@ -252,12 +447,7 @@ public class UnitServiceImpl implements UnitService {
             if (units.isEmpty()) {
                 continue; // Skip stages without units
             }
-            
-//         // Format the key with leading zeros
-//            String stageKey = String.format("%0" + maxDigits + "d", i);
-//            stageMap.put(stageKey, stageResponse);
-//            stagesCount++;
-            
+                    
             stageResponse.setStageId(stage.getStageId());
             stageResponse.setStageName(stage.getStageName());
             stageResponse.setStageDesc(stage.getStageDesc());
@@ -448,89 +638,6 @@ public class UnitServiceImpl implements UnitService {
                 
                 logger.info("First stage {} is always enabled, available from {}", stage.getStageId(), formattedStartDate);
             } else {
-            	
-            	// Commenting out delayed stage unlock logic
-                /*
-                // Process stages after the first one
-                if (delayedStageUnlock) {
-                    logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());
-                    
-                 // Get the previous stage
-                    Stage previousStage = stages.get(i - 1);
-                    
-                    // Fetch the completion date for the previous stage (IMPORTANT FIX)
-                    Optional<OffsetDateTime> previousStageCompletion = userSubConceptRepository
-                        .findLatestCompletionDateByUserIdAndStageId(userId, previousStage.getStageId());
-                    OffsetDateTime previousStageCompletionDate = previousStageCompletion.orElse(null);
-                    logger.info("Previous stage {} completion date: {}", previousStage.getStageId(), previousStageCompletionDate);
-                    
-                    if (previousStageCompletionDate != null) {
-                        // Previous stage has a completion date, apply delay logic
-                        if (delayInDays == 0) {
-                            // No delay configured - enable immediately
-                            logger.info("Stage {} enabled immediately due to 0 delay days", stage.getStageId());
-                            stageResponse.setStageEnabled(true);
-                            stageResponse.setDaysUntilNextStageEnabled(0);
-                        } else {
-                            // Calculate unlock date based on previous stage completion
-                            OffsetDateTime unlockDate = previousStageCompletionDate.plusDays(delayInDays);
-                            long daysRemaining = ChronoUnit.DAYS.between(currentDate, unlockDate);
-                            
-                            logger.info("Stage {} delay calculation - Current: {}, Unlock: {}", 
-                                stage.getStageId(), currentDate, unlockDate);
-                            
-                            if (currentDate.isBefore(unlockDate)) {
-                                // Still in delay period, stage locked
-                                stageResponse.setStageEnabled(false);
-                                stageResponse.setDaysUntilNextStageEnabled(Math.max(0, (int)daysRemaining));
-                                logger.info("Stage {} is locked with {} days remaining", 
-                                    stage.getStageId(), daysRemaining);
-                            } else {
-                                // Delay period has passed, enable stage
-                                stageResponse.setStageEnabled(true);
-                                stageResponse.setDaysUntilNextStageEnabled(0);
-                                logger.info("Stage {} is unlocked - delay period passed", stage.getStageId());
-                            }
-                        }
-                    } else {
-                    
-                        // Previous stage has no completion date, check completion status
-                        StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
-                        
-                        if (previousStageDTO != null) {
-                            String previousStageStatus = previousStageDTO.getStageCompletionStatus();
-                            boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
-                                                          "Stage Completed without Assignments".equals(previousStageStatus);
-                            
-                            logger.info("No completion date found for previous stage {}. Status: {}", 
-                                previousStage.getStageId(), previousStageStatus);
-                            
-                            if (isPreviousStageCompleted) {
-                                // Previous stage is marked complete but has no recorded date (legacy data)
-                                if (delayInDays == 0) {
-                                    stageResponse.setStageEnabled(true);
-                                    stageResponse.setDaysUntilNextStageEnabled(0);
-                                    logger.info("Stage {} enabled - previous completed with 0 delay", stage.getStageId());
-                                } else {
-                                    stageResponse.setStageEnabled(false);
-                                    stageResponse.setDaysUntilNextStageEnabled(delayInDays);
-                                    logger.warn("Stage {} locked - using default delay: {}", 
-                                        stage.getStageId(), delayInDays);
-                                }
-                            } else {
-                                // Previous stage not completed, this stage should be locked
-                                stageResponse.setStageEnabled(false);
-                                stageResponse.setDaysUntilNextStageEnabled(null); // null means locked due to prerequisite
-                                logger.info("Stage {} locked - previous stage not completed", stage.getStageId());
-                            }
-                        } else {
-                            // Previous stage was skipped (no units)
-                            stageResponse.setStageEnabled(true);
-                            logger.info("Stage {} enabled - previous stage skipped (no units)", stage.getStageId());
-                        }
-                    }
-                } else {
-                */
             	 // Process stages after the first one
                 if (delayedStageUnlock) {
                     logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());

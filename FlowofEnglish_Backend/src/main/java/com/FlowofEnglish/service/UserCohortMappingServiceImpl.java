@@ -5,6 +5,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +28,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
     @Autowired
     private CohortRepository cohortRepository;
+    
     @Autowired
     private CohortProgramRepository cohortProgramRepository;
 
@@ -33,6 +38,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCohortMappingServiceImpl.class);
 
     @Override
+    @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId")
+    @CacheEvict(value = {"cohortLeaderboards", "userMappings"}, key = "#cohortId")
     public UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd) {
         logger.info("Updating leaderboard score for userId: {}, cohortId: {}, scoreToAdd: {}", userId, cohortId,
                 scoreToAdd);
@@ -52,9 +59,8 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
             throw new IllegalArgumentException("Score cannot be null");
         }
 
-        // Find the user-cohort mapping
-        Optional<UserCohortMapping> mappingOpt = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId,
-                cohortId);
+        // Find the user-cohort mapping (this will be cached)
+        Optional<UserCohortMapping> mappingOpt = findByUser_UserIdAndCohort_CohortId(userId, cohortId);
 
         if (!mappingOpt.isPresent()) {
             logger.error("No mapping found for userId: {} and cohortId: {}", userId, cohortId);
@@ -63,8 +69,9 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
         UserCohortMapping mapping = mappingOpt.get();
 
-        // Check if cohort has leaderboard enabled
-        if (!mapping.getCohort().isShowLeaderboard()) {
+        // Check if cohort has leaderboard enabled (cached cohort lookup)
+        Cohort cohort = getCachedCohort(cohortId);
+        if (!cohort.isShowLeaderboard()) {
             logger.warn("Leaderboard is disabled for cohort: {}", cohortId);
             throw new IllegalArgumentException("Leaderboard is disabled for this cohort");
         }
@@ -86,26 +93,25 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId")
+    @CacheEvict(value = {"cohortMappings", "userMappings"}, allEntries = true)
     public UserCohortMapping createUserCohortMapping(String userId, String cohortId) {
         logger.info("Starting createUserCohortMapping for userId: {}, cohortId: {}", userId, cohortId);
 
-        // Fetch user and cohort details
-        Optional<User> userOpt = userRepository.findById(userId);
-        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
-
-        if (userOpt.isEmpty()) {
+        // Fetch user and cohort details (these will be cached)
+        User user = getCachedUser(userId);
+        if (user == null) {
             logger.error("User not found with ID: {}", userId);
             throw new IllegalArgumentException("User not found. Please check the user ID and try again.");
         }
-        if (cohortOpt.isEmpty()) {
+
+        Cohort cohort = getCachedCohort(cohortId);
+        if (cohort == null) {
             logger.error("Cohort not found with ID: {}", cohortId);
             throw new IllegalArgumentException("Cohort not found. Please check the cohort ID and try again.");
         }
 
-        User user = userOpt.get();
         logger.info("Found user: {}, email: {}", user.getUserName(), user.getUserEmail());
-
-        Cohort cohort = cohortOpt.get();
 
         // Organization validation
         if (!user.getOrganization().getOrganizationId().equals(cohort.getOrganization().getOrganizationId())) {
@@ -125,7 +131,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
             logger.info("User has a valid email: {}", user.getUserEmail());
 
             try {
-                Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(cohortId);
+                Optional<CohortProgram> cohortProgramOpt = getCachedCohortProgram(cohortId);
 
                 if (cohortProgramOpt.isPresent()) {
                     CohortProgram cohortProgram = cohortProgramOpt.get();
@@ -169,6 +175,7 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @CachePut(value = "cohortMappings", key = "#cohortId")
     public UserCohortMapping updateUserCohortMappingByCohortId(String cohortId, UserCohortMapping userCohortMapping) {
         List<UserCohortMapping> existingMappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
         if (existingMappings.isEmpty()) {
@@ -176,9 +183,11 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         }
         UserCohortMapping existingMapping = existingMappings.get(0);
 
-        // Find the new cohort by its ID
-        Cohort newCohort = cohortRepository.findById(cohortId)
-                .orElseThrow(() -> new IllegalArgumentException("Cohort with ID " + cohortId + " not found."));
+        // Find the new cohort by its ID (cached)
+        Cohort newCohort = getCachedCohort(cohortId);
+        if (newCohort == null) {
+            throw new IllegalArgumentException("Cohort with ID " + cohortId + " not found.");
+        }
 
         // Check if the user and the new cohort belong to the same organization
         if (!existingMapping.getUser().getOrganization().getOrganizationId()
@@ -195,6 +204,17 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return existingMapping;
     }
 
+    // Cache validation methods for CSV import
+    @Cacheable(value = "validationCache", key = "'user:' + #userId")
+    private boolean isUserExists(String userId) {
+        return userRepository.existsById(userId);
+    }
+
+    @Cacheable(value = "validationCache", key = "'cohort:' + #cohortId")
+    private boolean isCohortExists(String cohortId) {
+        return cohortRepository.existsById(cohortId);
+    }
+
     private String validateCsvData(String userId, String cohortId) {
         if (userId == null || userId.isEmpty()) {
             return "User ID is empty.";
@@ -202,10 +222,10 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         if (cohortId == null || cohortId.isEmpty()) {
             return "Cohort ID is empty.";
         }
-        if (!userRepository.existsById(userId)) {
+        if (!isUserExists(userId)) {
             return "User with ID " + userId + " not found.";
         }
-        if (!cohortRepository.existsById(cohortId)) {
+        if (!isCohortExists(cohortId)) {
             return "Cohort with ID " + cohortId + " not found.";
         }
         if (userCohortMappingRepository.existsByUser_UserIdAndCohort_CohortId(userId, cohortId)) {
@@ -215,11 +235,13 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @CacheEvict(value = {"userCohortMappings", "cohortMappings", "userMappings"}, allEntries = true)
     public void updateUserCohortMapping(int userCohortId, UserCohortMapping userCohortMapping) {
         // Assuming userCohortId is the primary key, simply save the updated entity
         userCohortMappingRepository.save(userCohortMapping);
     }
 
+    @CacheEvict(value = {"userCohortMappings", "cohortMappings", "userMappings"}, allEntries = true)
     public Map<String, List<String>> importUserCohortMappingsWithResponse(MultipartFile file) {
         List<String> successMessages = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
@@ -256,12 +278,19 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @Caching(
+        put = @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId"),
+        evict = {
+            @CacheEvict(value = "cohortMappings", key = "#cohortId"),
+            @CacheEvict(value = "userMappings", key = "#userId")
+        }
+    )
     public UserCohortMapping updateUserCohortMapping(String userId, String cohortId, UserCohortMapping userCohortMapping) {
         logger.info("Updating user-cohort mapping for userId: {}, cohortId: {}", userId, cohortId);
         
         // Find existing mapping
         Optional<UserCohortMapping> existingMappingOpt = 
-                userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+                findByUser_UserIdAndCohort_CohortId(userId, cohortId);
         
         if (existingMappingOpt.isEmpty()) {
             logger.error("User-cohort mapping not found for userId: {}", userId);
@@ -341,30 +370,32 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @Cacheable(value = "userCohortMappings", key = "#userId + ':' + #cohortId")
     public Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId) {
         return userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
     }
 
     @Override
+    @Cacheable(value = "allUserCohortMappings", key = "'all'")
     public List<UserCohortMappingDTO> getAllUserCohortMappings() {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAll();
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Cacheable(value = "cohortMappings", key = "#cohortId")
     public List<UserCohortMappingDTO> getUserCohortMappingsCohortId(String cohortId) {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Cacheable(value = "cohortLeaderboards", key = "#cohortId")
     public Map<String, Object> getUserCohortMappingsByCohortId(String cohortId) {
-        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
-        if (!cohortOpt.isPresent()) {
+        Cohort cohort = getCachedCohort(cohortId);
+        if (cohort == null) {
             throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
         }
-
-        Cohort cohort = cohortOpt.get();
 
         // Check the Show_leaderboard flag
         if (!cohort.isShowLeaderboard()) {
@@ -374,22 +405,18 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         }
 
         // If the leaderboard is enabled, fetch and return the data
-        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
-        List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        List<UserCohortMappingDTO> mappingDTOs = getUserCohortMappingsCohortId(cohortId);
 
         return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
     }
 
     @Override
+    @Cacheable(value = "cohortLeaderboards", key = "#cohortId + ':withLeaderboard'")
     public Map<String, Object> getUserCohortMappingsWithLeaderboard(String cohortId) {
-        Optional<Cohort> cohortOpt = cohortRepository.findById(cohortId);
-        if (!cohortOpt.isPresent()) {
+        Cohort cohort = getCachedCohort(cohortId);
+        if (cohort == null) {
             throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
         }
-
-        Cohort cohort = cohortOpt.get();
 
         // Check the Show_leaderboard flag
         if (!cohort.isShowLeaderboard()) {
@@ -399,44 +426,63 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         }
 
         // Otherwise, return the leaderboard data
-        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
-        List<UserCohortMappingDTO> mappingDTOs = mappings.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        List<UserCohortMappingDTO> mappingDTOs = getUserCohortMappingsCohortId(cohortId);
 
         return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
     }
 
     @Override
+    @Cacheable(value = "userMappings", key = "#userId + ':single'")
     public UserCohortMapping findByUserUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new RuntimeException("UserCohortMapping not found for userId: " + userId));
     }
 
     @Override
+    @Cacheable(value = "userMappings", key = "#userId + ':optional'")
     public Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId) {
         return userCohortMappingRepository.findByUserUserId(userId);
     }
 
     @Override
+    @Cacheable(value = "userMappings", key = "#userId + ':' + #programId")
     public Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId) {
         return userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId);
     }
 
     @Override
+    @Cacheable(value = "userMappings", key = "#userId + ':all'")
     public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId) {
         List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByUserUserId(userId);
         return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @CacheEvict(value = {"userCohortMappings", "cohortMappings", "userMappings"}, allEntries = true)
     public UserCohortMapping createUserCohortMapping(UserCohortMapping userCohortMapping) {
         return userCohortMappingRepository.save(userCohortMapping);
     }
 
     @Override
+    @CacheEvict(value = {"userMappings", "userCohortMappings", "cohortMappings"}, key = "#userId")
     public void deleteUserCohortMappingByUserId(String userId) {
         userCohortMappingRepository.deleteByUserUserId(userId);
+    }
+
+    // Helper methods for cached entity lookups
+    @Cacheable(value = "users", key = "#userId")
+    private User getCachedUser(String userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
+
+    @Cacheable(value = "cohorts", key = "#cohortId")
+    private Cohort getCachedCohort(String cohortId) {
+        return cohortRepository.findById(cohortId).orElse(null);
+    }
+
+    @Cacheable(value = "cohortPrograms", key = "#cohortId")
+    private Optional<CohortProgram> getCachedCohortProgram(String cohortId) {
+        return cohortProgramRepository.findByCohortCohortId(cohortId);
     }
 
     private UserCohortMappingDTO convertToDTO(UserCohortMapping userCohortMapping) {

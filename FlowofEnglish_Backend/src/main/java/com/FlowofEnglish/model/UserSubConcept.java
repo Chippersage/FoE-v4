@@ -137,13 +137,29 @@ public class UserSubConcept {
 	}
 
 	// Setters and Getters for completionStatus (non-persistent)
-    public boolean getCompletionStatus() {
-        return completionStatus;
-    }
+	/**
+	 * Gets the completion status (transient field)
+	 * @return true if completed, false otherwise
+	 */
+	public boolean isCompletionStatus() {
+	    return completionStatus;
+	}
 
-    public void setCompletionStatus(boolean completionStatus) {
-        this.completionStatus = completionStatus;
-    }
+	/**
+	 * Sets the completion status (transient field)
+	 * @param completionStatus the completion status to set
+	 */
+	public void setCompletionStatus(boolean completionStatus) {
+	    this.completionStatus = completionStatus;
+	}
+
+	/**
+	 * Alternative getter method name for completionStatus
+	 * @return true if completed, false otherwise
+	 */
+	public boolean getCompletionStatus() {
+	    return completionStatus;
+	}
     
     @Override
 	public String toString() {

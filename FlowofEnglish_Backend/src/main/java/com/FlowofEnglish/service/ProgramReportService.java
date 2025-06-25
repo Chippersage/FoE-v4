@@ -1,8 +1,8 @@
 package com.FlowofEnglish.service;
 
 import java.util.List;
-
 import com.FlowofEnglish.dto.*;
+
 public interface ProgramReportService {
 	ProgramReportDTO generateProgramReport(String userId, String programId);
     StageReportDTO generateStageReport(String userId, String stageId);
@@ -13,4 +13,5 @@ public interface ProgramReportService {
     byte[] generatePdfReport(String userId, String programId); 
     byte[] generateCsvReport(String userId, String programId);
 	UserProgressDTO getUserProgress(String programId, String userId);
+	UserDTO getUserInfo(String userId);
 }
