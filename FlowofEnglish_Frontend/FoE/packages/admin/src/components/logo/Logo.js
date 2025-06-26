@@ -18,9 +18,7 @@ const Logo = forwardRef(({ disabledLink = false, sx, ...other }, ref) => {
 
   // OR using local (public folder)
   // -------------------------------------------------------
-  const logo = (
-    <Box component="img" src={`/admin/assets/logo-hi-res.png`} sx={{ width: 200, cursor: 'pointer', ...sx }} />
-  );
+  const logo = <Box component="img" src={`/assets/logo-hi-res.png`} sx={{ width: 200, cursor: 'pointer', ...sx }} />;
 
   if (disabledLink) {
     return <>{logo}</>;

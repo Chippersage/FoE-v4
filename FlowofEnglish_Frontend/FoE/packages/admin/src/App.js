@@ -20,7 +20,7 @@ export default function App() {
       {/* Wrap your entire application with UserProvider */}
       <UserProvider>
         <GeneralUserProvider>
-        <BrowserRouter basename="/admin">
+        <BrowserRouter>
           <ThemeProvider>
             <ScrollToTop />
             <StyledChart />

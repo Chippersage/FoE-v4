@@ -458,7 +458,7 @@ export default function UsersOrgPage() {
                           <Stack direction="row" alignItems="center" spacing={2}>
                             <Avatar alt={name} src={avatarUrl} />
                             <Typography variant="subtitle2" noWrap>
-                              <a href={`/admin/org-dashboard/${id}/userdetails/${id}`} color="primary">
+                              <a href={`/org-dashboard/${id}/userdetails/${id}`} color="primary">
                                 {' '}
                                 {name}
                               </a>

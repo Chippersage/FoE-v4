@@ -3,7 +3,7 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import { useTheme } from '@mui/material/styles';
-import { Grid, Container, Typography, Select, MenuItem, Button, Box, } from '@mui/material';
+import { Grid, Container, Typography, Select, MenuItem, Button, Box } from '@mui/material';
 
 import { getOrgUsers, getOrgCohorts } from '../api';
 import { AppWidgetSummary } from '../sections/@dashboard/app';
@@ -20,13 +20,14 @@ export default function DashboardClientPage() {
 
   useEffect(() => {
     // Fetch organization details
-    axios.get(`${process.env.REACT_APP_API_URL}/organizations/${organizationId}`)
+    axios
+      .get(`${process.env.REACT_APP_API_URL}/organizations/${organizationId}`)
       .then((res) => {
         setOrgDetails(res.data);
       })
       .catch((err) => console.log(err));
-      // Fetch organization users
-      getOrgUsers(organizationId)
+    // Fetch organization users
+    getOrgUsers(organizationId)
       .then((res) => setUsers(res))
       .catch((err) => console.error(err));
 
@@ -36,7 +37,8 @@ export default function DashboardClientPage() {
       .catch((err) => console.error(err));
 
     // Fetch programs for selection dropdown
-    axios.get(`${process.env.REACT_APP_API_URL}/programs`)
+    axios
+      .get(`${process.env.REACT_APP_API_URL}/programs`)
       .then((res) => setPrograms(res.data))
       .catch((err) => console.log(err));
   }, [organizationId]);
@@ -81,14 +83,10 @@ export default function DashboardClientPage() {
             </Box>
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
-            <Select
-              value={selectedProgram}
-              onChange={handleProgramChange}
-              fullWidth
-              displayEmpty
-              variant="outlined"
-            >
-              <MenuItem value="" disabled>Select Program</MenuItem>
+            <Select value={selectedProgram} onChange={handleProgramChange} fullWidth displayEmpty variant="outlined">
+              <MenuItem value="" disabled>
+                Select Program
+              </MenuItem>
               {programs.map((program) => (
                 <MenuItem key={program.id} value={program.id}>
                   {program.programName}
@@ -109,33 +107,29 @@ export default function DashboardClientPage() {
             />
           </Grid> */}
           {/* Learners Card */}
-      <Grid item xs={12} md={6} lg={6}>
-      <AppWidgetSummary
-      title="Learners"
-      total={users ? users.length : 0}
-      svgIcon={
-      <img
-      src="/admin/assets/icons/navbar/profile.svg"
-      alt="Learners Icon"
-      style={{ width: 40, height: 40 }}/>}
-      />
-      </Grid>
+          <Grid item xs={12} md={6} lg={6}>
+            <AppWidgetSummary
+              title="Learners"
+              total={users ? users.length : 0}
+              svgIcon={
+                <img src="/assets/icons/navbar/profile.svg" alt="Learners Icon" style={{ width: 40, height: 40 }} />
+              }
+            />
+          </Grid>
 
-      {/* Cohorts Card */}
-      <Grid item xs={12} md={6} lg={6}>
-      <AppWidgetSummary
-      title="Cohorts"
-      total={cohorts ? cohorts.length : 0}
-      color="info"
-      svgIcon={
-      <img
-      src="/admin/assets/icons/navbar/cohort.svg"
-      alt="cohorts Icon"
-      style={{ width: 40, height: 40 }}/>}
-      />
-      </Grid>
+          {/* Cohorts Card */}
+          <Grid item xs={12} md={6} lg={6}>
+            <AppWidgetSummary
+              title="Cohorts"
+              total={cohorts ? cohorts.length : 0}
+              color="info"
+              svgIcon={
+                <img src="/assets/icons/navbar/cohort.svg" alt="cohorts Icon" style={{ width: 40, height: 40 }} />
+              }
+            />
+          </Grid>
 
-      {/* <Grid item xs={12} md={6} lg={6}>
+          {/* <Grid item xs={12} md={6} lg={6}>
             <AppWidgetSummary
               title="Total Cohorts"
               total={cohorts.length}
@@ -144,8 +138,6 @@ export default function DashboardClientPage() {
               link={`/org-dashboard/${organizationId}/cohorts`}
             />
           </Grid> */}
-
-
         </Grid>
       </Container>
     </>

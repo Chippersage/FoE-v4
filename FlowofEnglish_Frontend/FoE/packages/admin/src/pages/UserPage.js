@@ -2,16 +2,43 @@
 import { styled } from '@mui/material/styles';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CSVLink } from "react-csv";
+import { CSVLink } from 'react-csv';
 import { filter } from 'lodash';
 import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { format, formatISO } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 // @mui
-import { Button, Card, Checkbox, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Link, MenuItem, Modal,
-  Paper, Popover, Stack, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, TextField, Typography, FormControl, InputLabel, Select, } from '@mui/material';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Link,
+  MenuItem,
+  Modal,
+  Paper,
+  Popover,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TablePagination,
+  TableRow,
+  TextField,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+} from '@mui/material';
 
 // components
 import Iconify from '../components/iconify';
@@ -19,7 +46,16 @@ import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
-import { createOrg, deleteOrg, deleteOrgs, getOrgUsers, getOrgs, updateOrg, getPrograms, createSubscription } from '../api';
+import {
+  createOrg,
+  deleteOrg,
+  deleteOrgs,
+  getOrgUsers,
+  getOrgs,
+  updateOrg,
+  getPrograms,
+  createSubscription,
+} from '../api';
 
 // ----------------------------------------------------------------------
 
@@ -39,7 +75,7 @@ const StyledCard = styled(Card)({
   margin: '10px auto',
   padding: '20px',
   Button: {
-  marginTop: '10px',
+    marginTop: '10px',
   },
 });
 
@@ -68,7 +104,10 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_organization) => _organization.organizationName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(
+      array,
+      (_organization) => _organization.organizationName.toLowerCase().indexOf(query.toLowerCase()) !== -1
+    );
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -99,7 +138,7 @@ export default function UserPage() {
     organizationAdminEmail: '',
     organizationAdminPhone: '',
     orgPassword: '',
-    deletedAt: ''
+    deletedAt: '',
   };
   const [formData, setFormData] = useState(initialFormData);
   const [showOrgPassword, setShowOrgPassword] = useState(false);
@@ -136,8 +175,8 @@ export default function UserPage() {
     const fetchData = async () => {
       try {
         console.log('Fetching organizations and programs data...');
-      const orgsResponse = await getOrgs();
-      console.log('Organizations data fetched:', orgsResponse);
+        const orgsResponse = await getOrgs();
+        console.log('Organizations data fetched:', orgsResponse);
 
         const programsResponse = await getPrograms();
         console.log('Programs data fetched:', programsResponse);
@@ -150,7 +189,7 @@ export default function UserPage() {
     };
     fetchData();
   }, []);
-  
+
   const openSubscriptionDialog = () => {
     setSubscriptionForm({ organizationId: '', programId: '', maxCohorts: '' });
     setIsSubscriptionDialogOpen(true);
@@ -162,7 +201,7 @@ export default function UserPage() {
 
   const handleSubscriptionFormChange = (event) => {
     const { name, value } = event.target;
-  
+
     if (name === 'organizationId') {
       setSubscriptionForm((prev) => ({
         ...prev,
@@ -186,8 +225,7 @@ export default function UserPage() {
       }));
     }
   };
-  
-  
+
   const handleCreateSubscription = async () => {
     try {
       const response = await createSubscription(subscriptionForm); // Replace with actual API call
@@ -199,7 +237,7 @@ export default function UserPage() {
       console.error('Error creating subscription:', error);
     }
   };
-  
+
   const validateForm = () => {
     const errors = {};
     if (!formData.organizationAdminName.trim()) {
@@ -224,7 +262,7 @@ export default function UserPage() {
     // Additional validations if needed
     return errors;
   };
-  
+
   // Reset form to initial state
   const resetForm = () => {
     setFormData(initialFormData);
@@ -247,10 +285,10 @@ export default function UserPage() {
   const openUpdateDialog = (organization) => {
     console.log('Organization to update:', organization); // Debugging
     if (!organization) return;
-  
+
     const phoneWithCode = organization.organizationAdminPhone || '';
     const countryCode = phoneWithCode.substring(0, 2); // Assuming country code is 2 digits
-    
+
     setFormData({
       organizationId: organization.organizationId || '',
       organizationName: organization.organizationName || '',
@@ -258,43 +296,40 @@ export default function UserPage() {
       organizationAdminEmail: organization.organizationAdminEmail || '',
       organizationAdminPhone: organization.organizationAdminPhone || '',
       orgPassword: organization.orgPassword || '',
-  });
+    });
 
     setCountryCode(countryCode || '91'); // Default to '91' for India
-  setSelectedOrganization(organization);
-  setIsUpdateDialogOpen(true);
-};
+    setSelectedOrganization(organization);
+    setIsUpdateDialogOpen(true);
+  };
 
   const closeUpdateDialog = () => {
     resetForm();
     setSelectedOrganization(null);
     setIsUpdateDialogOpen(false);
   };
-  
 
   // Enhanced form change handler with validation
   const handleFormChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  
-  
 
   // Enhanced phone change handler
   const handlePhoneChange = (value, data) => {
     const rawPhone = value.replace(/[^0-9]/g, '');
     const strippedPhone = rawPhone.slice(data.dialCode.length);
     setCountryCode(data.dialCode);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      organizationAdminPhone: strippedPhone
+      organizationAdminPhone: strippedPhone,
     }));
-    
+
     // Clear phone error when being edited
     if (formErrors.organizationAdminPhone) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        organizationAdminPhone: ''
+        organizationAdminPhone: '',
       }));
     }
   };
@@ -303,7 +338,7 @@ export default function UserPage() {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
-  
+
     if (Object.keys(errors).length === 0) {
       setLoading(true);
       try {
@@ -313,9 +348,9 @@ export default function UserPage() {
           setOrgs(await getOrgs());
           closeCreateDialog();
           setSuccessMessage('Organization created successfully!');
-          setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
+          setTimeout(() => setSuccessMessage(''), 3000); // Show success message for 3 seconds
         } else if (response.status === 400) {
-          setFormErrors(prev => ({
+          setFormErrors((prev) => ({
             ...prev,
             organizationAdminEmail: response.data.message || 'Email already exists',
           }));
@@ -324,70 +359,69 @@ export default function UserPage() {
         console.error('Error creating organization:', error);
         setLoading(false);
         setErrorMessage('Failed to create organization. Please try again.');
-        setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+        setTimeout(() => setErrorMessage(''), 3000); // Show error message for 3 seconds
       }
     } else {
       setFormErrors(errors);
     }
   };
-  
 
-const handleUpdateSubmit = async (e) => {
-  e.preventDefault();
-  const errors = validateForm();
-  if (Object.keys(errors).length === 0) {
-    setLoading(true);
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length === 0) {
+      setLoading(true);
+      try {
+        const response = await updateOrg(formData.organizationId, formData);
+        setLoading(false);
+        if (response.status === 200) {
+          // Check for successful update response (status 200)
+          setOrgs(await getOrgs()); // Reload the organization list
+          closeUpdateDialog(); // Close the update dialog
+          setSuccessMessage('Organization updated successfully!');
+          setTimeout(() => setSuccessMessage(''), 3000); // Show success message for 3 seconds
+        } else if (response.status === 400) {
+          // Handle error response (e.g., organization not found)
+          setErrorMessage('Failed to update organization. Organization not found.');
+          setTimeout(() => setErrorMessage(''), 3000); // Show error message for 3 seconds
+        }
+      } catch (error) {
+        console.error('Error updating organization:', error);
+        setErrorMessage('Failed to update organization. Please try again.');
+        setTimeout(() => setErrorMessage(''), 3000); // Show error message for 3 seconds
+      }
+    } else {
+      setFormErrors(errors);
+    }
+  };
+
+  const handleDelete = async () => {
     try {
-      const response = await updateOrg(formData.organizationId, formData);
-      setLoading(false);
-      if (response.status === 200) {  // Check for successful update response (status 200)
-        setOrgs(await getOrgs());    // Reload the organization list
-        closeUpdateDialog();         // Close the update dialog
-        setSuccessMessage('Organization updated successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
-      } else if (response.status === 400) {  // Handle error response (e.g., organization not found)
-        setErrorMessage('Failed to update organization. Organization not found.');
-        setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+      const { organizationId } = selectedRow;
+      const response = await deleteOrg(organizationId);
+
+      if (response) {
+        // Reload the organization list after successful deletion
+        const orgs = await getOrgs();
+        setOrgs(orgs);
+
+        // Show success message
+        setSuccessMessage('Organization deleted successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000); // Show success message for 3 seconds
+
+        // Close the delete dialog
+        closeDeleteDialog();
+      } else {
+        // Handle failure (if no response is returned or deletion failed)
+        setErrorMessage('Failed to delete organization. Please try again.');
+        setTimeout(() => setErrorMessage(''), 3000); // Show error message for 3 seconds
       }
     } catch (error) {
-      console.error('Error updating organization:', error);
-      setErrorMessage('Failed to update organization. Please try again.');
-      setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
-    }
-  } else {
-    setFormErrors(errors);
-  }
-};
-
-
-const handleDelete = async () => {
-  try {
-    const { organizationId } = selectedRow;
-    const response = await deleteOrg(organizationId);
-
-    if (response) {
-      // Reload the organization list after successful deletion
-      const orgs = await getOrgs();
-      setOrgs(orgs);
-
-      // Show success message
-      setSuccessMessage('Organization deleted successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);  // Show success message for 3 seconds
-
-      // Close the delete dialog
-      closeDeleteDialog();
-    } else {
-      // Handle failure (if no response is returned or deletion failed)
+      console.error('Error deleting organization:', error);
       setErrorMessage('Failed to delete organization. Please try again.');
-      setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
+      setTimeout(() => setErrorMessage(''), 3000); // Show error message for 3 seconds
     }
-  } catch (error) {
-    console.error('Error deleting organization:', error);
-    setErrorMessage('Failed to delete organization. Please try again.');
-    setTimeout(() => setErrorMessage(''), 3000);  // Show error message for 3 seconds
-  }
-};
-
+  };
 
   const handleSelectedDelete = async () => {
     try {
@@ -407,13 +441,13 @@ const handleDelete = async () => {
       handleCloseMenu();
       const orgId = selectedRow?.organizationId;
       if (!orgId) {
-        console.error("No organization selected. Please select an organization to export.");
+        console.error('No organization selected. Please select an organization to export.');
         return;
       }
-  
-      console.log("Fetching users for Organization ID:", orgId);
+
+      console.log('Fetching users for Organization ID:', orgId);
       const data = await getOrgUsers(orgId);
-  
+
       if (data && Array.isArray(data)) {
         const formattedData = formatUserDataForExport(data); // Format the user data
         const csvContent = convertToCSV(formattedData); // Convert to CSV
@@ -421,30 +455,30 @@ const handleDelete = async () => {
         setCsvData(formattedData); // Set the formatted data for export
         setIsDataReady(true);
       } else {
-        console.error("Error fetching users for export:", data);
+        console.error('Error fetching users for export:', data);
       }
     } catch (error) {
-      console.error("Error in handleExport:", error);
+      console.error('Error in handleExport:', error);
     }
   };
   // Convert JSON data to CSV
-const convertToCSV = (data) => {
-  const headers = Object.keys(data[0]).join(",") + "\n";
-  const rows = data.map(row => Object.values(row).join(",")).join("\n");
-  return headers + rows;
-};
-// Trigger CSV download
-const downloadCSV = (csvContent, fileName) => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", fileName);
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+  const convertToCSV = (data) => {
+    const headers = Object.keys(data[0]).join(',') + '\n';
+    const rows = data.map((row) => Object.values(row).join(',')).join('\n');
+    return headers + rows;
+  };
+  // Trigger CSV download
+  const downloadCSV = (csvContent, fileName) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   const formatUserDataForExport = (users) => {
     return users.map((user) => ({
       userId: user.userId || '',
@@ -487,43 +521,40 @@ const downloadCSV = (csvContent, fileName) => {
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       // Select all rows
-    const newSelected = orgs.map((org) => org.organizationId);
+      const newSelected = orgs.map((org) => org.organizationId);
+      setSelected(newSelected);
+    } else {
+      // Deselect all rows
+      setSelected([]);
+    }
+  };
+
+  const handleClick = (event, organizationId) => {
+    const selectedIndex = selected.indexOf(organizationId);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      // Add the row to the selection
+      newSelected = newSelected.concat(selected, organizationId);
+    } else if (selectedIndex === 0) {
+      // Remove the first selected row
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      // Remove the last selected row
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      // Remove a middle row
+      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+    }
+
     setSelected(newSelected);
-  } else {
-    // Deselect all rows
-    setSelected([]);
-  }
-};
+  };
 
-const handleClick = (event, organizationId) => {
-  const selectedIndex = selected.indexOf(organizationId);
-  let newSelected = [];
+  // Helper function to check if a row is selected
+  const isRowSelected = (organizationId) => selected.indexOf(organizationId) !== -1;
 
-  if (selectedIndex === -1) {
-    // Add the row to the selection
-    newSelected = newSelected.concat(selected, organizationId);
-  } else if (selectedIndex === 0) {
-    // Remove the first selected row
-    newSelected = newSelected.concat(selected.slice(1));
-  } else if (selectedIndex === selected.length - 1) {
-    // Remove the last selected row
-    newSelected = newSelected.concat(selected.slice(0, -1));
-  } else if (selectedIndex > 0) {
-    // Remove a middle row
-    newSelected = newSelected.concat(
-      selected.slice(0, selectedIndex),
-      selected.slice(selectedIndex + 1)
-    );
-  }
-
-  setSelected(newSelected);
-};
-
-// Helper function to check if a row is selected
-const isRowSelected = (organizationId) => selected.indexOf(organizationId) !== -1;
-
-// Helper function to check if all rows are selected
-const isAllSelected = selected.length === orgs.length;
+  // Helper function to check if all rows are selected
+  const isAllSelected = selected.length === orgs.length;
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -540,11 +571,12 @@ const isAllSelected = selected.length === orgs.length;
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orgs.length) : 0;
-  const filteredUsers = applySortFilter(orgs, getComparator(order, orderBy), filterName)
-  .sort((a, b) => (a.deletedAt && !b.deletedAt ? 1 : !a.deletedAt && b.deletedAt ? -1 : 0));
+  const filteredUsers = applySortFilter(orgs, getComparator(order, orderBy), filterName).sort((a, b) =>
+    a.deletedAt && !b.deletedAt ? 1 : !a.deletedAt && b.deletedAt ? -1 : 0
+  );
   const isNotFound = !filteredUsers.length && !!filterName;
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   return (
     <>
@@ -553,42 +585,50 @@ const isAllSelected = selected.length === orgs.length;
       </Helmet>
 
       <Container>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h4" gutterBottom>
             Organizations
           </Typography>
-          </Stack>
+        </Stack>
 
-          {/* <div style={{ padding: '20px' }}> */}
-          <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-          <Button variant="contained" onClick={openCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
-          sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-            alignSelf: 'flex-start',
-          }}>
+        {/* <div style={{ padding: '20px' }}> */}
+        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+          <Button
+            variant="contained"
+            onClick={openCreateDialog}
+            startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+              alignSelf: 'flex-start',
+            }}
+          >
             New Organization
           </Button>
-          <Button variant="contained" onClick={openSubscriptionDialog} startIcon={<Iconify icon="eva:plus-fill" />}
-          sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-            alignSelf: 'flex-start',
-          }}>
+          <Button
+            variant="contained"
+            onClick={openSubscriptionDialog}
+            startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+              alignSelf: 'flex-start',
+            }}
+          >
             Assign Program-Org
           </Button>
         </Stack>
@@ -601,131 +641,128 @@ const isAllSelected = selected.length === orgs.length;
             deleteOrgs={deleteOrgs}
           />
 
-        <Scrollbar>
-        <TableContainer sx={{ minWidth: 800 }}>
-        <Table>
-        <UserListHead
-        order={order}
-        orderBy={orderBy}
-        headLabel={TABLE_HEAD}
-        rowCount={orgs.length}
-        numSelected={selected.length}
-        onRequestSort={handleRequestSort}
-        onSelectAllClick={handleSelectAllClick}
-        />
-<TableBody>
-  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-    const { organizationId, organizationName, organizationAdminName, organizationAdminPhone, createdAt, deletedAt } = row;
-    const isRowChecked = isRowSelected(organizationId);
+          <Scrollbar>
+            <TableContainer sx={{ minWidth: 800 }}>
+              <Table>
+                <UserListHead
+                  order={order}
+                  orderBy={orderBy}
+                  headLabel={TABLE_HEAD}
+                  rowCount={orgs.length}
+                  numSelected={selected.length}
+                  onRequestSort={handleRequestSort}
+                  onSelectAllClick={handleSelectAllClick}
+                />
+                <TableBody>
+                  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                    const {
+                      organizationId,
+                      organizationName,
+                      organizationAdminName,
+                      organizationAdminPhone,
+                      createdAt,
+                      deletedAt,
+                    } = row;
+                    const isRowChecked = isRowSelected(organizationId);
 
-    const isDeleted = !!deletedAt; // Check if the organization is deleted
+                    const isDeleted = !!deletedAt; // Check if the organization is deleted
 
-    return (
-      <TableRow
-        hover={!isDeleted} // Disable hover effect if deleted
-        key={organizationId}
-        tabIndex={-1}
-        role="checkbox"
-        selected={isRowChecked}
-        style={{
-          backgroundColor: isDeleted ? '#f5f5f5' : 'inherit', // Gray background for deleted rows
-          pointerEvents: isDeleted ? 'none' : 'auto', // Disable interactions
-          opacity: isDeleted ? 0.5 : 1, // Dim deleted rows
-        }}
-      >
-        <TableCell padding="checkbox">
-          <Checkbox
-            checked={isRowChecked}
-            onChange={(event) => handleClick(event, organizationId)}
-            disabled={isDeleted} // Disable checkbox if deleted
-          />
-        </TableCell>
+                    return (
+                      <TableRow
+                        hover={!isDeleted} // Disable hover effect if deleted
+                        key={organizationId}
+                        tabIndex={-1}
+                        role="checkbox"
+                        selected={isRowChecked}
+                        style={{
+                          backgroundColor: isDeleted ? '#f5f5f5' : 'inherit', // Gray background for deleted rows
+                          pointerEvents: isDeleted ? 'none' : 'auto', // Disable interactions
+                          opacity: isDeleted ? 0.5 : 1, // Dim deleted rows
+                        }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={isRowChecked}
+                            onChange={(event) => handleClick(event, organizationId)}
+                            disabled={isDeleted} // Disable checkbox if deleted
+                          />
+                        </TableCell>
 
-        <TableCell component="th" scope="row" padding="none">
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography variant="subtitle2" noWrap>
-              {isDeleted ? (
-                <span>{organizationId}</span> // Display plain text for deleted organizations
-              ) : (
-                <Link
-                  href={`/admin/org-dashboard/${organizationId}/app`}
-                  color="inherit"
-                  underline="hover"
-                >
-                  {organizationId}
-                </Link>
-              )}
-            </Typography>
-          </Stack>
-        </TableCell>
-        <TableCell align="left">{organizationName}</TableCell>
-        <TableCell align="left">{organizationAdminName}</TableCell>
-        <TableCell align="left">{organizationAdminPhone}</TableCell>
-        <TableCell align="left">
-          {createdAt ? format(new Date(createdAt), 'dd/MM/yyyy') : 'N/A'}
-        </TableCell>
-        <TableCell align="right">
-          {!isDeleted && (
-            <IconButton
-              size="large"
-              color="inherit"
-              onClick={(event) => handleOpenMenu(event, row)}
-            >
-              <Iconify icon={'eva:more-vertical-fill'} />
-            </IconButton>
-          )}
-        </TableCell>
-      </TableRow>
-    );
-  })}
-  {emptyRows > 0 && (
-    <TableRow style={{ height: 53 * emptyRows }}>
-      <TableCell colSpan={6} />
-    </TableRow>
-  )}
-</TableBody>
+                        <TableCell component="th" scope="row" padding="none">
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Typography variant="subtitle2" noWrap>
+                              {isDeleted ? (
+                                <span>{organizationId}</span> // Display plain text for deleted organizations
+                              ) : (
+                                <Link href={`/org-dashboard/${organizationId}/app`} color="inherit" underline="hover">
+                                  {organizationId}
+                                </Link>
+                              )}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="left">{organizationName}</TableCell>
+                        <TableCell align="left">{organizationAdminName}</TableCell>
+                        <TableCell align="left">{organizationAdminPhone}</TableCell>
+                        <TableCell align="left">
+                          {createdAt ? format(new Date(createdAt), 'dd/MM/yyyy') : 'N/A'}
+                        </TableCell>
+                        <TableCell align="right">
+                          {!isDeleted && (
+                            <IconButton size="large" color="inherit" onClick={(event) => handleOpenMenu(event, row)}>
+                              <Iconify icon={'eva:more-vertical-fill'} />
+                            </IconButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {emptyRows > 0 && (
+                    <TableRow style={{ height: 53 * emptyRows }}>
+                      <TableCell colSpan={6} />
+                    </TableRow>
+                  )}
+                </TableBody>
 
-        {isNotFound && (
-        <TableBody>
-        <TableRow>
-        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-        <Paper
-        sx={{
-        textAlign: 'center',
-        }}
-        >
-        <Typography variant="h6" paragraph>
-        Not found
-        </Typography>
+                {isNotFound && (
+                  <TableBody>
+                    <TableRow>
+                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                        <Paper
+                          sx={{
+                            textAlign: 'center',
+                          }}
+                        >
+                          <Typography variant="h6" paragraph>
+                            Not found
+                          </Typography>
 
-        <Typography variant="body2">
-        No results found for &nbsp;
-        <strong>&quot;{filterName}&quot;</strong>.
-        <br /> Try checking for typos or using complete words.
-        </Typography>
-        <>
-        {successMessage && (
-        <Typography variant="body1" color="success">
-        {successMessage}
-        </Typography>
-        )}
-        {errorMessage && (
-        <Typography variant="body1" color="error">
-        {errorMessage}
-        </Typography>
-        )}
-        <Container>
-        {/* Rest of your component */}
-        </Container>
-        </>
-        </Paper>
-        </TableCell>
-        </TableRow>
-        </TableBody>
-        )}
-        </Table>
-        </TableContainer>
-        </Scrollbar>
+                          <Typography variant="body2">
+                            No results found for &nbsp;
+                            <strong>&quot;{filterName}&quot;</strong>.
+                            <br /> Try checking for typos or using complete words.
+                          </Typography>
+                          <>
+                            {successMessage && (
+                              <Typography variant="body1" color="success">
+                                {successMessage}
+                              </Typography>
+                            )}
+                            {errorMessage && (
+                              <Typography variant="body1" color="error">
+                                {errorMessage}
+                              </Typography>
+                            )}
+                            <Container>{/* Rest of your component */}</Container>
+                          </>
+                        </Paper>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                )}
+              </Table>
+            </TableContainer>
+          </Scrollbar>
 
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
@@ -763,10 +800,13 @@ const isAllSelected = selected.length === orgs.length;
           Update
         </MenuItem>
         <MenuItem
-  onClick={() => {
-    navigate(`/org-dashboard/${selectedRow.organizationId}/cohorts/organization/${selectedRow.organizationId}`, { replace: true });
-  }}
-  >
+          onClick={() => {
+            navigate(
+              `/org-dashboard/${selectedRow.organizationId}/cohorts/organization/${selectedRow.organizationId}`,
+              { replace: true }
+            );
+          }}
+        >
           <Iconify icon={'eva:people-outline'} sx={{ mr: 2 }} />
           Cohorts
         </MenuItem>
@@ -774,229 +814,257 @@ const isAllSelected = selected.length === orgs.length;
           <Iconify icon={'eva:cloud-download-outline'} sx={{ mr: 2 }} />
           Export Users
         </MenuItem>
-      {isDataReady && (
-        <CSVLink
-        ref={csvLinkRef}
-          data={csvData}
-          filename={`users_${selectedRow.organizationId}.csv`} // Unique filename based on organization ID
-          onClick={() => setIsDataReady(false)} // Reset after download
-          style={{ display: 'none' }} // Hide the link in the UI
-        >
-          Download CSV
-        </CSVLink>
-      )}
+        {isDataReady && (
+          <CSVLink
+            ref={csvLinkRef}
+            data={csvData}
+            filename={`users_${selectedRow.organizationId}.csv`} // Unique filename based on organization ID
+            onClick={() => setIsDataReady(false)} // Reset after download
+            style={{ display: 'none' }} // Hide the link in the UI
+          >
+            Download CSV
+          </CSVLink>
+        )}
 
-<MenuItem
-sx={{ color: 'error.main' }} onClick={() => {setIsConfirmOpen(true); handleCloseMenu();}}>
-<Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-Delete
-</MenuItem>
+        <MenuItem
+          sx={{ color: 'error.main' }}
+          onClick={() => {
+            setIsConfirmOpen(true);
+            handleCloseMenu();
+          }}
+        >
+          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
+          Delete
+        </MenuItem>
       </Popover>
 
-{/* Create Organizations Dialog */}
-{isCreateDialogOpen && (
-<Dialog open={isCreateDialogOpen} onClose={closeCreateDialog}
-PaperProps={{ sx: { width: '100%', maxWidth: 'sm', // Reduces overall dialog width
-'& .MuiDialogContent-root': {pt: 2 }}// Adds space after title
-}}
->
-<DialogTitle>Create New Organization</DialogTitle>
-<DialogContent sx={{ pt: 4 }}>
-  {/* Display Spinner when loading */}
-  {loading && (
-    <div className="spinner" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-      Creating Organization...
-    </div>
-  )}
-  
-  {/* Hide form when loading */}
-  {!loading && (
-<div className="flex flex-col gap-6 pt-2">
-<TextField name="organizationName" label="Organization Name" value={formData.organizationName} onChange={handleFormChange} variant="outlined"
-error={!!formErrors.organizationName}
-helperText={formErrors.organizationName}
-fullWidth
-required
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
+      {/* Create Organizations Dialog */}
+      {isCreateDialogOpen && (
+        <Dialog
+          open={isCreateDialogOpen}
+          onClose={closeCreateDialog}
+          PaperProps={{
+            sx: {
+              width: '100%',
+              maxWidth: 'sm', // Reduces overall dialog width
+              '& .MuiDialogContent-root': { pt: 2 },
+            }, // Adds space after title
           }}
-/>
-<TextField
-name="organizationAdminName"
-label="Admin Name"
-value={formData.organizationAdminName}
-onChange={handleFormChange}
-variant="outlined"
-error={!!formErrors.organizationAdminName}
-helperText={formErrors.organizationAdminName}
-fullWidth
-required
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-/>
-<div className="flex flex-col">
-<ReactPhoneInput
-country={'in'}
-enableSearch
-value={`${countryCode}${formData.organizationAdminPhone}`}
-onChange={handlePhoneChange}
-inputStyle={{ width: '100%', height: '45px' }}
-/>
-{formErrors.organizationAdminPhone && (
-<Typography color="error" variant="caption" sx={{ mt: 0.5 }}>
-{formErrors.organizationAdminPhone}
-</Typography>
-)}
-</div>
-<TextField
-name="organizationAdminEmail"
-label="Admin Email"
-value={formData.organizationAdminEmail}
-onChange={handleFormChange}
-variant="outlined"
-error={!!formErrors.organizationAdminEmail}
-helperText={formErrors.organizationAdminEmail}
-fullWidth
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-required
-/>
-</div>
-)}
-</DialogContent>
-<DialogActions sx={{ p: 2.5 }}>
-{!loading && (
-    <>
-<Button onClick={closeCreateDialog}
- sx={{
-  bgcolor: '#5bc3cd', // Default background color
-  color: 'white', // Text color
-  fontWeight: 'bold', // Font weight
-  '&:hover': {
-  bgcolor: '#DB5788', // Hover background color
-  },
-  py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-  }}
-    >Cancel</Button>
-<Button onClick={handleCreateSubmit}
-  sx={{
-  bgcolor: '#5bc3cd', // Default background color
-  color: 'white', // Text color
-  fontWeight: 'bold', // Font weight
-  '&:hover': {
-  bgcolor: '#DB5788', // Hover background color
-  },
-  py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-  }}
-  >Create</Button>
-  </>
-  )}
-</DialogActions>
-</Dialog>
-)}
+        >
+          <DialogTitle>Create New Organization</DialogTitle>
+          <DialogContent sx={{ pt: 4 }}>
+            {/* Display Spinner when loading */}
+            {loading && (
+              <div className="spinner" style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                Creating Organization...
+              </div>
+            )}
 
-{/* Update Organizations Dialog */}
-{isUpdateDialogOpen && (
-<Dialog open={isUpdateDialogOpen} onClose={closeUpdateDialog}
-PaperProps={{ sx: { width: '100%', maxWidth: 'sm', // Reduces overall dialog width
-  '& .MuiDialogContent-root': {pt: 2 }}// Adds space after title
-  }}
->
-<DialogTitle>Update Organization</DialogTitle>
-<DialogContent sx={{ pt: 4 }}>
-<div className="flex flex-col gap-6 pt-2">
-<TextField
-name="organizationId"
-label="Organization ID"
-value={formData.organizationId}
-onChange={handleFormChange}
-variant="outlined"
-fullWidth
-required
-disabled
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
+            {/* Hide form when loading */}
+            {!loading && (
+              <div className="flex flex-col gap-6 pt-2">
+                <TextField
+                  name="organizationName"
+                  label="Organization Name"
+                  value={formData.organizationName}
+                  onChange={handleFormChange}
+                  variant="outlined"
+                  error={!!formErrors.organizationName}
+                  helperText={formErrors.organizationName}
+                  fullWidth
+                  required
+                  size="small" // Reduces the height of text fields
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px', // Consistent height for all text fields
+                    },
+                  }}
+                />
+                <TextField
+                  name="organizationAdminName"
+                  label="Admin Name"
+                  value={formData.organizationAdminName}
+                  onChange={handleFormChange}
+                  variant="outlined"
+                  error={!!formErrors.organizationAdminName}
+                  helperText={formErrors.organizationAdminName}
+                  fullWidth
+                  required
+                  size="small" // Reduces the height of text fields
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px', // Consistent height for all text fields
+                    },
+                  }}
+                />
+                <div className="flex flex-col">
+                  <ReactPhoneInput
+                    country={'in'}
+                    enableSearch
+                    value={`${countryCode}${formData.organizationAdminPhone}`}
+                    onChange={handlePhoneChange}
+                    inputStyle={{ width: '100%', height: '45px' }}
+                  />
+                  {formErrors.organizationAdminPhone && (
+                    <Typography color="error" variant="caption" sx={{ mt: 0.5 }}>
+                      {formErrors.organizationAdminPhone}
+                    </Typography>
+                  )}
+                </div>
+                <TextField
+                  name="organizationAdminEmail"
+                  label="Admin Email"
+                  value={formData.organizationAdminEmail}
+                  onChange={handleFormChange}
+                  variant="outlined"
+                  error={!!formErrors.organizationAdminEmail}
+                  helperText={formErrors.organizationAdminEmail}
+                  fullWidth
+                  size="small" // Reduces the height of text fields
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px', // Consistent height for all text fields
+                    },
+                  }}
+                  required
+                />
+              </div>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            {!loading && (
+              <>
+                <Button
+                  onClick={closeCreateDialog}
+                  sx={{
+                    bgcolor: '#5bc3cd', // Default background color
+                    color: 'white', // Text color
+                    fontWeight: 'bold', // Font weight
+                    '&:hover': {
+                      bgcolor: '#DB5788', // Hover background color
+                    },
+                    py: 0.5, // Padding Y
+                    px: 1, // Padding X
+                    borderRadius: '4px', // Border radius
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateSubmit}
+                  sx={{
+                    bgcolor: '#5bc3cd', // Default background color
+                    color: 'white', // Text color
+                    fontWeight: 'bold', // Font weight
+                    '&:hover': {
+                      bgcolor: '#DB5788', // Hover background color
+                    },
+                    py: 0.5, // Padding Y
+                    px: 1, // Padding X
+                    borderRadius: '4px', // Border radius
+                  }}
+                >
+                  Create
+                </Button>
+              </>
+            )}
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Update Organizations Dialog */}
+      {isUpdateDialogOpen && (
+        <Dialog
+          open={isUpdateDialogOpen}
+          onClose={closeUpdateDialog}
+          PaperProps={{
+            sx: {
+              width: '100%',
+              maxWidth: 'sm', // Reduces overall dialog width
+              '& .MuiDialogContent-root': { pt: 2 },
+            }, // Adds space after title
           }}
-/>
-<TextField
-name="organizationName"
-label="Organization Name"
-value={formData.organizationName}
-onChange={handleFormChange}
-variant="outlined"
-fullWidth
-required
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-/>
-<TextField
-name="organizationAdminName"
-label="Admin Name"
-value={formData.organizationAdminName}
-onChange={handleFormChange}
-variant="outlined"
-fullWidth
-required
-size="small" // Reduces the height of text fields
-          sx={{ 
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-/>
-<ReactPhoneInput
-country={'in'}
-enableSearch
-value={`${countryCode}${formData.organizationAdminPhone}`}
-onChange={handlePhoneChange}
-inputStyle={{ width: '100%' }}
-style={{ marginBottom: '10px' }}
-/>
-{formErrors.organizationAdminPhone && (
-<Typography color="error" variant="caption">
-{formErrors.organizationAdminPhone}
-</Typography>
-)}
-<TextField
-name="organizationAdminEmail"
-label="Admin Email"
-value={formData.organizationAdminEmail}
-onChange={handleFormChange}
-variant="outlined"
-fullWidth
-style={{ marginBottom: '10px' }}
-required
-disabled
-size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-/>
-{/* <div style={{ position: 'relative', marginBottom: '10px' }}>
+        >
+          <DialogTitle>Update Organization</DialogTitle>
+          <DialogContent sx={{ pt: 4 }}>
+            <div className="flex flex-col gap-6 pt-2">
+              <TextField
+                name="organizationId"
+                label="Organization ID"
+                value={formData.organizationId}
+                onChange={handleFormChange}
+                variant="outlined"
+                fullWidth
+                required
+                disabled
+                size="small" // Reduces the height of text fields
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '45px', // Consistent height for all text fields
+                  },
+                }}
+              />
+              <TextField
+                name="organizationName"
+                label="Organization Name"
+                value={formData.organizationName}
+                onChange={handleFormChange}
+                variant="outlined"
+                fullWidth
+                required
+                size="small" // Reduces the height of text fields
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '45px', // Consistent height for all text fields
+                  },
+                }}
+              />
+              <TextField
+                name="organizationAdminName"
+                label="Admin Name"
+                value={formData.organizationAdminName}
+                onChange={handleFormChange}
+                variant="outlined"
+                fullWidth
+                required
+                size="small" // Reduces the height of text fields
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '45px', // Consistent height for all text fields
+                  },
+                }}
+              />
+              <ReactPhoneInput
+                country={'in'}
+                enableSearch
+                value={`${countryCode}${formData.organizationAdminPhone}`}
+                onChange={handlePhoneChange}
+                inputStyle={{ width: '100%' }}
+                style={{ marginBottom: '10px' }}
+              />
+              {formErrors.organizationAdminPhone && (
+                <Typography color="error" variant="caption">
+                  {formErrors.organizationAdminPhone}
+                </Typography>
+              )}
+              <TextField
+                name="organizationAdminEmail"
+                label="Admin Email"
+                value={formData.organizationAdminEmail}
+                onChange={handleFormChange}
+                variant="outlined"
+                fullWidth
+                style={{ marginBottom: '10px' }}
+                required
+                disabled
+                size="small" // Reduces the height of text fields
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '45px', // Consistent height for all text fields
+                  },
+                }}
+              />
+              {/* <div style={{ position: 'relative', marginBottom: '10px' }}>
   <TextField
     name="orgPassword"
     label="Password"
@@ -1028,7 +1096,7 @@ size="small" // Reduces the height of text fields
   </button>
 </div> */}
 
-{/* <TextField
+              {/* <TextField
 name="created at"
 label="Created At"
 type="date"
@@ -1081,41 +1149,47 @@ size="small" // Reduces the height of text fields
             }
           }}
 /> */}
-</div>
-</DialogContent>
-<DialogActions>
-<Button onClick={closeUpdateDialog}
-sx={{
-  bgcolor: '#5bc3cd', // Default background color
-  color: 'white', // Text color
-  fontWeight: 'bold', // Font weight
-  '&:hover': {
-  bgcolor: '#DB5788', // Hover background color
-  },
-  py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-  }}
-          >Cancel</Button>
-<Button onClick={handleUpdateSubmit}
-sx={{
-  bgcolor: '#5bc3cd', // Default background color
-  color: 'white', // Text color
-  fontWeight: 'bold', // Font weight
-  '&:hover': {
-  bgcolor: '#DB5788', // Hover background color
-  },
-  py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-  }}
-          >Update</Button>
-</DialogActions>
-</Dialog>
-)}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={closeUpdateDialog}
+              sx={{
+                bgcolor: '#5bc3cd', // Default background color
+                color: 'white', // Text color
+                fontWeight: 'bold', // Font weight
+                '&:hover': {
+                  bgcolor: '#DB5788', // Hover background color
+                },
+                py: 0.5, // Padding Y
+                px: 1, // Padding X
+                borderRadius: '4px', // Border radius
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateSubmit}
+              sx={{
+                bgcolor: '#5bc3cd', // Default background color
+                color: 'white', // Text color
+                fontWeight: 'bold', // Font weight
+                '&:hover': {
+                  bgcolor: '#DB5788', // Hover background color
+                },
+                py: 0.5, // Padding Y
+                px: 1, // Padding X
+                borderRadius: '4px', // Border radius
+              }}
+            >
+              Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
-{/* Create Subscription Dialog */}
-<Dialog open={isSubscriptionDialogOpen} onClose={closeSubscriptionDialog}>
+      {/* Create Subscription Dialog */}
+      <Dialog open={isSubscriptionDialogOpen} onClose={closeSubscriptionDialog}>
         <DialogTitle>Create Subscription</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
@@ -1126,14 +1200,14 @@ sx={{
               onChange={handleSubscriptionFormChange}
             >
               {organizations.length > 0 ? (
-          organizations.map((org) => (
-            <MenuItem key={org.organizationId} value={org.organizationId}>
-              {org.organizationName}
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>No organizations available</MenuItem>
-        )}
+                organizations.map((org) => (
+                  <MenuItem key={org.organizationId} value={org.organizationId}>
+                    {org.organizationName}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No organizations available</MenuItem>
+              )}
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
@@ -1144,14 +1218,14 @@ sx={{
               onChange={handleSubscriptionFormChange}
             >
               {programs.length > 0 ? (
-          programs.map((program) => (
-            <MenuItem key={program.programId} value={program.programId}>
-              {program.programName}
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>No programs available</MenuItem>
-        )}
+                programs.map((program) => (
+                  <MenuItem key={program.programId} value={program.programId}>
+                    {program.programName}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No programs available</MenuItem>
+              )}
             </Select>
           </FormControl>
           <TextField
@@ -1168,7 +1242,7 @@ sx={{
             fullWidth
             margin="normal"
             label="End Date"
-            type = "date"
+            type="date"
             name="EndDate"
             InputLabelProps={{ shrink: true }}
             value={subscriptionForm.endDate}
@@ -1240,32 +1314,41 @@ sx={{
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}
-          sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-            bgcolor: '#DB5788', // Hover background color
-            },
-            py: 0.5, // Padding Y
-            px: 1, // Padding X
-            borderRadius: '4px', // Border radius
-            }}
-          >Cancel</Button>
-    <Button onClick={() => { handleDelete();  setIsConfirmOpen(false); }}
+          <Button
+            onClick={() => setIsConfirmOpen(false)}
             sx={{
               bgcolor: '#5bc3cd', // Default background color
               color: 'white', // Text color
               fontWeight: 'bold', // Font weight
               '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
+                bgcolor: '#DB5788', // Hover background color
               },
               py: 0.5, // Padding Y
               px: 1, // Padding X
               borderRadius: '4px', // Border radius
-              }}
-          > Delete
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              handleDelete();
+              setIsConfirmOpen(false);
+            }}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+            }}
+          >
+            {' '}
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

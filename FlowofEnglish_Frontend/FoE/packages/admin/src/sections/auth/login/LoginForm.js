@@ -1,8 +1,7 @@
-
 /* eslint-disable */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 import { useUser } from 'src/UserContext';
 
@@ -53,15 +52,11 @@ export default function LoginForm() {
   };
 
   const handleSuperAdmin = () => navigate('/loginorg');
-  
+
   return (
     <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
       <div className="mb-8 mt-8">
-        <img
-          src="/admin/assets/main-logo.png"
-          alt="flowofenglish Logo"
-          className="h-16"
-        />
+        <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" />
       </div>
 
       <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
@@ -83,7 +78,7 @@ export default function LoginForm() {
 
           <div className="relative">
             <input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -116,26 +111,19 @@ export default function LoginForm() {
             </label>
           </div>
 
-          {error && (
-            <p className="text-red-600 text-center text-sm font-medium">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-600 text-center text-sm font-medium">{error}</p>}
 
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           >
-            {isSubmitting ? "Logging in..." : "Login"}
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
-          <button
-            onClick={handleSuperAdmin}
-            className="text-[#5bc3cd] hover:underline block w-full"
-          >
+          <button onClick={handleSuperAdmin} className="text-[#5bc3cd] hover:underline block w-full">
             Go to Org Admin Page
           </button>
         </div>

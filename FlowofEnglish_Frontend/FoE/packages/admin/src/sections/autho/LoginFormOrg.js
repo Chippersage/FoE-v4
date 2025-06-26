@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 // components
 import { useUser } from 'src/UserContext';
@@ -57,15 +57,14 @@ export default function LoginFormOrg() {
     } catch (error) {
       console.error('Error during login:', error);
       setError('Error during login');
-    }finally {
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSuperadmin = () => {
-      navigate('/login');
-    };
-    
+    navigate('/login');
+  };
 
   const handleForgotPassword = () => {
     navigate('/forgot');
@@ -78,91 +77,70 @@ export default function LoginFormOrg() {
 
   return (
     <>
-      {showReminders && (
-        <ReminderPopup
-          reminders={cohortReminders}
-          onClose={handlePopupClose}
-        />
-      )}
-    <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
-      <div className="mb-8 mt-8">
-        <img
-          src="/admin/assets/main-logo.png"
-          alt="flowofenglish Logo"
-          className="h-16"
-        />
-      </div>
+      {showReminders && <ReminderPopup reminders={cohortReminders} onClose={handlePopupClose} />}
+      <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
+        <div className="mb-8 mt-8">
+          <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" />
+        </div>
 
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
-        <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
-          Login to Admin Account
-        </h2>
+        <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
+          <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">Login to Admin Account</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <input
-              type="email"
-              placeholder="Admin Email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <input
+                type="email"
+                placeholder="Admin Email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+                required
+              />
+            </div>
 
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={orgPassword}
-              onChange={(e) => setOrgPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={orgPassword}
+                onChange={(e) => setOrgPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5bc3cd]"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOffIcon className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <EyeIcon className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
+
+            {error && <p className="text-red-600 text-center text-sm font-medium">{error}</p>}
+
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
-              {showPassword ? (
-                <EyeOffIcon className="h-5 w-5 text-gray-500" />
-              ) : (
-                <EyeIcon className="h-5 w-5 text-gray-500" />
-              )}
+              {isSubmitting ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center space-y-2">
+            <button onClick={handleSuperadmin} className="text-[#5bc3cd] hover:underline block w-full">
+              Go to SuperAdmin
+            </button>
+            <button onClick={handleForgotPassword} className="text-[#5bc3cd] hover:underline block w-full">
+              Forgot Password?
             </button>
           </div>
-
-          {error && (
-            <p className="text-red-600 text-center text-sm font-medium">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-[#5bc3cd] hover:bg-[#DB5788] text-white font-bold py-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center space-y-2">
-          <button
-            onClick={handleSuperadmin}
-            className="text-[#5bc3cd] hover:underline block w-full"
-          >
-            Go to SuperAdmin
-          </button>
-          <button
-            onClick={handleForgotPassword}
-            className="text-[#5bc3cd] hover:underline block w-full"
-          >
-            Forgot Password?
-          </button>
         </div>
       </div>
-    </div>
     </>
   );
 }
