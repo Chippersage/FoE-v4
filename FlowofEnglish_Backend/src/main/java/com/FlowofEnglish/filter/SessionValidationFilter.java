@@ -78,8 +78,7 @@ public class SessionValidationFilter implements Filter {
             "/api/v1/programconceptsmappings/{userId}/unit/",
             "/api/v1/user-attempts/",
             "/api/v1/assignments/submit",
-            "/api/v1/userSubConceptsCompletion/",
-            "/api/v1/assignment-with-attempt");
+            "/api/v1/userSubConceptsCompletion/");
 
     // Public endpoints that don't require session validation
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
