@@ -12,6 +12,11 @@ permissions:
 env:
   IMAGE_TAG: ${{ github.sha }}
   TASK_DEF_TEMPLATE: .github/workflows/task-def.json
+  ECR_REPOSITORY: chippersage-flowofenglish-backend-prod
+  CONTAINER_NAME: chippersage-flowofenglish-backend-prod
+  ECS_CLUSTER: chippersage-prod
+  ECS_SERVICE: chippersage-flowofenglish-backend-prod-service
+  
 
 jobs:
   deploy:
@@ -26,8 +31,8 @@ jobs:
         id: aws-creds
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::325599888975:role/OIDCRole
+          aws-region: ap-south-1
 
       - name: Log in to Amazon ECR
         id: login-ecr
@@ -37,7 +42,7 @@ jobs:
 
       - name: Build, tag, and push Docker image to ECR
         run: |
-          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
@@ -47,13 +52,13 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ env.TASK_DEF_TEMPLATE }}
-          container-name: ${{ secrets.CONTAINER_NAME }}
+          container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ env.IMAGE_URI }}
 
       - name: Deploy ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          service: ${{ secrets.ECS_SERVICE }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           task-definition: ${{ steps.render-task.outputs.task-definition }}
           wait-for-service-stability: true
