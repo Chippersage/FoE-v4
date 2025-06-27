@@ -22,15 +22,15 @@ jobs:
         aws-region: ap-south-1
 
     - name: Install Dependencies
-      working-directory: FoE-v4/FlowofEnglish_Frontend/FoE/packages/admin
+      working-directory: FlowofEnglish_Frontend/FoE/packages/admin
       run: yarn install --frozen-lockfile
 
     - name: Build React App
-      working-directory: FoE-v4/FlowofEnglish_Frontend/FoE/packages/admin
+      working-directory: FlowofEnglish_Frontend/FoE/packages/admin
       run: yarn build
 
     - name: Sync to S3
-      run: aws s3 sync FoE-v4/FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
+      run: aws s3 sync FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
 
     - name: Invalidate CloudFront Cache
       run: aws cloudfront create-invalidation --distribution-id E1L96NRBICZOLW --paths "/*"
