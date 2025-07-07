@@ -1,4 +1,4 @@
-name: CI/CD - Deploy Admin Portal Frontend
+name: CI/CD - Deploy Admin Portal FrontEnd
 
 on:
   push:
