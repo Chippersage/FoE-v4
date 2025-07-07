@@ -30,7 +30,7 @@ jobs:
 
       - name: Build React App
         working-directory: FlowofEnglish_Frontend/FoE/packages/admin
-        run: yarn build
+        run: CI='' yarn build
 
       - name: Sync to S3
         run: aws s3 sync FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
