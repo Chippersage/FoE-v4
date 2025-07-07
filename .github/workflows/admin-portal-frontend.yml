@@ -1,7 +1,10 @@
 name: CI/CD - Deploy Admin Portal Frontend
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -12,25 +15,25 @@ jobs:
       contents: read
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Configure AWS credentials (OIDC)
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::325599888975:role/OIDCRole
-        aws-region: ap-south-1
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::325599888975:role/OIDCRole
+          aws-region: ap-south-1
 
-    - name: Install Dependencies
-      working-directory: FlowofEnglish_Frontend/FoE/packages/admin
-      run: yarn install --frozen-lockfile
+      - name: Install Dependencies
+        working-directory: FlowofEnglish_Frontend/FoE/packages/admin
+        run: yarn install --frozen-lockfile
 
-    - name: Build React App
-      working-directory: FlowofEnglish_Frontend/FoE/packages/admin
-      run: yarn build
+      - name: Build React App
+        working-directory: FlowofEnglish_Frontend/FoE/packages/admin
+        run: yarn build
 
-    - name: Sync to S3
-      run: aws s3 sync FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
+      - name: Sync to S3
+        run: aws s3 sync FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
 
-    - name: Invalidate CloudFront Cache
-      run: aws cloudfront create-invalidation --distribution-id E1L96NRBICZOLW --paths "/*"
+      - name: Invalidate CloudFront Cache
+        run: aws cloudfront create-invalidation --distribution-id E1L96NRBICZOLW --paths "/*"
