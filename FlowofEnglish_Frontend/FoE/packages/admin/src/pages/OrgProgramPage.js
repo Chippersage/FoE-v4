@@ -3,8 +3,19 @@ import { styled } from '@mui/material/styles';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import {
-  Card, Checkbox, CircularProgress, Container, Link, Table, TableBody, TableCell, TableContainer, TablePagination,
-  TableRow, Typography, Stack
+  Card,
+  Checkbox,
+  CircularProgress,
+  Container,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TablePagination,
+  TableRow,
+  Typography,
+  Stack,
 } from '@mui/material';
 
 // Custom Components
@@ -99,10 +110,7 @@ const OrgProgramPage = () => {
     } else if (selectedIndex === selected.length - 1) {
       newSelected = selected.slice(0, -1);
     } else {
-      newSelected = [
-        ...selected.slice(0, selectedIndex),
-        ...selected.slice(selectedIndex + 1),
-      ];
+      newSelected = [...selected.slice(0, selectedIndex), ...selected.slice(selectedIndex + 1)];
     }
     setSelected(newSelected);
   };
@@ -154,36 +162,25 @@ const OrgProgramPage = () => {
                     onSelectAllClick={handleSelectAllClick}
                   />
                   <TableBody>
-                    {filteredPrograms
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((row) => {
-                        const { programId, programName, stages, unitCount } = row;
-                        const isItemSelected = selected.indexOf(programName) !== -1;
-                        return (
-                          <TableRow
-                            hover
-                            key={programId}
-                            role="checkbox"
-                            selected={isItemSelected}
-                            tabIndex={-1}
-                          >
-                            <TableCell padding="checkbox">
-                              <Checkbox
-                                checked={isItemSelected}
-                                onChange={(event) => handleClick(event, programName)}
-                              />
-                            </TableCell>
-                            <TableCell>{programId}</TableCell>
-                            <TableCell>
-                              <Link href={`/admin/dashboard/program/${programId}`} color="inherit" underline="hover">
-                                {programName}
-                              </Link>
-                            </TableCell>
-                            <TableCell>{stages}</TableCell>
-                            <TableCell align="right">{unitCount}</TableCell>
-                          </TableRow>
-                        );
-                      })}
+                    {filteredPrograms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                      const { programId, programName, stages, unitCount } = row;
+                      const isItemSelected = selected.indexOf(programName) !== -1;
+                      return (
+                        <TableRow hover key={programId} role="checkbox" selected={isItemSelected} tabIndex={-1}>
+                          <TableCell padding="checkbox">
+                            <Checkbox checked={isItemSelected} onChange={(event) => handleClick(event, programName)} />
+                          </TableCell>
+                          <TableCell>{programId}</TableCell>
+                          <TableCell>
+                            <Link href={`/dashboard/program/${programId}`} color="inherit" underline="hover">
+                              {programName}
+                            </Link>
+                          </TableCell>
+                          <TableCell>{stages}</TableCell>
+                          <TableCell align="right">{unitCount}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                     {isProgramNotFound && (
                       <TableRow>
                         <TableCell colSpan={6} align="center">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {Button, Box, TextField, Typography, Snackbar, Alert, CircularProgress} from '@mui/material';
+import { Button, Box, TextField, Typography, Snackbar, Alert, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import Iconify from './iconify';
 
@@ -15,7 +15,7 @@ const ForgotPasswordx = () => {
   const [canResendOtp, setCanResendOtp] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
 
-   // Timer for OTP resend functionality
+  // Timer for OTP resend functionality
   useEffect(() => {
     let interval;
     if (showOtpField && resendTimer > 0) {
@@ -27,7 +27,6 @@ const ForgotPasswordx = () => {
     }
     return () => clearInterval(interval);
   }, [showOtpField, resendTimer]);
-
 
   const handleBackToLogin = () => {
     navigate('/loginorg');
@@ -47,7 +46,7 @@ const ForgotPasswordx = () => {
         setAlert({
           open: true,
           message: `OTP sent to ${email}`,
-          severity: 'success'
+          severity: 'success',
         });
         // Start the resend timer
         setResendTimer(60);
@@ -61,7 +60,7 @@ const ForgotPasswordx = () => {
         setAlert({
           open: true,
           message: 'Password reset successful. Check your email for the new password.',
-          severity: 'success'
+          severity: 'success',
         });
         // Reset form after successful password reset
         setTimeout(() => {
@@ -77,48 +76,48 @@ const ForgotPasswordx = () => {
       setAlert({
         open: true,
         message: error.response?.data?.message || 'An error occurred',
-        severity: 'error'
+        severity: 'error',
       });
-  // If OTP verification failed, enable resend button immediately
-  if (showOtpField && errorMessage.toLowerCase().includes('otp')) {
-    setCanResendOtp(true);
-    setResendTimer(0);
-  }
-} finally {
-  setIsLoading(false);
-}
-};
-const handleResendOtp = async () => {
-  if (isResending || isLoading) return; // Prevent resend if already in progress
-  
-  setIsResending(true);
-  try {
-    await axios.post(`${process.env.REACT_APP_API_URL}/organizations/forgot-password`, {
-      email,
-      resend: true
-    });
-    
-    setAlert({
-      open: true,
-      message: `New OTP sent to ${email}`,
-      severity: 'success'
-    });
-    
-    // Reset the resend timer
-    setResendTimer(60);
-    setCanResendOtp(false);
-    // Clear the OTP field
-    setOtp('');
-  } catch (error) {
-    setAlert({
-      open: true,
-      message: error.response?.data?.message || 'Failed to resend OTP',
-      severity: 'error'
-    });
-  } finally {
-    setIsResending(false);
-  }
-};
+      // If OTP verification failed, enable resend button immediately
+      if (showOtpField && errorMessage.toLowerCase().includes('otp')) {
+        setCanResendOtp(true);
+        setResendTimer(0);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleResendOtp = async () => {
+    if (isResending || isLoading) return; // Prevent resend if already in progress
+
+    setIsResending(true);
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/organizations/forgot-password`, {
+        email,
+        resend: true,
+      });
+
+      setAlert({
+        open: true,
+        message: `New OTP sent to ${email}`,
+        severity: 'success',
+      });
+
+      // Reset the resend timer
+      setResendTimer(60);
+      setCanResendOtp(false);
+      // Clear the OTP field
+      setOtp('');
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: error.response?.data?.message || 'Failed to resend OTP',
+        severity: 'error',
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
   const handleCloseAlert = () => {
     setAlert({ ...alert, open: false });
   };
@@ -126,17 +125,11 @@ const handleResendOtp = async () => {
   return (
     <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
       <div className="mb-8 mt-8">
-        <img
-          src="/admin/assets/main-logo.png"
-          alt="flowofenglish Logo"
-          className="h-16"
-        />
+        <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" />
       </div>
 
       <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
-        <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">
-          Forgot Password
-        </h2>
+        <h2 className="md:text-3xl text-xl font-semibold text-center text-gray-800 mb-8">Forgot Password</h2>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <Box sx={{ mt: 2, maxWidth: 400, mx: 'auto' }}>
@@ -180,13 +173,15 @@ const handleResendOtp = async () => {
                 py: 1.5, // Padding Y
                 px: 2, // Padding X
                 borderRadius: '8px', // Border radius
-                mt: 2
+                mt: 2,
               }}
             >
               {isLoading ? (
                 <CircularProgress size={24} color="inherit" />
+              ) : showOtpField ? (
+                'Reset Password'
               ) : (
-                showOtpField ? 'Reset Password' : 'Send OTP'
+                'Send OTP'
               )}
             </Button>
 
@@ -196,19 +191,15 @@ const handleResendOtp = async () => {
                   <Button
                     onClick={handleResendOtp}
                     disabled={isResending || isLoading}
-                    sx={{ 
+                    sx={{
                       color: '#5bc3cd',
                       '&:hover': {
                         bgcolor: 'transparent',
-                        textDecoration: 'underline'
-                      }
+                        textDecoration: 'underline',
+                      },
                     }}
                   >
-                    {isResending ? (
-                      <CircularProgress size={20} color="inherit" />
-                    ) : (
-                      'Resend OTP'
-                    )}
+                    {isResending ? <CircularProgress size={20} color="inherit" /> : 'Resend OTP'}
                   </Button>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
@@ -231,15 +222,8 @@ const handleResendOtp = async () => {
         </form>
       </div>
 
-      <Snackbar 
-        open={alert.open} 
-        autoHideDuration={6000} 
-        onClose={handleCloseAlert}
-      >
-        <Alert 
-          onClose={handleCloseAlert} 
-          severity={alert.severity}
-        >
+      <Snackbar open={alert.open} autoHideDuration={6000} onClose={handleCloseAlert}>
+        <Alert onClose={handleCloseAlert} severity={alert.severity}>
           {alert.message}
         </Alert>
       </Snackbar>

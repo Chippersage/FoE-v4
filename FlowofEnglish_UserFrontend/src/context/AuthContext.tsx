@@ -2,13 +2,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-type UserCohort = {
-  cohortId: string;
-  cohortName: string;
-  cohortStartDate: number;
-  cohortEndDate: number;
-  program: INITIAL_USER_PROGRAM_STATE;
-};
+// type UserCohort = {
+//   cohortId: string;
+//   cohortName: string;
+//   cohortStartDate: number;
+//   cohortEndDate: number;
+//   program: INITIAL_USER_PROGRAM_STATE;
+// };
 
 type INITIAL_USER_PROGRAM_STATE = {
   programId: "";
@@ -20,20 +20,20 @@ type INITIAL_USER_PROGRAM_STATE = {
   programCompletionStatus: "";
 };
 
-type AssignmentStatistics = {
-  correctedAssignments: number;
-  totalAssignments: number;
-  pendingAssignments: number;
-  totalCohortUserCount: number;
-  cohortDetails: {
-    [cohortId: string]: {
-      correctedAssignments: number;
-      totalAssignments: number;
-      pendingAssignments: number;
-      cohortUserCount: number;
-    };
-  };
-};
+// type AssignmentStatistics = {
+//   correctedAssignments: number;
+//   totalAssignments: number;
+//   pendingAssignments: number;
+//   totalCohortUserCount: number;
+//   cohortDetails: {
+//     [cohortId: string]: {
+//       correctedAssignments: number;
+//       totalAssignments: number;
+//       pendingAssignments: number;
+//       cohortUserCount: number;
+//     };
+//   };
+// };
 
 type User = {
   userId: string;
@@ -42,13 +42,10 @@ type User = {
   userName: string;
   userPhoneNumber: string;
   organization: typeof INITIAL_USER_ORGANISATION_STATE;
-  cohorts: UserCohort[];
   program: INITIAL_USER_PROGRAM_STATE;
   selectedCohortWithProgram: any;
-  assignmentStatistics?: AssignmentStatistics | null;
+  userType: string;
 };
-
-
 
 export const INITIAL_USER_PROGRAM_STATE: INITIAL_USER_PROGRAM_STATE = {};
 
@@ -61,7 +58,7 @@ export const INITIAL_USER_ORGANISATION_STATE = {
   organizationAdminPhone: "",
 };
 
-export const INITIAL_USER_COHORTS_STATE: UserCohort[] = [];
+// export const INITIAL_USER_COHORTS_STATE: UserCohort[] = [];
 
 export const INITIAL_USER_STATE: User = {
   userId: "",
@@ -70,10 +67,11 @@ export const INITIAL_USER_STATE: User = {
   userName: "",
   userPhoneNumber: "",
   organization: INITIAL_USER_ORGANISATION_STATE,
-  cohorts: INITIAL_USER_COHORTS_STATE,
+  // cohorts: INITIAL_USER_COHORTS_STATE,
   program: INITIAL_USER_PROGRAM_STATE,
   selectedCohortWithProgram: null,
-  assignmentStatistics: null, // ✅ Add this
+  userType: "",
+  // assignmentStatistics: null,
 };
 
 interface AuthContextType {
@@ -87,8 +85,6 @@ interface AuthContextType {
   setSelectedCohortWithProgram: React.Dispatch<React.SetStateAction<any>>;
 }
 
-
-
 /// Define initial state for AuthContext
 export const INITIAL_STATE: AuthContextType = {
   user: INITIAL_USER_STATE,
@@ -101,16 +97,14 @@ export const INITIAL_STATE: AuthContextType = {
   setSelectedCohortWithProgram: () => {},
 };
 
-
 // Create AuthContext
 const AuthContext = createContext<AuthContextType>(INITIAL_STATE);
-
 
 // @ts-ignore
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(INITIAL_USER_STATE);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Changed to start as true
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedCohortWithProgram, setSelectedCohortWithProgram] = useState(
     () => {
@@ -120,46 +114,46 @@ export const AuthProvider = ({ children }) => {
   );
 
   // Function to check if the user is authenticated
-const checkAuthUser = async () => {
-  setIsLoading(true);
-  try {
-    const currentUser = JSON.parse(localStorage.getItem("user"));
-    const userType = localStorage.getItem("userType");
-    console.log("currentUser", currentUser);
-    if (currentUser) {
-      const newUserState = {
-        userId: currentUser.userId,
-        userAddress: currentUser.userAddress,
-        userEmail: currentUser.userEmail,
-        userName: currentUser.userName,
-        userPhoneNumber: currentUser.userPhoneNumber,
-        organization: currentUser.organization,
-        cohorts: currentUser.allCohortsWithPrograms,
-        program: currentUser.program,
-        selectedCohortWithProgram:
-          currentUser.selectedCohortWithProgram || null,
-        assignmentStatistics: null,
-      };
+  const checkAuthUser = async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      // const userType = localStorage.getItem("userType");
+      // console.log("currentUser", currentUser);
+      if (currentUser) {
+        const newUserState = {
+          userId: currentUser.userId,
+          userAddress: currentUser.userAddress,
+          userEmail: currentUser.userEmail,
+          userName: currentUser.userName,
+          userPhoneNumber: currentUser.userPhoneNumber,
+          organization: currentUser.organization,
+          // cohorts: currentUser.allCohortsWithPrograms,
+          program: currentUser.program,
+          selectedCohortWithProgram:
+            currentUser.selectedCohortWithProgram || null,
+          userType: currentUser.userType, // Ensure userType is set
+          // assignmentStatistics: null,
+        };
 
-      if (userType?.toLowerCase() === "mentor") {
-        newUserState.assignmentStatistics =
-          currentUser.assignmentStatistics || null;
+        // if (userType?.toLowerCase() === "mentor") {
+        //   newUserState.assignmentStatistics =
+        //     currentUser.assignmentStatistics || null;
+        // }
+
+        setUser(newUserState);
+        setIsAuthenticated(true);
+        return true;
       }
 
-      setUser(newUserState);
-      setIsAuthenticated(true);
-      return true;
+      return false;
+    } catch (error) {
+      console.error("Error checking auth:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-
-    return false;
-  } catch (error) {
-    console.error("Error checking auth:", error);
-    return false;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     const savedCohort = localStorage.getItem("selectedCohortWithProgram");
@@ -170,36 +164,38 @@ const checkAuthUser = async () => {
 
   // Check authentication on mount
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    const userType = localStorage.getItem("userType");
-    const validUserTypes = ["Learner", "Mentor", "mentor", "learner"];
+    const initAuth = async () => {
+      const isAuthed = await checkAuthUser();
 
-    if (!user || !userType || !validUserTypes.includes(userType)) {
-      navigate("/sign-in");
-    } else {
-      checkAuthUser();
+      if (!isAuthed) {
+        navigate("/sign-in");
+        return;
+      }
 
       const currentPath = window.location.pathname;
-
       const excludedPaths = [
         "/cohorts/",
         "/view-progress",
         "/profile",
         "/organization-details",
         "/about-us",
-        // Add more substrings here that should skip cohort selection
       ];
 
       const shouldSkipCohortSelection = excludedPaths.some((path) =>
         currentPath.includes(path)
       );
 
-      if (!selectedCohortWithProgram && !shouldSkipCohortSelection) {
+      if (
+        !selectedCohortWithProgram &&
+        !shouldSkipCohortSelection &&
+        currentPath !== "/sign-in"
+      ) {
         navigate("/select-cohort");
       }
-    }
+    };
+
+    initAuth();
   }, [navigate, selectedCohortWithProgram]);
-  
 
   // Value to be provided by the context
   const value = {

@@ -336,7 +336,7 @@ export default function SubConceptsPage() {
     };
 
     fetchAndSetSubconcepts();
-  }, [user, unitId]);
+  }, [user?.userId, unitId]);
 
   useEffect(() => {
     setTotalSteps(subconcepts.length + 2); // Including start and end
@@ -453,7 +453,6 @@ export default function SubConceptsPage() {
   return (
     <>
       <Header2 />
-      <BackButton className="fixed top-28 left-4 z-20" />
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -542,7 +541,7 @@ export default function SubConceptsPage() {
                         (unitCompletionStatus === "yes" ||
                           unitCompletionStatus.toLowerCase() ===
                             "unit completed without assignments")
-                          ? `/home`
+                          ? "/dashboard"
                           : isEnabled &&
                             index !== totalSteps - 1 &&
                             index !== 0 &&
@@ -577,7 +576,7 @@ export default function SubConceptsPage() {
                           setAudioPlaying(true);
                           // Navigate after confetti animation
                           setTimeout(() => {
-                            navigate("/home");
+                            navigate("/dashboard");
                           }, 5000); // Match this with confetti duration
                         } else if (
                           index === totalSteps - 1 &&

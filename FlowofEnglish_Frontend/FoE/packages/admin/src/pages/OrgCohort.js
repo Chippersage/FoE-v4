@@ -8,12 +8,36 @@ import { format, formatISO } from 'date-fns';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
-
-
 import {
-  Card, Table, Stack, Paper, Button, Checkbox, TableRow, Menu, MenuItem, TableBody, TableCell, Container,Typography,
-  IconButton, Modal, TableContainer, TablePagination, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
-  Link,FormControl,InputLabel, Select, FormHelperText} from '@mui/material';
+  Card,
+  Table,
+  Stack,
+  Paper,
+  Button,
+  Checkbox,
+  TableRow,
+  Menu,
+  MenuItem,
+  TableBody,
+  TableCell,
+  Container,
+  Typography,
+  IconButton,
+  Modal,
+  TableContainer,
+  TablePagination,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Link,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
+} from '@mui/material';
 
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -28,7 +52,7 @@ const TABLE_HEAD = [
   { id: 'cohortName', label: 'Cohort Name', alignRight: false },
   { id: 'cohortStartDate', label: 'Start Date', alignRight: false },
   { id: 'cohortEndDate', label: 'End Date', alignRight: false },
-  { id: 'actions', label: 'Actions', alignRight: true }
+  { id: 'actions', label: 'Actions', alignRight: true },
 ];
 
 // ----------------------------------------------------------------------
@@ -79,9 +103,8 @@ const INITIAL_FORM_STATE = {
   showLeaderboard: true, // Default true
   delayedStageUnlock: false, // Default is false
   delayInDays: 0, // Default is 0 (no delay)
-  organization: { organizationId: '' }
+  organization: { organizationId: '' },
 };
-
 
 function OrgCohort() {
   const { id: organizationId } = useParams();
@@ -118,7 +141,7 @@ function OrgCohort() {
       setCohorts(data);
     } catch (error) {
       showNotification(error.response?.data?.message || 'Failed to fetch cohorts', 'error');
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -131,40 +154,42 @@ function OrgCohort() {
     setNotification({ ...notification, open: false });
   };
 
-const validateForm = () => {
-const errors = {};
-// Check if cohortName is empty
-if (!formData.cohortName.trim()) {errors.cohortName = 'Cohort name is required';}
-else { const cohortNamePattern = /^[A-Za-z]{3}.*$/;
-if (!cohortNamePattern.test(formData.cohortName)) {
-errors.cohortName = 'The first 3 characters must be letters';
-}
-}
-// Check if cohortStartDate is empty
-if (!formData.cohortStartDate) {
-errors.cohortStartDate = 'Start date is required';
-}
-// Validate end date if provided
-if (formData.cohortEndDate) {
-  if (new Date(formData.cohortEndDate) <= new Date(formData.cohortStartDate)) {
-    errors.cohortEndDate = 'End date must be greater than start date';
-  }
-  // Validate delayInDays if delayedStageUnlock is enabled
-  if (formData.delayedStageUnlock && (formData.delayInDays < 1 || formData.delayInDays > 15)) {
-    errors.delayInDays = 'Delay in days must be between 1 and 10';
-  }
-}
-return errors;
-};
-// Enable Create Button Only When Form is Valid
-const isFormValid = () => {
-  const errors = validateForm();
-  return Object.keys(errors).length === 0;
-};
+  const validateForm = () => {
+    const errors = {};
+    // Check if cohortName is empty
+    if (!formData.cohortName.trim()) {
+      errors.cohortName = 'Cohort name is required';
+    } else {
+      const cohortNamePattern = /^[A-Za-z]{3}.*$/;
+      if (!cohortNamePattern.test(formData.cohortName)) {
+        errors.cohortName = 'The first 3 characters must be letters';
+      }
+    }
+    // Check if cohortStartDate is empty
+    if (!formData.cohortStartDate) {
+      errors.cohortStartDate = 'Start date is required';
+    }
+    // Validate end date if provided
+    if (formData.cohortEndDate) {
+      if (new Date(formData.cohortEndDate) <= new Date(formData.cohortStartDate)) {
+        errors.cohortEndDate = 'End date must be greater than start date';
+      }
+      // Validate delayInDays if delayedStageUnlock is enabled
+      if (formData.delayedStageUnlock && (formData.delayInDays < 1 || formData.delayInDays > 15)) {
+        errors.delayInDays = 'Delay in days must be between 1 and 10';
+      }
+    }
+    return errors;
+  };
+  // Enable Create Button Only When Form is Valid
+  const isFormValid = () => {
+    const errors = validateForm();
+    return Object.keys(errors).length === 0;
+  };
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -184,7 +209,7 @@ const isFormValid = () => {
     setIsEditMode(false);
     setIsCreateDialogOpen(true);
   };
-  
+
   const handleOpenUpdateDialog = (row) => {
     setFormData({
       cohortId: row.cohortId,
@@ -201,25 +226,25 @@ const isFormValid = () => {
     setIsUpdateDialogOpen(true);
   };
 
-// Update handleCloseDialogs function
-const handleCloseDialogs = () => {
-  setIsCreateDialogOpen(false);
-  setIsUpdateDialogOpen(false);
-  setIsEditMode(false);  // Reset edit mode
-  setFormData(INITIAL_FORM_STATE);
-  setFormErrors({});
-};
+  // Update handleCloseDialogs function
+  const handleCloseDialogs = () => {
+    setIsCreateDialogOpen(false);
+    setIsUpdateDialogOpen(false);
+    setIsEditMode(false); // Reset edit mode
+    setFormData(INITIAL_FORM_STATE);
+    setFormErrors({});
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
-    
+
     if (Object.keys(errors).length === 0) {
       try {
         const payload = {
           ...formData,
           cohortStartDate: formData.cohortStartDate ? formatISO(new Date(formData.cohortStartDate)) : null,
           cohortEndDate: formData.cohortEndDate ? formatISO(new Date(formData.cohortEndDate)) : null,
-          organization: { organizationId }
+          organization: { organizationId },
         };
 
         if (isEditMode) {
@@ -231,7 +256,7 @@ const handleCloseDialogs = () => {
           showNotification('Cohort created successfully', 'success');
           setIsCreateDialogOpen(false);
         }
-        
+
         fetchCohorts();
         handleClose();
       } catch (error) {
@@ -244,7 +269,6 @@ const handleCloseDialogs = () => {
       showNotification('Please fix the form errors', 'error');
     }
   };
-
 
   const handleDelete = async () => {
     try {
@@ -287,20 +311,17 @@ const handleCloseDialogs = () => {
     setSelected(newSelected);
   };
 
-  
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
 
-  
-
   const handleOpenActionMenu = (event, row) => {
     setActionAnchorEl(event.currentTarget);
     setSelectedRow(row);
   };
-  
+
   const handleCloseActionMenu = () => setActionAnchorEl(null);
 
   const filteredCohorts = applySortFilter(cohorts, getComparator(order, orderBy), filterName);
@@ -317,103 +338,114 @@ const handleCloseDialogs = () => {
           <Typography variant="h4" gutterBottom>
             Cohorts
           </Typography>
-          </Stack>
+        </Stack>
 
-          {/* <div style={{ padding: '20px' }}> */}
-          <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-          <Button variant="contained" onClick={handleOpenCreateDialog} startIcon={<Iconify icon="eva:plus-fill" />}
-          sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 1.5, // Padding Y
-            px: 2, // Padding X
-            borderRadius: '8px', // Border radius
-          }}>
+        {/* <div style={{ padding: '20px' }}> */}
+        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+          <Button
+            variant="contained"
+            onClick={handleOpenCreateDialog}
+            startIcon={<Iconify icon="eva:plus-fill" />}
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 1.5, // Padding Y
+              px: 2, // Padding X
+              borderRadius: '8px', // Border radius
+            }}
+          >
             New Cohort
           </Button>
         </Stack>
 
         <Card>
-          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={(e) => setFilterName(e.target.value)} />
+          <UserListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={(e) => setFilterName(e.target.value)}
+          />
 
           <Scrollbar>
-          {loading ? (
-    <>
-    <CircularProgress/>
-      <Typography variant="h6" paragraph align="center">
-        Loading cohorts...
-      </Typography>
-    </>
-  ) : (
-    <>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <UserListHead
-                  order={order}
-                  orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={cohorts.length}
-                  numSelected={selected.length}
-                  onRequestSort={handleRequestSort}
-                  onSelectAllClick={handleSelectAllClick}
-                />
-      <TableBody>
-        {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-          const { cohortId } = row;
-          const selectedCohort = selected.indexOf(cohortId) !== -1;
-
-              return (
-              <TableRow hover key={row.cohortId} tabIndex={-1} role="checkbox" selected={selectedCohort} >
-              <TableCell padding="checkbox">
-                <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortId)} />
-              </TableCell>
-              <TableCell component="th" scope="row" padding="none">
-                <Typography variant="subtitle2" noWrap>
-                <Link href={`/admin/org-dashboards/${organizationId}/user-cohort/${organizationId}/${cohortId}`} color="inherit" underline="hover">
-                {cohortId}</Link>
-              
+            {loading ? (
+              <>
+                <CircularProgress />
+                <Typography variant="h6" paragraph align="center">
+                  Loading cohorts...
                 </Typography>
-              </TableCell>
-              <TableCell align="left">{row.cohortName}</TableCell>
-              <TableCell>
-              {format(new Date(row.cohortStartDate), 'dd/MM/yyyy')}
-              </TableCell>
-              <TableCell>
-                {row.cohortEndDate ? format(new Date(row.cohortEndDate), 'dd/MM/yyyy') : '-'}
-              </TableCell>
-              <TableCell align="right">
-                <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
-                  <Iconify icon="eva:more-vertical-fill" />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          );
-                  })}
-                </TableBody>
+              </>
+            ) : (
+              <>
+                <TableContainer sx={{ minWidth: 800 }}>
+                  <Table>
+                    <UserListHead
+                      order={order}
+                      orderBy={orderBy}
+                      headLabel={TABLE_HEAD}
+                      rowCount={cohorts.length}
+                      numSelected={selected.length}
+                      onRequestSort={handleRequestSort}
+                      onSelectAllClick={handleSelectAllClick}
+                    />
+                    <TableBody>
+                      {filteredCohorts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                        const { cohortId } = row;
+                        const selectedCohort = selected.indexOf(cohortId) !== -1;
 
-                {isNotFound && (
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <Paper sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" paragraph>
-                            Not found
-                          </Typography>
-                          <Typography variant="body2">
-                            No results found for &quot;{filterName}&quot;. Try checking for typos or using complete words.
-                          </Typography>
-                        </Paper>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-            </>
+                        return (
+                          <TableRow hover key={row.cohortId} tabIndex={-1} role="checkbox" selected={selectedCohort}>
+                            <TableCell padding="checkbox">
+                              <Checkbox checked={selectedCohort} onChange={() => handleClick(cohortId)} />
+                            </TableCell>
+                            <TableCell component="th" scope="row" padding="none">
+                              <Typography variant="subtitle2" noWrap>
+                                <Link
+                                  href={`/org-dashboards/${organizationId}/user-cohort/${organizationId}/${cohortId}`}
+                                  color="inherit"
+                                  underline="hover"
+                                >
+                                  {cohortId}
+                                </Link>
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="left">{row.cohortName}</TableCell>
+                            <TableCell>{format(new Date(row.cohortStartDate), 'dd/MM/yyyy')}</TableCell>
+                            <TableCell>
+                              {row.cohortEndDate ? format(new Date(row.cohortEndDate), 'dd/MM/yyyy') : '-'}
+                            </TableCell>
+                            <TableCell align="right">
+                              <IconButton size="large" color="inherit" onClick={(e) => handleOpenActionMenu(e, row)}>
+                                <Iconify icon="eva:more-vertical-fill" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+
+                    {isNotFound && (
+                      <TableBody>
+                        <TableRow>
+                          <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                            <Paper sx={{ textAlign: 'center' }}>
+                              <Typography variant="h6" paragraph>
+                                Not found
+                              </Typography>
+                              <Typography variant="body2">
+                                No results found for &quot;{filterName}&quot;. Try checking for typos or using complete
+                                words.
+                              </Typography>
+                            </Paper>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    )}
+                  </Table>
+                </TableContainer>
+              </>
             )}
           </Scrollbar>
 
@@ -430,336 +462,144 @@ const handleCloseDialogs = () => {
         {/* </div> */}
       </Container>
 
-  {/* Create Cohort Modal */}
-  <Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs}>
-  <DialogTitle>Create New Cohort</DialogTitle>
-  <DialogContent>
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortName"
-      label="Cohort Name"
-      value={formData.cohortName}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortName}
-      helperText={formErrors.cohortName}
-      required
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortStartDate"
-      label="Start Date"
-      type="date"
-      InputLabelProps={{ shrink: true }}
-      value={formData.cohortStartDate}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortStartDate}
-      helperText={formErrors.cohortStartDate}
-      required
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortEndDate"
-      label="End Date"
-      type="date"
-      InputLabelProps={{ shrink: true }}
-      value={formData.cohortEndDate}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortEndDate}
-      helperText={formErrors.cohortEndDate}
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="organizationId"
-      label="Organization ID"
-      value={formData.organization.organizationId}
-      disabled
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
-      <Select
-        labelId="show-leaderboard-label"
-        id="show-leaderboard"
-        name="showLeaderboard"
-        value={formData.showLeaderboard ? 'true' : 'false'}
-        label="Show Leaderboard" // Added label prop
-        onChange={(e) =>
-          setFormData((prevData) => ({
-            ...prevData,
-            showLeaderboard: e.target.value === 'true',
-          }))
-        }
-        sx={{ minHeight: '45px' }} // Set minimum height
-      >
-        <MenuItem value="true">True</MenuItem>
-        <MenuItem value="false">False</MenuItem>
-      </Select>
-    </FormControl>
-    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
-      <Select
-        labelId="DelayedStageUnlock-label"
-        id="DelayedStageUnlock"
-        name="DelayedStageUnlock"
-        value={formData.delayedStageUnlock ? 'true' : 'false'}
-        label="DelayedStageUnlock" // Added label prop
-        onChange={(e) =>
-          setFormData((prevData) => ({
-            ...prevData,
-            delayedStageUnlock: e.target.value === 'true',
-          }))
-        }
-        sx={{ minHeight: '45px' }} // Set minimum height
-      >
-        <MenuItem value="true">True</MenuItem>
-        <MenuItem value="false">False</MenuItem>
-      </Select>
-    </FormControl>
-    {formData.delayedStageUnlock && (
-      <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-        <InputLabel id="delay-in-days-label">Delay in Days</InputLabel>
-        <Select
-          labelId="delay-in-days-label"
-          id="delay-in-days"
-          name="delayInDays"
-          value={formData.delayInDays}
-          label="Delay in Days" // Added label prop
-          onChange={handleFormChange}
-          error={!!formErrors.delayInDays}
-          sx={{ minHeight: '45px' }} // Set minimum height
-        >
-          {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
-            <MenuItem key={day} value={day}>
-              {day}
-            </MenuItem>
-          ))}
-        </Select>
-        {formErrors.delayInDays && (
-          <FormHelperText error>{formErrors.delayInDays}</FormHelperText>
-        )}
-      </FormControl>
-    )}
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseDialogs}sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 0.5, // Padding Y
-            px: 1, // Padding X
-            borderRadius: '4px', // Border radius
-          }}>Cancel</Button>
-    <Button onClick={handleSubmit} color="primary"
-      sx={{
-      bgcolor: '#5bc3cd', // Default background color
-      color: 'white', // Text color
-      fontWeight: 'bold', // Font weight
-      '&:hover': {
-      bgcolor: '#DB5788', // Hover background color
-      },
-      py: 0.5, // Padding Y
-      px: 1, // Padding X
-      borderRadius: '4px', // Border radius
-      }}
-          >Create</Button>
-  </DialogActions>
-</Dialog>
-
- {/* Update Cohort Modal */}
-<Dialog open={isUpdateDialogOpen} onClose={handleCloseDialogs}>
-  <DialogTitle>Update Cohort</DialogTitle>
-  <DialogContent>
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortId"
-      label="Cohort ID"
-      value={formData.cohortId}
-      disabled
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="organizationId"
-      label="Organization ID"
-      value={formData.organization.organizationId}
-      disabled
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortName"
-      label="Cohort Name"
-      value={formData.cohortName}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortName}
-      helperText={formErrors.cohortName}
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortStartDate"
-      label="Start Date"
-      type="date"
-      InputLabelProps={{ shrink: true }}
-      value={formData.cohortStartDate}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortStartDate}
-      helperText={formErrors.cohortStartDate}
-      disabled
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      name="cohortEndDate"
-      label="End Date"
-      type="date"
-      InputLabelProps={{ shrink: true }}
-      value={formData.cohortEndDate}
-      onChange={handleFormChange}
-      error={!!formErrors.cohortEndDate}
-      helperText={formErrors.cohortEndDate}
-      size="small" // Reduces the height of text fields
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              height: '45px' // Consistent height for all text fields
-            }
-          }}
-    />
-    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-      <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
-      <Select
-        labelId="show-leaderboard-label"
-        id="show-leaderboard"
-        name="showLeaderboard"
-        value={formData.showLeaderboard ? 'true' : 'false'}
-        label="Show Leaderboard"
-        onChange={(e) =>
-          setFormData((prevData) => ({
-            ...prevData,
-            showLeaderboard: e.target.value === 'true',
-          }))
-        }
-        sx={{ minHeight: '45px' }}
-      >
-        <MenuItem value="true">True</MenuItem>
-        <MenuItem value="false">False</MenuItem>
-      </Select>
-    </FormControl>
-    <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-      <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
-      <Select
-        labelId="DelayedStageUnlock-label"
-        id="DelayedStageUnlock"
-        name="DelayedStageUnlock"
-        value={formData.delayedStageUnlock ? 'true' : 'false'}
-        label="DelayedStageUnlock"
-        onChange={(e) =>
-          setFormData((prevData) => ({
-            ...prevData,
-            delayedStageUnlock: e.target.value === 'true',
-          }))
-        }
-        sx={{ minHeight: '45px' }}
-      >
-        <MenuItem value="true">True</MenuItem>
-        <MenuItem value="false">False</MenuItem>
-      </Select>
-    </FormControl>
-    {formData.delayedStageUnlock && (
-      <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
-        <InputLabel id="delay-in-days-label">Delay in Days</InputLabel>
-        <Select
-          labelId="delay-in-days-label"
-          id="delay-in-days"
-          name="delayInDays"
-          value={formData.delayInDays}
-          label="Delay in Days"
-          onChange={handleFormChange}
-          error={!!formErrors.delayInDays}
-          sx={{ minHeight: '45px' }}
-        >
-          {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
-            <MenuItem key={day} value={day}>
-              {day}
-            </MenuItem>
-          ))}
-        </Select>
-        {formErrors.delayInDays && (
-          <FormHelperText error>{formErrors.delayInDays}</FormHelperText>
-        )}
-      </FormControl>
-    )}
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseDialogs}
-    autoFocus
-    sx={{
-      bgcolor: '#5bc3cd', // Default background color
-      color: 'white', // Text color
-      fontWeight: 'bold', // Font weight
-      '&:hover': {
-        bgcolor: '#DB5788', // Hover background color
-      },
-      py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-    }} type="submit" variant="contained">Cancel</Button>
-    <Button onClick={handleSubmit} variant="contained"
+      {/* Create Cohort Modal */}
+      <Dialog open={isCreateDialogOpen} onClose={handleCloseDialogs}>
+        <DialogTitle>Create New Cohort</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortName"
+            label="Cohort Name"
+            value={formData.cohortName}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortName}
+            helperText={formErrors.cohortName}
+            required
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortStartDate"
+            label="Start Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={formData.cohortStartDate}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortStartDate}
+            helperText={formErrors.cohortStartDate}
+            required
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortEndDate"
+            label="End Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={formData.cohortEndDate}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortEndDate}
+            helperText={formErrors.cohortEndDate}
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="organizationId"
+            label="Organization ID"
+            value={formData.organization.organizationId}
+            disabled
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+            <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+            <Select
+              labelId="show-leaderboard-label"
+              id="show-leaderboard"
+              name="showLeaderboard"
+              value={formData.showLeaderboard ? 'true' : 'false'}
+              label="Show Leaderboard" // Added label prop
+              onChange={(e) =>
+                setFormData((prevData) => ({
+                  ...prevData,
+                  showLeaderboard: e.target.value === 'true',
+                }))
+              }
+              sx={{ minHeight: '45px' }} // Set minimum height
+            >
+              <MenuItem value="true">True</MenuItem>
+              <MenuItem value="false">False</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+            <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+            <Select
+              labelId="DelayedStageUnlock-label"
+              id="DelayedStageUnlock"
+              name="DelayedStageUnlock"
+              value={formData.delayedStageUnlock ? 'true' : 'false'}
+              label="DelayedStageUnlock" // Added label prop
+              onChange={(e) =>
+                setFormData((prevData) => ({
+                  ...prevData,
+                  delayedStageUnlock: e.target.value === 'true',
+                }))
+              }
+              sx={{ minHeight: '45px' }} // Set minimum height
+            >
+              <MenuItem value="true">True</MenuItem>
+              <MenuItem value="false">False</MenuItem>
+            </Select>
+          </FormControl>
+          {formData.delayedStageUnlock && (
+            <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+              <InputLabel id="delay-in-days-label">Delay in Days</InputLabel>
+              <Select
+                labelId="delay-in-days-label"
+                id="delay-in-days"
+                name="delayInDays"
+                value={formData.delayInDays}
+                label="Delay in Days" // Added label prop
+                onChange={handleFormChange}
+                error={!!formErrors.delayInDays}
+                sx={{ minHeight: '45px' }} // Set minimum height
+              >
+                {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
+                  <MenuItem key={day} value={day}>
+                    {day}
+                  </MenuItem>
+                ))}
+              </Select>
+              {formErrors.delayInDays && <FormHelperText error>{formErrors.delayInDays}</FormHelperText>}
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDialogs}
             sx={{
               bgcolor: '#5bc3cd', // Default background color
               color: 'white', // Text color
@@ -768,12 +608,219 @@ const handleCloseDialogs = () => {
                 bgcolor: '#DB5788', // Hover background color
               },
               py: 0.5, // Padding Y
-  px: 1, // Padding X
-  borderRadius: '4px', // Border radius
-            }}>Update</Button>
-  </DialogActions>
-</Dialog>
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            color="primary"
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+            }}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
 
+      {/* Update Cohort Modal */}
+      <Dialog open={isUpdateDialogOpen} onClose={handleCloseDialogs}>
+        <DialogTitle>Update Cohort</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortId"
+            label="Cohort ID"
+            value={formData.cohortId}
+            disabled
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="organizationId"
+            label="Organization ID"
+            value={formData.organization.organizationId}
+            disabled
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortName"
+            label="Cohort Name"
+            value={formData.cohortName}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortName}
+            helperText={formErrors.cohortName}
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortStartDate"
+            label="Start Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={formData.cohortStartDate}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortStartDate}
+            helperText={formErrors.cohortStartDate}
+            disabled
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="cohortEndDate"
+            label="End Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={formData.cohortEndDate}
+            onChange={handleFormChange}
+            error={!!formErrors.cohortEndDate}
+            helperText={formErrors.cohortEndDate}
+            size="small" // Reduces the height of text fields
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '45px', // Consistent height for all text fields
+              },
+            }}
+          />
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+            <InputLabel id="show-leaderboard-label">Show Leaderboard</InputLabel>
+            <Select
+              labelId="show-leaderboard-label"
+              id="show-leaderboard"
+              name="showLeaderboard"
+              value={formData.showLeaderboard ? 'true' : 'false'}
+              label="Show Leaderboard"
+              onChange={(e) =>
+                setFormData((prevData) => ({
+                  ...prevData,
+                  showLeaderboard: e.target.value === 'true',
+                }))
+              }
+              sx={{ minHeight: '45px' }}
+            >
+              <MenuItem value="true">True</MenuItem>
+              <MenuItem value="false">False</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+            <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
+            <Select
+              labelId="DelayedStageUnlock-label"
+              id="DelayedStageUnlock"
+              name="DelayedStageUnlock"
+              value={formData.delayedStageUnlock ? 'true' : 'false'}
+              label="DelayedStageUnlock"
+              onChange={(e) =>
+                setFormData((prevData) => ({
+                  ...prevData,
+                  delayedStageUnlock: e.target.value === 'true',
+                }))
+              }
+              sx={{ minHeight: '45px' }}
+            >
+              <MenuItem value="true">True</MenuItem>
+              <MenuItem value="false">False</MenuItem>
+            </Select>
+          </FormControl>
+          {formData.delayedStageUnlock && (
+            <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+              <InputLabel id="delay-in-days-label">Delay in Days</InputLabel>
+              <Select
+                labelId="delay-in-days-label"
+                id="delay-in-days"
+                name="delayInDays"
+                value={formData.delayInDays}
+                label="Delay in Days"
+                onChange={handleFormChange}
+                error={!!formErrors.delayInDays}
+                sx={{ minHeight: '45px' }}
+              >
+                {Array.from({ length: 15 }, (_, i) => i + 1).map((day) => (
+                  <MenuItem key={day} value={day}>
+                    {day}
+                  </MenuItem>
+                ))}
+              </Select>
+              {formErrors.delayInDays && <FormHelperText error>{formErrors.delayInDays}</FormHelperText>}
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDialogs}
+            autoFocus
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+            }}
+            type="submit"
+            variant="contained"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            sx={{
+              bgcolor: '#5bc3cd', // Default background color
+              color: 'white', // Text color
+              fontWeight: 'bold', // Font weight
+              '&:hover': {
+                bgcolor: '#DB5788', // Hover background color
+              },
+              py: 0.5, // Padding Y
+              px: 1, // Padding X
+              borderRadius: '4px', // Border radius
+            }}
+          >
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Action Menu */}
       <Menu
@@ -783,11 +830,21 @@ const handleCloseDialogs = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={() => { handleOpenUpdateDialog(selectedRow); handleCloseActionMenu(); }}>
+        <MenuItem
+          onClick={() => {
+            handleOpenUpdateDialog(selectedRow);
+            handleCloseActionMenu();
+          }}
+        >
           <Iconify icon="eva:edit-fill" sx={{ mr: 2 }} />
           Update
         </MenuItem>
-        <MenuItem onClick={() => { setIsConfirmOpen(true); handleCloseActionMenu(); }}>
+        <MenuItem
+          onClick={() => {
+            setIsConfirmOpen(true);
+            handleCloseActionMenu();
+          }}
+        >
           <Iconify icon="eva:trash-2-outline" sx={{ mr: 2 }} />
           Delete
         </MenuItem>
@@ -796,55 +853,56 @@ const handleCloseDialogs = () => {
       {/* Confirm Delete Modal */}
       <Modal open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
         <StyledCard>
-          <Typography variant="h6" gutterBottom>Are you sure you want to delete this Cohort?</Typography>
+          <Typography variant="h6" gutterBottom>
+            Are you sure you want to delete this Cohort?
+          </Typography>
           <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <Button variant="contained" color="primary" onClick={() => handleDelete(selectedRow.cohortId)}sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 0.5, // Padding Y
-            px: 1, // Padding X
-            borderRadius: '4px',// Border radius
-          }}>
-            Delete
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => setIsConfirmOpen(false)}
-          sx={{
-            bgcolor: '#5bc3cd', // Default background color
-            color: 'white', // Text color
-            fontWeight: 'bold', // Font weight
-            '&:hover': {
-              bgcolor: '#DB5788', // Hover background color
-            },
-            py: 0.5, // Padding Y
-            px: 1, // Padding X
-            borderRadius: '4px', // Border radius
-          }}>
-           Cancel
-          </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleDelete(selectedRow.cohortId)}
+              sx={{
+                bgcolor: '#5bc3cd', // Default background color
+                color: 'white', // Text color
+                fontWeight: 'bold', // Font weight
+                '&:hover': {
+                  bgcolor: '#DB5788', // Hover background color
+                },
+                py: 0.5, // Padding Y
+                px: 1, // Padding X
+                borderRadius: '4px', // Border radius
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setIsConfirmOpen(false)}
+              sx={{
+                bgcolor: '#5bc3cd', // Default background color
+                color: 'white', // Text color
+                fontWeight: 'bold', // Font weight
+                '&:hover': {
+                  bgcolor: '#DB5788', // Hover background color
+                },
+                py: 0.5, // Padding Y
+                px: 1, // Padding X
+                borderRadius: '4px', // Border radius
+              }}
+            >
+              Cancel
+            </Button>
           </Stack>
         </StyledCard>
       </Modal>
 
       {/* Notification Snackbar */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={handleCloseNotification}
-      >
-        <MuiAlert
-          onClose={handleCloseNotification}
-          severity={notification.type}
-          elevation={6}
-          variant="filled"
-        >
+      <Snackbar open={notification.open} autoHideDuration={4000} onClose={handleCloseNotification}>
+        <MuiAlert onClose={handleCloseNotification} severity={notification.type} elevation={6} variant="filled">
           {notification.message}
         </MuiAlert>
       </Snackbar>
-
     </>
   );
 }

@@ -11,7 +11,7 @@ const RootLayout = () => {
     localStorage.getItem("cohortReminder")
   );
   const location = useLocation();
-  const isHomePage = location.pathname === "/home";
+  const isHomePage = location.pathname === "/dashboard";
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Scroll main content to top on location change

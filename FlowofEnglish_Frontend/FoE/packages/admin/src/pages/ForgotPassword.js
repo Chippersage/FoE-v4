@@ -17,7 +17,7 @@
 //     <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
 //       <div className="mb-8 mt-8">
 //         <img
-//           src="/admin/assets/main-logo.png"
+//           src="/assets/main-logo.png"
 //           alt="flowofenglish Logo"
 //           className="h-16"
 //         />

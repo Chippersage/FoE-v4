@@ -76,11 +76,12 @@ export default function LoginPage() {
       const { userType, userDetails, assignmentStatistics } = login.data;
 
       // localStorage.setItem("tempSessionId", tempSessionId);
-      localStorage.setItem("userType", userType);
+      // localStorage.setItem("userType", userType);
       // (cohortReminder && cohortReminder !== null && cohortReminder !== undefined) && localStorage.setItem("cohortReminder", cohortReminder);
       const mergedUserDetails = {
         ...userDetails,
         assignmentStatistics: assignmentStatistics || null, // optional chaining to be safe
+        userType
       };
 
       localStorage.setItem("user", JSON.stringify(mergedUserDetails));

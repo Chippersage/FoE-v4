@@ -62,24 +62,25 @@ export default function LoginPage() {
         {mdUp && (
           <StyledSection>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
-            Welcome SuperAdmin
+              Welcome SuperAdmin
             </Typography>
-            <img src={`/admin/assets/illustrations/illustration_login.png`} alt="login" />
+            <img src={`/assets/illustrations/illustration_login.png`} alt="login" />
           </StyledSection>
         )}
 
-<Container sx = {{ width: {
-      xs: '100%', // Full width on small screens
-      sm: '600px', // Restrict to 600px on larger screens
-    },
-    margin: '0 auto',
-    padding: 2,
-  }}
->
-            <LoginForm />
+        <Container
+          sx={{
+            width: {
+              xs: '100%', // Full width on small screens
+              sm: '600px', // Restrict to 600px on larger screens
+            },
+            margin: '0 auto',
+            padding: 2,
+          }}
+        >
+          <LoginForm />
         </Container>
       </StyledRoot>
     </>
   );
 }
-

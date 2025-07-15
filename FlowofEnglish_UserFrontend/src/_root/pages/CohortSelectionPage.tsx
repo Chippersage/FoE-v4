@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -119,17 +119,30 @@ const playNotificationSound = () => {
   audio.play().catch((err) => console.error("Error playing sound:", err));
 };
 
-export default function Dashboard() {
-  const scrollContainerRef = useRef(null);
+interface Cohort {
+  cohortId: string;
+  cohortName: string;
+  cohortEndDate: string;
+  program: {
+    programId: string;
+    // Add other program fields as needed
+  };
+  // Add other cohort fields as needed
+}
+
+const Dashboard: React.FC = () => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const { user, setSelectedCohortWithProgram } = useUserContext();
-  const [progressData, setProgressData] = useState({}); // Store progress per programId
-  const [loading, setLoading] = useState({}); // Track loading state for each programId
+  const [progressData, setProgressData] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  // const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
   const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
-  const userType = localStorage.getItem("userType");
+  // const userType = localStorage.getItem("userType");
   const [showAssignments, setShowAssignments] = useState(false);
   const [showEndDateNotification, setShowEndDateNotification] = useState(true);
   const progressFetchedRef = useRef({});
@@ -155,6 +168,9 @@ export default function Dashboard() {
   const [showErrorModalOpen, setShowErrorModalOpen] = useState(false);
   const [errorModalData, setErrorModalData] = useState(null);
   const [isResuming, setIsResuming] = useState(false);
+  const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
+  const [fetchedCohorts, setFetchedCohorts] = useState<any[]>([]);
+  // const [cohorts, setCohorts] = useState([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -180,7 +196,7 @@ export default function Dashboard() {
 
     // Check which dependencies changed
     const currentDeps = {
-      userCohortsLength: user?.cohorts?.length || 0,
+      userCohortsLength: fetchedCohorts?.userDetails?.allCohortsWithPrograms?.length || 0,
       userId: user?.userId,
       apiBaseUrl: API_BASE_URL,
     };
@@ -221,12 +237,12 @@ export default function Dashboard() {
     }
 
     // Guard clause
-    if (!user?.cohorts || !user?.userId) {
+    if (!fetchedCohorts || !fetchedCohorts?.userDetails?.allCohortsWithPrograms || !user?.userId) {
       addLog(
         `Skipping effect: ${
           !user
             ? "user is null"
-            : !user.cohorts
+            : !fetchedCohorts
             ? "cohorts is null"
             : "userId is null"
         }`
@@ -234,12 +250,14 @@ export default function Dashboard() {
       return;
     }
 
-    addLog(`Processing ${user.cohorts.length} cohorts`);
+    addLog(
+      `Processing ${fetchedCohorts?.userDetails?.allCohortsWithPrograms.length} cohorts`
+    );
 
     // Create a batch of promises for cohorts that haven't been fetched yet
     const fetchPromises = [];
 
-    user.cohorts.forEach((cohort, index) => {
+    fetchedCohorts?.userDetails?.allCohortsWithPrograms.forEach((cohort, index) => {
       const programId = cohort?.program?.programId;
       if (!programId) {
         addLog(`Cohort at index ${index} has no programId, skipping`);
@@ -262,7 +280,7 @@ export default function Dashboard() {
 
       // Add the fetch promise to our array
       const fetchPromise = fetch(
-        `${API_BASE_URL}/reports/program/${programId}/user/${user.userId}/progress`
+        `${API_BASE_URL}/reports/program/${programId}/user/${user?.userId}/progress`
       )
         .then((res) => {
           if (!res.ok)
@@ -326,37 +344,139 @@ export default function Dashboard() {
     return () => {
       addLog("Effect cleanup - component unmounting or dependencies changed");
     };
-  }, [user?.cohorts, API_BASE_URL, user?.userId]); // Dependencies
+  }, [fetchedCohorts, API_BASE_URL, user?.userId]); // Dependencies
 
-  const sortedCohorts = [...(user?.cohorts || [])].sort((a, b) => {
-    // Get pending assignment counts
-    const pendingCountA =
-      user?.assignmentStatistics?.cohortDetails?.[a.cohortId]
-        ?.pendingAssignments || 0;
-    const pendingCountB =
-      user?.assignmentStatistics?.cohortDetails?.[b.cohortId]
-        ?.pendingAssignments || 0;
+  // Fetch cohorts from API
+  // useEffect(() => {
+  //   const fetchCohorts = async () => {
+  //     try {
+  //       setIsLoadingCohorts(true);
+  //       const response = await axios.get<Cohort[]>(
+  //         `${API_BASE_URL}/users/${user?.userId}/cohorts`
+  //       );
+  //       setCohorts(response.data);
+  //     } catch (error) {
+  //       console.error("Failed to fetch cohorts:", error);
+  //       toast.error("Failed to load cohorts");
+  //     } finally {
+  //       setIsLoadingCohorts(false);
+  //     }
+  //   };
 
-    // First sort by pending assignments (descending)
-    if (pendingCountA > 0 && pendingCountB === 0) return -1;
-    if (pendingCountA === 0 && pendingCountB > 0) return 1;
+  //   if (user?.userId) {
+  //     fetchCohorts();
+  //   }
+  // }, [user?.userId, API_BASE_URL]);
 
-    // Then sort by cohort status (active before ending soon before ended)
+  // Sort cohorts
+  // const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
+  
+
+  // Fetch cohorts from API
+  useEffect(() => {
+    const fetchCohorts = async () => {
+      try {
+        setIsLoadingCohorts(true);
+        const response = await axios.get(`${API_BASE_URL}/users/${user?.userId}/cohorts`);
+        // console.log("Fetched cohorts:", response.data.allCohortsWithPrograms);
+        setFetchedCohorts(response.data);
+      } catch (error) {
+        console.error('Failed to fetch cohorts:', error);
+        toast.error('Failed to load cohorts');
+      } finally {
+        setIsLoadingCohorts(false);
+      }
+    };
+
+    if (user?.userId) {
+      fetchCohorts();
+    }
+  }, [user?.userId, API_BASE_URL]);
+
+  // SkeletonCard component for loading state
+  const SkeletonCard = () => (
+    <Card className="min-w-[280px] max-w-[280px] md:min-w-[400px] md:max-w-[400px] border rounded-xl shadow-lg snap-center p-4 pt-10 space-y-4 relative">
+      {/* Badge Skeleton */}
+      <div className="absolute top-2 right-2 z-10">
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+
+      {/* Heading */}
+      <Skeleton className="h-6 w-3/4 mb-2" />
+
+      {/* Cohort details */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-3/5" />
+      </div>
+
+      {/* "See Details" button */}
+      <Skeleton className="h-4 w-24 my-2" />
+
+      {/* Progress text and bar */}
+      <div className="space-y-1">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-2 w-full" />
+      </div>
+
+      {/* Footer Button */}
+      <div className="flex justify-end border-t bg-gray-50 pt-3">
+        <Skeleton className="h-8 w-20 rounded-[5px]" />
+      </div>
+    </Card>
+  );
+  
+
+  const sortedCohorts = [...(isLoadingCohorts ? [] : fetchedCohorts?.userDetails?.allCohortsWithPrograms)].sort((a: any, b: any) => {
+    // First, sort by assignment statistics if available
+    if (fetchedCohorts?.assignmentStatistics?.cohortDetails) {
+      const statsA = fetchedCohorts.assignmentStatistics.cohortDetails[a.cohortId];
+      // console.log("statsA", statsA);
+      const statsB = fetchedCohorts.assignmentStatistics.cohortDetails[b.cohortId];
+
+      if (statsA?.pendingAssignments !== statsB?.pendingAssignments) {
+        return (statsB?.pendingAssignments || 0) - (statsA?.pendingAssignments || 0);
+      }
+    }
+
+    // Then, sort by days remaining
     const daysRemainingA = calculateDaysRemaining(a.cohortEndDate);
     const daysRemainingB = calculateDaysRemaining(b.cohortEndDate);
 
-    // Active cohorts (more than 15 days) first
+    if (daysRemainingA === null || daysRemainingB === null) return 0;
+
     if (daysRemainingA > 15 && daysRemainingB <= 15) return -1;
     if (daysRemainingA <= 15 && daysRemainingB > 15) return 1;
 
-    // Then sort by days remaining (descending)
+    // If both are in the same category (both <= 15 or both > 15)
     if (daysRemainingA !== daysRemainingB) {
       return daysRemainingB - daysRemainingA;
     }
 
-    // Finally sort alphabetically by cohort name
+    // Finally, sort alphabetically by cohort name
     return a.cohortName.localeCompare(b.cohortName);
   });
+
+  // Skeleton loading card component
+  // const SkeletonCard = () => (
+  //   <Card className="flex flex-col min-w-[300px] max-w-[400px] p-6 space-y-4">
+  //     <div className="space-y-3">
+  //       <Skeleton className="h-6 w-3/4" />
+  //       <Skeleton className="h-4 w-1/2" />
+  //     </div>
+  //     <div className="space-y-2">
+  //       <Skeleton className="h-4 w-full" />
+  //       <Skeleton className="h-4 w-5/6" />
+  //     </div>
+  //     <div className="space-y-3">
+  //       <Skeleton className="h-2 w-full" />
+  //       <div className="flex justify-between items-center">
+  //         <Skeleton className="h-9 w-24" />
+  //         <Skeleton className="h-8 w-8 rounded-full" />
+  //       </div>
+  //     </div>
+  //   </Card>
+  // );
 
   const handleResume = async (cohortWithProgram) => {
     const daysRemaining = calculateDaysRemaining(
@@ -383,7 +503,7 @@ export default function Dashboard() {
       );
       localStorage.setItem("sessionId", response.data.sessionId);
 
-      navigate("/home");
+      navigate("/dashboard");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Server is down or not responding (network error)
@@ -471,13 +591,13 @@ export default function Dashboard() {
 
   // Count cohorts that are ending soon (<=15 days) or have ended
   const endingSoonCohorts =
-    user?.cohorts?.filter((cohort) => {
+    fetchedCohorts?.userDetails?.allCohortsWithPrograms?.filter((cohort) => {
       const daysRemaining = calculateDaysRemaining(cohort.cohortEndDate);
       return daysRemaining !== null && daysRemaining <= 15;
     }) || [];
 
   const endedCohorts =
-    user?.cohorts?.filter((cohort) => {
+    fetchedCohorts?.userDetails?.allCohortsWithPrograms?.filter((cohort) => {
       const daysRemaining = calculateDaysRemaining(cohort.cohortEndDate);
       return daysRemaining !== null && daysRemaining <= 0;
     }) || [];
@@ -555,7 +675,7 @@ export default function Dashboard() {
         <CohortTour
           onResumeClick={handleResume}
           firstCohortProgress={
-            progressData[user?.cohorts?.[0]?.program?.programId]
+            progressData[fetchedCohorts?.userDetails?.allCohortsWithPrograms?.[0]?.program?.programId]
           }
         />
       )}
@@ -977,141 +1097,153 @@ export default function Dashboard() {
               onScroll={handleScroll}
               className="flex gap-4 pb-4 p-2 w-full overflow-x-auto custom-scrollbar-2 snap-x snap-mandatory"
             >
-              {sortedCohorts.map((cohortWithProgram, index) => {
-                const programId = cohortWithProgram?.program?.programId;
-                const progress = progressData[programId];
-                const isLoading = loading[programId];
+              {isLoadingCohorts ? (
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {[1, 2, 3].map((index) => (
+                    <SkeletonCard key={index} />
+                  ))}
+                </div>
+              ) : sortedCohorts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No cohorts available</p>
+                </div>
+              ) : (
+                sortedCohorts.map((cohortWithProgram, index) => {
+                  const programId = cohortWithProgram?.program?.programId;
+                  const progress = progressData[programId];
+                  const isLoading = loading[programId];
 
-                // Calculate days remaining and status
-                const daysRemaining = calculateDaysRemaining(
-                  cohortWithProgram.cohortEndDate
-                );
-                const cohortStatus = getCohortStatus(daysRemaining);
-                const isDisabled =
-                  cohortStatus.status === "ended" || daysRemaining < 0;
+                  // Calculate days remaining and status
+                  const daysRemaining = calculateDaysRemaining(
+                    cohortWithProgram.cohortEndDate
+                  );
+                  const cohortStatus = getCohortStatus(daysRemaining);
+                  const isDisabled =
+                    cohortStatus.status === "ended" || daysRemaining < 0;
 
-                return (
-                  <MotionCard
-                    key={cohortWithProgram?.program?.programId}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className={`min-w-[280px] max-w-[280px] border relative md:min-w-[400px] md:max-w-[400px] rounded-xl shadow-lg snap-center 
+                  return (
+                    <MotionCard
+                      key={cohortWithProgram?.program?.programId}
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      className={`min-w-[280px] max-w-[280px] border relative md:min-w-[400px] md:max-w-[400px] rounded-xl shadow-lg snap-center 
                       ${
                         isDisabled
                           ? "border-gray-200 bg-gradient-to-b from-gray-100 to-gray-50 opacity-75"
                           : "border-gray-200 bg-gradient-to-b from-[#CAF2BC] to-white hover:shadow-xl"
                       } 
                       ${index === 0 ? "program-card-first" : ""}`}
-                  >
-                    {/* Cohort status badge */}
-                    <div className="absolute top-2 right-2 z-10">
-                      <Badge
-                        variant="outline"
-                        className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${cohortStatus.color}`}
-                      >
-                        {cohortStatus.icon}
-                        {cohortStatus.label}
-                      </Badge>
-                    </div>
-
-                    {/* Overlay for disabled cohorts */}
-                    {isDisabled && (
-                      <div className="absolute inset-0 bg-gray-200 bg-opacity-10 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-20">
-                        <div className="bg-white bg-opacity-90 rounded-lg px-4 py-3 shadow-lg border border-gray-200 max-w-[80%] text-center">
-                          <Lock className="h-8 w-8 mx-auto mb-2 text-gray-500" />
-                          <h4 className="font-medium text-gray-800 mb-1">
-                            Cohort Ended
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            This cohort is no longer accessible
-                          </p>
-                        </div>
+                    >
+                      {/* Cohort status badge */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <Badge
+                          variant="outline"
+                          className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${cohortStatus.color}`}
+                        >
+                          {cohortStatus.icon}
+                          {cohortStatus.label}
+                        </Badge>
                       </div>
-                    )}
 
-                    <CardContent className="p-4 pt-10">
-                      <h3 className="mb-2 line-clamp-2 min-h-[48px] font-medium">
-                        {cohortWithProgram?.program?.programName}
-                      </h3>
-
-                      {/* Cohort details */}
-                      <div className="flex flex-col gap-1 mb-3">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium mr-1">Cohort:</span>
-                          {cohortWithProgram?.cohortName}
-                        </div>
-
-                        {cohortWithProgram.cohortEndDate && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            <span>
-                              Ends:{" "}
-                              {formatUnixToDate(
-                                cohortWithProgram?.cohortEndDate
-                              )}
-                            </span>
+                      {/* Overlay for disabled cohorts */}
+                      {isDisabled && (
+                        <div className="absolute inset-0 bg-gray-200 bg-opacity-10 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-20">
+                          <div className="bg-white bg-opacity-90 rounded-lg px-4 py-3 shadow-lg border border-gray-200 max-w-[80%] text-center">
+                            <Lock className="h-8 w-8 mx-auto mb-2 text-gray-500" />
+                            <h4 className="font-medium text-gray-800 mb-1">
+                              Cohort Ended
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              This cohort is no longer accessible
+                            </p>
                           </div>
-                        )}
-                      </div>
-
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="link"
-                              className="mb-2 h-auto p-0 text-emerald-600"
-                              // disabled={isDisabled}
-                              disabled={true}
-                            >
-                              See Details
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View program details</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-sm text-gray-600">
-                          {isLoading
-                            ? "Loading..."
-                            : `${progress?.toFixed(1)}% complete`}
-                        </span>
-                      </div>
-                      {isLoading ? (
-                        <Skeleton className="h-2 w-full" />
-                      ) : (
-                        <Progress
-                          value={progress}
-                          className={`h-2 ${isDisabled ? "bg-gray-200" : ""}`}
-                        />
+                        </div>
                       )}
-                    </CardContent>
-                    <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
-                      <Button
-                        size="sm"
-                        disabled={isDisabled}
-                        className={`w-[80px] bg-gradient-to-r 
+
+                      <CardContent className="p-4 pt-10">
+                        <h3 className="mb-2 line-clamp-2 min-h-[48px] font-medium">
+                          {cohortWithProgram?.program?.programName}
+                        </h3>
+
+                        {/* Cohort details */}
+                        <div className="flex flex-col gap-1 mb-3">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="font-medium mr-1">Cohort:</span>
+                            {cohortWithProgram?.cohortName}
+                          </div>
+
+                          {cohortWithProgram.cohortEndDate && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              <span>
+                                Ends:{" "}
+                                {formatUnixToDate(
+                                  cohortWithProgram?.cohortEndDate
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="link"
+                                className="mb-2 h-auto p-0 text-emerald-600"
+                                // disabled={isDisabled}
+                                disabled={true}
+                              >
+                                See Details
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>View program details</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-sm text-gray-600">
+                            {isLoading
+                              ? "Loading..."
+                              : `${progress?.toFixed(1)}% complete`}
+                          </span>
+                        </div>
+                        {isLoading ? (
+                          <Skeleton className="h-2 w-full" />
+                        ) : (
+                          <Progress
+                            value={progress}
+                            className={`h-2 ${isDisabled ? "bg-gray-200" : ""}`}
+                          />
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
+                        <Button
+                          size="sm"
+                          disabled={isDisabled}
+                          className={`w-[80px] bg-gradient-to-r 
                           ${
                             isDisabled
                               ? "from-gray-400 to-gray-500 opacity-70 cursor-not-allowed"
                               : "from-emerald-500 to-green-500 hover:bg-emerald-600"
                           } 
                           rounded-[5px] ${index === 0 ? "resume-button" : ""}`}
-                        onClick={() => handleResume(cohortWithProgram)}
-                      >
-                        {progress === 0 ? "Start" : "Resume"}
-                      </Button>
-                    </CardFooter>
-                  </MotionCard>
-                );
-              })}
+                          onClick={() => handleResume(cohortWithProgram)}
+                        >
+                          {progress === 0 ? "Start" : "Resume"}
+                        </Button>
+                      </CardFooter>
+                    </MotionCard>
+                  );
+                })
+              )}
             </div>
           </section>
 
           {/* Daily Challenge Section - Redesigned */}
-          {userType === "mentor" || userType === "Mentor" ? (
+          {user?.userType === "mentor" || user?.userType === "Mentor" ? (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1139,7 +1271,7 @@ export default function Dashboard() {
                       const color = "from-emerald-500 to-green-500";
 
                       const pendingCount =
-                        user?.assignmentStatistics?.cohortDetails?.[
+                        fetchedCohorts?.assignmentStatistics?.cohortDetails?.[
                           course.cohortId
                         ]?.pendingAssignments || 0;
 
@@ -1418,4 +1550,6 @@ export default function Dashboard() {
       </div>
     </>
   );
-}
+};
+
+export default Dashboard;

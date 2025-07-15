@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.*;
-
 import com.FlowofEnglish.repository.*;
 
 
@@ -32,6 +31,9 @@ public class CacheManagementService {
     @Autowired
     private UnitRepository unitRepository;
     
+    @Autowired
+    private UserCohortMappingRepository userCohortMappingRepository;
+    
     /**
      * Evict all user-related caches when subconcept completion changes
      */
@@ -53,6 +55,9 @@ public class CacheManagementService {
             
             // IMPORTANT: Evict all report-related caches
             evictReportCaches(userId, programId, stageIds, unitIds);
+            
+            // IMPORTANT: Evict user progress caches
+            evictUserProgressCaches(userId, programId);
             
             // Also evict session filter caches if needed
             evictSessionFilterCaches(userId);
@@ -103,6 +108,47 @@ public class CacheManagementService {
     }
     
     /**
+     * Evict user progress caches for a user
+     */
+    public void evictUserProgressCaches(String userId, String programId) {
+        try {
+            logger.info("Evicting user progress caches for userId: {}, programId: {}", userId, programId);
+            
+            // Evict the specific user progress cache for this program
+            evictFromCache("userProgress", programId + "_" + userId);
+            logger.debug("Evicted userProgress cache for key: {}", programId + "_" + userId);
+            
+            // Evict cohort progress caches - need to find which cohorts this user belongs to
+            evictCohortProgressCachesForUser(userId, programId);
+            
+            logger.info("Successfully evicted user progress caches for userId: {}, programId: {}", userId, programId);
+            
+        } catch (Exception e) {
+            logger.error("Error evicting user progress caches for userId: {}, programId: {}", userId, programId, e);
+        }
+    }
+    
+    /**
+     * Evict cohort progress caches that include this user
+     */
+    private void evictCohortProgressCachesForUser(String userId, String programId) {
+        try {
+            // Find the cohort this user belongs to for this program
+            Optional<com.FlowofEnglish.model.UserCohortMapping> userCohortMapping = 
+                userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId);
+            
+            if (userCohortMapping.isPresent()) {
+                String cohortId = userCohortMapping.get().getCohort().getCohortId();
+                evictFromCache("cohortProgress", programId + "_" + cohortId);
+                logger.debug("Evicted cohortProgress cache for key: {}", programId + "_" + cohortId);
+            }
+            
+        } catch (Exception e) {
+            logger.warn("Error evicting cohort progress caches for userId: {}, programId: {}", userId, programId, e);
+        }
+    }
+    
+    /**
      * Evict report caches for a specific unit completion
      */
     public void evictUnitReportCaches(String userId, String unitId, String stageId, String programId) {
@@ -124,10 +170,41 @@ public class CacheManagementService {
                 evictFromCache("userAttempts", userId + "_" + subconceptId);
             }
             
+            // IMPORTANT: Also evict user progress caches since unit completion affects progress
+            evictUserProgressCaches(userId, programId);
+            
             logger.info("Successfully evicted unit-specific report caches for userId: {}, unitId: {}", userId, unitId);
             
         } catch (Exception e) {
             logger.error("Error evicting unit report caches for userId: {}, unitId: {}", userId, unitId, e);
+        }
+    }
+    
+    /**
+     * Evict caches when a user attempts a subconcept (called from UserAttempts service)
+     */
+    public void evictCachesOnUserAttempt(String userId, String subconceptId, String unitId, String stageId, String programId) {
+        try {
+            logger.info("Evicting caches on user attempt for userId: {}, subconceptId: {}, programId: {}", 
+                       userId, subconceptId, programId);
+            
+            // Evict user attempts cache for this specific subconcept
+            evictFromCache("userAttempts", userId + "_" + subconceptId);
+            
+            // Evict report caches that might be affected
+            evictFromCache("unitReports", userId + "_" + unitId);
+            evictFromCache("stageReports", userId + "_" + stageId);
+            evictFromCache("programReports", userId + "_" + programId);
+            
+            // IMPORTANT: Evict user progress caches since attempts affect progress calculations
+            evictUserProgressCaches(userId, programId);
+            
+            logger.info("Successfully evicted caches on user attempt for userId: {}, subconceptId: {}", 
+                       userId, subconceptId);
+            
+        } catch (Exception e) {
+            logger.error("Error evicting caches on user attempt for userId: {}, subconceptId: {}", 
+                        userId, subconceptId, e);
         }
     }
     
@@ -243,5 +320,21 @@ public class CacheManagementService {
         } catch (Exception e) {
             logger.error("Error evicting all user caches for userId: {}", userId, e);
         }
+    }
+    
+    /**
+     * Manually clear user progress cache for specific user and program
+     */
+    public void clearUserProgressCache(String programId, String userId) {
+        logger.info("Manually clearing user progress cache for programId: {} and userId: {}", programId, userId);
+        evictFromCache("userProgress", programId + "_" + userId);
+    }
+    
+    /**
+     * Manually clear cohort progress cache for specific program and cohort
+     */
+    public void clearCohortProgressCache(String programId, String cohortId) {
+        logger.info("Manually clearing cohort progress cache for programId: {} and cohortId: {}", programId, cohortId);
+        evictFromCache("cohortProgress", programId + "_" + cohortId);
     }
 }

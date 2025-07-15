@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SvgColor from '../../../components/svg-color';
 import { useUser } from '../../../UserContext';
 
-const icon = (name) => <SvgColor src={`/admin/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
+const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
 
 const getNavConfig = () => {
   const navigate = useNavigate();
@@ -47,10 +47,9 @@ const getNavConfig = () => {
         path: '/dashboard/superpassword',
         icon: icon('setting'),
       },
-      
     ];
   }
-  
+
   if (userType === 'orgAdmin') {
     return [
       {
@@ -69,15 +68,15 @@ const getNavConfig = () => {
         icon: icon('profile'),
       },
       {
-          title: 'Programs',
-          path: `/org-dashboards/${orgId}/programs`,
-          icon: icon('program'),
-        },
-        // {
-        //   title: 'Payment',
-        //   path: `/org-dashboards/${orgId}/payments`,
-        //   icon: icon('program'),
-        // },
+        title: 'Programs',
+        path: `/org-dashboards/${orgId}/programs`,
+        icon: icon('program'),
+      },
+      // {
+      //   title: 'Payment',
+      //   path: `/org-dashboards/${orgId}/payments`,
+      //   icon: icon('program'),
+      // },
       {
         title: 'Reports',
         path: `/org-dashboards/${orgId}/orgreport`,

@@ -3,7 +3,7 @@
 import { Helmet } from 'react-helmet-async';
 // @mui
 import { styled } from '@mui/material/styles';
-import { Container, Typography} from '@mui/material';
+import { Container, Typography } from '@mui/material';
 // hooks
 import useResponsive from '../hooks/useResponsive';
 // components
@@ -64,19 +64,21 @@ export default function LoginPageOrg() {
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
               Welcome Admin
             </Typography>
-            <img src={`/admin/assets/illustrations/illustration_login.png`} alt="login" />
+            <img src={`/assets/illustrations/illustration_login.png`} alt="login" />
           </StyledSection>
         )}
 
-        <Container sx = {{ width: {
-      xs: '100%', // Full width on small screens
-      sm: '600px', // Restrict to 600px on larger screens
-    },
-    margin: '0 auto',
-    padding: 2,
-  }}
->
-            <LoginFormOrg />
+        <Container
+          sx={{
+            width: {
+              xs: '100%', // Full width on small screens
+              sm: '600px', // Restrict to 600px on larger screens
+            },
+            margin: '0 auto',
+            padding: 2,
+          }}
+        >
+          <LoginFormOrg />
         </Container>
       </StyledRoot>
     </>
