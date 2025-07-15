@@ -3,8 +3,7 @@ name: CI/CD - Deploy User Portal Frontend
 on:
   push:
     branches:
-      - master
-  workflow_dispatch:
+      - master-clone
 
 jobs:
   deploy:
