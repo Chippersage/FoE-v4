@@ -1,7 +1,6 @@
 package com.FlowofEnglish.repository;
 
-import com.FlowofEnglish.model.Cohort;
-import com.FlowofEnglish.model.UserCohortMapping;
+import com.FlowofEnglish.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +14,7 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
 	
 	List<UserCohortMapping> findAllByCohortCohortId(String cohortId);
 	List<UserCohortMapping> findByCohortCohortId(String cohortId);
-	List<UserCohortMapping> findByCohort(Cohort cohort); // Newly added
+	List<UserCohortMapping> findByCohort(Cohort cohort);
 	Optional<UserCohortMapping> findByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
 	boolean existsByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
 
