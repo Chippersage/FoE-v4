@@ -342,9 +342,12 @@ const SingleSubconcept = () => {
         return response.json();
       })
       .then((data) => {
-        setScorePercentage(
-          (payload?.userAttemptScore / subconcept?.subconceptMaxscore) * 100
-        );
+        const percentage =
+          subconcept?.subconceptMaxscore === 0
+            ? 100
+            : (payload?.userAttemptScore / subconcept?.subconceptMaxscore) *
+              100;
+        setScorePercentage(percentage);
         // console.log("Score submitted successfully:", data);
       })
       .catch((error) => {
@@ -466,6 +469,7 @@ const SingleSubconcept = () => {
                     <iframe
                       id="embeddedContent"
                       src={subconcept?.subconceptLink}
+                      // src={"/alphabet/consonantblends/consonantblends-startblends/consonantblends-startblends-Level1-fr.html"}
                       title="Embedded Content"
                       className={`w-full min-h-[500px] sm:min-h-[800px]`}
                       onLoad={() => {

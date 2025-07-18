@@ -109,6 +109,7 @@ const iconMap = {
   text_from_text: TextFromText,
   writer_general_sentences: WriterGeneralSentences,
   word: Word,
+  words: Word,
 
   passage_read: Read,
   passage_jw: JumbledWords,
