@@ -27,6 +27,7 @@ FlowofEnglish_Backend/logs/app.log.2025-06-16.0.gz
 FlowofEnglish_Backend/logs/app.log.2025-06-17.0.gz
 FlowofEnglish_Backend/logs/app.log.2025-06-18.0.gz
 FlowofEnglish_Backend/logs/app.log.2025-06-20.0.gz
+FlowofEnglish_Backend/logs
 
 # Ignore Docker-specific Spring Boot properties
 FlowofEnglish_Backend/src/main/resources/application-docker.properties
