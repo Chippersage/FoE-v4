@@ -20,7 +20,7 @@ FlowofEnglish_Backend/uploads/
 # FlowofEnglish_UserFrontend/package-lock.jsonFlowofEnglish_Backend/src/main/resources/application.properties
 FlowofEnglish_Backend/src/main/resources/application.properties
 # Ignore Docker-related files
-FlowofEnglish_Backend/Dockerfile
+# FlowofEnglish_Backend/Dockerfile
 FlowofEnglish_Backend/docker-compose.yml
 FlowofEnglish_Backend/FoE.dockerignore
 FlowofEnglish_Backend/logs/app.log.2025-06-16.0.gz

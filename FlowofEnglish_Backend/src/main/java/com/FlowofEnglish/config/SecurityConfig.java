@@ -24,25 +24,21 @@ public class SecurityConfig {
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of(
-                    	    "http://localhost:3000", 
-                    	    "http://localhost:8080",
-                    	    "http://13.234.42.153:8080", 
-                    	    "http://13.234.42.153:3000",
-                    	    "https://flowofenglish.thechippersage.com", 
-                    	    "https://flowofenglish.thechippersage.com/admin",
-                    	    "http://flowofenglish-user.thechippersage.com",
-                    	    "https://flowofenglish-user.thechippersage.com",
-                    	    "http://flowofenglish-admin.thechippersage.com",
-                    	    "https://flowofenglish-admin.thechippersage.com",
-                    	    "https://flowofenglish-backend.thechippersage.com",
-                    	    "http://localhost:5173", 
-                    	    "http://10.12.131.110:5173",
-                    	    "http://127.0.0.1:5501",  
-                    	    "http://127.0.0.1:5501/index.html",
-                    	    "http://10.12.127.175:5173", 
-                    	    "https://chippersageblr.s3.ap-south-1.amazonaws.com",
-                    	    "https://paymentpage-nine.vercel.app/"
-                    	));
+                            "http://localhost:3000", 
+                            "http://localhost:8080",
+                            "http://13.234.42.153:8080", 
+                            "http://13.234.42.153:3000",
+                            "https://flowofenglish.thechippersage.com", 
+                            "https://flowofenglish.thechippersage.com/admin",
+                            "https://flowofenglish-user.thechippersage.com",
+                            "http://localhost:5173", 
+                            "http://10.12.131.110:5173/",
+                            "http://127.0.0.1:5501",  
+                            "http://10.12.127.175:5173/", 
+                            "http://127.0.0.1:5501/index.html", 
+                            "https://chippersageblr.s3.ap-south-1.amazonaws.com",
+                            "https://paymentpage-nine.vercel.app/" // Include this domain
+                        ));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
