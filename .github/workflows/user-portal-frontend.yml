@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Download env file
-        working-directory: FlowofEnglish_Frontend/FoE/packages/user
+        working-directory: FlowofEnglish_UserFrontend
         run: aws s3 cp s3://chippersage-env-prod/user/.env .
 
       - name: Build React App
