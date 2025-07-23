@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -27,6 +26,10 @@ jobs:
       - name: Install Dependencies (npm)
         working-directory: FlowofEnglish_UserFrontend
         run: npm ci
+
+      - name: Download env file
+        working-directory: FlowofEnglish_Frontend/FoE/packages/user
+        run: aws s3 cp s3://chippersage-env-prod/user/.env .
 
       - name: Build React App
         working-directory: FlowofEnglish_UserFrontend
