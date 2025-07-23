@@ -31,13 +31,17 @@ public class SecurityConfig {
                             "https://flowofenglish.thechippersage.com", 
                             "https://flowofenglish.thechippersage.com/admin",
                             "https://flowofenglish-user.thechippersage.com",
+                            "https://flowofenglish-admin.thechippersage.com",
+                            "http://flowofenglish-old.thechippersage.com/",
+                            "https://flowofenglish-backend.thechippersage.com",
                             "http://localhost:5173", 
                             "http://10.12.131.110:5173/",
                             "http://127.0.0.1:5501",  
                             "http://10.12.127.175:5173/", 
                             "http://127.0.0.1:5501/index.html", 
-                            "https://chippersageblr.s3.ap-south-1.amazonaws.com",
-                            "https://paymentpage-nine.vercel.app/" // Include this domain
+                            "https://chippersageblr.s3.ap-south-1.amazonaws.com", // s3 bucket link
+                            "https://d1pb9z6a4vrmi3.cloudfront.net/", // cloud-front s3 url
+                            "https://paymentpage-nine.vercel.app/" // Razorpay html domain
                         ));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
