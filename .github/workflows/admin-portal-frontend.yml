@@ -1,10 +1,9 @@
-name: CI/CD - Deploy Admin Portal FrontEnd
+name: CI/CD - Deploy Admin Portal Frontend
 
 on:
   push:
     branches:
       - master
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -26,11 +25,15 @@ jobs:
 
       - name: Install Dependencies
         working-directory: FlowofEnglish_Frontend/FoE/packages/admin
-        run: yarn install --frozen-lockfile
+        run: yarn install --legacy-peer-deps
+
+      - name: Download env file
+        working-directory: FlowofEnglish_Frontend/FoE/packages/admin
+        run: aws s3 cp s3://chippersage-env-prod/admin/.env .
 
       - name: Build React App
         working-directory: FlowofEnglish_Frontend/FoE/packages/admin
-        run: CI='' yarn build
+        run: CI='' npm run build
 
       - name: Sync to S3
         run: aws s3 sync FlowofEnglish_Frontend/FoE/packages/admin/build/ s3://chippersage-flowofenglish-adminportal-prod --delete
