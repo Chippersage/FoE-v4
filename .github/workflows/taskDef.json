@@ -132,6 +132,9 @@
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/mail/properties/smtp/starttls/required"
         },
         {
+          "name": "SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/mail/properties/smtp/ssl/trust/"
+        {
           "name": "AWS_ACCESSKEYID",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/aws/access-key-id"
         },
