@@ -2,11 +2,8 @@ package com.FlowofEnglish.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.springframework.scheduling.annotation.*;
+import org.slf4j.*;
 import com.FlowofEnglish.service.*;
 
 @Configuration
@@ -16,11 +13,8 @@ public class SchedulerConfig {
     
     @Autowired
     private WeeklyReportService weeklyReportService;
-    
-    @Autowired
-    private BuddhaPurnimaGreetingService buddhaPurnimaGreetingService;
-    
-    @Scheduled(cron = "0 0 9 * * MON", zone = "Asia/Kolkata") // Every Monday at 9 AM
+        
+    @Scheduled(cron = "0 0 10 * * TUE", zone = "Asia/Kolkata") // Every Tuesday at 10 AM
     public void sendWeeklyEmails() {
         System.out.println("Weekly email scheduler triggered at: " + java.time.LocalDateTime.now());
         logger.info("Weekly email scheduler triggered at: {}", java.time.LocalDateTime.now());
@@ -31,7 +25,17 @@ public class SchedulerConfig {
             logger.error("Error occurred while sending weekly emails: {}", e.getMessage(), e);
         }
     }
-    
+}
+
+
+
+
+
+//@Autowired
+//private BuddhaPurnimaGreetingService buddhaPurnimaGreetingService;
+
+
+
 //    // Run once at 2:00 PM  (May 12, 2025)
 //    @Scheduled(cron = "0 0 14 12 5 ?", zone = "Asia/Kolkata")
 //    public void sendBuddhaPurnimaGreetings() {
@@ -44,4 +48,3 @@ public class SchedulerConfig {
 //            logger.error("Error occurred while sending Buddha Purnima greetings: {}", e.getMessage(), e);
 //        }
 //    }
-}

@@ -175,6 +175,14 @@
 			<version>2.25.11</version>
 		</dependency>
 		
+		<!-- AWS Cloudfront SDK  -->
+		<dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-cloudfront</artifactId>
+          <version>1.12.705</version> <!-- Latest stable as of mid-2025 -->
+        </dependency>
+
+		
 		<!-- Monitoring -->
 		<dependency>
 			<groupId>io.micrometer</groupId>

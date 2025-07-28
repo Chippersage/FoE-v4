@@ -41,6 +41,7 @@ public class SecurityConfig {
                             "http://127.0.0.1:5501/index.html", 
                             "https://chippersageblr.s3.ap-south-1.amazonaws.com", // s3 bucket link
                             "https://d1pb9z6a4vrmi3.cloudfront.net/", // cloud-front s3 url
+                            "https://d1kq2q5oc3pn5i.cloudfront.net/",
                             "https://paymentpage-nine.vercel.app/" // Razorpay html domain
                         ));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

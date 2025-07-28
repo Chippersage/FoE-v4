@@ -1,6 +1,4 @@
-
 # .gitignore in the root directory of your project
-
 # Ignore node_modules directories
 FlowofEnglish_Frontend/node_modules/
 FlowofEnglish_Frontend/FoE/packages/admin/build
@@ -19,6 +17,7 @@ FlowofEnglish_UserFrontend/public/Sentences/
 FlowofEnglish_Backend/uploads/
 # FlowofEnglish_UserFrontend/package-lock.jsonFlowofEnglish_Backend/src/main/resources/application.properties
 FlowofEnglish_Backend/src/main/resources/application.properties
+FlowofEnglish_Backend/src/main/resources/keys/
 # Ignore Docker-related files
 # FlowofEnglish_Backend/Dockerfile
 FlowofEnglish_Backend/docker-compose.yml
