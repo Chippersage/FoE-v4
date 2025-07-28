@@ -134,6 +134,7 @@
         {
           "name": "SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/mail/properties/smtp/ssl/trust/"
+        },
         {
           "name": "AWS_ACCESSKEYID",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/aws/access-key-id"
@@ -153,6 +154,22 @@
         {
           "name": "RAZORPAY_KEYID",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/razorpay/key-id"
+        },
+        {
+          "name": "CLOUDFRONT_DOMAIN",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/domain"
+        },
+        {
+         "name": "CLOUDFRONT_KEY_PAIR_ID",
+         "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/key-pair-id"
+        },
+        {
+         "name": "CLOUDFRONT_PRIVATE_KEY",
+         "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/private-key"
+        },
+        {
+          "name": "CLOUDFRONT_URL_EXPIRATION_SECONDS",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/url-expiration-seconds"
         },
         {
           "name": "RAZORPAY_KEYSECRET",
