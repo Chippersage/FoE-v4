@@ -3,8 +3,8 @@ package com.FlowofEnglish.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -22,16 +22,19 @@ public class CloudFrontConfig {
     @Value("${cloudfront.keyPairId}")
     private String keyPairId;
 
-    @Value("${cloudfront.privateKeyPath:}")
-    private Resource privateKeyResource; // Will be null if not set
+    @Value("${cloudfront.private-key-path:}")
+    private String privateKeyPath;
+
+    @Value("${cloudfront.private-key-content:}")
+    private String privateKeyContent;
 
     @Value("${cloudfront.url.expiration.seconds}")
     private long expirationSeconds;
 
-    private final Environment environment;
+    private final ResourceLoader resourceLoader;
 
-    public CloudFrontConfig(Environment environment) {
-        this.environment = environment;
+    public CloudFrontConfig(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
     }
 
     public String getDomain() {
@@ -49,33 +52,30 @@ public class CloudFrontConfig {
     @Bean
     public PrivateKey cloudFrontPrivateKey() {
         try {
-            String activeProfile = environment.getProperty("spring.profiles.active", "default");
+            String pemContent;
 
-            String privateKeyPem;
-
-            if ("prod".equalsIgnoreCase(activeProfile)) {
-                // Read from environment variable in ECS
-                privateKeyPem = System.getenv("CLOUDFRONT_PRIVATE_KEY");
-                if (privateKeyPem == null || privateKeyPem.isBlank()) {
-                    throw new RuntimeException("CLOUDFRONT_PRIVATE_KEY environment variable is not set");
+            if (privateKeyPath != null && !privateKeyPath.isBlank()) {
+                // Load from file (classpath or absolute)
+                Resource resource = resourceLoader.getResource(privateKeyPath);
+                try (InputStream is = resource.getInputStream()) {
+                    pemContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                 }
+            } else if (privateKeyContent != null && !privateKeyContent.isBlank()) {
+                // Load from raw secure string (e.g., from SSM or SecretsManager)
+                pemContent = privateKeyContent.replace("\\n", "\n");
             } else {
-                // Fallback to local file for dev/test
-                try (InputStream is = privateKeyResource.getInputStream()) {
-                    byte[] keyBytes = is.readAllBytes();
-                    privateKeyPem = new String(keyBytes, StandardCharsets.UTF_8);
-                }
+                throw new IllegalArgumentException("CloudFront private key not provided via path or content.");
             }
 
-            // Sanitize PEM and decode
-            privateKeyPem = privateKeyPem
+            // Strip PEM markers
+            pemContent = pemContent
                     .replace("-----BEGIN RSA PRIVATE KEY-----", "")
                     .replace("-----END RSA PRIVATE KEY-----", "")
                     .replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s+", "");
 
-            byte[] decoded = Base64.getDecoder().decode(privateKeyPem);
+            byte[] decoded = Base64.getDecoder().decode(pemContent);
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
             return KeyFactory.getInstance("RSA").generatePrivate(spec);
 
