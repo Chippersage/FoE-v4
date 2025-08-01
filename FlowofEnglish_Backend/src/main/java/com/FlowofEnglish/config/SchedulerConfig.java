@@ -14,7 +14,7 @@ public class SchedulerConfig {
     @Autowired
     private WeeklyReportService weeklyReportService;
         
-    @Scheduled(cron = "0 50 12 * * TUE", zone = "Asia/Kolkata") // Every Tuesday at 10 AM
+//    @Scheduled(cron = "0 50 12 * * TUE", zone = "Asia/Kolkata") // Every Tuesday at 10 AM
     public void sendWeeklyEmails() {
         System.out.println("Weekly email scheduler triggered at: " + java.time.LocalDateTime.now());
         logger.info("Weekly email scheduler triggered at: {}", java.time.LocalDateTime.now());
