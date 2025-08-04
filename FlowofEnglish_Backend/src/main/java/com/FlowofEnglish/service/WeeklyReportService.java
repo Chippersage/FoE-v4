@@ -57,7 +57,7 @@ public class WeeklyReportService {
             logger.info("Found {} users with valid emails", usersWithValidEmails.size());
 
             sendAdminReports(inactiveUsers);
-            sendUserNotifications(usersWithValidEmails);
+           // sendUserNotifications(usersWithValidEmails);
             
             logger.info("Completed weekly email report process. Processed {} users.", usersWithValidEmails.size());
             
