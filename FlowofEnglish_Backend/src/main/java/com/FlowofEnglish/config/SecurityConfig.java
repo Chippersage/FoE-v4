@@ -36,21 +36,21 @@ public class SecurityConfig {
                 .configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of(
-                        "http://localhost:3000", 
+                        "http://localhost:3000",
                         "http://localhost:8080",
-                        "http://13.234.42.153:8080", 
+                        "http://13.234.42.153:8080",
                         "http://13.234.42.153:3000",
-                        "https://flowofenglish.thechippersage.com", 
+                        "https://flowofenglish.thechippersage.com",
                         "https://flowofenglish.thechippersage.com/admin",
                         "https://flowofenglish-user.thechippersage.com",
                         "https://flowofenglish-admin.thechippersage.com",
                         "https://flowofenglish-old.thechippersage.com/",
                         "https://flowofenglish-backend.thechippersage.com",
-                        "http://localhost:5173", 
+                        "http://localhost:5173",
                         "http://10.12.131.110:5173/",
-                        "http://127.0.0.1:5501",  
-                        "http://10.12.127.175:5173/", 
-                        "http://127.0.0.1:5501/index.html", 
+                        "http://127.0.0.1:5501",
+                        "http://10.12.127.175:5173/",
+                        "http://127.0.0.1:5501/index.html",
                         "https://chippersageblr.s3.ap-south-1.amazonaws.com", // s3 bucket
                         "https://d1pb9z6a4vrmi3.cloudfront.net/", // CloudFront URL chippersageblr
                         "https://d1kq2q5oc3pn5i.cloudfront.net/", // CloudFront Signed-in URL
@@ -69,12 +69,12 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize -> {
             authorize
                 // Allow Swagger authentication endpoints
-                .requestMatchers("/api/v1/swagger/login", "/api/v1/swagger/authenticate", 
+                .requestMatchers("/api/v1/swagger/login", "/api/v1/swagger/authenticate",
                                 "/api/v1/swagger/logout", "/api/v1/swagger/unauthorized")
                 .permitAll()
                 
                 // Allow API docs and Swagger UI (these will be filtered by SwaggerAuthFilter)
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", 
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
                                 "/webjars/swagger-ui/**")
                 .permitAll()
                 
