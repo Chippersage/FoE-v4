@@ -69,7 +69,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize -> {
             authorize
                 // Allow Swagger authentication endpoints
-                .requestMatchers("/api/v1/swagger/login", "/api/v1/swagger/authenticate",
+                .requestMatchers("/actuator/health", "/api/v1/swagger/login", "/api/v1/swagger/authenticate",
                                 "/api/v1/swagger/logout", "/api/v1/swagger/unauthorized")
                 .permitAll()
                 
