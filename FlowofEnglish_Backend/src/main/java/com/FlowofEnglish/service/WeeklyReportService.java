@@ -28,12 +28,56 @@ public class WeeklyReportService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    public int weeklyReportServiceTestSingleUser(List<User> users) {
+        return sendUserNotifications(users);
+    }
 
+    /**
+     * Main method - now uses optimized database filtering
+     * No need for manual filtering since the database query already applies all filters
+     */
+    @Transactional
+    public void sendWeeklyReports() {
+        logger.info("Starting weekly email report process...");
+        int successCount = 0;
+        
+        try {
+            // This now only returns users that are:
+            // 1. ACTIVE status
+            // 2. In cohorts that haven't ended
+            // 3. Inactive for the specified days
+            List<User> inactiveUsers = getInactiveUsers(DEFAULT_INACTIVITY_DAYS);
+            logger.info("Found {} inactive users (filtered for active users in active cohorts)", inactiveUsers.size());
+
+            // All users returned already have valid conditions, so we just need email validation
+            List<User> usersWithValidEmails = filterUsersWithValidEmails(inactiveUsers);
+            logger.info("Found {} users with valid emails", usersWithValidEmails.size());
+
+            sendAdminReports(inactiveUsers);
+            
+         // Track success count when sending user notifications
+            successCount = sendUserNotifications(usersWithValidEmails);
+
+            logger.info("Completed weekly email report process. Successfully sent {} emails out of {}.", 
+                        successCount, usersWithValidEmails.size());
+            
+        } catch (Exception e) {
+            logger.error("Error in weekly report process: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Updated method using the optimized repository query
+     * Now filters at database level instead of in-memory
+     */
     @Transactional
     public List<User> getInactiveUsers(int inactivityDays) {
         OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(inactivityDays);
 
-        List<Object[]> latestAttempts = userAttemptsRepository.findLatestAttemptTimestamps();
+        // - ACTIVE users only
+        // - Users in active cohorts only (cohortEndDate > now or null)
+        List<Object[]> latestAttempts = userAttemptsRepository.findLatestAttemptTimestampsForActiveUsersInActiveCohorts();
 
         return latestAttempts.stream()
             .filter(attempt -> {
@@ -45,26 +89,6 @@ public class WeeklyReportService {
             .collect(Collectors.toList());
     }
     
-    @Transactional
-    public void sendWeeklyReports() {
-        logger.info("Starting weekly email report process...");
-
-        try {
-            List<User> inactiveUsers = getInactiveUsers(DEFAULT_INACTIVITY_DAYS);
-            logger.info("Found {} inactive users", inactiveUsers.size());
-
-            List<User> usersWithValidEmails = filterUsersWithValidEmails(inactiveUsers);
-            logger.info("Found {} users with valid emails", usersWithValidEmails.size());
-
-            sendAdminReports(inactiveUsers);
-           // sendUserNotifications(usersWithValidEmails);
-            
-            logger.info("Completed weekly email report process. Processed {} users.", usersWithValidEmails.size());
-            
-        } catch (Exception e) {
-            logger.error("Error in weekly report process: {}", e.getMessage(), e);
-        }
-    }
     
     private List<User> filterUsersWithValidEmails(List<User> users) {
         return users.stream()
@@ -116,10 +140,11 @@ public class WeeklyReportService {
             .orElse(null);
     }
     
-    private void sendUserNotifications(List<User> users) {
-        // Use a Set to track (email + name) pairs
+    private int sendUserNotifications(List<User> users) {
         Set<String> processedKeys = new HashSet<>();
 
+        int successCount = 0;
+        
         for (User user : users) {
             String email = user.getUserEmail();
             String name = user.getUserName();
@@ -129,7 +154,6 @@ public class WeeklyReportService {
                 continue;
             }
 
-            // Create a unique key for (email + name)
             String uniqueKey = email.trim().toLowerCase() + "::" + name.trim().toLowerCase();
 
             if (processedKeys.contains(uniqueKey)) {
@@ -139,14 +163,16 @@ public class WeeklyReportService {
 
             try {
                 sendInactiveUserNotification(user);
-                processedKeys.add(uniqueKey); // mark as processed
+                processedKeys.add(uniqueKey);
+                successCount++;
                 logger.info("Notification sent to user: {} ({})", name, email);
             } catch (Exception e) {
                 logger.error("Failed to send notification to user: {} ({}) - Error: {}", name, email, e.getMessage(), e);
             }
         }
+        
+        return successCount;
     }
-
 
     private void sendAdminReport(String orgId, String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
         if (inactiveUsers.isEmpty()) {
@@ -211,7 +237,7 @@ public class WeeklyReportService {
             return;
         }
         
-        String subject = "We Miss You! Your English Journey Awaits";
+        String subject = "Your Flow of English is Waiting for You! 📚";
         String emailBody = buildUserNotificationBody(user);
         
         SimpleMailMessage message = new SimpleMailMessage();
@@ -221,31 +247,28 @@ public class WeeklyReportService {
         
         mailSender.send(message);
     }
-    
+
     private String buildUserNotificationBody(User user) {
+        String firstName = user.getUserName() != null ? user.getUserName() : "[First Name]";
         StringBuilder body = new StringBuilder();
 
-        body.append("Hi ").append(user.getUserName()).append(",\n\n");
+        body.append("Hi ").append(firstName).append(",\n\n");
 
-        body.append("We noticed you haven’t dropped by *Flow of English* lately, and we just wanted to check in.\n\n");
-        
-        body.append("Your English learning journey is still right where you left it:\n");
-        body.append("• All your progress is safe and ready to pick up\n");
-        body.append("• Fresh challenges and new lessons are waiting\n");
-        body.append("• Your personalized learning path is just a click away\n\n");
+        body.append("It’s been a little quiet without you in the Flow of English app. Even the words are asking, \"Where is ").append(firstName).append("?\" 😄\n\n");
 
-        body.append("Even 10 minutes today can make a big difference! You’ll be surprised how quickly it all comes back once you get going.\n\n");
+        body.append("Were you able to open the app this week? If something stopped you — like internet issues, Application issues, school work, or even your pet sitting on your keyboard — just reply and tell us. We are happy to help.\n\n");
 
-        body.append("Click here to jump back in: ").append(PLATFORM_URL).append("\n\n");
+        body.append("Your lessons are still waiting. Even 5–10 minutes today can help you keep learning and make your English better.\n\n");
 
-        body.append("Need help or have a question? Just reply to this email or drop us a note at ").append(SUPPORT_EMAIL).append("\n\n");
+        body.append("👉 Start learning again: ").append(PLATFORM_URL).append("\n\n");
 
-        body.append("We’re cheering you on, always!\n\n");
-        body.append("Warm regards,\n");
+        body.append("If you need help or want to share how your week went, reply to this email or write to us at ").append(SUPPORT_EMAIL).append(". We always like to hear from you.\n\n");
+
+        body.append("With warm wishes,\n");
         body.append("The ChipperSage Team\n\n");
-
-        body.append("P.S. Learning a little every day adds up. You've got this 💪");
+        body.append("P.S. A small step today is better than no step at all. Your future self will be proud. 💪");
 
         return body.toString();
     }
+
 }
