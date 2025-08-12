@@ -280,8 +280,15 @@ const SingleSubconcept = () => {
     else {
       const iframe = document.getElementById("embeddedContent");
       if (iframe && iframe.tagName === "IFRAME") {
+        // Send the old format for backward compatibility
+        (iframe as HTMLIFrameElement).contentWindow?.postMessage("submitClicked", "*");
+        
+        // Send additional data separately
         (iframe as HTMLIFrameElement).contentWindow?.postMessage(
-          "submitClicked",
+          {
+            action: "subconceptData",
+            subconceptMaxscore: subconcept?.subconceptMaxscore
+          },
           "*"
         );
       }
@@ -469,7 +476,7 @@ const SingleSubconcept = () => {
                     <iframe
                       id="embeddedContent"
                       src={subconcept?.subconceptLink}
-                      // src={"/alphabet/consonantblends/consonantblends-startblends/consonantblends-startblends-Level1-fr.html"}
+                      // src={"/alphabet/alphabet_a.html"}
                       title="Embedded Content"
                       className={`w-full min-h-[500px] sm:min-h-[800px]`}
                       onLoad={() => {
