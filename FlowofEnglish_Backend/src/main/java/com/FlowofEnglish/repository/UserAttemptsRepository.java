@@ -1,7 +1,6 @@
 package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.UserAttempts;
-
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -56,4 +55,22 @@ public interface UserAttemptsRepository extends JpaRepository<UserAttempts, Long
           @Param("unitId") String unitId,
           @Param("subconceptId") String subconceptId
       );
+      
+      /**
+       * Find latest attempt timestamps for users who:
+       * 1. Are ACTIVE (status = 'ACTIVE')
+       * 2. Are in cohorts that haven't ended yet (cohortEndDate is null or > current time)
+       * This eliminates the need for in-memory filtering
+       */
+      @Query("SELECT ua.user.userId, MAX(ua.userAttemptEndTimestamp) " +
+             "FROM UserAttempts ua " +
+             "JOIN ua.user u " +
+             "JOIN UserCohortMapping ucm ON ucm.user.userId = u.userId " +
+             "JOIN ucm.cohort c " +
+             "WHERE u.status = 'ACTIVE' " +
+             "AND ucm.status = 'ACTIVE' " +
+             "AND (c.cohortEndDate IS NULL OR c.cohortEndDate > CURRENT_TIMESTAMP) " +
+             "GROUP BY ua.user.userId")
+      List<Object[]> findLatestAttemptTimestampsForActiveUsersInActiveCohorts();
+  
 }

@@ -132,6 +132,10 @@
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/mail/properties/smtp/starttls/required"
         },
         {
+          "name": "SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/mail/properties/smtp/ssl/trust"
+        },
+        {
           "name": "AWS_ACCESSKEYID",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/aws/access-key-id"
         },
@@ -146,6 +150,22 @@
         {
           "name": "AWS_S3_BUCKET",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/aws/s3/bucket"
+        },
+        {
+          "name": "CLOUDFRONT_DOMAIN",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/domain"
+        },
+        {
+          "name": "CLOUDFRONT_KEYPAIRID",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/key-pair-id"
+        },
+        {
+          "name": "CLOUDFRONT_PRIVATE_KEY_CONTENT",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/private-key"
+        },
+        {
+          "name": "CLOUDFRONT_URL_EXPIRATION_SECONDS",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/cloudfront/url-expiration-seconds"
         },
         {
           "name": "RAZORPAY_KEYID",
@@ -224,6 +244,10 @@
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/management/endpoint/health/show-components"
         },
         {
+          "name": "MANAGEMENT_ENDPOINT_METRICS_ENABLED",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/management/endpoint/metrics/enabled"
+        },
+        {
           "name": "SPRING_JPA_DATABASE_PLATFORM",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/jpa/database-platform"
         },
@@ -250,7 +274,56 @@
         {
           "name": "LOGGING_FILE_NAME",
           "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/logging/file/name"
+        },
+        {
+          "name": "SPRINGDOC_API_DOCS_ENABLED",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/api-docs/enabled"
+        },
+        {
+          "name": "SPRINGDOC_SWAGGER_UI_ENABLED",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/swagger-ui/enabled"
+        },
+        {
+          "name": "SPRINGDOC_SWAGGER_UI_PATH",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/swagger-ui/path"
+        },
+        {
+          "name": "SPRINGDOC_API_DOCS_PATH",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/api-docs/path"
+        },
+        {
+          "name": "SPRINGDOC_SWAGGER_UI_DISABLE_SWAGGER_DEFAULT_URL",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/swagger-ui/disable-swagger-default-url"
+        },
+        {
+          "name": "SPRINGDOC_SWAGGER_UI_USE_ROOT_PATH",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/springdoc/swagger-ui/use-root-path"
+        },
+        {
+          "name": "SERVER_SERVLET_SESSION_COOKIE_NAME",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/server/servlet/session/cookie/name"
+        },
+        {
+          "name": "SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/server/servlet/session/cookie/http-only"
+        },
+        {
+          "name": "SERVER_SERVLET_SESSION_COOKIE_SECURE",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/server/servlet/session/cookie/secure"
+        },
+        {
+          "name": "SPRING_THYMELEAF_PREFIX",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/thymeleaf/prefix"
+        },
+        {
+          "name": "SPRING_THYMELEAF_SUFFIX",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/thymeleaf/suffix"
+        },
+        {
+          "name": "SPRING_THYMELEAF_CACHE",
+          "valueFrom": "arn:aws:ssm:ap-south-1:325599888975:parameter/flowofenglish/prod/backend/spring/thymeleaf/cache"
         }
+
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

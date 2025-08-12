@@ -6,7 +6,7 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import org.springframework.cache.annotation.*;
 import jakarta.transaction.Transactional;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.commons.csv.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -47,51 +47,57 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     @Autowired
     private UserAttemptsRepository  userAttemptsRepository;
     
+    @Autowired
+    private CloudFrontSignedUrlService cloudFrontSignedUrlService;
+    
+ // Inject CloudFront domain from application.properties
+    @Value("${cloudfront.domain}")
+    private String cloudFrontDomain;
+    
     private static final Logger logger = LoggerFactory.getLogger(ProgramConceptsMappingServiceImpl.class);
     
-    @Override
-    @Cacheable(value = "programConceptsMappings", key = "'all'")
-    public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
+    /**
+     * Helper method to process subconceptLink and generate signed URLs when needed
+     */
+    private String processSubconceptLink(String subconceptLink) {
+        if (subconceptLink == null || subconceptLink.trim().isEmpty()) {
+            return subconceptLink;
+        }
+        
         try {
-            logger.info("Retrieving all program concepts mappings from database");
-            List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findAll();
-            logger.info("Successfully retrieved {} program concepts mappings", mappings.size());
-            return mappings;
+            // Check if the link is a path (starts with / and doesn't contain http)
+            if (subconceptLink.startsWith("/") && !subconceptLink.toLowerCase().startsWith("http")) {
+                logger.debug("Processing path for signed URL: {}", subconceptLink);
+                // This is a path, generate signed URL
+                return cloudFrontSignedUrlService.generateSignedUrl(subconceptLink);
+            }
+            // Check if the link is already a CloudFront URL
+            else if (subconceptLink.toLowerCase().startsWith(cloudFrontDomain.toLowerCase())) {
+                logger.debug("Processing CloudFront URL for signed URL: {}", subconceptLink);
+                // Extract the path from the CloudFront URL
+                String path = subconceptLink.substring(cloudFrontDomain.length());
+                if (!path.startsWith("/")) {
+                    path = "/" + path;
+                }
+                return cloudFrontSignedUrlService.generateSignedUrl(path);
+            }
+            // Check if it's an S3 direct link or other external URL
+            else if (subconceptLink.toLowerCase().startsWith("http")) {
+                logger.debug("Returning external URL as-is: {}", subconceptLink);
+                // This is an external URL (like S3 direct link), return as-is
+                return subconceptLink;
+            }
+            else {
+                logger.warn("Unrecognized link format: {}", subconceptLink);
+                // Fallback: return as-is
+                return subconceptLink;
+            }
         } catch (Exception e) {
-            logger.error("Error occurred while retrieving all program concepts mappings: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to retrieve program concepts mappings", e);
+            logger.error("Error processing subconceptLink: {}, Error: {}", subconceptLink, e.getMessage());
+            // If there's an error generating signed URL, return original link
+            return subconceptLink;
         }
     }
-
-    @Override
-    @Cacheable(value = "programConceptsMappings", key = "#programConceptId")
-    public Optional<ProgramConceptsMapping> getProgramConceptsMappingById(Long programConceptId) {
-        try {
-            logger.info("Retrieving program concepts mapping with ID: {}", programConceptId);
-            
-            if (programConceptId == null) {
-                logger.warn("Program concept ID is null");
-                throw new IllegalArgumentException("Program concept ID cannot be null");
-            }
-            
-            Optional<ProgramConceptsMapping> mapping = programConceptsMappingRepository.findById(programConceptId);
-            
-            if (mapping.isPresent()) {
-                logger.info("Successfully found program concepts mapping with ID: {}", programConceptId);
-            } else {
-                logger.warn("No program concepts mapping found with ID: {}", programConceptId);
-            }
-            
-            return mapping;
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid argument for getProgramConceptsMappingById: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error occurred while retrieving program concepts mapping with ID {}: {}", programConceptId, e.getMessage(), e);
-            throw new RuntimeException("Failed to retrieve program concepts mapping", e);
-        }
-    }
-    
     
     @Override
     @Cacheable(value = "programConceptsByUnit", key = "#userId + '_' + #unitId")
@@ -187,7 +193,16 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
             subconceptResponseDTO.setSubconceptDesc2(mapping.getSubconcept().getSubconceptDesc2());
             subconceptResponseDTO.setSubconceptType(mapping.getSubconcept().getSubconceptType());
-            subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
+            //subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
+
+            // Process the subconceptLink to handle signed URLs
+            String originalLink = mapping.getSubconcept().getSubconceptLink();
+            String processedLink = processSubconceptLink(originalLink);
+            subconceptResponseDTO.setSubconceptLink(processedLink);
+            
+            logger.debug("Processed link for subconcept {}: {} -> {}", 
+                    subconcept.getSubconceptId(), originalLink, processedLink);
+            
             subconceptResponseDTO.setDependency(mapping.getSubconcept().getDependency());
             subconceptResponseDTO.setSubconceptMaxscore(mapping.getSubconcept().getSubconceptMaxscore());
             subconceptResponseDTO.setNumQuestions(mapping.getSubconcept().getNumQuestions());
@@ -321,6 +336,49 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         }
     }
 
+    
+    @Override
+    @Cacheable(value = "programConceptsMappings", key = "'all'")
+    public List<ProgramConceptsMapping> getAllProgramConceptsMappings() {
+        try {
+            logger.info("Retrieving all program concepts mappings from database");
+            List<ProgramConceptsMapping> mappings = programConceptsMappingRepository.findAll();
+            logger.info("Successfully retrieved {} program concepts mappings", mappings.size());
+            return mappings;
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving all program concepts mappings: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve program concepts mappings", e);
+        }
+    }
+
+    @Override
+    @Cacheable(value = "programConceptsMappings", key = "#programConceptId")
+    public Optional<ProgramConceptsMapping> getProgramConceptsMappingById(Long programConceptId) {
+        try {
+            logger.info("Retrieving program concepts mapping with ID: {}", programConceptId);
+            
+            if (programConceptId == null) {
+                logger.warn("Program concept ID is null");
+                throw new IllegalArgumentException("Program concept ID cannot be null");
+            }
+            
+            Optional<ProgramConceptsMapping> mapping = programConceptsMappingRepository.findById(programConceptId);
+            
+            if (mapping.isPresent()) {
+                logger.info("Successfully found program concepts mapping with ID: {}", programConceptId);
+            } else {
+                logger.warn("No program concepts mapping found with ID: {}", programConceptId);
+            }
+            
+            return mapping;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument for getProgramConceptsMappingById: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving program concepts mapping with ID {}: {}", programConceptId, e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve program concepts mapping", e);
+        }
+    }
     
     
     @Override

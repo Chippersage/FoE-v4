@@ -3,26 +3,22 @@ package com.FlowofEnglish.service;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.slf4j.*;
 import jakarta.transaction.Transactional;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class WeeklyReportService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportService.class);
+    private static final int DEFAULT_INACTIVITY_DAYS = 5;
+    private static final String SUPPORT_EMAIL = "support@thechippersage.com";
+    private static final String PLATFORM_URL = "https://flowofenglish.thechippersage.com";
     
     @Autowired
     private UserAttemptsRepository userAttemptsRepository;
@@ -33,333 +29,246 @@ public class WeeklyReportService {
     @Autowired
     private JavaMailSender mailSender;
     
-    private static final Logger logger = LoggerFactory.getLogger(WeeklyReportService.class);
-    
-    private static final String TEAM_ORG_ID = "TEAM";
-    
-    private static final String MAHA_ORG_ID = "MAHA";
-    
-    private static final String SKEI_ORG_ID = "SKEI";
-    
-    // Define image paths as constants - using class-path for deployed environment
-    private static final String CONSISTENCY_IMAGE = "images/Improve Everyday 01.jpg";
-    private static final String LOGO_IMAGE = "images/ChipperSageLogo.png";
+    public int weeklyReportServiceTestSingleUser(List<User> users) {
+        return sendUserNotifications(users);
+    }
 
+    /**
+     * Main method - now uses optimized database filtering
+     * No need for manual filtering since the database query already applies all filters
+     */
+    @Transactional
+    public void sendWeeklyReports() {
+        logger.info("Starting weekly email report process...");
+        int successCount = 0;
+        
+        try {
+            // This now only returns users that are:
+            // 1. ACTIVE status
+            // 2. In cohorts that haven't ended
+            // 3. Inactive for the specified days
+            List<User> inactiveUsers = getInactiveUsers(DEFAULT_INACTIVITY_DAYS);
+            logger.info("Found {} inactive users (filtered for active users in active cohorts)", inactiveUsers.size());
+
+            // All users returned already have valid conditions, so we just need email validation
+            List<User> usersWithValidEmails = filterUsersWithValidEmails(inactiveUsers);
+            logger.info("Found {} users with valid emails", usersWithValidEmails.size());
+
+            sendAdminReports(inactiveUsers);
+            
+         // Track success count when sending user notifications
+            successCount = sendUserNotifications(usersWithValidEmails);
+
+            logger.info("Completed weekly email report process. Successfully sent {} emails out of {}.", 
+                        successCount, usersWithValidEmails.size());
+            
+        } catch (Exception e) {
+            logger.error("Error in weekly report process: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Updated method using the optimized repository query
+     * Now filters at database level instead of in-memory
+     */
     @Transactional
     public List<User> getInactiveUsers(int inactivityDays) {
         OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(inactivityDays);
 
-        // Fetch latest attempt timestamps for all users
-        List<Object[]> latestAttempts = userAttemptsRepository.findLatestAttemptTimestamps();
+        // - ACTIVE users only
+        // - Users in active cohorts only (cohortEndDate > now or null)
+        List<Object[]> latestAttempts = userAttemptsRepository.findLatestAttemptTimestampsForActiveUsersInActiveCohorts();
 
-        // Filter users inactive for the specified days
-        List<User> inactiveUsers = latestAttempts.stream()
+        return latestAttempts.stream()
             .filter(attempt -> {
                 OffsetDateTime lastAttempt = (OffsetDateTime) attempt[1];
                 return lastAttempt.isBefore(cutoffTime);
             })
             .map(attempt -> userRepository.findById((String) attempt[0]).orElse(null))
-            .filter(user -> user != null)
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
-
-        return inactiveUsers;
     }
     
-    @Transactional
-    public void sendWeeklyReports() {
-    	logger.info("Starting weekly email report process...");
-
-        OffsetDateTime fiveDaysAgo = OffsetDateTime.now().minusDays(5);
-        // Get inactive users from attempts instead of session mapping
-        List<User> inactiveUsers = getInactiveUsers(5);
-        logger.info("Fetched {} inactive users since {}", inactiveUsers.size(), fiveDaysAgo);
-
-        // Separate users with valid emails
-        List<User> usersWithEmails = inactiveUsers.stream()
-            .filter(user -> user.getUserEmail() != null && !user.getUserEmail().isEmpty())
+    
+    private List<User> filterUsersWithValidEmails(List<User> users) {
+        return users.stream()
+            .filter(user -> isValidEmail(user.getUserEmail()))
             .collect(Collectors.toList());
-        logger.info("Found {} users with valid emails", usersWithEmails.size());
-
-        // Create a set to track users who have already received emails
-        Set<String> processedUserIds = new HashSet<>();
-
-        // Group inactive users by organization and cohort for admin reports only
-        Map<String, Map<String, List<User>>> orgCohortMap = inactiveUsers.stream()
-            .collect(Collectors.groupingBy(
-                user -> String.valueOf(user.getOrganization().getOrganizationId()),
-                Collectors.groupingBy(user -> {
-                    List<UserCohortMapping> mappings = user.getUserCohortMappings();
-                    return mappings != null && !mappings.isEmpty() 
-                           ? String.valueOf(mappings.get(0).getCohort().getCohortId())
-                           : "Unknown";
-                })
-            ));
-
-        // Process each organization for admin reports only
+    }
+    
+    private boolean isValidEmail(String email) {
+        return email != null && !email.trim().isEmpty();
+    }
+    
+    private void sendAdminReports(List<User> inactiveUsers) {
+        Map<String, Map<String, List<User>>> orgCohortMap = groupUsersByOrgAndCohort(inactiveUsers);
+        
         orgCohortMap.forEach((orgId, cohortUsers) -> {
             cohortUsers.forEach((cohortId, users) -> {
                 try {
-                    // Find the top scorer in this cohort
-                    UserCohortMapping topper = users.stream()
-                        .flatMap(user -> user.getUserCohortMappings().stream())
-                        .filter(mapping -> cohortId.equals(String.valueOf(mapping.getCohort().getCohortId())))
-                        .max(Comparator.comparingInt(UserCohortMapping::getLeaderboardScore))
-                        .orElse(null);
-
-                    // Send report email to admin
-                    sendEmailToOrganizationAdmin(orgId, cohortId, users, topper);
-                    logger.info("Processed cohort {} in organization {}, sent {} admin emails.", cohortId, orgId, 1);
+                    UserCohortMapping topper = findTopScorer(users, cohortId);
+                    sendAdminReport(orgId, cohortId, users, topper);
+                    logger.info("Sent admin report for organization: {}, cohort: {}", orgId, cohortId);
                 } catch (Exception e) {
-                    logger.error("Error processing cohort {} in organization {}. Error: {}", cohortId, orgId, e.getMessage(), e);
+                    logger.error("Failed to send admin report for org: {}, cohort: {}. Error: {}", 
+                               orgId, cohortId, e.getMessage(), e);
                 }
             });
         });
+    }
+    
+    private Map<String, Map<String, List<User>>> groupUsersByOrgAndCohort(List<User> users) {
+        return users.stream()
+            .collect(Collectors.groupingBy(
+                user -> String.valueOf(user.getOrganization().getOrganizationId()),
+                Collectors.groupingBy(this::getCohortId)
+            ));
+    }
+    
+    private String getCohortId(User user) {
+        List<UserCohortMapping> mappings = user.getUserCohortMappings();
+        return mappings != null && !mappings.isEmpty() 
+               ? String.valueOf(mappings.get(0).getCohort().getCohortId())
+               : "Unknown";
+    }
+    
+    private UserCohortMapping findTopScorer(List<User> users, String cohortId) {
+        return users.stream()
+            .flatMap(user -> user.getUserCohortMappings().stream())
+            .filter(mapping -> cohortId.equals(String.valueOf(mapping.getCohort().getCohortId())))
+            .max(Comparator.comparingInt(UserCohortMapping::getLeaderboardScore))
+            .orElse(null);
+    }
+    
+    private int sendUserNotifications(List<User> users) {
+        Set<String> processedKeys = new HashSet<>();
 
-        // Handle individual user emails separately to prevent duplicates
-        for (User user : usersWithEmails) {
-            // Skip if user already received an email
-            if (processedUserIds.contains(user.getUserId())) {
-                logger.info("Skipping duplicate email for user: {}", user.getUserId());
+        int successCount = 0;
+        
+        for (User user : users) {
+            String email = user.getUserEmail();
+            String name = user.getUserName();
+
+            if (!isValidEmail(email)) {
+                logger.warn("Skipping user {} due to invalid email", user.getUserId());
+                continue;
+            }
+
+            String uniqueKey = email.trim().toLowerCase() + "::" + name.trim().toLowerCase();
+
+            if (processedKeys.contains(uniqueKey)) {
+                logger.debug("Duplicate found: Skipping email to {} ({})", name, email);
                 continue;
             }
 
             try {
-                // Find the user's top cohort score for motivation (if applicable)
-                UserCohortMapping userTopperInfo = user.getUserCohortMappings().stream()
-                    .max(Comparator.comparingInt(UserCohortMapping::getLeaderboardScore))
-                    .orElse(null);
-
-                if (TEAM_ORG_ID.equals(user.getOrganization().getOrganizationId())) {
-                    sendBoardExamUserEmail(user);
-                } else {
-                    sendInactiveUserEmail(user, userTopperInfo);
-                }
-                
-                // Mark this user as processed
-                processedUserIds.add(user.getUserId());
-                logger.info("Email sent successfully to user: {}", user.getUserEmail());
+                sendInactiveUserNotification(user);
+                processedKeys.add(uniqueKey);
+                successCount++;
+                logger.info("Notification sent to user: {} ({})", name, email);
             } catch (Exception e) {
-                logger.error("Failed to send email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
+                logger.error("Failed to send notification to user: {} ({}) - Error: {}", name, email, e.getMessage(), e);
             }
         }
         
-        logger.info("Completed weekly email report process. Sent emails to {} unique users.", processedUserIds.size());
+        return successCount;
     }
-    
-    private void sendBoardExamUserEmail(User user) {
-        if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
+
+    private void sendAdminReport(String orgId, String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
+        if (inactiveUsers.isEmpty()) {
             return;
         }
 
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setTo(user.getUserEmail());
-            helper.setSubject("Your English Journey Misses You! 🚀 Time to Reignite the Fun!");
-            
-            StringBuilder emailBody = new StringBuilder()
-                .append("<html><body style='font-family: Arial, sans-serif; color: #333333;'>")
-                .append("<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>")
-                .append("<p>Dear ").append(user.getUserName()).append(",</p>")
-             // Engaging message
-                .append("<p>Your virtual English learning space has been awfully quiet without you! 😢 ")
-                .append("It's been waiting for your clicks, your progress, and those 'aha!' moments.</p>")
-             // Section: What's Happening While You Were Away
-                .append("<h3 style='color: #4a86e8;'>Here's What's Happening While You Were Away:</h3>")
-                .append("<ul>")
-                .append("<li>📖 The words you were mastering? They’ve been whispering, “Where’s ").append(user.getUserName()).append("?”</li>")
-                .append("<li>🎉 Your quizzes have been warming up for your grand return!</li>")
-                .append("<li>🧩 Your progress path is waiting for its next victory moment!</li>")
-                .append("</ul>")
-             // Insert consistency image
-                .append("<div style='text-align: center; margin: 20px 0;'>")
-                .append("<img src='cid:consistencyImage' alt='Consistency' style='max-width: 100%; height: auto;'/>")
-                .append("</div>")
-                
-             // Section: Just 10 Minutes Can Make a Difference
-                .append("<h3 style='color: #4a86e8;'>Just 10 Minutes Can Make a Difference!</h3>")
-                .append("<p>🔮 <b>Fun Prediction:</b> A quick 10-minute session today can boost your confidence by 17.5%! (Yes, we did the math. 😉)</p>")
-                
-                // Fun Fact
-                .append("<h3 style='color: #4a86e8;'>🧠 Did You Know?</h3>")
-                .append("<p>Taking a break is actually good! Your brain has been processing your last lessons in the background—now it's time to level up even faster! 🚀</p>")
-
-                // CTA Button
-                .append("<div style='text-align: center; margin: 20px 0;'>")
-                .append("<a href='https://flowofenglish.thechippersage.com' ")
-                .append("style='display: inline-block; padding: 12px 20px; background-color: #4a86e8; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;'>")
-                .append("👉 Jump Back In Now!</a>")
-                .append("</div>")
-
-                // Support Information
-                .append("<p>💡 <b>Need help?</b> Questions? Just reply to this email or reach us at ")
-                .append("<a href='mailto:support@thechippersage.com'>support@thechippersage.com</a>.</p>")
-                
-                // Sign-off
-                .append("<p>We can't wait to celebrate your progress! 🚀</p>")
-                .append("<p><b>The Chippersage Team 🌟</b></p>")
-
-                // P.S. Message
-                .append("<p><i>P.S. A tiny 10-minute effort today will make tomorrow's English feel like a breeze! ✨</i></p>")
-
-             // Footer with Logo
-                .append("<div style='margin-top: 30px; border-top: 1px solid #dddddd; padding-top: 20px; text-align: center;'>")
-                .append("<img src='cid:logoImage' alt='ChipperSage Logo' style='max-width: 150px; height: auto;'/>")
-                .append("<p style='color: #777777; font-size: 12px;'>© 2025 ChipperSage. All rights reserved.</p>")
-                .append("</div>")
-
-                .append("</div></body></html>");
-
-
-            helper.setText(emailBody.toString(), true);
-            
-            // Add images as inline attachments
-            helper.addInline("consistencyImage", new ClassPathResource(CONSISTENCY_IMAGE));
-            helper.addInline("logoImage", new ClassPathResource(LOGO_IMAGE));
-            
-            mailSender.send(mimeMessage);
-            
-            // Send copy to admin and support using simple text for admin copy
-            SimpleMailMessage adminCopy = new SimpleMailMessage();
-            adminCopy.setTo(new String[]{
-                user.getOrganization().getOrganizationAdminEmail(),
-                "support@thechippersage.com"
-            });
-            adminCopy.setSubject("Teacher on Exam Duty - " + user.getUserName());
-            adminCopy.setText(
-                "Exam duty notification sent to:\n" +
-                "Teacher: " + user.getUserName() + "\n" +
-                "Email: " + user.getUserEmail() + "\n" +
-                "Organization: " + user.getOrganization().getOrganizationId() + "\n" +
-                "Status: On Board Exam Duty (Feb 21 - Mar 11)\n\n" +
-                "Original email content sent in HTML format with images."
-            );
-            mailSender.send(adminCopy);
-            
-        } catch (MessagingException e) {
-            logger.error("Failed to send HTML email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
-            // Fallback to plain text email
-            sendPlainTextFallbackEmail(user, "Exam Duty Superhero!");
-        }
-    }
-
-    private void sendEmailToOrganizationAdmin(String orgId, String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
-        if (inactiveUsers == null || inactiveUsers.isEmpty()) {
-            return;
-        }
-
-        String subject = "Weekly Report for Cohort " + cohortId;
         String adminEmail = inactiveUsers.get(0).getOrganization().getOrganizationAdminEmail();
-
-        StringBuilder emailBody = new StringBuilder()
-            .append("Weekly Report for Cohort: ").append(cohortId).append("\n\n")
-            .append("Inactive Users (more than 5 days):\n");
-
-        inactiveUsers.forEach(user -> 
-            emailBody.append("- ")
-                    .append(user.getUserName())
-                    .append(" (")
-                    .append(user.getUserEmail() != null ? user.getUserEmail() : "No Email Provided")
-                    .append(")\n")
-        );
-
-        if (topper != null) {
-            emailBody.append("\nLeaderboard Topper:\n")
-                    .append(topper.getUser().getUserName())
-                    .append(" (Score: ")
-                    .append(topper.getLeaderboardScore())
-                    .append(")\n");
+        if (!isValidEmail(adminEmail)) {
+            logger.warn("Invalid admin email for organization: {}", orgId);
+            return;
         }
+
+        String subject = String.format("Weekly Report - Cohort %s (Organization %s)", cohortId, orgId);
+        String emailBody = buildAdminReportBody(cohortId, inactiveUsers, topper);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(adminEmail);
         message.setSubject(subject);
-        message.setText(emailBody.toString());
+        message.setText(emailBody);
+        
         mailSender.send(message);
     }
+    
+    private String buildAdminReportBody(String cohortId, List<User> inactiveUsers, UserCohortMapping topper) {
+        StringBuilder body = new StringBuilder();
+        body.append("Weekly Inactive Users Report\n");
+        body.append("=".repeat(30)).append("\n\n");
+        body.append("Cohort: ").append(cohortId).append("\n");
+        body.append("Report Date: ").append(OffsetDateTime.now().toLocalDate()).append("\n");
+        body.append("Inactive Period: More than ").append(DEFAULT_INACTIVITY_DAYS).append(" days\n\n");
+        
+        body.append("Inactive Users (").append(inactiveUsers.size()).append("):\n");
+        body.append("-".repeat(20)).append("\n");
+        
+        inactiveUsers.forEach(user -> {
+            body.append("• ").append(user.getUserName());
+            if (isValidEmail(user.getUserEmail())) {
+                body.append(" (").append(user.getUserEmail()).append(")");
+            } else {
+                body.append(" (No email provided)");
+            }
+            body.append("\n");
+        });
 
-    private void sendInactiveUserEmail(User user, UserCohortMapping topper) {
-        if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
+        if (topper != null) {
+            body.append("\nCohort Leader:\n");
+            body.append("-".repeat(15)).append("\n");
+            body.append("• ").append(topper.getUser().getUserName());
+            body.append(" - Score: ").append(topper.getLeaderboardScore()).append("\n");
+        }
+        
+        body.append("\n---\n");
+        body.append("ChipperSage Team\n");
+        body.append("Support: ").append(SUPPORT_EMAIL);
+        
+        return body.toString();
+    }
+
+    private void sendInactiveUserNotification(User user) {
+        if (!isValidEmail(user.getUserEmail())) {
+            logger.warn("Invalid email for user: {}", user.getUserId());
             return;
         }
         
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setTo(user.getUserEmail());
-            helper.setSubject("Missing Your English Adventures! 🚀 Your Learning Path is Getting Lonely!");
-            
-            StringBuilder emailBody = new StringBuilder()
-                .append("<html><body style='font-family: Arial, sans-serif; color: #333333;'>")
-                .append("<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>")
-                .append("<p>Dear ").append(user.getUserName()).append(",</p>")
-                .append("<p><strong>Guess what?</strong> Your virtual English learning space has been sending us sad emojis! 😢 ")
-                .append("It misses the sound of your clicks and the brilliance of your answers!</p>")
-                .append("<h2 style='color: #4a86e8;'>🎬 What's Been Happening While You Were Away:</h2>")
-                .append("<p>Remember those challenging words you were mastering? They've been hanging out together, ")
-                .append("planning a surprise quiz party for your return! (Don't worry - they're friendly quizzes with extra hints!)</p>")
-                
-                // Insert consistency image
-                .append("<div style='text-align: center; margin: 20px 0;'>")
-                .append("<img src='cid:consistencyImage' alt='Improve Every Day' style='max-width: 100%; height: auto;'/>")
-                .append("</div>")
-                
-                .append("<h2 style='color: #4a86e8;'>🔮 Fun Prediction:</h2>")
-                .append("<p>If you spend just 10 minutes today on Flow of English (yes, that's shorter than scrolling through ")
-                .append("social media during breakfast!), your confidence meter will jump up by at least 17.5% ")
-                .append("(our very scientific calculation)!</p>")
-                .append("<p><strong>🧠 Fun Fact:</strong></p>")
-                .append("<p>Did you know? Learners who return after a break often progress FASTER! ")
-                .append("Your brain has been secretly processing everything behind the scenes.</p>")
-                .append("<p><a href='https://flowofenglish.thechippersage.com' style='display: inline-block; background-color: #4a86e8; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 15px 0;'>Ready to jump back in? →</a></p>")
-                .append("<p>Need help? Questions? Just reply to this email or reach us at <a href='mailto:support@thechippersage.com'>support@thechippersage.com</a></p>")
-                .append("<p>Can't wait to see your progress!</p>")
-                .append("<p>The Chippersage Team 🌟</p>")
-                .append("<p><i>P.S. Just 10 minutes today will make tomorrow's English SO much easier! ✨</i></p>")
-                
-                // Footer with logo
-                .append("<div style='margin-top: 30px; border-top: 1px solid #dddddd; padding-top: 20px; text-align: center;'>")
-                .append("<img src='cid:logoImage' alt='ChipperSage Logo' style='max-width: 150px; height: auto;'/>")
-                .append("<p style='color: #777777; font-size: 12px;'>© 2025 ChipperSage. All rights reserved.</p>")
-                .append("</div>")
-                
-                .append("</div></body></html>");
+        String subject = "Your Flow of English is Waiting for You! 📚";
+        String emailBody = buildUserNotificationBody(user);
+        
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getUserEmail());
+        message.setSubject(subject);
+        message.setText(emailBody);
+        
+        mailSender.send(message);
+    }
 
-            helper.setText(emailBody.toString(), true);
-            
-            // Add images as inline attachments
-            helper.addInline("consistencyImage", new ClassPathResource(CONSISTENCY_IMAGE));
-            helper.addInline("logoImage", new ClassPathResource(LOGO_IMAGE));
-            
-            mailSender.send(mimeMessage);
-            
-        } catch (MessagingException e) {
-            logger.error("Failed to send HTML email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
-            // Fallback to plain text email
-            sendPlainTextFallbackEmail(user, "Missing Your English Adventures!");
-        }
+    private String buildUserNotificationBody(User user) {
+        String firstName = user.getUserName() != null ? user.getUserName() : "[First Name]";
+        StringBuilder body = new StringBuilder();
+
+        body.append("Hi ").append(firstName).append(",\n\n");
+
+        body.append("It’s been a little quiet without you in the Flow of English app. Even the words are asking, \"Where is ").append(firstName).append("?\" 😄\n\n");
+
+        body.append("Were you able to open the app this week? If something stopped you — like internet issues, Application issues, school work, or even your pet sitting on your keyboard — just reply and tell us. We are happy to help.\n\n");
+
+        body.append("Your lessons are still waiting. Even 5–10 minutes today can help you keep learning and make your English better.\n\n");
+
+        body.append("👉 Start learning again: ").append(PLATFORM_URL).append("\n\n");
+
+        body.append("If you need help or want to share how your week went, reply to this email or write to us at ").append(SUPPORT_EMAIL).append(". We always like to hear from you.\n\n");
+
+        body.append("With warm wishes,\n");
+        body.append("The ChipperSage Team\n\n");
+        body.append("P.S. A small step today is better than no step at all. Your future self will be proud. 💪");
+
+        return body.toString();
     }
-    
-    // Fallback method to send plain text emails if HTML email fails
-    private void sendPlainTextFallbackEmail(User user, String subject) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getUserEmail());
-            message.setSubject(subject);
-            
-            StringBuilder emailBody = new StringBuilder()
-                .append("Dear ").append(user.getUserName()).append(",\n\n")
-                .append("We've been missing you at Flow of English! Your learning journey is waiting for you.\n\n")
-                .append("Ready to jump back in? → https://flowofenglish.thechippersage.com\n\n")
-                .append("Need help? Questions? Just reply to this email or reach us at support@thechippersage.com\n\n")
-                .append("The Chippersage Team");
-            
-            message.setText(emailBody.toString());
-            mailSender.send(message);
-            
-            logger.info("Fallback plain text email sent to user: {}", user.getUserEmail());
-        } catch (Exception e) {
-            logger.error("Failed to send even fallback email to user: {}. Error: {}", user.getUserEmail(), e.getMessage(), e);
-        }
-    }
+
 }

@@ -50,7 +50,7 @@ public class UserController {
     private HttpSession session;
 
     @Autowired
-    private UserCohortMappingService userCohortMappingService; 
+    private UserCohortMappingService userCohortMappingService;
     
     @Autowired
     private SingleDeviceLoginService singleDeviceLoginService;
@@ -321,7 +321,7 @@ public class UserController {
     private String getClientIpAddress(HttpServletRequest request) {
         String[] headers = {
             "X-Forwarded-For",
-            "X-Real-IP", 
+            "X-Real-IP",
             "Proxy-Client-IP",
             "WL-Proxy-Client-IP",
             "HTTP_X_FORWARDED_FOR",
@@ -391,8 +391,8 @@ public class UserController {
     /**
      * Helper method to add mentor assignment statistics to the response
      */
-    private void addMentorAssignmentStatistics(Map<String, Object> response, 
-                                              UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
+    private void addMentorAssignmentStatistics(Map<String, Object> response,
+                                            UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
    //     Map<String, Object> assignmentStats = new HashMap<>();
         
         // Get all cohorts associated with this mentor
@@ -463,8 +463,8 @@ public class UserController {
     /**
      * Helper method to add cohort reminders to the response
      */
-    private void addCohortEndDateReminders(Map<String, Object> response, 
-                                          UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
+    private void addCohortEndDateReminders(Map<String, Object> response,
+                                        UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
         List<String> cohortReminders = new ArrayList<>();
         List<String> endedCohortReminders = new ArrayList<>();
         
@@ -655,10 +655,10 @@ public class UserController {
     /**
      * Enhanced session creation with better error handling
      */
-    private ResponseEntity<?> createEnhancedSessionAndRespond(User user, Cohort selectedCohort, 
-                                                             String userId, String selectedCohortId, 
-                                                             Map<String, Object> response, 
-                                                             HttpServletRequest request) {
+    private ResponseEntity<?> createEnhancedSessionAndRespond(User user, Cohort selectedCohort,
+                                                                String userId, String selectedCohortId,
+                                                                Map<String, Object> response,
+                                                                HttpServletRequest request) {
         try {
             // Invalidate any existing active sessions for this user-cohort combination
             userSessionMappingService.invalidateAllActiveSessions(userId, selectedCohortId);

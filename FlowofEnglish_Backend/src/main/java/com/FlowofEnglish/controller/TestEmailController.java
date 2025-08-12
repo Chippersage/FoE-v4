@@ -1,21 +1,14 @@
 package com.FlowofEnglish.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.FlowofEnglish.model.User;
-import com.FlowofEnglish.repository.UserRepository;
+import org.springframework.web.bind.annotation.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
 import com.FlowofEnglish.service.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.slf4j.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/test")
@@ -29,6 +22,42 @@ public class TestEmailController {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private WeeklyReportService weeklyReportService;
+    
+    @GetMapping("/weekly-report/email/{userId}")
+    public String sendTestWeeklyReportEmail(@PathVariable String userId) {
+        logger.info("Received request to send test Weekly Report email to user ID: {}", userId);
+
+        Optional<User> userOptional = userRepository.findByUserId(userId);
+        if (!userOptional.isPresent()) {
+            logger.error("User not found with ID: {}", userId);
+            return "User not found with ID: " + userId;
+        }
+
+        User user = userOptional.get();
+        if (user.getUserEmail() == null || user.getUserEmail().isEmpty()) {
+            logger.error("User with ID: {} has no email address", userId);
+            return "User with ID: " + userId + " has no email address";
+        }
+
+        try {
+            // This will only send to this one user (no admin report)
+            List<User> singleUserList = Collections.singletonList(user);
+            int successCount = weeklyReportService.weeklyReportServiceTestSingleUser(singleUserList);
+
+            logger.info("Test Weekly Report email sent to {} ({}), Success count: {}", 
+                        user.getUserName(), user.getUserEmail(), successCount);
+
+            return "Test Weekly Report email sent to " + user.getUserName() +
+                   " (" + user.getUserEmail() + "). Success count: " + successCount;
+
+        } catch (Exception e) {
+            logger.error("Error sending test Weekly Report email to user ID: {}, Error: {}", userId, e.getMessage(), e);
+            return "Error sending test Weekly Report email: " + e.getMessage();
+        }
+    }
+
     @GetMapping("/good-friday/email/{userId}")
     public String sendTestGoodFridayEmail(@PathVariable String userId) {
         logger.info("Received request to send test Good Friday email to user ID: {}", userId);
