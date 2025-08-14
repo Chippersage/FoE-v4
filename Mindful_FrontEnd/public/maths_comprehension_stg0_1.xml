@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<activities desc="Maths Comprehension" headertext="Read the sentence. Choose the correct answer for the question">
+
+<question id="1" inferencingGroupId="comprehension_1" desc="Here, we use long and short to talk about" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a worm and a snake - which is long and which is short?">
+<options>
+<option slno="1" desc="length" correct="true" />
+<option slno="2" desc="creepy crawlies" correct="false" />
+<option slno="3" desc="height" correct="false" />
+</options>
+</question>
+
+<question id="2" inferencingGroupId="comprehension_1" desc="What is the opposite of 'long'?" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a worm and a snake - which is long and which is short?">
+<options>
+<option slno="1" desc="not long" correct="false" />
+<option slno="2" desc="short" correct="true" />
+<option slno="3" desc="don't know" correct="false" />
+</options>
+</question>
+
+<question id="3" inferencingGroupId="comprehension_1" desc=" We use tall and short for" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a puppy and a calf, can you tell which is tall and which is short?">
+<options>
+<option slno="1" desc="height" correct="true" />
+<option slno="2" desc="length" correct="false" />
+<option slno="3" desc="animals" correct="false" />
+</options>
+</question>
+
+<question id="4" inferencingGroupId="comprehension_1" desc="What is the opposite of 'tall'?" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a puppy and a calf, can you tell which is tall and which is short?">
+<options>
+<option slno="1" desc="Not long" correct="true" />
+<option slno="2" desc="Short" correct="true" />
+<option slno="3" desc="Don't know" correct="false" />
+</options>
+</question>
+
+<question id="5" inferencingGroupId="comprehension_1" desc="Here big and small are used for" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a cat and a tiger, which is big and which is small?">
+<options>
+<option slno="1" desc="comparing size" correct="true" />
+<option slno="2" desc="comparing shape" correct="false" />
+<option slno="3" desc="nothing" correct="false" />
+</options>
+</question>
+
+<question id="6" inferencingGroupId="comprehension_1" desc="The opposite of small is" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a cat and a tiger, which is big and which is small?">
+<options>
+<option slno="1" desc="big" correct="true" />
+<option slno="2" desc="not small" correct="false" />
+<option slno="3" desc="long" correct="false" />
+</options>
+</question>
+
+<question id="7" inferencingGroupId="comprehension_1" desc=" We use large and small for" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between a neem tree and a rose plant, which is large and which is small?">
+<options>
+<option slno="1" desc="comparing colour" correct="false" />
+<option slno="2" desc="comparing size" correct="true" />
+<option slno="3" desc="comparing shape" correct="false" />
+</options>
+</question>
+
+<question id="8" inferencingGroupId="comprehension_1" desc="The opposite of 'large' is" BloomsTaxonomy="1,2" use="L,P,T" Stage="0" reference="Between a neem tree and a rose plant, which is large and which is small?">
+<options>
+<option slno="1" desc="small" correct="true" />
+<option slno="2" desc="short" correct="false" />
+<option slno="3" desc="don't know" correct="false" />
+</options>
+</question>
+
+<question id="9" inferencingGroupId="comprehension_1" desc="Choose the correct answer." BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="A bread loaf is large and a cup cake is small.">
+<options>
+<option slno="1" desc="True" correct="false" />
+<option slno="2" desc="False" correct="true" />
+<option slno="3" desc="Both are of the same size" correct="false" />
+</options>
+</question>
+
+<question id="10" inferencingGroupId="comprehension_1" desc="Heavy and light are used" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between an elephant and a cow, which is heavy and which is light?">
+<options>
+<option slno="1" desc="to compare the weight." correct="true" />
+<option slno="2" desc="to compare the shape." correct="false" />
+<option slno="3" desc="Nothing." correct="false" />
+</options>
+</question>
+
+<question id="11" inferencingGroupId="comprehension_1" desc="The opposite of 'heavy' is" BloomsTaxonomy="1,2" use="T,P,L" Stage="0" reference="Between an elephant and a cow, which is heavy and which is light?">
+<options>
+<option slno="1" desc="light." correct="true" />
+<option slno="2" desc="small." correct="false" />
+<option slno="3" desc="long." correct="false" />
+</options>
+</question>
+</activities>

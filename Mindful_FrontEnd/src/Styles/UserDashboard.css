@@ -1,0 +1,4 @@
+.maindivdashboard {
+    display: flex;
+    flex-direction: row;
+}

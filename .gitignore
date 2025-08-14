@@ -12,8 +12,13 @@ FlowofEnglish_UserFrontend/public/Learner-v4/
 FlowofEnglish_UserFrontend/tsconfig.app.tsbuildinfo
 FlowofEnglish_Frontend/FoE/packages/admin/.env
 FlowofEnglish_UserFrontend/.env
-FlowofEnglish_UserFrontend/public/Grammar/
-FlowofEnglish_UserFrontend/public/Sentences/
+Mindful_FrontEnd/.env
+Mindful_FrontEnd/node_modules/
+Mindful_FrontEnd/dist/
+Mindful_FrontEnd/public/Learner-v4/
+Mindful_FrontEnd/tsconfig.app.tsbuildinfo
+Mindful_FrontEnd/public/Grammar/
+Mindful_FrontEnd/public/Sentences/
 FlowofEnglish_Backend/uploads/
 # FlowofEnglish_UserFrontend/package-lock.jsonFlowofEnglish_Backend/src/main/resources/application.properties
 FlowofEnglish_Backend/src/main/resources/application.properties
