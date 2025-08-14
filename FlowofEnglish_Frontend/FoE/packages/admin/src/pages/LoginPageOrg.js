@@ -13,6 +13,14 @@ import { LoginFormOrg } from '../sections/autho';
 
 // ----------------------------------------------------------------------
 
+// const StyledRoot = styled('div')(({ theme }) => ({
+//   minHeight: '100vh',
+//   display: 'flex',
+//   alignItems: 'center',
+//   justifyContent: 'center',
+//   backgroundColor: theme.palette.background.default,
+// }));
+
 const StyledRoot = styled('div')(({ theme }) => ({
   [theme.breakpoints.up('md')]: {
     display: 'flex',
@@ -47,7 +55,7 @@ export default function LoginPageOrg() {
   return (
     <>
       <Helmet>
-        <title> Login | Chippersage </title>
+        <title> Login | Mindfultalk </title>
       </Helmet>
 
       <StyledRoot>
@@ -59,7 +67,7 @@ export default function LoginPageOrg() {
           }}
         />
 
-        {mdUp && (
+       {mdUp && (
           <StyledSection>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
               Welcome Admin
@@ -68,6 +76,22 @@ export default function LoginPageOrg() {
           </StyledSection>
         )}
 
+{/* <Container
+          maxWidth="sm"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '80vh',
+            padding: 3,
+          }}
+        >
+          <LoginFormOrg />
+        </Container>
+      </StyledRoot>
+    </>
+  ); */}
         <Container
           sx={{
             width: {
