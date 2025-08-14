@@ -54,7 +54,8 @@ public class SecurityConfig {
                         "https://chippersageblr.s3.ap-south-1.amazonaws.com", // s3 bucket
                         "https://d1pb9z6a4vrmi3.cloudfront.net/", // CloudFront URL chippersageblr
                         "https://d1kq2q5oc3pn5i.cloudfront.net/", // CloudFront Signed-in URL
-                        "https://paymentpage-nine.vercel.app/" // Razorpay
+                        "https://d27ig5p8mdmxxx.cloudfront.net/", // CloudFront Mindful Frontend
+                        "https://paymentpage-nine.vercel.app/" // Razorpay payment page
                     ));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
