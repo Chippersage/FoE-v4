@@ -26,6 +26,7 @@ export const fetchAndParseQuestionsFromXML = async (
     const headerText = questionNode.getAttribute("headertext") || "";
     const reference = questionNode.getAttribute("reference") || null; // Parse reference attribute
     const img = questionNode.getAttribute("img") || null; // Parse img attribute
+    const titletext = questionNode.getAttribute("titletext") || null; // Parse titletext attribute
 
     const optionNodes = questionNode.getElementsByTagName("option");
     const options: Option[] = [];
@@ -57,6 +58,7 @@ export const fetchAndParseQuestionsFromXML = async (
       headerText, // Individual question headerText
       reference, // Add reference to the question object
       img, // Add img to the question object
+      titletext, // Add titletext to the question object
       options,
       type,
       marks: 1,

@@ -133,7 +133,9 @@ const Question: React.FC<QuestionProps> = ({
                 clipRule="evenodd"
               />
             </svg>
-            <h4 className="text-sm font-medium text-green-800">Reference</h4>
+            <h4 className="text-sm font-medium text-green-800">
+              {question.titletext ? question.titletext : "Reference"}
+            </h4>
           </div>
           <p className="text-sm text-green-700 leading-relaxed">
             {question.reference}

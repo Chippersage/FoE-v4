@@ -24,6 +24,7 @@ export interface Question {
   marks: number;
   reference: string | null; // Reference to the question, can be null if not provided
   img?: string | null; // Optional image attribute for the question
+  titletext?: string | null; // Optional title for the passage when reference is a passage
 }
 
 export interface QuizState {
