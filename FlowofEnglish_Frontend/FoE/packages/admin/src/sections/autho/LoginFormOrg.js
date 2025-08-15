@@ -78,9 +78,14 @@ export default function LoginFormOrg() {
   return (
     <>
       {showReminders && <ReminderPopup reminders={cohortReminders} onClose={handlePopupClose} />}
-      <div className="min-h-screen md:bg-gray-100 w-full flex flex-col items-center md:p-4">
-        <div className="mb-8 mt-8">
-          <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" />
+      <div className="w-full flex flex-col items-center">
+        <div className="mb-8">
+          {/* <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" /> */}
+          <img
+          src="/assets/mindful_logo_circle.png"
+          alt="Mindfultalk Logo"
+          className="h-24 w-24 md:h-32 md:w-32"
+        />
         </div>
 
         <div className="w-full max-w-md bg-white rounded-lg shadow-md md:p-8 p-4">
