@@ -49,25 +49,21 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
             >
               <div className="flex items-center">
                 {/* Serial Number */}
-                <div className="font-bold text-lg mr-3 min-w-[30px] text-center text-slate-600">
+                <div className="font-bold text-lg mr-1 min-w-[30px] text-center">
                   {index + 1}.
                 </div>
-                <Avatar src={avatar_icon} size="w-8 h-8" />
-                <div className="ml-3">
-                  <div className="font-semibold text-slate-800 text-sm truncate max-w-[140px]">
+
+                {/* Avatar Section */}
+                <Avatar src={avatar_icon} />
+                <div className="ml-2">
+                  <div className="font-semibold text-black truncate max-w-[140px]">
                     {entry.userName}
                   </div>
-                  {entry.userId === currentUser?.userId && (
-                    <div className="text-xs text-orange-600 font-medium">You</div>
-                  )}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-base font-bold text-slate-800">
-                  {entry.leaderboardScore} 
-                </div>
-                <div className="text-xs text-slate-500">
-                  Points
+                <div className="text-md font-bold">
+                  {entry.leaderboardScore} Points
                 </div>
               </div>
             </div>
@@ -75,35 +71,35 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
 
           {/* If current user is not in top 3, display them after top 3 with special effect */}
           {currentUserRank > 3 && currentUser && !showMore && (
-            <div className="flex justify-between items-center py-3 px-3 bg-orange-50 border border-orange-200 rounded-lg shadow-sm">
+            <div className="flex justify-between items-center py-2 bg-blue-100 p-2 rounded-xl shadow-xl">
               <div className="flex items-center">
-                <Avatar src={avatar_icon} size="w-8 h-8" />
-                <div className="ml-3">
-                  <div className="font-semibold text-slate-800 text-sm">
+                <Avatar src={avatar_icon} />
+                <div className="ml-2">
+                  <div className="font-semibold text-primary">
                     {currentUser.userName}
                   </div>
-                  <div className="text-xs text-orange-600 font-medium">You</div>
+                  <div className="text-xs text-muted-foreground">You</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-base font-bold text-slate-800">
+                <div className="text-lg font-bold">
                   {currentUser.leaderboardScore} Points
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-sm text-muted-foreground">
                   Rank {currentUserRank}
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </CardContent>
 
-      {/* Show More Button */}
-      <div className="mt-4 pt-4 border-t border-slate-200">
+      {/* Sticky Show More Button */}
+      <div className="sticky bottom-0 bg-white shadow-sm">
         {!showMore ? (
           <Button
             onClick={() => setShowMore(true)}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 text-sm"
+            className="w-full text-center rounded-[5px]"
             disabled={displayedLeaderboard.length === 0}
           >
             Show more
@@ -111,12 +107,12 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
         ) : (
           <Button
             onClick={() => setShowMore(false)}
-            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg py-2 text-sm"
+            className="w-full text-center rounded-[5px]"
           >
             Show less
           </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

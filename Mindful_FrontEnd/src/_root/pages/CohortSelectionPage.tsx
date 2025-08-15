@@ -640,7 +640,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
               {isLoadingCohorts ? (
                 <>
                   {[1, 2, 3].map((index) => (
@@ -716,26 +716,51 @@ const Dashboard: React.FC = () => {
                       )}
 
                       <CardContent className="p-6 pt-12">
-                        {/* Professional program title */}
-                        <h3 className="mb-4 line-clamp-2 min-h-[56px] font-semibold text-lg text-slate-800 leading-tight">
-                          {cohortWithProgram?.program?.programName}
-                        </h3>
+                        {/* Professional program title with modern truncation */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h3 className="mb-4 font-semibold text-lg text-slate-800 leading-tight group cursor-help">
+                                <span className="line-clamp-2 min-h-[3.5rem] block transition-colors duration-200 group-hover:text-slate-900">
+                                  {cohortWithProgram?.program?.programName}
+                                </span>
+                                {/* Fade effect for long text */}
+                                <div className="absolute bottom-0 right-0 w-8 h-6 bg-gradient-to-l from-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                              </h3>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top" 
+                              className="max-w-xs p-3 text-sm bg-slate-900 text-white border-slate-700"
+                            >
+                              <p className="font-medium">{cohortWithProgram?.program?.programName}</p>
+                              <p className="text-slate-300 text-xs mt-1">Click to view full program details</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
 
-                        {/* Professional cohort details */}
+                        {/* Professional cohort details with improved spacing */}
                         <div className="flex flex-col gap-3 mb-6">
-                          <div className="flex items-center text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
-                            <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-lg mr-3">
+                          <div className="flex items-center text-sm text-slate-600 bg-slate-50 rounded-lg p-3 transition-colors duration-200 hover:bg-slate-100">
+                            <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-lg mr-3 flex-shrink-0">
                               <BookOpen className="h-4 w-4 text-orange-600" />
                             </div>
-                            <div>
-                              <span className="font-medium">{cohortWithProgram.cohortName}</span>
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium text-slate-700 truncate block">
+                                {cohortWithProgram.cohortName}
+                              </span>
                             </div>
                           </div>
 
                           {cohortWithProgram.cohortEndDate && (
-                            <div className="flex items-center text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              <span>Ends: {new Date(Number(cohortWithProgram.cohortEndDate) * 1000).toLocaleDateString()}</span>
+                            <div className="flex items-center text-sm text-slate-600 bg-slate-50 rounded-lg p-3 transition-colors duration-200 hover:bg-slate-100">
+                              <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span className="truncate">
+                                Ends: {new Date(Number(cohortWithProgram.cohortEndDate) * 1000).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -743,7 +768,7 @@ const Dashboard: React.FC = () => {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="link" size="sm" className="p-0 h-auto text-orange-600">
+                              <Button disabled variant="link" size="sm" className="p-0 h-auto text-orange-600 ">
                                 See program details
                               </Button>
                             </TooltipTrigger>
@@ -778,13 +803,13 @@ const Dashboard: React.FC = () => {
                       
                       {/* Professional action footer */}
                       <CardFooter className="flex justify-between items-center border-t border-slate-100 bg-slate-50/50 p-6 rounded-b-xl">
-                        <div className="flex items-center text-sm text-slate-600">
+                        {/* <div className="flex items-center text-sm text-slate-600">
                           {progress === 0 ? (
                             <span>Ready to begin</span>
                           ) : (
                             <span>Continue learning</span>
                           )}
-                        </div>
+                        </div> */}
                         <Button
                           size="sm"
                           disabled={isDisabled}

@@ -32,21 +32,21 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className="relative w-full h-full no-scrollbar bg-slate-50">
+      <div className="relative w-full h-full no-scrollbar bg-white">
         {isLoading ? (
-          <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
+          <div className="fixed inset-0 flex items-center justify-center bg-white">
             <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-200 border-t-orange-600"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-orange-500"></div>
               <p className="mt-4 text-slate-600 font-medium">Loading your learning dashboard...</p>
             </div>
           </div>
         ) : (
           <>
-            {/* Professional Background */}
-            <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100"></div>
+            {/* Professional Clean Background */}
+            <div className="fixed inset-0 bg-slate-50"></div>
             
-            {/* Professional header pattern */}
-            <div className="fixed top-0 left-0 right-0 h-32 bg-gradient-to-b from-slate-800/5 to-transparent"></div>
+            {/* Subtle top border */}
+            <div className="fixed top-0 left-0 right-0 h-1 bg-orange-500"></div>
 
             <div className="relative z-10 h-full">
               <Dashboard />

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
+
 // @ts-ignore
 export default function UserProgressBar({ userProgress }) {
   const {
@@ -13,54 +15,79 @@ export default function UserProgressBar({ userProgress }) {
 
   const [isHovered, setIsHovered] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
-// @ts-ignore
+
+  // @ts-ignore
   const handleMouseMove = (event) => {
-    const progressBar = event.currentTarget; // The progress bar element
-    const rect = progressBar.getBoundingClientRect(); // Get the bounding box
-    const cursorX = event.clientX - rect.left; // Calculate cursor position relative to the progress bar
+    const progressBar = event.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const cursorX = event.clientX - rect.left;
     setCursorPosition(cursorX);
   };
 
   const completionPercentage = subconceptCompletionPercentage?.toFixed(1);
-  // console.log(completionPercentage)
+
   return (
     <div
-      className="relative w-full max-w-md h-6"
+      className="relative w-full max-w-md"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
     >
-      <div className="w-full h-full bg-[#DB5788] rounded-none overflow-hidden">
-        <div
-          className="h-full w-0 bg-green-400 transition-all duration-500 ease-in-out flex items-center justify-center"
-          style={{ width: `${completionPercentage}%` }}
-        ></div>
-        {completionPercentage && (
-          <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs text-white font-semibold">
-            Completed {completionPercentage}%
-          </span>
-        )}
+      {/* Progress Label */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-slate-700">Learning Progress</span>
+        <span className="text-sm font-semibold text-slate-900">{completionPercentage}%</span>
       </div>
+
+      {/* Progress Bar Container */}
+      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${completionPercentage}%` }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full relative"
+        >
+          {/* Shimmer effect for active progress */}
+          <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
+        </motion.div>
+      </div>
+
+      {/* Professional Tooltip */}
       {isHovered && (
-        <div
-          className="absolute top-full mt-2 px-3 py-2 bg-gray-200 opacity-80 bg-opacity-90 text-black text-sm rounded-[2px] shadow-lg transition-opacity duration-300 w-36"
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 5 }}
+          className="absolute top-full mt-3 px-4 py-3 bg-white border border-slate-200 text-slate-700 text-sm rounded-lg shadow-lg z-10 min-w-[200px]"
           style={{
-            left: `${cursorPosition}px`,
-            transform: "translateX(-50%)", // Center the tooltip
+            left: `${Math.min(Math.max(cursorPosition - 100, 0), 200)}px`,
           }}
         >
-          <h4 className="font-semibold">Completed:</h4>
-          <p>-------------</p>
-          <p className="font-medium">
-            Stages: {completedStages}/{totalStages}
-          </p>
-          <p className="font-medium">
-            Units: {completedUnits}/{totalUnits}
-          </p>
-          <p className="font-medium">
-            Activities: {completedSubconcepts}/{totalSubconcepts}
-          </p>
-        </div>
+          <div className="space-y-2">
+            <h4 className="font-semibold text-slate-900 border-b border-slate-100 pb-1">
+              Progress Overview
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Stages:</span>
+                  <span className="font-medium">{completedStages}/{totalStages}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Units:</span>
+                  <span className="font-medium">{completedUnits}/{totalUnits}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Activities:</span>
+                  <span className="font-medium">{completedSubconcepts}/{totalSubconcepts}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Tooltip Arrow */}
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-slate-200 rotate-45" />
+        </motion.div>
       )}
     </div>
   );

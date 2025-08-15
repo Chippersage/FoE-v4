@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronUp, CircleAlert, CircleCheck, Trophy } from "lucide-react";
+import { CircleAlert, CircleCheck, Trophy } from "lucide-react";
 import { ChevronDown, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 // import { Book } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -84,8 +84,8 @@ export default function Stages({
       <div className="w-full space-y-6 learning-path-section">
         {/* Enhanced Progress Overview */}
         {programCompletionStatus === "yes" && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-emerald-500 rounded-lg shadow-sm">
+          <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-md">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -109,48 +109,48 @@ export default function Stages({
                 <Card
                   ref={cardRef}
                   key={index}
-                  className={`group transition-all duration-200 hover:shadow-md border ${
+                  className={`group hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border ${
                     isCompleted 
-                      ? 'border-green-200 bg-green-50' 
+                      ? 'border-green-200 bg-white' 
                       : isPending
-                      ? 'border-amber-200 bg-amber-50'
+                      ? 'border-amber-200 bg-white'
                       : isEnabled
                       ? 'border-slate-200 bg-white hover:border-slate-300'
                       : 'border-slate-200 bg-slate-50'
                   } rounded-lg overflow-hidden`}
                 >
                   {/* Stage Header */}
-                  <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${
+                        <div className={`p-2 rounded-lg ${
                           isCompleted 
-                            ? 'bg-green-100' 
+                            ? 'bg-green-100 text-green-600' 
                             : isPending
-                            ? 'bg-amber-100'
+                            ? 'bg-amber-100 text-amber-600'
                             : isEnabled
-                            ? 'bg-orange-100'
-                            : 'bg-slate-200'
+                            ? 'bg-orange-100 text-orange-600'
+                            : 'bg-slate-100 text-slate-400'
                         }`}>
                           {isCompleted ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                            <CheckCircle2 className="w-4 h-4" />
                           ) : isPending ? (
-                            <AlertCircle className="w-5 h-5 text-amber-600" />
+                            <AlertCircle className="w-4 h-4" />
                           ) : isEnabled ? (
-                            <Clock className="w-5 h-5 text-orange-600" />
+                            <Clock className="w-4 h-4" />
                           ) : (
                             <div className="w-4 h-4 border-2 border-slate-400 rounded-full animate-spin border-t-transparent" />
                           )}
                         </div>
                         
                         <div className="flex-1">
-                          <CardTitle className={`text-xl font-bold mb-2 transition-colors ${
+                          <CardTitle className={`text-lg group-hover:text-orange-600 transition-colors ${
                             isEnabled ? "text-slate-800" : "text-slate-500"
                           }`}>
                             {/* @ts-ignore */}
                             {stage.stageName}
                           </CardTitle>
-                          <p className={`text-sm leading-relaxed ${
+                          <p className={`text-sm leading-relaxed mt-1 ${
                             isEnabled ? "text-slate-600" : "text-slate-400"
                           }`}>
                             {/* @ts-ignore */}
@@ -159,58 +159,84 @@ export default function Stages({
                         </div>
                       </div>
 
-                      {/* Status Badge & Expand Button */}
-                      <div className="flex items-center space-x-2">
-                        {isPending ? (
-                          <Badge className="bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-lg font-medium">
-                            <AlertCircle className="w-4 h-4 mr-1" />
-                            Pending
-                          </Badge>
-                        ) : isCompleted ? (
-                          <Badge className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-lg font-medium">
-                            <CheckCircle2 className="w-4 h-4 mr-1" />
-                            Completed
-                          </Badge>
-                        ) : isEnabled ? (
-                          <button
-                            onClick={() => {
-                              toggleExpand(index);
-                              handleScrollToCard(cardRef);
-                            }}
-                            className="flex items-center justify-center px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors duration-200 text-sm font-medium text-slate-700"
-                          >
-                            {isExpanded ? (
-                              <>
-                                <span>Hide Units</span>
-                                <ChevronUp className="ml-2 h-4 w-4" />
-                              </>
-                            ) : (
-                              <>
-                                <span>View Units</span>
-                                <ChevronDown className="ml-2 h-4 w-4" />
-                              </>
-                            )}
-                          </button>
-                        ) : null}
+                      <div className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                        isCompleted 
+                          ? "bg-green-500 text-white"
+                          : isPending
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {/* @ts-ignore */}
+                        {Math.round(((stage.completedUnitsCount || 0) / stage.unitsCount) * 100)}%
                       </div>
                     </div>
                   </CardHeader>
 
                   <CardContent className="pt-0">
-                    {/* Action Button for Collapsed State */}
-                    {!isExpanded && (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => {
-                            toggleExpand(index);
-                            handleScrollToCard(cardRef);
+                    <div className="space-y-3">
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            isCompleted ? "bg-green-500" : "bg-orange-500"
+                          }`}
+                          style={{
+                            // @ts-ignore
+                            width: `${stage.unitsCount > 0 ? ((stage.completedUnitsCount || 0) / stage.unitsCount) * 100 : 0}%`
+                          }}
+                        ></div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-slate-600">
+                        <div className="flex items-center gap-4">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            {/* @ts-ignore */}
+                            {stage.completedUnitsCount || 0}/{stage.unitsCount} units
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isPending ? (
+                            <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded text-xs font-medium">
+                              <AlertCircle className="w-3 h-3" />
+                              Pending
+                            </span>
+                          ) : isCompleted ? (
+                            <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded text-xs font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Completed
+                            </span>
+                          ) : isEnabled ? (
+                            <button
+                              onClick={() => {
+                                toggleExpand(index);
+                                handleScrollToCard(cardRef);
+                              }}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                isExpanded 
+                                  ? "bg-orange-600 text-white hover:bg-orange-700" 
+                                  : "bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200"
+                              }`}
+                            >
+                              {isExpanded ? "Hide Units" : "View Units"}
+                              {isExpanded ? (
+                                <ChevronUp className="w-3 h-3" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3" />
+                              )}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
                           }}
                           disabled={!isEnabled}
-                          className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 ${
+                          className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
                             isEnabled
                               ? isCompleted
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm hover:shadow-md"
-                                : "bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md"
+                                ? "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl"
+                                : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl"
                               : "bg-slate-300 text-slate-500 cursor-not-allowed"
                           } ${
                             index === 0 &&

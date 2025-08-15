@@ -277,13 +277,13 @@ export default function LoginPage() {
             <div className="mt-8 pt-6 border-t border-slate-200">
               <div className="flex flex-col space-y-3 text-center">
                 <a
-                  href="mailto:support@thechippersage.com?subject=Corporate%20Learning%20Platform%3A%20Support%20Request"
+                  href="mailto:support@mindfultalk.in?subject=Platform%20Support%20Request"
                   className="text-orange-600 hover:text-orange-700 text-sm font-medium transition-colors duration-200"
                 >
                   Need technical support?
                 </a>
                 <a
-                  href="mailto:support@thechippersage.com?subject=Corporate%20Learning%20Platform%3A%20Account%20Request"
+                  href="mailto:support@mindfultalk.in?subject=Platform%20Account%20Request"
                   className="text-slate-600 hover:text-slate-700 text-sm transition-colors duration-200"
                 >
                   Request new account access

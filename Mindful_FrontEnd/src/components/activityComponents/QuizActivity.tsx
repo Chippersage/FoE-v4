@@ -292,8 +292,8 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
 
   if (state.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
-        <div className="animate-pulse text-lg text-green-600">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="animate-pulse text-lg text-[#f48d03] font-medium">
           Loading quiz...
         </div>
       </div>
@@ -308,22 +308,15 @@ const QuizActivity: React.FC<QuizActivityProps> = ({
 
   return (
     <div
-      className="min-h-screen bg-slate-100 font-sans p-4 relative"
-      style={{
-        backgroundImage: "url('/images/cohort-bg.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-      }}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans p-4 relative"
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/10 z-0" />
+      {/* Professional overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-slate-100/30 z-0" />
       <div className="relative z-10 w-full py-10 px-4">
-        <div className="max-w-7xl mx-auto border border-green-200 shadow-lg rounded-xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/80 backdrop-blur-sm z-10">
+        <div className="max-w-7xl mx-auto border border-slate-200 shadow-xl rounded-2xl p-6 md:p-8 w-full transition-all duration-300 relative bg-white/95 backdrop-blur-sm z-10">
           <div className="flex justify-between items-center mb-6">
             {activitiesHeaderText && (
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-[#f48d03] to-[#e67e00] bg-clip-text text-transparent mb-6">
                 {activitiesHeaderText}
               </h2>
             )}
