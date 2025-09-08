@@ -248,7 +248,7 @@ export default function SubConceptsPage() {
       // Set background URL dynamically
       setBackgroundUrl(
         selectedCohortWithProgram?.program?.programId.startsWith("PET")
-          ? "/images/PET-New-Bg.jpg"
+          ? "/images/written-accessories-desk.jpg"
           : "/images/index.png"
       );
 
@@ -481,7 +481,7 @@ export default function SubConceptsPage() {
         />
 
         {/* Black overlay on top of ONLY the background - z-index 1 */}
-        {backgroundUrl === "/images/PET-New-Bg.jpg" && (
+        {backgroundUrl === "/images/written-accessories-desk.jpg" && (
           <div className="fixed inset-0 bg-black opacity-25 pointer-events-none top-24 sm:top-0 z-1" />
         )}
 
