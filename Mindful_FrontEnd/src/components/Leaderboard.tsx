@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import avatar_icon from "../assets/icons/avatar_icon.svg";
 import Avatar from "./Avatar";
 import { Button } from "./ui/button";
@@ -26,45 +25,49 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
   const displayedLeaderboard = showMore ? sortedLeaderboard : top3;
 
   return (
-    <Card className="max-w-lg mx-auto max-h-[350px] flex flex-col rounded-[3px] overflow-hidden p-1 leaderboard-section">
-      <CardHeader className="text-center p-0 m-1">
-        <CardTitle className="text-2xl font-bold font-openSans">
+    <div className="max-w-lg mx-auto max-h-[350px] flex flex-col rounded-lg overflow-hidden">
+      <div className="text-center mb-4">
+        <h4 className="text-lg font-bold text-slate-800 mb-1">
           Leaderboard
-        </CardTitle>
-        <p className="text-muted-foreground font-garamond">{cohortName}</p>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto custom-scrollbar-2">
-        <div className="space-y-4">
+        </h4>
+        <p className="text-slate-600 text-sm">{cohortName}</p>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-3">
           {/* Display the appropriate number of scorers (top 3 or full leaderboard) */}
           {displayedLeaderboard.length === 0 && (
-            <div className="text-center">No leaderboard data available</div>
+            <div className="text-center py-4 text-slate-500">No leaderboard data available</div>
           )}
           {displayedLeaderboard.map((entry, index) => (
             <div
               key={entry.userId}
-              className={`flex justify-between items-center py-1 px-1 rounded-[5px] ${
+              className={`flex justify-between items-center py-3 px-3 rounded-lg transition-colors ${
                 entry.userId === currentUser?.userId
-                  ? "bg-orange-100 rounded-[2px] shadow-lg"
-                  : "bg-gray-100"
+                  ? "bg-orange-50 border border-orange-200 shadow-sm"
+                  : "bg-slate-50 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center">
                 {/* Serial Number */}
-                <div className="font-bold text-lg mr-1 min-w-[30px] text-center">
+                <div className="font-bold text-lg mr-3 min-w-[30px] text-center text-slate-600">
                   {index + 1}.
                 </div>
-
-                {/* Avatar Section */}
-                <Avatar src={avatar_icon} />
-                <div className="ml-2">
-                  <div className="font-semibold text-black truncate max-w-[140px]">
+                <Avatar src={avatar_icon} size="w-8 h-8" />
+                <div className="ml-3">
+                  <div className="font-semibold text-slate-800 text-sm truncate max-w-[140px]">
                     {entry.userName}
                   </div>
+                  {entry.userId === currentUser?.userId && (
+                    <div className="text-xs text-orange-600 font-medium">You</div>
+                  )}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-md font-bold">
-                  {entry.leaderboardScore} Points
+                <div className="text-base font-bold text-slate-800">
+                  {entry.leaderboardScore} 
+                </div>
+                <div className="text-xs text-slate-500">
+                  Points
                 </div>
               </div>
             </div>
@@ -72,35 +75,35 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
 
           {/* If current user is not in top 3, display them after top 3 with special effect */}
           {currentUserRank > 3 && currentUser && !showMore && (
-            <div className="flex justify-between items-center py-2 bg-orange-100 p-2 rounded-xl shadow-xl">
+            <div className="flex justify-between items-center py-3 px-3 bg-orange-50 border border-orange-200 rounded-lg shadow-sm">
               <div className="flex items-center">
-                <Avatar src={avatar_icon} />
-                <div className="ml-2">
-                  <div className="font-semibold text-primary">
+                <Avatar src={avatar_icon} size="w-8 h-8" />
+                <div className="ml-3">
+                  <div className="font-semibold text-slate-800 text-sm">
                     {currentUser.userName}
                   </div>
-                  <div className="text-xs text-muted-foreground">You</div>
+                  <div className="text-xs text-orange-600 font-medium">You</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold">
+                <div className="text-base font-bold text-slate-800">
                   {currentUser.leaderboardScore} Points
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs text-slate-500">
                   Rank {currentUserRank}
                 </div>
               </div>
             </div>
           )}
         </div>
-      </CardContent>
+      </div>
 
-      {/* Sticky Show More Button */}
-      <div className="sticky bottom-0 bg-white shadow-sm">
+      {/* Show More Button */}
+      <div className="mt-4 pt-4 border-t border-slate-200">
         {!showMore ? (
           <Button
             onClick={() => setShowMore(true)}
-            className="w-full text-center rounded-[5px]"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 text-sm"
             disabled={displayedLeaderboard.length === 0}
           >
             Show more
@@ -108,12 +111,12 @@ export default function Leaderboard({ cohortId, userId, cohortName, leaderboard 
         ) : (
           <Button
             onClick={() => setShowMore(false)}
-            className="w-full text-center rounded-[5px]"
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg py-2 text-sm"
           >
             Show less
           </Button>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

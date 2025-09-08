@@ -275,7 +275,7 @@ export default function UnifiedHeader({
             {/* Brand/Logo Section */}
             {showBranding && (
               <Link 
-                to={user ? "/dashboard" : "/"} 
+                // to={user ? "/dashboard" : "/"} 
                 className="flex items-center gap-3 hover:opacity-90 transition-opacity group"
               >
                 <div className="flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-lg group-hover:shadow-xl transition-shadow p-1">

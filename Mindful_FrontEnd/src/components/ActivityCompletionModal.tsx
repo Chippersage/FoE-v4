@@ -5,55 +5,59 @@ import {
   Trophy,
   Sparkles,
   Medal,
-  Rocket,
-  ArrowRight,
+  Target,
+  CheckCircle,
   Timer,
+  TrendingUp,
+  Award,
 } from "lucide-react";
-// import EmojiBubbles from "./EmojiBubbles";
+import { motion } from "framer-motion";
 
 interface ActivityCompletionModal {
-//   isOpen: boolean;
   onClose: () => void;
   scorePercentage: number;
-  countdownDuration: number; // Receive countdown duration as prop
+  countdownDuration: number;
 }
 
 export default function ActivityCompletionModal({
-//   isOpen,
   onClose,
   scorePercentage,
   countdownDuration,
 }: ActivityCompletionModal) {
   const [countdown, setCountdown] = useState(countdownDuration);
   const [audio] = useState(new Audio());
-  // console.log("scorePercentage in activity completion modal", scorePercentage);
 
   useEffect(() => {
     let timer: number;
-    // if (isOpen) {
-      setCountdown(countdownDuration);
+    setCountdown(countdownDuration);
 
-      // Set audio source based on scorePercentage
-      audio.src =
-        scorePercentage > 75
-          ? "/high-score.mp3"
-          : scorePercentage >= 50
-          ? "/medium-score.mp3"
-          : "/low-score.mp3";
+    // Professional sound effects based on performance - copyright-free alternatives
+    if (scorePercentage > 75) {
+      // High achievement - success completion sound
+      audio.src = "/sounds/high-score-sound-effect.mp3";
+    } else if (scorePercentage >= 50) {
+      // Good performance - positive feedback sound
+      audio.src = "/sounds/average-score-sound-effect.mp3";
+    } else {
+      // Needs improvement - gentle encouragement sound
+      audio.src = "/sounds/low-score-sound-effect.mp3";
+    }
 
-      audio.play();
+    // Play audio with error handling
+    audio.play().catch((error) => {
+      console.warn("Audio playback failed:", error);
+    });
 
-      timer = window.setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            onClose(); // Close modal after countdown ends
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    // }
+    timer = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onClose();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
       clearInterval(timer);
@@ -62,52 +66,60 @@ export default function ActivityCompletionModal({
     };
   }, [scorePercentage, countdownDuration, audio, onClose]);
 
-//   if (!isOpen) return null;
-
   const getScoreContent = () => {
     if (scorePercentage > 75) {
       return {
-        icon: (
-          <Trophy className="w-24 h-24 text-yellow-500 animate-[bounce_2s_ease-in-out_infinite]" />
+        icon: <Trophy className="w-16 h-16 text-emerald-600" />,
+        title: "Excellent Work!",
+        message: "Outstanding performance! You've mastered this concept and unlocked the next activity.",
+        bgGradient: "from-emerald-50 to-blue-50",
+        borderColor: "border-emerald-200",
+        titleColor: "text-emerald-700",
+        messageColor: "text-slate-600",
+        progressColor: "bg-emerald-500",
+        badge: (
+          <div className="flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+            <Award className="w-4 h-4" />
+            High Achiever
+          </div>
         ),
-        title: "Hurrah! 🌟",
-        message:
-          "You are on the right path. Unlocking the next activity for you...",
-        bgColor: "bg-slate-700",
-        textColor: "text-green-400",
-        buttonColor: "bg-green-500 hover:bg-green-600",
-        extraIcon: (
-          <Rocket className="absolute -right-2 top-1/2 w-8 h-8 text-green-400 animate-pulse" />
-        ),
+        extraIcon: <Sparkles className="w-5 h-5 text-emerald-500" />,
       };
     } else if (scorePercentage >= 50) {
       return {
-        icon: (
-          <Medal className="w-24 h-24 text-orange-400 animate-[swing_2s_ease-in-out_infinite]" />
+        icon: <Medal className="w-16 h-16 text-blue-600" />,
+        title: "Well Done!",
+        message: "Good progress! You've completed this activity and can move forward. Keep practicing to improve further.",
+        bgGradient: "from-blue-50 to-indigo-50",
+        borderColor: "border-blue-200",
+        titleColor: "text-blue-700",
+        messageColor: "text-slate-600",
+        progressColor: "bg-blue-500",
+        badge: (
+          <div className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            <TrendingUp className="w-4 h-4" />
+            Good Progress
+          </div>
         ),
-        title: "Well Done! 🎉",
-        message: "You have unlocked the next activity, but keep practising.",
-        bgColor: "bg-slate-700",
-        textColor: "text-orange-400",
-        buttonColor: "bg-orange-500 hover:bg-orange-600",
-        extraIcon: (
-          <Star className="absolute -right-2 top-1/2 w-8 h-8 text-orange-400 animate-pulse" />
-        ),
+        extraIcon: <Star className="w-5 h-5 text-blue-500" />,
       };
     } else {
       return {
-        icon: (
-          <img src="/icons/User-icons/confused.png" className="w-24 h-24 text-orange-400 animate-[float_3s_ease-in-out_infinite]" />
+        icon: <Target className="w-16 h-16 text-slate-600" />,
+        title: "Keep Learning!",
+        message: "You're making progress! Consider reviewing this material and try again when you're ready. The next activity is unlocked.",
+        bgGradient: "from-slate-50 to-gray-50",
+        borderColor: "border-slate-200",
+        titleColor: "text-slate-700",
+        messageColor: "text-slate-600",
+        progressColor: "bg-slate-500",
+        badge: (
+          <div className="flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Activity Complete
+          </div>
         ),
-        title: "Keep Going!",
-        message:
-          "You can do better! Come back anytime and try again. Meanwhile, unlocking the next activity for you.",
-        bgColor: "bg-slate-700",
-        textColor: "text-orange-400",
-        buttonColor: "bg-orange-500 hover:bg-orange-600",
-        extraIcon: (
-          <ArrowRight className="absolute -right-2 top-1/2 w-8 h-8 text-orange-400 animate-pulse hidden" />
-        ),
+        extraIcon: <TrendingUp className="w-5 h-5 text-slate-500" />,
       };
     }
   };
@@ -115,70 +127,94 @@ export default function ActivityCompletionModal({
   const content = getScoreContent();
 
   return (
-    <>
-      {/* <EmojiBubbles
-        emoji={
-          scorePercentage > 75
-            ? "🤩"
-            : scorePercentage >= 50
-            ? " 😊 "
-            : " 🥹 "
-        }
-        count={30}
-        interval={50}
-      /> */}
-
-      <div className="fixed inset-0 flex backdrop-blur-0 items-center justify-center z-50">
-        <div
-          className={`${content.bgColor} rounded-lg w-full max-w-md mx-4 overflow-hidden animate-[bounceIn_0.6s_ease-in-out] shadow-2xl`}
-        >
-          <div className="bg-slate-800 py-4 px-6 border-b border-slate-600">
-            <h2 className="text-2xl font-bold text-white text-center">
-              Next Activity Unlocked
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={`bg-gradient-to-br ${content.bgGradient} rounded-2xl w-full max-w-md mx-4 overflow-hidden shadow-2xl border ${content.borderColor}`}
+      >
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm py-4 px-6 border-b border-slate-200/50">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-800">
+              Activity Completed
             </h2>
-          </div>
-
-          <div className="p-6">
-            <div className="relative z-10">
-              <div className="flex justify-center mb-6 relative">
-                <div className="relative">
-                  {content.icon}
-                  <Sparkles className={`absolute -top-2 -left-2 w-6 h-6 text-yellow-400 animate-pulse ${scorePercentage < 50 ? "hidden" : ""}`} />
-                  {content.extraIcon}
-                </div>
-              </div>
-
-              <h2
-                className={`text-4xl font-bold text-center mb-4 ${content.textColor}`}
-              >
-                {content.title}
-              </h2>
-              <p className="text-xl text-center text-slate-300 mb-8">
-                {content.message}
-              </p>
-
-              <div className="flex items-center justify-center gap-2 text-slate-300">
-                <Timer className="w-5 h-5" />
-                <p>
-                  Redirecting to activities page in{" "}
-                  <span className="font-bold">{countdown}</span> seconds.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-2 bg-slate-600">
-            <div
-              className="h-full bg-green-500 transition-all duration-1000"
-              style={{
-                width: `${
-                  ((countdownDuration - countdown) / countdownDuration) * 100
-                }%`,
-              }}
-            />
+            {content.badge}
           </div>
         </div>
-      </div>
-    </>
+
+        {/* Content */}
+        <div className="p-8">
+          <div className="text-center">
+            {/* Icon with animation */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
+              className="flex justify-center mb-6 relative"
+            >
+              <div className="relative">
+                {content.icon}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-1 -right-1"
+                >
+                  {content.extraIcon}
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Score Display */}
+            <div className="mb-4">
+              <div className="text-3xl font-bold text-slate-800 mb-1">
+                {Math.round(scorePercentage)}%
+              </div>
+              <div className="w-24 h-2 bg-slate-200 rounded-full mx-auto">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${scorePercentage}%` }}
+                  transition={{ delay: 0.5, duration: 1 }}
+                  className={`h-full ${content.progressColor} rounded-full`}
+                />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className={`text-2xl font-bold mb-4 ${content.titleColor}`}>
+              {content.title}
+            </h3>
+
+            {/* Message */}
+            <p className={`text-base leading-relaxed mb-6 ${content.messageColor}`}>
+              {content.message}
+            </p>
+
+            {/* Countdown */}
+            <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">
+              <Timer className="w-4 h-4" />
+              <span>
+                Continuing in{" "}
+                <span className="font-semibold text-slate-700">{countdown}</span>{" "}
+                seconds
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="h-1 bg-slate-200">
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{
+              width: `${((countdownDuration - countdown) / countdownDuration) * 100}%`,
+            }}
+            transition={{ duration: 0.3 }}
+            className={`h-full ${content.progressColor}`}
+          />
+        </div>
+      </motion.div>
+    </div>
   );
 }

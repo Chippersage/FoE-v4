@@ -404,7 +404,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            className="border-2 border-black rounded-md shadow-md w-full h-[300px] "
+            className="border-2 border-slate-200 rounded-xl shadow-lg w-full h-[300px] bg-white"
           >
             <source src={subconceptLink} type="audio/mp3" />
             Your browser does not support the audio element.
@@ -419,7 +419,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
             controls
             controlsList="nodownload" // Restrict download
             onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            className="border-2 border-black rounded-md shadow-md max-h-[60vh]"
+            className="border-2 border-slate-200 rounded-xl shadow-lg max-h-[60vh] bg-white"
           >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
@@ -436,8 +436,9 @@ case "assignment_image":
         alt="Image content"
         style={{
           maxWidth: "100%",
-          borderRadius: "10px",
-          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+          borderRadius: "12px",
+          boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+          border: "2px solid #e2e8f0",
         }}
         onContextMenu={(e) => e.preventDefault()} // Block right-click menu
       />
@@ -452,7 +453,7 @@ case "assignment_image":
             link.click();
             document.body.removeChild(link);
           }}
-          className="mt-4 bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm transition-all"
+          className="mt-4 bg-[#f48d03] hover:bg-[#e67e00] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Download Assignment
         </Button>
@@ -479,8 +480,9 @@ case "assignment_image":
               // height=""
               title="PDF Document"
               style={{
-                borderRadius: "10px",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                borderRadius: "12px",
+                boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                border: "2px solid #e2e8f0",
                 // pointerEvents: "none",
               }}
               // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
@@ -502,8 +504,9 @@ case "assignment_image":
             height="600px"
             title="PDF Document"
             style={{
-              borderRadius: "10px",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              borderRadius: "12px",
+              boxShadow: "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+              border: "2px solid #e2e8f0",
               // pointerEvents: "none",
             }}
             // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
@@ -558,20 +561,22 @@ case "assignment_image":
           subconceptType={subconceptData?.subconceptType}
         />
       ) : null}
-      {showErrorPopup && renderOverlay("error")}
+      {showErrorPopup && (
+        <ActivityCompletionModal
+          countdownDuration={5}
+          onClose={() => setShowErrorPopup(false)}
+          scorePercentage={0} // Error state - low score to trigger appropriate messaging
+        />
+      )}
       {/* Rest of the component */}
       {/* @ts-ignore */}
       <div
-        className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full fixed"
-        style={{
-          backgroundImage: "url('/images/cohort-bg.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed",
-        }}
+        className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-center font-sans text-gray-800 w-full fixed"
       >
-        <h1 className="pt-6 text-2xl md:text-3xl lg:text-4xl font-bold text-[#2C3E50]">
+        {/* Professional overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-slate-100/30 z-0" />
+        
+        <h1 className="relative z-10 pt-6 text-2xl md:text-3xl lg:text-4xl font-semibold bg-gradient-to-r from-[#f48d03] to-[#e67e00] bg-clip-text text-transparent">
           {subconceptData?.subconceptType === "video" ||
           subconceptData?.subconceptType === "youtube"
             ? "Watch the video"
@@ -597,23 +602,23 @@ case "assignment_image":
         /> */}
         <div
           id="contentArea"
-          className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:pb-24 flex justify-center items-center ${
+          className={`relative z-10 mb-6 mt-4 mx-auto p-4 sm:p-6 md:pb-24 flex justify-center items-center ${
             ["assessment", "video", "assignment_video", "youtube"].includes(
               subconceptData?.subconceptType
             )
               ? "w-11/12 flex justify-center items-center"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          } rounded-lg overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar`}
+          } bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar`}
         >
           {renderContent()}
         </div>
         <div
-          className={` bg-white ${
+          className={`relative z-10 bg-white/95 backdrop-blur-sm border-t border-slate-200 ${
             subconceptData?.subconceptType === "pdf" ||
             subconceptData?.subconceptType === "assignment_pdf"
               ? "sticky"
               : "fixed w-full"
-          } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-lg before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-gray-300 before:to-transparent before:rounded-t-md z-10`}
+          } flex-col bottom-0 flex justify-center gap-2 flex-wrap p-1 shadow-2xl before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-gradient-to-b before:from-slate-300 before:to-transparent before:rounded-t-md z-10`}
         >
           {subconceptData?.subconceptType === "assessment" && (
             <div className="flex justify-center items-center space-x-2 py-1">
@@ -640,7 +645,7 @@ case "assignment_image":
                 <Button
                   onClick={() => setIsAssignmentStatusModalOpen(true)}
                   disabled={isAssignmentStatusModalOpen}
-                  className="bg-[#00A66B] hover:bg-green-600 text-white rounded-[5px]"
+                  className="bg-[#f48d03] hover:bg-[#e67e00] text-white rounded-lg font-medium transition-all duration-200 shadow-md"
                 >
                   View Assignment status
                 </Button>
@@ -661,9 +666,9 @@ case "assignment_image":
                   (subconceptData?.subconceptType.startsWith("assessment") &&
                     !isAssessmentIntegrityChecked) ||
                   isComplete
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#00A66B] hover:bg-green-600"
-                } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[5px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]`}
+                    ? "bg-slate-400 cursor-not-allowed"
+                    : "bg-[#f48d03] hover:bg-[#e67e00]"
+                } text-white px-3 py-2 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-lg text-sm sm:text-base md:text-lg font-medium transition-all duration-200 max-w-[150px] sm:max-w-[200px] shadow-md`}
               >
                 {subconceptData?.subconceptType
                   ?.toLowerCase()
@@ -681,7 +686,7 @@ case "assignment_image":
             </button> */}
             <Button
               onClick={handleGoBack}
-              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg max-w-[150px] sm:max-w-[200px] rounded-[5px]"
+              className="bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg font-medium max-w-[150px] sm:max-w-[200px] rounded-lg shadow-md transition-all duration-200"
             >
               Go Back
             </Button>

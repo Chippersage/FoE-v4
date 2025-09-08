@@ -1,29 +1,45 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
   Clock,
-  // BookOpen,
-  // Mic,
-  // PlayCircle,
-  // Headphones,
-  // PenTool,
-  // Play,
-  // Flag,
+  Play,
+  Lock,
+  ArrowRight,
+  Trophy,
+  Star,
+  ChevronRight,
+  BookOpen,
+  Target,
+  Award,
+  Video,
+  Headphones,
+  Edit3,
+  FileText,
+  HelpCircle,
+  Volume2,
+  Eye,
+  PenTool,
+  MessageSquare,
+  GraduationCap,
+  ClipboardCheck,
+  Lightbulb,
+  Mic,
+  Shuffle,
+  Globe,
+  BookMarked,
+  Feather,
 } from "lucide-react";
 import PenNib from "@/components/activityIcons/PenNib";
 import Book from "@/components/activityIcons/Book";
 import Camera from "@/components/activityIcons/Camera";
 import Speaker from "@/components/activityIcons/Speaker";
 import Picture from "@/components/activityIcons/Picture";
-// import ReadAlongBook from "@/components/ReadAlongBook";
 import Start from "@/components/activityIcons/Start";
 import QnA from "@/components/activityIcons/QnA";
-// import TeachingIcon from "@/assets/icons/workshop.svg";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-// import { useLocation } from "react-router-dom";
 import UnifiedHeader from "@/components/UnifiedHeader";
 import { useUserContext } from "@/context/AuthContext";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
@@ -53,14 +69,13 @@ import MainIdea from "@/components/activityIcons/MainIdea";
 import StoryCompletion from "@/components/activityIcons/StoryCompletion";
 import TextFromImage from "@/components/activityIcons/TextFromImage";
 import TextFromText from "@/components/activityIcons/TextFromText";
-
-import { useSession } from "@/context/TimerContext";
-import Default from "@/components/activityIcons/Default";
 import WriterGeneralSentences from "@/components/activityIcons/WriterGeneralSentences";
+import Default from "@/components/activityIcons/Default";
 import BackButton from "@/components/BackButton";
 import toast from "react-hot-toast";
 import Word from "@/components/activityIcons/Word";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { useSession } from "@/context/TimerContext";
 
 interface Subconcept {
   subconceptId: string;
@@ -70,84 +85,279 @@ interface Subconcept {
   completionStatus: string;
 }
 
-interface SubconceptData {
-  [key: string]: Subconcept;
-}
-
 const iconMap = {
-  youtube: Camera,
-  html: PenNib,
-  pdf: Book,
-  video: Camera,
-  audio: Speaker,
-  image: Picture,
-  qna: QnA,
-  fib: FIB,
-  grammar: Grammar,
-  comprehension: Comprehension,
-  trueorfalse: TrueOrFalse,
-  jw: JumbledWords,
-  listen: Listen,
-  speak: Speaker,
-  match: Match,
-  read: Read,
-  teacher_assist: TeacherAssist,
-  write: Write,
-  riddles: Riddle,
-  dictation: Dictation,
-  vocab: Spelling,
-  mtf: Spelling,
-  mcq: QnA,
-  realworld: RealWorld,
-  literature: Literature,
-  dialogue_writing: DialogueWriting,
-  generate_idea_words: GenerateIdeaWords,
-  how_sentences_change: HowSentencesChange,
-  main_idea: MainIdea,
-  story_completion: StoryCompletion,
-  text_from_picture: TextFromImage,
-  text_from_text: TextFromText,
-  writer_general_sentences: WriterGeneralSentences,
-  word: Word,
-  words: Word,
+  youtube: Video,
+  html: Edit3,
+  pdf: FileText,
+  video: Video,
+  audio: Headphones,
+  image: Eye,
+  qna: HelpCircle,
+  fib: Edit3,
+  grammar: PenTool,
+  comprehension: BookOpen,
+  trueorfalse: CheckCircle2,
+  jw: Shuffle,
+  listen: Headphones,
+  speak: Mic,
+  match: Target,
+  read: BookOpen,
+  teacher_assist: GraduationCap,
+  write: Edit3,
+  riddles: Lightbulb,
+  dictation: Mic,
+  vocab: BookMarked,
+  mtf: Target,
+  mcq: HelpCircle,
+  realworld: Globe,
+  literature: BookMarked,
+  dialogue_writing: MessageSquare,
+  generate_idea_words: Lightbulb,
+  how_sentences_change: Edit3,
+  main_idea: Target,
+  story_completion: Feather,
+  text_from_picture: Eye,
+  text_from_text: FileText,
+  writer_general_sentences: Edit3,
+  word: BookMarked,
+  words: BookMarked,
+  passage_read: BookOpen,
+  passage_jw: Shuffle,
+  passage_fib: Edit3,
+  passage_spelling: BookMarked,
+  passage_vocab: BookMarked,
+  passage_comprehension: BookOpen,
+  passage_qna: HelpCircle,
+  assignment: ClipboardCheck,
+  assignment_pdf: ClipboardCheck,
+  assignment_video: ClipboardCheck,
+  assignment_audio: ClipboardCheck,
+  assignment_image: ClipboardCheck,
+  assessment: GraduationCap,
+};
 
-  passage_read: Read,
-  passage_jw: JumbledWords,
-  passage_fib: FIB,
-  passage_spelling: Spelling,
-  passage_vocab: Spelling,
-  passage_comprehension: Comprehension,
-  passage_qna: QnA,
+const ActivityTypeColors = {
+  video: "from-blue-50 to-blue-100",
+  audio: "from-purple-50 to-purple-100", 
+  qna: "from-indigo-50 to-indigo-100",
+  read: "from-emerald-50 to-emerald-100",
+  write: "from-orange-50 to-orange-100",
+  assessment: "from-red-50 to-red-100",
+  assignment: "from-yellow-50 to-yellow-100",
+  default: "from-slate-50 to-slate-100",
+};
 
-  assignment: Assignment,
-  assignment_pdf: Assignment,
-  assignment_video: Assignment,
-  assignment_audio: Assignment,
-  assignment_image: Assignment,
-  assessment: Assessment,
+const getActivityTypeColor = (type: string) => {
+  const normalizedType = type.toLowerCase();
+  if (normalizedType.includes('video') || normalizedType.includes('camera')) return ActivityTypeColors.video;
+  if (normalizedType.includes('audio') || normalizedType.includes('speaker') || normalizedType.includes('listen')) return ActivityTypeColors.audio;
+  if (normalizedType.includes('qna') || normalizedType.includes('mcq')) return ActivityTypeColors.qna;
+  if (normalizedType.includes('read')) return ActivityTypeColors.read;
+  if (normalizedType.includes('write')) return ActivityTypeColors.write;
+  if (normalizedType.includes('assessment')) return ActivityTypeColors.assessment;
+  if (normalizedType.includes('assignment')) return ActivityTypeColors.assignment;
+  return ActivityTypeColors.default;
+};
+
+const ActivityCard = ({ subconcept, index, isEnabled, isCompleted, isNext, stageId, currentUnitId }) => {
+  const normalizedIconMap = Object.keys(iconMap).reduce(
+    (acc, key) => {
+      acc[key.toLowerCase()] = iconMap[key];
+      return acc;
+    },
+    {} as Record<string, (typeof iconMap)[keyof typeof iconMap]>
+  );
+
+  const Icon = normalizedIconMap[subconcept.subconceptType.toLowerCase()] || BookOpen;
+  const colorGradient = getActivityTypeColor(subconcept.subconceptType);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="group relative"
+    >
+      <Link
+        to={
+          isEnabled &&
+          !(subconcept?.subconceptType?.toLowerCase().startsWith("assessment") &&
+            subconcept?.completionStatus === "yes")
+            ? `/subconcept/${subconcept?.subconceptId}`
+            : null
+        }
+        state={{ subconcept, stageId, currentUnitId }}
+        className={`${!isEnabled && "cursor-not-allowed"}`}
+        onClick={(e) => {
+          if (subconcept?.subconceptType?.toLowerCase().startsWith("assessment") &&
+              subconcept?.completionStatus === "yes") {
+            e.preventDefault();
+            toast(
+              (t) => (
+                <div className="text-gray-800 font-medium text-md">
+                  Assessment already completed, you can attempt only once!
+                </div>
+              ),
+              {
+                icon: "⚠️",
+                position: "top-center",
+                style: {
+                  border: "1px solid #d1d5db",
+                  padding: "12px 16px",
+                  color: "#374151",
+                  background: "#f9fafb",
+                  borderRadius: "8px",
+                },
+              }
+            );
+          }
+        }}
+      >
+        <div
+          className={`
+            relative overflow-hidden rounded-lg border transition-all duration-300 p-6 min-h-[120px] bg-white
+            ${isCompleted 
+              ? "border-emerald-200 shadow-sm" 
+              : isEnabled 
+                ? "border-slate-200 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]" 
+                : "border-gray-200 opacity-70"}
+            ${isNext ? "ring-2 ring-blue-200 ring-opacity-60 shadow-md" : ""}
+          `}
+        >
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-20">
+            <div 
+              className={`absolute inset-0 bg-gradient-to-br ${colorGradient}`}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="relative z-10 flex items-center justify-between h-full">
+            <div className="flex items-center space-x-4 flex-1">
+              {/* Icon Container */}
+                <div 
+                  className={`
+                    relative p-3 rounded-lg transition-all duration-300
+                    ${isCompleted 
+                      ? "bg-emerald-100" 
+                      : isEnabled 
+                        ? "bg-slate-50 group-hover:bg-blue-50" 
+                        : "bg-gray-100"}
+                  `}
+                >
+                  <Icon
+                    width="28"
+                    height="28"
+                    color={
+                      isCompleted 
+                        ? "#059669" 
+                        : isEnabled 
+                          ? "#3b82f6" 
+                          : "#9ca3af"
+                    }
+                    className="object-contain"
+                  />
+
+                  {/* Status Indicator */}
+                  {isCompleted && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-1"
+                    >
+                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    </motion.div>
+                  )}
+
+                  {!isEnabled && !isCompleted && (
+                    <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-1">
+                      <Lock className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+
+                  {isNext && !isCompleted && (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1"
+                    >
+                      <Play className="w-3 h-3 text-white" />
+                    </motion.div>
+                  )}
+              </div>
+
+              {/* Activity Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className={`
+                  font-semibold text-base leading-tight mb-1 truncate
+                  ${isCompleted 
+                    ? "text-emerald-700" 
+                    : isEnabled 
+                      ? "text-slate-700" 
+                      : "text-gray-500"}
+                `}>
+                  {subconcept.subconceptDesc}
+                </h3>
+                <p className={`
+                  text-sm capitalize
+                  ${isCompleted 
+                    ? "text-emerald-600" 
+                    : isEnabled 
+                      ? "text-blue-600" 
+                      : "text-gray-400"}
+                `}>
+                  {subconcept.subconceptType.replace(/_/g, ' ')}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Indicator */}
+            <div className={`
+              transition-all duration-300
+              ${isEnabled ? "opacity-100 group-hover:translate-x-0.5" : "opacity-40"}
+            `}>
+              {isCompleted ? (
+                <Trophy className="w-5 h-5 text-emerald-500" />
+              ) : isEnabled ? (
+                <ChevronRight className="w-5 h-5 text-blue-500" />
+              ) : (
+                <Lock className="w-5 h-5 text-gray-400" />
+              )}
+            </div>
+          </div>
+
+          {/* Next Activity Pulse */}
+          {isNext && !isCompleted && (
+            <>
+              <motion.div
+                animate={{ scale: [1, 1.02, 1] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-blue-100/50 rounded-lg"
+              />
+              <div className="absolute top-3 right-3">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
+                  Next
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </Link>
+    </motion.div>
+  );
 };
 
 export default function SubConceptsPage() {
-  // const location = useLocation();
-  // const stageId = location.state?.stageId;
   const [stageId, setStageId] = useState("");
-  // const currentUnitId = location.state?.currentUnitId;
   const [currentUnitId, setCurrentUnitId] = useState("");
-  // const nextUnitId = location.state?.nextUnitId;
   const { unitId } = useParams();
   const [nextUnitId, setNextUnitId] = useState(null);
   const { user, selectedCohortWithProgram } = useUserContext();
   const [subconcepts, setSubconcepts] = useState<Subconcept[]>([]);
-  // const [started, setStarted] = useState(true);
-  const [animationTrigger, setAnimationTrigger] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTooltip, setActiveTooltip] = useState<number | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [pathWidth, setPathWidth] = useState(1000);
-  const [pathHeight, setPathHeight] = useState(400);
-  const rowHeight = pathHeight / 2; // Height of each row
-  const [totalSteps, setTotalSteps] = useState(2);
   const [showConfetti, setShowConfetti] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [unitCompletionStatus, setUnitCompletionStatus] = useState("");
@@ -156,132 +366,7 @@ export default function SubConceptsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [celebratedStageName, setCelebratedStageName] = useState("");
   const navigate = useNavigate();
-  const selectedProgramId = localStorage.getItem("selectedProgramId");
-  const [pathData, setPathData] = useState(null);
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
-
   const { formattedElapsedTime } = useSession();
-
-  const bounceAnimation = {
-    y: [0, -20, 0],
-    // scale: [1, 1.2, 1], // Scale up to 1.1 at the peak of the bounce
-    transition: {
-      duration: 1,
-      repeat: Number.POSITIVE_INFINITY,
-      repeatType: "loop",
-      ease: "easeInOut",
-    },
-  };
-
-  // just to ensure paths calculated and
-  const [delayedPoints, setDelayedPoints] = useState<
-    { x: number; y: number }[]
-  >([]);
-
-  // Detect orientation changes
-  useEffect(() => {
-    const handleResize = () => {
-      setScreenWidth(window.innerWidth);
-      setScreenHeight(window.innerHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("orientationchange", handleResize);
-    };
-  }, []);
-
-  // Update path data when totalSteps, path size, or screen size changes
-  useEffect(() => {
-    if (totalSteps) {
-      if (totalSteps < 5 && screenWidth >= 640) {
-        const calculatedPath = getSinglePath();
-        setPathData(calculatedPath);
-      } else {
-        const calculatedPath = getPath(
-          totalSteps > 8 ? (totalSteps > 14 ? 3 : 2) : 1
-        );
-        setPathData(calculatedPath);
-      }
-    }
-
-    const timer = setTimeout(() => {
-      const newPoints = [...Array(totalSteps)].map((_, index) =>
-        getPointOnPath(index / (totalSteps - 1))
-      );
-      setDelayedPoints(newPoints);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [totalSteps, screenWidth, screenHeight, pathWidth, pathHeight]); // Trigger on orientation change
-
-  // Update path dimensions when totalSteps or screen size changes
-  useLayoutEffect(() => {
-    if (screenWidth < 768) {
-      setPathWidth(300);
-    } else if (screenWidth >= 768 && screenWidth < 1024) {
-      setPathWidth(800);
-    } else {
-      setPathWidth(1000);
-    }
-
-    const baseHeight = 400;
-    const heightIncrement = 50;
-    const newHeight = baseHeight + (totalSteps - 2) * heightIncrement;
-    setPathHeight(newHeight);
-  }, [totalSteps, screenWidth, screenHeight]); // Recalculate on orientation change
-
-  useEffect(() => {
-    // Clean up - no background needed for professional interface
-  }, [selectedCohortWithProgram]);
-
-  const [targetIndex, setTargetIndex] = useState(null);
-  const scrollableDivRef = useRef(null);
-  const stepRefs = useRef([]);
-  // const { pathname } = useLocation(); // Detect route changes
-
-  // Calculate target index and update state
-  useEffect(() => {
-    const incompleteIndex = subconcepts.findIndex(
-      (s) => s.completionStatus === "incomplete"
-    );
-    const ignoredIndex = subconcepts.findIndex(
-      (s) => s.completionStatus === "ignored"
-    );
-
-    // Find the first occurring status
-    let calculatedTargetIndex;
-    if (
-      incompleteIndex !== -1 &&
-      (ignoredIndex === -1 || incompleteIndex < ignoredIndex)
-    ) {
-      calculatedTargetIndex = incompleteIndex;
-    } else {
-      calculatedTargetIndex = ignoredIndex;
-    }
-
-    setTargetIndex(
-      calculatedTargetIndex === -1
-        ? subconcepts.length + 1
-        : calculatedTargetIndex + 1
-    );
-  }, [subconcepts]);
-
-  // Scroll to the active subconcept when the target index changes
-  useEffect(() => {
-    setTimeout(() => {
-      if (targetIndex !== null && stepRefs.current[targetIndex]) {
-        stepRefs.current[targetIndex].scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 500);
-  }, [targetIndex]); // Trigger on targetIndex change
 
   const fetchSubconcepts = async () => {
     try {
@@ -299,17 +384,15 @@ export default function SubConceptsPage() {
   useEffect(() => {
     const fetchAndSetSubconcepts = async () => {
       if (user.userId && unitId) {
-        // console.log(user);
         try {
           const result = await fetchSubconcepts();
-          // console.log(result);
           setUnitCompletionStatus(result.unitCompletionStatus);
           setStageId(result.stageId);
           setCurrentUnitId(result.unitId);
           setUnitName(result.unitName);
           setUnitDescription(result.unitDesc);
           setCelebratedStageName(result.stageName);
-          const fetchedSubconcepts: SubconceptData = result.subConcepts;
+          const fetchedSubconcepts = result.subConcepts;
           setSubconcepts(Object.values(fetchedSubconcepts));
         } catch (err) {
           setError("Failed to fetch data.");
@@ -323,41 +406,20 @@ export default function SubConceptsPage() {
   }, [user?.userId, unitId]);
 
   useEffect(() => {
-    setTotalSteps(subconcepts.length + 2); // Including start and end
-  }, [subconcepts]);
-
-  // useEffect(() => {
-  //   if (started) {
-  //     setAnimationTrigger(true);
-  //   }
-  // }, [started]);
-
-  useEffect(() => {
-    setAnimationTrigger(true);
-  }, []); // Empty dependency array to trigger on initial render
-
-  useEffect(() => {
     if (!unitId) return;
 
-    // Retrieve all units and parse as an array
     const allUnitsString = localStorage.getItem("allUnitsOfCurrentStage");
     const allUnits: { unitId: string }[] = allUnitsString
       ? JSON.parse(allUnitsString)
       : [];
-    // console.log(allUnits);
-    // Find the current unit index
-    const currentIndex = allUnits.findIndex((unit) => {
-      // console.log(unit);
-      return unit.unitId == unitId;
-    });
-    // console.log(currentIndex);
-    // Find the next unit
+    
+    const currentIndex = allUnits.findIndex((unit) => unit.unitId == unitId);
+    
     if (currentIndex !== -1 && currentIndex < allUnits.length - 1) {
       const nextUnit = allUnits[currentIndex + 1];
-      // @ts-ignore
       setNextUnitId(nextUnit?.unitId || null);
     } else {
-      setNextUnitId(null); // No next unit
+      setNextUnitId(null);
     }
   }, [unitId]);
 
@@ -367,469 +429,360 @@ export default function SubConceptsPage() {
     navigate("/");
   };
 
-  const getSinglePath = () => {
-    // Fixed starting Y position
-    const startY = 200; // Fixed starting position
-    let path = `M100,${startY}`;
-
-    // Draw a straight horizontal line to the right
-    path += `H${pathWidth - 40}`;
-
-    return { path, dynamicHeight: startY + 100 }; // Add some padding
-  };
-
-  const getPath = (numWaves = 2) => {
-    const radius = window.innerWidth >= 640 ? 50 : 30;
-    const waveHeight = rowHeight / 2;
-    const startY = 150; // Fixed starting position
-
-    let path = `M100,${startY}`;
-    let maxY = startY; // Track max Y-coordinate
-
-    for (let i = 0; i < numWaves; i++) {
-      let yOffset = i * waveHeight * 2;
-      let bottomY = waveHeight * 2 + startY + yOffset;
-      maxY = Math.max(maxY, bottomY); // Update max Y-coordinate
-
-      path += `
-      H${pathWidth - 40 - radius} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 40},${startY + radius + yOffset}
-      V${waveHeight + startY - radius + yOffset} 
-      A${radius},${radius} 0 0 1 ${pathWidth - 40 - radius},${
-        waveHeight + startY + yOffset
-      }
-      H${40 + radius}
-      A${radius},${radius} 0 0 0 40,${waveHeight + startY + radius + yOffset}
-      V${waveHeight * 2 + startY - radius + yOffset} 
-      A${radius},${radius} 0 0 0 ${40 + radius},${bottomY}
-    `;
-    }
-
-    path += ` H${pathWidth - 40}`; // Ensure path extends properly
-
-    return { path, dynamicHeight: maxY + 100 }; // Add some padding
-  };
-
-  const getPointOnPath = (progress: number) => {
-    const path = document.querySelector(".curve-path") as SVGPathElement | null;
-    if (!path) return { x: 0, y: 0 };
-    const length = path.getTotalLength();
-    const point = path.getPointAtLength(progress * length);
-    return { x: point.x, y: point.y };
-  };
-
   const handleFinishClick = () => {
-    setShowConfetti(true); // Trigger confetti animation
-    setAudioPlaying(true); // Play audio
+    setShowConfetti(true);
+    setAudioPlaying(true);
     setTimeout(() => {
-      setShowConfetti(false); // Hide confetti after 5 seconds
+      setShowConfetti(false);
     }, 5000);
   };
+
+  const completedCount = subconcepts.filter(s => s.completionStatus === "yes").length;
+  const progressPercentage = subconcepts.length > 0 ? (completedCount / subconcepts.length) * 100 : 0;
 
   if (loading) {
     return <LoadingOverlay />;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        <div className="text-center p-8">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
+
+  const nextActivityIndex = subconcepts.findIndex(s => 
+    s.completionStatus === "incomplete" || s.completionStatus === "ignored"
+  );
 
   return (
     <>
       <UnifiedHeader variant="transparent" />
+      
       <KidFriendlyModal
         isOpen={isModalOpen}
         onClose={closeModal}
         stageName={celebratedStageName}
         congratsType="stageCompletion"
       />
-      {/* Audio Element */}
+
+      {/* Audio Elements */}
       {isModalOpen && (
+        <audio src="/sounds/unit_completion_success.mp3" autoPlay />
+      )}
+      {audioPlaying && (
         <audio
-          src="/youaresuperb.mp3"
+          src="/sounds/unit_completion_success.mp3"
           autoPlay
-          // onEnded={() => setShowConfetti(false)}
+          onEnded={() => setAudioPlaying(false)}
         />
       )}
-      <div
-        ref={scrollableDivRef}
-        className="relative w-full h-auto overflow-y-auto min-h-screen"
-        style={{
-          background: `linear-gradient(135deg, #f8fafc 0%, #e0e7ef 60%, #e0f2fe 100%)`,
-        }}
-      >
-        {/* Minimalist pattern overlay */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(135deg, rgba(180,200,220,0.08) 0px, rgba(180,200,220,0.08) 2px, transparent 2px, transparent 24px)',
-            opacity: 0.5,
-            mixBlendMode: 'multiply',
-          }}
-        />
-        {/* SVG Container - clean professional layout */}
-        {pathData && (
-          <div className="w-full min-h-full relative flex items-center justify-center pt-8 pb-16">
-            <svg
-              className="w-full h-auto"
-              viewBox={`0 0 ${pathWidth} ${pathData.dynamicHeight}`}
-              preserveAspectRatio="xMinYMin meet"
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        {/* Hero Section */}
+        <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8"
             >
-              <path
-                d={pathData.path}
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="3"
-                className="curve-path"
-                strokeDasharray={"15,10"}
-                opacity="0.8"
-              />
-              {delayedPoints.map((_, index) => {
-                const point = getPointOnPath(index / (totalSteps - 1));
-                const subconcept =
-                  index > 0 && index < totalSteps - 1
-                    ? subconcepts[index - 1]
-                    : null;
-
-                const normalizedIconMap = Object.keys(iconMap).reduce(
-                  (acc, key) => {
-                    acc[key.toLowerCase()] = iconMap[key]; // Converting keys to lowercase
-                    return acc;
-                  },
-                  {} as Record<string, (typeof iconMap)[keyof typeof iconMap]>
-                );
-
-                const Icon = subconcept
-                  ? normalizedIconMap[
-                      subconcept.subconceptType.toLowerCase() as keyof typeof normalizedIconMap
-                    ]
-                  : index === 0
-                  ? Start
-                  : Finish;
-
-                const isCompleted =
-                  subconcept && subconcept.completionStatus === "yes";
-                const isEnabled =
-                  index === 0 ||
-                  (index === totalSteps - 1 &&
-                    subconcepts.every((s) => s.completionStatus === "yes")) ||
-                  (subconcept?.completionStatus !== "disabled" &&
-                    index !== totalSteps - 1);
-
-                return (
-                  <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
-                    <Link
-                      to={
-                        index === totalSteps - 1 &&
-                        nextUnitId &&
-                        (unitCompletionStatus === "yes" ||
-                          unitCompletionStatus.toLowerCase() ===
-                            "unit completed without assignments")
-                          ? "/dashboard"
-                          : isEnabled &&
-                            index !== totalSteps - 1 &&
-                            index !== 0 &&
-                            !(
-                              subconcept?.subconceptType
-                                ?.toLowerCase()
-                                .startsWith("assessment") &&
-                              subconcept?.completionStatus === "yes"
-                            )
-                          ? `/subconcept/${subconcept?.subconceptId}`
-                          : null
-                      }
-                      state={{ subconcept, stageId, currentUnitId }}
-                      className={`${
-                        !isEnabled &&
-                        unitCompletionStatus.toLowerCase() !==
-                          "unit completed without assignments" &&
-                        "cursor-not-allowed"
-                      }`}
-                      onMouseEnter={() => setActiveTooltip(index)}
-                      onMouseLeave={() => setActiveTooltip(null)}
-                      onClick={(e) => {
-                        if (
-                          index === totalSteps - 1 &&
-                          (unitCompletionStatus === "yes" ||
-                            unitCompletionStatus.toLowerCase() ===
-                              "unit completed without assignments") &&
-                          nextUnitId
-                        ) {
-                          e.preventDefault(); // Prevent immediate navigation
-                          setShowConfetti(true);
-                          setAudioPlaying(true);
-                          // Navigate after confetti animation
-                          setTimeout(() => {
-                            navigate("/dashboard");
-                          }, 5000); // Match this with confetti duration
-                        } else if (
-                          index === totalSteps - 1 &&
-                          (unitCompletionStatus === "yes" ||
-                            unitCompletionStatus.toLowerCase() ===
-                              "unit completed without assignments") &&
-                          !nextUnitId
-                        ) {
-                          openModal();
-                        } else if (
-                          subconcept?.subconceptType
-                            ?.toLowerCase()
-                            .startsWith("assessment") &&
-                          subconcept?.completionStatus === "yes"
-                        ) {
-                          e.preventDefault(); // prevent navigation
-                          toast(
-                            (t) => (
-                              <div className="text-yellow-800 font-medium text-md">
-                                Assessment already completed, you can attempt
-                                only once!
-                              </div>
-                            ),
-                            {
-                              icon: "⚠️",
-                              position: "top-center",
-                              style: {
-                                border: "1px solid #facc15",
-                                padding: "12px 16px",
-                                color: "#78350f",
-                                background: "#fef9c3",
-                                borderRadius: "8px",
-                              },
-                            }
-                          );
-                        }
-                      }}
-                    >
-                      <g
-                        className={`transition-transform duration-300 ease-out  ${
-                          animationTrigger ? "scale-100" : "scale-0"
-                        }`}
-                        style={{ transitionDelay: `${index * 100}ms` }}
-                      >
-                        <rect
-                          x={point.x - 22}
-                          y={point.y - 22}
-                          width="44"
-                          height="44"
-                          rx="8"
-                          ry="8"
-                          fill={
-                            index === 0 || index === totalSteps - 1
-                              ? "transparent"
-                              : subconcept?.completionStatus === "incomplete"
-                              ? "#ffffff"
-                              : "#ffffff"
-                          }
-                          stroke={
-                            index === 0 || index === totalSteps - 1
-                              ? "none"
-                              : isEnabled
-                              ? isCompleted
-                                ? "#10b981"
-                                : "#3b82f6"
-                              : "#94a3b8"
-                          }
-                          strokeWidth="3"
-                          filter="drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1))"
-                          onClick={
-                            index === totalSteps - 1
-                              ? handleFinishClick
-                              : undefined
-                          }
-                        />
-
-                        <Icon
-                          x={
-                            index === 0
-                              ? point.x - 64
-                              : index === totalSteps - 1
-                              ? point.x - 30
-                              : point.x - 18
-                          }
-                          y={
-                            index === 0
-                              ? point.y - 45
-                              : index === totalSteps - 1
-                              ? point.y - 50
-                              : point.y - 18
-                          }
-                          width={
-                            index === 0 || index === totalSteps - 1
-                              ? "70"
-                              : "36"
-                          }
-                          height={
-                            index === 0 || index === totalSteps - 1
-                              ? "70"
-                              : "36"
-                          }
-                          color={
-                            index === 0 || index === totalSteps - 1
-                              ? "#3b82f6"
-                              : isCompleted
-                              ? "#10b981"
-                              : "#475569"
-                          }
-                          className={`object-contain transition-all duration-300 ${
-                            index === totalSteps - 1 &&
-                            unitCompletionStatus != "yes" &&
-                            unitCompletionStatus?.toLowerCase() !=
-                              "unit completed without assignments" &&
-                            "opacity-50"
-                          }`}
-                        />
-
-                        {isCompleted && (
-                          <g
-                            className={`transition-transform duration-300 ease-out ${
-                              animationTrigger ? "scale-100" : "scale-0"
-                            }`}
-                            style={{
-                              transitionDelay: `${index * 100 + 300}ms`,
-                            }}
-                          >
-                            <circle
-                              cx={point.x + 20}
-                              cy={point.y - 20}
-                              r="12"
-                              fill="#10b981"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            />
-                            <CheckCircle2
-                              x={point.x + 8}
-                              y={point.y - 32}
-                              width="24"
-                              height="24"
-                              color="white"
-                            />
-                          </g>
-                        )}
-                      </g>
-                      {/* Google Pin for the first incomplete subconcept */}
-                      {index === targetIndex && (
-                        <motion.g animate={bounceAnimation}>
-                          <image
-                            x={point.x - 28}
-                            y={point.y - 90} // Position above the icon
-                            width="54"
-                            height="60"
-                            href="/images/google-pin.png" // Replace with your pin image path
-                            className=""
-                          />
-                        </motion.g>
-                      )}
-                    </Link>
-                    {activeTooltip === index && (
-                      <foreignObject
-                        x={point.x - 100}
-                        y={point.y + 25}
-                        width="200"
-                        height="500"
-                      >
-                        <div
-                          className={`${
-                            isEnabled
-                              ? "bg-slate-800 text-white" // Professional dark for enabled
-                              : unitCompletionStatus?.toLowerCase() ===
-                                "unit completed without assignments"
-                              ? "bg-amber-600 text-white" // Amber for assignments pending
-                              : "bg-slate-400 text-white" // Light slate for disabled
-                          } px-3 py-2 rounded-lg text-xs text-center font-medium shadow-lg backdrop-blur-sm z-[1000]`}
-                          style={{
-                            position: "absolute",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            whiteSpace: "normal",
-                            zIndex: 1000,
-                            maxWidth: "200px",
-                          }}
-                        >
-                          {subconcept ? (
-                            subconcept.subconceptDesc
-                          ) : index === 0 ? (
-                            "Start Learning"
-                          ) : index === totalSteps - 1 &&
-                            unitCompletionStatus !== "yes" &&
-                            unitCompletionStatus?.toLowerCase() !==
-                              "unit completed without assignments" ? (
-                            "Complete all activities to finish"
-                          ) : unitCompletionStatus?.toLowerCase() ===
-                            "unit completed without assignments" ? (
-                            <>
-                              <span>Unit Complete!</span>
-                              <br />
-                              <span className="text-xs opacity-90">
-                                Remember to complete your assignments
-                              </span>
-                            </>
-                          ) : (
-                            "Finish Unit"
-                          )}
-                        </div>
-                      </foreignObject>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        )}
-
-        {/* Confetti Animation - professional celebration */}
-        {showConfetti && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm z-50">
-            <DotLottieReact
-              src="/animation.lottie"
-              loop
-              autoplay
-              style={{ width: "2000px", height: "1000px", zIndex: 9999 }}
-            />
-            <div className="absolute bg-white border border-slate-200 p-8 rounded-xl shadow-2xl text-center max-w-[350px] sm:max-w-xl">
-              <h2 className="text-3xl font-bold text-slate-800 mb-3">
-                Excellent Work!
-              </h2>
-              <p className="text-slate-600 text-lg mb-2">
-                You have successfully completed this unit!
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                {unitName || "Loading Unit..."}
+              </h1>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                {unitDescription || "Loading description..."}
               </p>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                You will be redirected to the dashboard. From there, you can
-                continue to the next unit to advance your learning journey.
-              </p>
-            </div>
-          </div>
-        )}
+            </motion.div>
 
-        {/* Audio Element */}
-        {audioPlaying && (
-          <audio
-            src="/youaresuperb.mp3"
-            autoPlay
-            onEnded={() => setAudioPlaying(false)}
-          />
-        )}
-
-        {/* Current Unit Title - professional corporate styling */}
-        <div
-          className="fixed z-[20] top-[120px] left-1/2 transform -translate-x-1/2 text-center font-semibold text-slate-800 bg-white/95 backdrop-blur-sm border border-slate-200 px-6 py-3 rounded-lg shadow-lg max-w-full"
-          style={{ maxWidth: "90%" }}
-        >
-          <div className="text-lg">{unitName || "Loading Unit..."}</div>
-          <div className="text-sm font-normal text-slate-600 opacity-90 italic truncate mt-1">
-            {unitDescription || "Loading description..."}
+            {/* Progress Section */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-8"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base font-semibold text-slate-700">Learning Progress</h2>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-slate-500">
+                  <span>{completedCount} of {subconcepts.length} completed</span>
+                  {formattedElapsedTime && (
+                    <>
+                      <span>•</span>
+                      <Clock className="w-4 h-4" />
+                      <span>{formattedElapsedTime}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="relative">
+                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercentage}%` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full relative"
+                  >
+                    <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
+                  </motion.div>
+                </div>
+                <div className="flex justify-between mt-2 text-sm">
+                  <span className="text-slate-600 font-medium">{Math.round(progressPercentage)}% Complete</span>
+                  {progressPercentage === 100 && (
+                    <div className="flex items-center space-x-1 text-emerald-600">
+                      <Award className="w-4 h-4" />
+                      <span className="font-medium">Unit Completed!</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
 
-        {/* Session Time - professional styling */}
-        {formattedElapsedTime && (
-          <div className="fixed z-[20] top-[180px] sm:top-[140px] right-4 flex items-center gap-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 shadow-sm">
-            <Clock className="h-4 w-4 text-orange-600" />
-            <span className="font-medium text-orange-700 tabular-nums text-sm">
-              {formattedElapsedTime}
-            </span>
+        {/* Activities Grid */}
+        <div className="px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid gap-4 md:gap-6">
+              {/* Start Activity */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="col-span-full"
+              >
+                <div className="bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl shadow-sm p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-white/20 p-3 rounded-lg">
+                        <Start width="28" height="28" color="white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Begin Your Learning Journey</h3>
+                        <p className="text-slate-200 text-sm">Start with the first activity below</p>
+                      </div>
+                    </div>
+                    <Star className="w-6 h-6 text-slate-300" />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Activity Cards */}
+              {subconcepts.map((subconcept, index) => {
+                const isCompleted = subconcept.completionStatus === "yes";
+                const isEnabled = subconcept.completionStatus !== "disabled";
+                const isNext = index === nextActivityIndex;
+
+                return (
+                  <ActivityCard
+                    key={subconcept.subconceptId}
+                    subconcept={subconcept}
+                    index={index}
+                    isEnabled={isEnabled}
+                    isCompleted={isCompleted}
+                    isNext={isNext}
+                    stageId={stageId}
+                    currentUnitId={currentUnitId}
+                  />
+                );
+              })}
+
+              {/* Finish Activity */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: subconcepts.length * 0.1 }}
+                className="col-span-full"
+              >
+                <Link
+                  to={
+                    nextUnitId &&
+                    (unitCompletionStatus === "yes" ||
+                      unitCompletionStatus.toLowerCase() === "unit completed without assignments")
+                      ? "/dashboard"
+                      : null
+                  }
+                  onClick={(e) => {
+                    if (
+                      nextUnitId &&
+                      (unitCompletionStatus === "yes" ||
+                        unitCompletionStatus.toLowerCase() === "unit completed without assignments")
+                    ) {
+                      e.preventDefault();
+                      setShowConfetti(true);
+                      setAudioPlaying(true);
+                      setTimeout(() => {
+                        navigate("/dashboard");
+                      }, 5000);
+                    } else if (
+                      !nextUnitId &&
+                      (unitCompletionStatus === "yes" ||
+                        unitCompletionStatus.toLowerCase() === "unit completed without assignments")
+                    ) {
+                      openModal();
+                    }
+                  }}
+                  className={`
+                    block transition-all duration-300
+                    ${unitCompletionStatus === "yes" || 
+                      unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                      ? "hover:scale-105 cursor-pointer" 
+                      : "cursor-not-allowed opacity-60"}
+                  `}
+                >
+                  <div className={`
+                    rounded-lg shadow-sm p-6 border
+                    ${unitCompletionStatus === "yes" || 
+                      unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 border-emerald-400 text-white" 
+                      : "bg-gray-100 border-gray-300 text-gray-500"}
+                  `}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className={`
+                          p-3 rounded-lg
+                          ${unitCompletionStatus === "yes" || 
+                            unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                            ? "bg-white/20" 
+                            : "bg-gray-200"}
+                        `}>
+                          <Trophy 
+                            width="28" 
+                            height="28" 
+                            color={
+                              unitCompletionStatus === "yes" || 
+                              unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                                ? "white" 
+                                : "#9ca3af"
+                            } 
+                          />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {unitCompletionStatus === "yes" || 
+                             unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                              ? "Congratulations! Unit Complete!" 
+                              : "Finish Unit"}
+                          </h3>
+                          <p className={`text-sm
+                            ${unitCompletionStatus === "yes" || 
+                              unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                              ? "text-emerald-100" 
+                              : "text-gray-400"}
+                          `}>
+                            {unitCompletionStatus === "yes" || 
+                             unitCompletionStatus.toLowerCase() === "unit completed without assignments"
+                              ? "Click to continue to the next unit" 
+                              : "Complete all activities above to proceed"}
+                          </p>
+                        </div>
+                      </div>
+                      {unitCompletionStatus === "yes" || 
+                       unitCompletionStatus.toLowerCase() === "unit completed without assignments" ? (
+                        <Trophy className="w-6 h-6 text-emerald-200" />
+                      ) : (
+                        <Lock className="w-6 h-6 text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Professional Success Modal */}
+        <AnimatePresence>
+          {showConfetti && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", duration: 0.5 }}
+                className="bg-white rounded-xl shadow-2xl p-8 text-center max-w-md mx-4 border border-slate-200"
+              >
+                {/* Success Icon */}
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Trophy className="w-8 h-8 text-emerald-600" />
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                  Unit Completed Successfully
+                </h2>
+
+                {/* Message */}
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Congratulations on completing this learning unit. Your progress demonstrates excellent commitment to your educational journey.
+                </p>
+
+                {/* Progress Indicator */}
+                <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
+                    <span>Unit Progress</span>
+                    <span className="font-semibold">100%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 1, delay: 0.3 }}
+                      className="bg-emerald-500 h-2 rounded-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Message */}
+                <p className="text-sm text-slate-500">
+                  Redirecting to your dashboard in a moment...
+                </p>
+
+                {/* Loading indicator */}
+                <div className="flex justify-center mt-4">
+                  <div className="flex space-x-1">
+                    <motion.div
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
+                      className="w-2 h-2 bg-emerald-500 rounded-full"
+                    />
+                    <motion.div
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+                      className="w-2 h-2 bg-emerald-500 rounded-full"
+                    />
+                    <motion.div
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+                      className="w-2 h-2 bg-emerald-500 rounded-full"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

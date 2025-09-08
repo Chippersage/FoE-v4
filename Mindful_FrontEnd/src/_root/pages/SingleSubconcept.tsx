@@ -8,6 +8,8 @@ import VocabularyActivity from "@/components/activityComponents/VocabularyActivi
 import QuizActivity from "@/components/activityComponents/QuizActivity";
 import VocabularyLearning from "@/components/activityComponents/vocabulary-learning/vocabulary-learning";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { motion } from "framer-motion";
+import { AlertCircle, AlertTriangle, Timer } from "lucide-react";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -24,71 +26,73 @@ const ErrorOverlay = ({ countdown = 5, onClose }) => {
   }, [timer, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-opacity-70 z-50 flex items-center justify-center animate-fadeIn">
-      <div
-        className="text-center shadow-lg max-w-sm w-full"
-        style={{
-          backgroundColor: "#375368",
-          borderColor: "#375368",
-          minWidth: "300px",
-          minHeight: "180px",
-          borderRadius: "4px",
-          boxShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
-        }}
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/20">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl w-full max-w-md mx-4 overflow-hidden shadow-2xl border border-red-200"
       >
-        <p
-          className="mb-2 tracking-wide text-gray-100"
-          style={{
-            fontSize: "16px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-            padding: "15px 0px",
-            borderBottom: "1px solid #ffffff",
-          }}
-        >
-          Oops! Something went wrong
-        </p>
-        <h4
-          className="mt-4 tracking-wide"
-          style={{
-            color: "#FF7F7F", // Red shade for error
-            fontSize: "20px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-          }}
-        >
-          Try again 😥
-        </h4>
-        <p
-          className="mt-4 text-gray-100"
-          style={{
-            fontSize: "22px",
-            fontWeight: "bold",
-            textShadow: "0 1px 0 #f3f3f3",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-            padding: "0px 20px",
-          }}
-        >
-          You need to attempt this activity again.
-        </p>
-        <p
-          className="mt-2 mb-4"
-          style={{
-            color: "#B0B0B0", // Gray shade
-            fontSize: "13px",
-            fontWeight: "normal",
-            fontFamily: "'OpenSans-Regular', sans-serif",
-            lineHeight: "1.3",
-          }}
-        >
-          Closing in <span style={{ fontWeight: "bold" }}>{timer}</span>{" "}
-          seconds.
-        </p>
-      </div>
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm py-4 px-6 border-b border-red-200/50">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-800">
+              Activity Error
+            </h2>
+            <div className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+              <AlertCircle className="w-4 h-4" />
+              Retry Required
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-8 text-center">
+          {/* Icon */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
+            className="flex justify-center mb-6"
+          >
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+          </motion.div>
+
+          {/* Title */}
+          <h3 className="text-2xl font-bold mb-4 text-red-700">
+            Something Went Wrong
+          </h3>
+
+          {/* Message */}
+          <p className="text-base leading-relaxed mb-6 text-slate-600">
+            We encountered an issue while processing your activity. Please try again to continue your learning.
+          </p>
+
+          {/* Countdown */}
+          <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">
+            <Timer className="w-4 h-4" />
+            <span>
+              Closing in{" "}
+              <span className="font-semibold text-slate-700">{timer}</span>{" "}
+              seconds
+            </span>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="h-1 bg-red-200">
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{
+              width: `${((countdown - timer) / countdown) * 100}%`,
+            }}
+            transition={{ duration: 0.3 }}
+            className="h-full bg-red-500"
+          />
+        </div>
+      </motion.div>
     </div>
   );
 };

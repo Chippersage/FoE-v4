@@ -15,7 +15,7 @@ export const HomePage = () => {
     if (selectedCohortWithProgram) {
       setBackgroundUrl(
         selectedCohortWithProgram?.program?.programId.startsWith("PET")
-          ? "/images/PET-New-Bg.jpg"
+          ? "/images/written-accessories-desk.jpg"
           : "/images/index.png"
       );
       setIsLoading(false);
@@ -49,7 +49,7 @@ export const HomePage = () => {
             ></div>
 
             {/* Overlay */}
-            {backgroundUrl === "/images/PET-New-Bg.jpg" && (
+            {backgroundUrl === "/images/written-accessories-desk.jpg" && (
             <div
               className="fixed inset-0 bg-black opacity-30"
               style={{ marginTop: "100px", zIndex: 1 }}
