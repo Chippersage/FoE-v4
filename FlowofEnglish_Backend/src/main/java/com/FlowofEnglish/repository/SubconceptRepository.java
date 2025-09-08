@@ -1,9 +1,7 @@
 package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.Subconcept;
-
 import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

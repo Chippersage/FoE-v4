@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title> Login | Mindfultalk </title>
+        <title> Login | Chippersage </title>
       </Helmet>
 
       <StyledRoot>

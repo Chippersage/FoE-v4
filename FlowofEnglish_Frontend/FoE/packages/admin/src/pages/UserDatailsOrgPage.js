@@ -183,7 +183,7 @@ export default function UserDatailsOrgPage() {
   return (
     <>
       <Helmet>
-        <title> User | Mindfultalk </title>
+        <title> User | Chippersage </title>
       </Helmet>
 
       <Container>

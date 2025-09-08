@@ -3,7 +3,11 @@ package com.FlowofEnglish.service;
 import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+// import com.FlowofEnglish.util.DurationCalculator;
 import com.opencsv.CSVReader;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.cache.annotation.*;
 import org.slf4j.*;
 
@@ -20,6 +24,9 @@ public class SubconceptServiceImpl implements SubconceptService {
 
     @Autowired
     private SubconceptRepository subconceptRepository;
+    
+//    @Autowired
+//    private DurationCalculator durationCalculator;
     
     @Autowired
     private ConceptRepository conceptRepository; 
@@ -556,4 +563,23 @@ public class SubconceptServiceImpl implements SubconceptService {
             throw new RuntimeException("Failed to convert subconcept to DTO: " + e.getMessage());
         }
     }
+    
+//    @Transactional
+//    public void populateDurations() {
+//        List<Subconcept> subconcepts = subconceptRepository.findAll();
+//        int updated = 0;
+//
+//        for (Subconcept s : subconcepts) {
+//            if (s.getDuration() == null || s.getDuration() == 0) {
+//                int duration = durationCalculator.calculateDuration(s);
+//                s.setDuration(duration);
+//                subconceptRepository.save(s);
+//                updated++;
+//                logger.info("Updated subconcept {} with duration {} seconds", s.getSubconceptId(), duration);
+//            }
+//        }
+//
+//        logger.info("Migration complete. Updated {} subconcepts", updated);
+//    }
+
 }

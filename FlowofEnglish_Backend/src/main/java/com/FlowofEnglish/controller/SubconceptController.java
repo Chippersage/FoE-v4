@@ -85,4 +85,11 @@ public class SubconceptController {
         subconceptService.deleteSubconcept(subconceptId);
         return ResponseEntity.noContent().build();
     }
+    
+//    @PostMapping("/populate-durations")
+//    public ResponseEntity<String> populateDurations() {
+//        subconceptService.populateDurations();
+//        return ResponseEntity.ok("Durations populated successfully");
+//    }
+
 }

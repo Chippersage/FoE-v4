@@ -29,7 +29,7 @@ export default function LoginPageOrg() {
   return (
     <>
       <Helmet>
-        <title> Login | Mindfultalk </title>
+        <title> Login | Chippersage </title>
       </Helmet>
 
       <StyledRoot>

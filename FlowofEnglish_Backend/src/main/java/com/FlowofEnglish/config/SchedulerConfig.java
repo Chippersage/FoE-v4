@@ -26,25 +26,3 @@ public class SchedulerConfig {
         }
     }
 }
-
-
-
-
-
-//@Autowired
-//private BuddhaPurnimaGreetingService buddhaPurnimaGreetingService;
-
-
-
-//    // Run once at 2:00 PM  (May 12, 2025)
-//    @Scheduled(cron = "0 0 14 12 5 ?", zone = "Asia/Kolkata")
-//    public void sendBuddhaPurnimaGreetings() {
-//        System.out.println("Buddha Purnima greeting scheduler triggered at: " + java.time.LocalDateTime.now());
-//        logger.info("Buddha Purnima greeting scheduler triggered at: {}", java.time.LocalDateTime.now());
-//        try {
-//            buddhaPurnimaGreetingService.sendBuddhaPurnimaGreetings();
-//            logger.info("Buddha Purnima greeting process completed successfully.");
-//        } catch (Exception e) {
-//            logger.error("Error occurred while sending Buddha Purnima greetings: {}", e.getMessage(), e);
-//        }
-//    }

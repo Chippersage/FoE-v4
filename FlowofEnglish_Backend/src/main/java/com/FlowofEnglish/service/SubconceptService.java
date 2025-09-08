@@ -2,10 +2,7 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.dto.SubconceptResponseDTO;
 import com.FlowofEnglish.model.Subconcept;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +16,5 @@ public interface SubconceptService {
     void deleteSubconcept(String subconceptId); 
     Map<String, Object> uploadSubconceptsCSV(MultipartFile file);
     Map<String, Object> updateSubconceptsCSV(MultipartFile file);
+  //  void populateDurations();
 }

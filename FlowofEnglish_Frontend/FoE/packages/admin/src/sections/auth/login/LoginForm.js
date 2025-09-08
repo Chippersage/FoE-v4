@@ -192,11 +192,7 @@ export default function LoginForm() {
     <div className="w-full flex flex-col items-center">
       {/* Logo with increased size */}
       <div className="mb-8">
-        <img 
-          src="/assets/mindful_logo_circle.png" 
-          alt="Mindfultalk Logo" 
-          className="h-24 w-24 md:h-32 md:w-32" 
-        />
+        <img src="/assets/main-logo.png" alt="flowofenglish Logo" className="h-16" />
       </div>
 
       {/* Login Form Card */}
