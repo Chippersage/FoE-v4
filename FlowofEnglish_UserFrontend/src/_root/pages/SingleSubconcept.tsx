@@ -446,7 +446,14 @@ const SingleSubconcept = () => {
               );
             } else if (showIframe) {
               return (
-                <div className="relative w-full min-h-[500px] sm:min-h-[800px]">
+                <div 
+                  className="relative w-full mt-3"
+                  style={{
+                    height: 'calc(100vh - 100px)', // 100px = 55px (header1) + 45px (header2)
+                    minHeight: 'calc(100vh - 100px)',
+                    maxHeight: 'calc(100vh - 100px)'
+                  }}
+                >
                   {isIframeLoading && <LoadingOverlay />}
                   {iframeError ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -476,9 +483,16 @@ const SingleSubconcept = () => {
                     <iframe
                       id="embeddedContent"
                       src={subconcept?.subconceptLink}
-                      // src={"/alphabet/alphabet_a.html"}
+                      // src={"/TextFromPicture/TextFromPicture_story2_stg5_suggestAtitle.html"}
+                      // src={"/Construct_textfromtext/TextFromText_practice_stg1_twistAndTale_pg1.html"}
+                      // src={"/reader2/resources/books/reader2/vol1/Reader2_Book_1/book1_story.html"}
                       title="Embedded Content"
-                      className={`w-full min-h-[500px] sm:min-h-[800px]`}
+                      className="w-full h-full"
+                      style={{
+                        height: '98%',
+                        minHeight: '98%',
+                        maxHeight: '98%'
+                      }}
                       onLoad={() => {
                         setShowGoBack(true);
                         setOnFrameLoad(true);
