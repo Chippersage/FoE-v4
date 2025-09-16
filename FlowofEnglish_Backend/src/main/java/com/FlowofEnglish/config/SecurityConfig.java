@@ -48,6 +48,7 @@ public class SecurityConfig {
                         "https://flowofenglish-backend.thechippersage.com",
                         "http://localhost:5173",
                         "http://10.12.131.110:5173/",
+                        "http://10.12.116.213:5173/",
                         "http://127.0.0.1:5501",
                         "http://10.12.127.175:5173/",
                         "http://127.0.0.1:5501/index.html",
