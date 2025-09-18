@@ -36,3 +36,4 @@ FlowofEnglish_Backend/logs
 # Ignore Docker-specific Spring Boot properties
 FlowofEnglish_Backend/src/main/resources/application-docker.properties
 
+Mindful_FrontEnd/
