@@ -991,14 +991,32 @@ case "assignment_image":
   );
       case "pdf":
       case "assignment_pdf":
+        return (
+          <div className="w-full">
+            <PDFBrowserViewer
+              pdfUrl={subconceptLink}
+              onContentLoaded={() => {
+                // Handle content loaded if needed
+              }}
+            />
+          </div>
+        );
+      case "pdfAsPpt":
+        return (
+          <div className="w-full">
+            <PDFSlideViewer
+              pdfUrl={subconceptLink}
+              onContentLoaded={() => {
+                // Handle content loaded if needed
+              }}
+            />
+          </div>
+        );
       case "youtube":
         return (
           <div
             onContextMenu={(e) => e.preventDefault()} // Disable right-click
-            className={`${
-              subconceptData?.subconceptType?.toLowerCase() === "youtube" &&
-              "w-11/12"
-            } iframe-wrapper w-full`}
+            className="w-11/12 iframe-wrapper"
             style={{ position: "relative" }}
           >
             <iframe
