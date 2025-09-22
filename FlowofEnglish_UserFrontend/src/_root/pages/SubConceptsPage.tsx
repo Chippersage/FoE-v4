@@ -78,6 +78,7 @@ const iconMap = {
   youtube: Camera,
   html: PenNib,
   pdf: Book,
+  pdfAsPpt: Book,
   video: Camera,
   audio: Speaker,
   image: Picture,

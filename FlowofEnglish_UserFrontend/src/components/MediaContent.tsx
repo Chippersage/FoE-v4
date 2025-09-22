@@ -9,6 +9,536 @@ import ActivityCompletionModal from "./ActivityCompletionModal";
 import AssignmentStatusModal from "./modals/AssignmentStatusModal";
 import axios from "axios";
 import { Button } from "./ui/button";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Keyboard, EffectFade } from 'swiper/modules';
+import { usePdfToImages } from '../hooks/usePdfToImages';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
+
+// Browser-style PDF Viewer Component with Full Width and Scrolling
+const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContentLoaded?: () => void }) => {
+  const { images, totalPages, loading, error, progress } = usePdfToImages(pdfUrl);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoom, setZoom] = useState(1.2); // Start with slightly higher zoom for better quality
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (images.length > 0 && !loading) {
+      onContentLoaded?.();
+    }
+  }, [images, loading, onContentLoaded]);
+
+  const handleFullscreen = () => {
+    if (!isFullscreen && containerRef.current) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else if (isFullscreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `document-${Date.now()}.pdf`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const zoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.25, 3.0));
+  };
+
+  const zoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.25, 0.5));
+  };
+
+  const fitToWidth = () => {
+    setZoom(1.0);
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[600px] bg-gradient-to-br from-red-50 to-red-100 rounded-2xl border-2 border-red-200">
+        <div className="text-center p-8 max-w-md">
+          <div className="text-red-500 text-6xl mb-4 animate-bounce">📄</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">PDF Loading Failed</h3>
+          <p className="text-gray-600 mb-4 text-sm">{error}</p>
+          <p className="text-gray-500 mb-6 text-sm">Unable to process the document. Please try reloading the page.</p>
+
+          {/* <button 
+            onClick={handleDownload}
+            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            📥 Download PDF
+          </button> */}
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || images.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[600px] bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
+        <div className="text-center p-8 max-w-md">
+          <div className="relative mb-6">
+            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Document</h3>
+          {/* <p className="text-gray-600 mb-4">Converting pages for viewing...</p> */}
+          {totalPages > 0 && (
+            <p className="text-gray-500 text-sm mb-4">
+              Processing {totalPages} pages ({progress}% complete)
+            </p>
+          )}
+          <div className="w-64 bg-gray-200 rounded-full h-3 mx-auto overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative rounded-xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-0' : 'w-full'
+        }`}
+      style={{ height: isFullscreen ? '100vh' : 'calc(100vh - 180px)' }}
+    >
+      {/* Toolbar */}
+      {/* <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 z-20 px-4 py-2">
+        <div className="flex items-center justify-between"> */}
+      {/* Left side - Document info */}
+      {/* <div className="flex items-center space-x-3">
+            <div className="bg-blue-600 rounded-lg p-1.5">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium text-gray-700">{images.length} pages</span>
+          </div> */}
+
+      {/* Center - Zoom controls */}
+      {/* <div className="flex items-center space-x-2">
+            <button
+              onClick={zoomOut}
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+              title="Zoom Out"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </button>
+            
+            <span className="text-xs font-medium text-gray-600 min-w-[60px] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            
+            <button
+              onClick={zoomIn}
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+              title="Zoom In"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            
+            <button
+              onClick={fitToWidth}
+              className="px-2 py-1.5 text-xs rounded-md bg-gray-100 hover:bg-gray-200 transition-colors font-medium text-gray-600"
+              title="Fit to Width"
+            >
+              Fit
+            </button>
+          </div> */}
+
+      {/* Right side - Actions */}
+      {/* <div className="flex items-center space-x-2">
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 transition-colors text-xs font-medium text-white"
+              title="Download PDF"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Download</span>
+            </button>
+
+            <button
+              onClick={handleFullscreen}
+              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? (
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M15 9V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 15v4.5M15 15h4.5m-4.5 0l5.5 5.5" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </div> */}
+
+      {/* PDF Content Area with Scrolling */}
+      <div
+        ref={scrollContainerRef}
+        className="w-full h-full pt-12 overflow-auto"
+        style={{
+          scrollBehavior: 'smooth',
+        }}
+      >
+        <div className="flex flex-col items-center py-4 space-y-4 ">
+          {images.map((page, index) => (
+            <div
+              key={page.pageNumber}
+              className="bg-white shadow-lg border border-gray-300 max-w-[90%] md:max-w-[80%]"
+              style={{
+                width: `${zoom * 100}%`
+              }}
+            >
+              <img
+                src={page.imageData}
+                alt={`Page ${page.pageNumber}`}
+                className="w-full h-auto block"
+                style={{
+                  imageRendering: 'auto', // Use browser's best quality algorithm
+                  objectFit: 'contain',
+                  objectPosition: 'center',
+                }}
+                loading={index < 3 ? "eager" : "lazy"}
+                decoding="auto"
+                fetchPriority={index < 3 ? "high" : "auto"}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Professional PDF Slide Viewer Component
+const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContentLoaded?: () => void }) => {
+  const { images, totalPages, loading, error, progress } = usePdfToImages(pdfUrl);
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [swiperInstance, setSwiperInstance] = useState<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (images.length > 0 && !loading) {
+      onContentLoaded?.();
+    }
+  }, [images, loading, onContentLoaded]);
+
+  const handleFullscreen = () => {
+    if (!isFullscreen && containerRef.current) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else if (isFullscreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // const handleDownload = () => {
+  //   const link = document.createElement('a');
+  //   link.href = pdfUrl;
+  //   link.download = `document-${Date.now()}.pdf`;
+  //   link.target = '_blank';
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // };
+
+  const goToSlide = (slideIndex: number) => {
+    if (swiperInstance && slideIndex >= 0 && slideIndex < images.length) {
+      swiperInstance.slideTo(slideIndex);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[600px] bg-gradient-to-br from-red-50 to-red-100 rounded-2xl border-2 border-red-200">
+        <div className="text-center p-8 max-w-md">
+          <div className="text-red-500 text-6xl mb-4 animate-bounce">📄</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">PDF Loading Failed</h3>
+          <p className="text-gray-600 mb-4 text-sm">{error}</p>
+          <p className="text-gray-500 mb-6 text-sm">Unable to process document. Please try reloading.</p>
+
+          {/* <button
+            onClick={handleDownload}
+            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            📥 Download PDF
+          </button> */}
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || images.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[600px] bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
+        <div className="text-center p-8 max-w-md">
+          <div className="relative mb-6">
+            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Document</h3>
+          {/* <p className="text-gray-600 mb-4">Converting pages to slides...</p> */}
+          {totalPages > 0 && (
+            <p className="text-gray-500 text-sm mb-4">
+              Processing {totalPages} pages ({progress}% complete)
+            </p>
+          )}
+          <div className="w-64 bg-gray-200 rounded-full h-3 mx-auto overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative rounded-xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-0' : 'w-full'
+        }`}
+      style={{ height: isFullscreen ? '100vh' : 'calc(100vh - 180px)' }}
+    >
+      {/* Minimal Header - Only Fullscreen Button */}
+      <div className="absolute top-12 right-4 z-20">
+        <button
+          onClick={handleFullscreen}
+          className="p-2 rounded-lg bg-white hover:bg-gray-50 transition-all duration-300 shadow-md border border-gray-200 hover:border-gray-300"
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        >
+          {isFullscreen ? (
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M15 9V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 15v4.5M15 15h4.5m-4.5 0l5.5 5.5" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Main Slide Area */}
+      <div className="relative w-full h-full pt-4 pb-16">
+        <Swiper
+          modules={[Navigation, Pagination, Keyboard, EffectFade]}
+          spaceBetween={0}
+          slidesPerView={1}
+          navigation={{
+            nextEl: '.swiper-button-next-custom',
+            prevEl: '.swiper-button-prev-custom',
+          }}
+          pagination={{
+            clickable: true,
+            bulletClass: 'swiper-pagination-bullet-custom',
+            bulletActiveClass: 'swiper-pagination-bullet-active-custom',
+          }}
+          keyboard={{
+            enabled: true,
+          }}
+          effect="fade"
+          fadeEffect={{
+            crossFade: true,
+          }}
+          speed={300}
+          onSwiper={setSwiperInstance}
+          onSlideChange={(swiper) => setCurrentSlide(swiper.activeIndex + 1)}
+          className="w-full h-full"
+        >
+          {images.map((page, index) => (
+            <SwiperSlide key={page.pageNumber} className="flex items-center justify-center pt-4">
+              <div className="relative w-full h-full flex items-center justify-center p-6">
+                <div className="relative max-w-full max-h-full bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                  <img
+                    src={page.imageData}
+                    alt={`Slide ${page.pageNumber}`}
+                    className="max-w-full max-h-full object-contain"
+                    style={{
+                      maxHeight: 'calc(100vh - 200px)',
+                      maxWidth: 'calc(100vw - 120px)',
+                    }}
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                </div>
+              </div>
+            </SwiperSlide>
+          ))}
+
+          {/* Custom Navigation Buttons */}
+          <div className="swiper-button-prev-custom absolute left-6 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-all duration-300 group shadow-md border border-gray-200 hover:border-gray-300 z-10 cursor-pointer">
+            <svg className="w-6 h-6 text-gray-600 group-hover:text-gray-800 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </div>
+
+          <div className="swiper-button-next-custom absolute right-6 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-all duration-300 group shadow-md border border-gray-200 hover:border-gray-300 z-10 cursor-pointer">
+            <svg className="w-6 h-6 text-gray-600 group-hover:text-gray-800 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Swiper>
+      </div>
+
+      {/* Bottom Control Bar */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 text-gray-800 p-4">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          {/* Quick Navigation */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => goToSlide(currentSlide - 2)}
+              disabled={currentSlide <= 1}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-gray-700 border border-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="number"
+                value={currentSlide}
+                onChange={(e) => {
+                  const slide = parseInt(e.target.value);
+                  if (slide >= 1 && slide <= images.length) {
+                    goToSlide(slide - 1);
+                  }
+                }}
+                className="w-16 px-3 py-2 text-center bg-white text-gray-700 rounded-lg border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                min="1"
+                max={images.length}
+              />
+              <span className="text-gray-500 text-sm">of {images.length}</span>
+            </div>
+
+            <button
+              onClick={() => goToSlide(currentSlide)}
+              disabled={currentSlide >= images.length}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-gray-700 border border-gray-200"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8">
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(currentSlide / images.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              {Math.round((currentSlide / images.length) * 100)}%
+            </span>
+          </div>
+
+          {/* Controls Info */}
+          <div className="text-gray-400 text-xs hidden lg:block">
+            Use arrow keys or swipe to navigate
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Pagination Styles */}
+      <style jsx global>{`
+        .swiper-pagination-bullet-custom {
+          width: 10px;
+          height: 10px;
+          background: #d1d5db;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          margin: 0 3px;
+          border: 1px solid #e5e7eb;
+        }
+        
+        .swiper-pagination-bullet-active-custom {
+          background: #3b82f6;
+          transform: scale(1.2);
+          border-color: #3b82f6;
+        }
+        
+        .swiper-pagination {
+          bottom: 80px !important;
+          z-index: 10;
+        }
+      `}</style>
+    </div>
+  );
+};
 // @ts-ignore
 const MediaContent = ({ subconceptData, currentUnitId }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
@@ -477,7 +1007,7 @@ case "assignment_image":
               src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
               width="100%"
               // height=""
-              title="PDF Document"
+              title="YouTube Video"
               style={{
                 borderRadius: "10px",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
@@ -602,6 +1132,8 @@ case "assignment_image":
               subconceptData?.subconceptType
             )
               ? "w-11/12 flex justify-center items-center"
+              : subconceptData?.subconceptType === "pdf" || subconceptData?.subconceptType === "assignment_pdf" || subconceptData?.subconceptType === "pdfAsPpt"
+              ? "w-full px-2"
               : "w-11/12 max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
           } rounded-lg overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar`}
         >

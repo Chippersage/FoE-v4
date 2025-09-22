@@ -125,6 +125,7 @@ const SingleSubconcept = () => {
       "mtf",
       "mcq",
       "word",
+      "pdfAsPpt"
     ].includes(subconcept?.subconceptType)
   );
   // const [showSubmit, setShowSubmit] = useState(
