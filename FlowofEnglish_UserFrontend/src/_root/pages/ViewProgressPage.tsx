@@ -81,11 +81,40 @@ export default function ViewProgressPage() {
   }, [user?.userId, API_BASE_URL]);
 
   // Set default selected program when cohorts are loaded
-  useEffect(() => {
-    if (fetchedCohorts && fetchedCohorts.length > 0 && !selectedProgram) {
-      setSelectedProgram(fetchedCohorts[0]?.program?.programId);
+ useEffect(() => {
+  if (fetchedCohorts?.length > 0 && !selectedProgram) {
+    try {
+      const stored = localStorage.getItem("selectedCohortWithProgram");
+      const selectedCohortWithProgram = stored ? JSON.parse(stored) : null;
+
+      console.log("Selected cohort from localStorage:", selectedCohortWithProgram);
+
+      if (selectedCohortWithProgram) {
+        const cohort = fetchedCohorts.find(
+          c => c.cohortId === selectedCohortWithProgram.cohortId
+        );
+        if (cohort?.program?.programId) {
+          setSelectedProgram(cohort.program.programId);
+          return; // ✅ stop here if found
+        }
+      }
+
+      // ✅ fallback to first cohort’s programId
+      if (fetchedCohorts[0]?.program?.programId) {
+        setSelectedProgram(fetchedCohorts[0].program.programId);
+      }
+
+    } catch (err) {
+      console.error("Error parsing localStorage cohort:", err);
+
+      // ✅ fallback even if parsing failed
+      if (fetchedCohorts[0]?.program?.programId) {
+        setSelectedProgram(fetchedCohorts[0].program.programId);
+      }
     }
-  }, [fetchedCohorts, selectedProgram]);
+  }
+}, [fetchedCohorts, selectedProgram]);
+
 
   // Load user progress data
   useEffect(() => {
