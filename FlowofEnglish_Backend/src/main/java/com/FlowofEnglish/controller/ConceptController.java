@@ -7,9 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/concepts")
@@ -44,7 +42,18 @@ public class ConceptController {
     public ResponseEntity<Concept> updateConcept(@PathVariable String conceptId, @RequestBody Concept concept) {
         return ResponseEntity.ok(conceptService.updateConcept(conceptId, concept));
     }
-
+    @PutMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> updateConceptsCSV(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, Object> result = conceptService.updateConceptsCSV(file);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", e.getMessage(),
+                "success", false
+            ));
+        }
+    }
     @DeleteMapping("/{conceptId}")
     public ResponseEntity<Void> deleteConcept(@PathVariable String conceptId) {
         conceptService.deleteConcept(conceptId);

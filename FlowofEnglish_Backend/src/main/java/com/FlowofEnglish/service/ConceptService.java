@@ -21,4 +21,5 @@ public interface ConceptService {
             Map<String, ConceptDTO> subconceptConceptMap);
     List<ConceptSummaryDTO> generateConceptSummaries(Map<ConceptDTO, List<SubconceptReportDTO>> conceptMapping);
     //List<ConceptSummaryDTO> getConceptSummariesForStage(String userId, String stageId);
+    Map<String, Object> updateConceptsCSV(MultipartFile file);
 }

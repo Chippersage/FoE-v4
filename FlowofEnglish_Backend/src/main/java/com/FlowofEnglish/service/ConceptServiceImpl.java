@@ -2,6 +2,7 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+import com.opencsv.CSVReader;
 import com.FlowofEnglish.dto.*;
 
 import org.slf4j.*;
@@ -167,6 +168,188 @@ public class ConceptServiceImpl implements ConceptService {
         });
     }
 
+    @Override
+    @CacheEvict(value = {"concepts", "conceptSummaries", "conceptMappings"}, allEntries = true)
+    public Map<String, Object> updateConceptsCSV(MultipartFile file) {
+        logger.info("Starting CSV update process for concepts file: {}", file.getOriginalFilename());
+        
+        Map<String, Object> result = new HashMap<>();
+        int updatedCount = 0;
+        int failedCount = 0;
+        int notFoundCount = 0;
+        List<String> failedIds = new ArrayList<>();
+        List<String> notFoundIds = new ArrayList<>();
+        List<String> updateLogs = new ArrayList<>();
+
+        if (file.isEmpty()) {
+            logger.error("Uploaded file is empty");
+            throw new RuntimeException("File is empty");
+        }
+
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+            List<String[]> records = reader.readAll();
+            
+            // Validate header row exists
+            if (records.isEmpty()) {
+                logger.error("CSV file is empty");
+                throw new RuntimeException("CSV file is empty");
+            }
+            
+            logger.info("Processing {} records from CSV file", records.size() - 1);
+            
+            // Read and validate header row
+            String[] headers = records.get(0);
+            Map<String, Integer> headerMap = new HashMap<>();
+            
+            // Create header mapping (case insensitive)
+            for (int i = 0; i < headers.length; i++) {
+                headerMap.put(headers[i].trim().toLowerCase(), i);
+            }
+            
+            // Validate required conceptId column exists
+            if (!headerMap.containsKey("conceptid")) {
+                logger.error("CSV must contain 'conceptId' column");
+                throw new RuntimeException("CSV must contain 'conceptId' column");
+            }
+            
+            int conceptIdIndex = headerMap.get("conceptid");
+            logger.debug("Found conceptId column at index: {}", conceptIdIndex);
+            
+            // Process data rows
+            for (int i = 1; i < records.size(); i++) {
+                String[] record = records.get(i);
+                int lineNumber = i + 1;
+                
+                try {
+                    // Skip rows with insufficient data
+                    if (record.length <= conceptIdIndex) {
+                        String error = "Line " + lineNumber + ": Missing conceptId column";
+                        logger.warn(error);
+                        failedCount++;
+                        failedIds.add(error);
+                        continue;
+                    }
+                    
+                    String conceptId = record[conceptIdIndex].trim();
+                    
+                    // Skip empty concept IDs
+                    if (conceptId.isEmpty()) {
+                        String error = "Line " + lineNumber + ": Empty ConceptId";
+                        logger.warn(error);
+                        failedCount++;
+                        failedIds.add(error);
+                        continue;
+                    }
+
+                    // Check if concept exists
+                    Optional<Concept> existingConceptOpt = conceptRepository.findById(conceptId);
+                    if (existingConceptOpt.isEmpty()) {
+                        String error = "ConceptId: " + conceptId + " not found";
+                        logger.warn(error);
+                        notFoundCount++;
+                        notFoundIds.add(error);
+                        continue;
+                    }
+
+                    Concept existingConcept = existingConceptOpt.get();
+                    List<String> updatedFields = new ArrayList<>();
+                    boolean hasUpdates = false;
+                    
+                    // Update fields dynamically based on header mapping
+                    hasUpdates |= updateField(headerMap, record, "conceptname", 
+                        existingConcept::setConceptName, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "conceptdesc", 
+                        existingConcept::setConceptDesc, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "conceptskill1", 
+                        existingConcept::setConceptSkill1, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "conceptskill2", 
+                        existingConcept::setConceptSkill2, updatedFields);
+                    
+                    // Update contentId field with validation
+                    if (updateContentField(headerMap, record, "contentid", existingConcept, 
+                        updatedFields, conceptId, failedIds)) {
+                        hasUpdates = true;
+                    }
+                    
+                    // Save only if there are updates
+                    if (hasUpdates) {
+                        conceptRepository.save(existingConcept);
+                        updatedCount++;
+                        String logMessage = "ConceptId: " + conceptId + " updated fields: " + String.join(", ", updatedFields);
+                        updateLogs.add(logMessage);
+                        logger.debug(logMessage);
+                    } else {
+                        String logMessage = "ConceptId: " + conceptId + " - No fields to update (all provided fields were empty)";
+                        updateLogs.add(logMessage);
+                        logger.debug(logMessage);
+                    }
+                    
+                } catch (Exception e) {
+                    String error = "Line " + lineNumber + ": Unexpected error - " + e.getMessage();
+                    logger.error(error, e);
+                    failedCount++;
+                    failedIds.add(error);
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.error("Failed to process CSV file: {}", file.getOriginalFilename(), e);
+            throw new RuntimeException("Failed to process CSV file: " + e.getMessage());
+        }
+
+        // Prepare result summary
+        result.put("updatedCount", updatedCount);
+        result.put("failedCount", failedCount);
+        result.put("notFoundCount", notFoundCount);
+        result.put("totalProcessed", updatedCount + failedCount + notFoundCount);
+        result.put("failedIds", failedIds);
+        result.put("notFoundIds", notFoundIds);
+        result.put("updateLogs", updateLogs);
+        result.put("message", "Update completed. Only non-empty fields were updated, existing data preserved for empty fields.");
+        
+        logger.info("CSV update completed. Updated: {}, Failed: {}, Not Found: {}, Total processed: {}", 
+                   updatedCount, failedCount, notFoundCount, updatedCount + failedCount + notFoundCount);
+        return result;
+    }
+
+    // Helper method to update string fields (same as subconcepts)
+    private boolean updateField(Map<String, Integer> headerMap, String[] record, String fieldName, 
+                               java.util.function.Consumer<String> setter, List<String> updatedFields) {
+        if (headerMap.containsKey(fieldName) && 
+            record.length > headerMap.get(fieldName) && 
+            !record[headerMap.get(fieldName)].trim().isEmpty()) {
+            setter.accept(record[headerMap.get(fieldName)].trim());
+            updatedFields.add(fieldName);
+            return true;
+        }
+        return false;
+    }
+
+    // Helper method to update ContentMaster field
+    private boolean updateContentField(Map<String, Integer> headerMap, String[] record, String fieldName,
+                                     Concept concept, List<String> updatedFields,
+                                     String conceptId, List<String> failedIds) {
+        if (headerMap.containsKey(fieldName) && 
+            record.length > headerMap.get(fieldName) && 
+            !record[headerMap.get(fieldName)].trim().isEmpty()) {
+            try {
+                int contentId = Integer.parseInt(record[headerMap.get(fieldName)].trim());
+                Optional<ContentMaster> contentOpt = contentRepository.findById(contentId);
+                if (contentOpt.isEmpty()) {
+                    failedIds.add("ConceptId: " + conceptId + " failed - ContentId " + contentId + " not found");
+                    return false;
+                }
+                concept.setContent(contentOpt.get());
+                updatedFields.add(fieldName);
+                return true;
+            } catch (NumberFormatException e) {
+                failedIds.add("ConceptId: " + conceptId + " failed - Invalid number format for " + fieldName);
+                return false;
+            }
+        }
+        return false;
+    }
+    
     @Override
     @CacheEvict(value = {"concepts", "concept", "conceptSummaries", "conceptMappings"}, allEntries = true)
     public void deleteConcept(String conceptId) {
