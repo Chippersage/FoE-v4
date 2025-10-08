@@ -42,9 +42,6 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     private SubconceptRepository subconceptRepository;
     
     @Autowired
-    private ConceptRepository conceptRepository;
-    
-    @Autowired
     private UserAttemptsRepository  userAttemptsRepository;
     
     @Autowired
@@ -623,6 +620,93 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         }
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = {"programConceptsMappings", "programConceptsByUnit", "programConceptsByProgram", "conceptsByProgram", "conceptsAndProgress"}, allEntries = true)
+    public ResponseEntity<Map<String, Object>> bulkUpdate(MultipartFile file) {
+        List<String> errorMessages = new ArrayList<>();
+        int successCount = 0;
+        int failCount = 0;
+
+        try (Reader reader = new InputStreamReader(file.getInputStream());
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder()
+                     .setHeader()
+                     .setSkipHeaderRecord(true)
+                     .build())) {
+
+            // Validate headers
+            Set<String> headers = csvParser.getHeaderMap().keySet();
+            List<String> requiredHeaders = List.of("ProgramId", "StageId", "UnitId", "SubconceptId", "programconcept_desc", "position");
+
+            for (String header : requiredHeaders) {
+                if (!headers.contains(header)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("success", false, "message", "Missing required header: " + header));
+                }
+            }
+
+            for (CSVRecord record : csvParser) {
+                try {
+                    String programId = record.get("ProgramId").trim();
+                    String stageId = record.get("StageId").trim();
+                    String unitId = record.get("UnitId").trim();
+                    String subconceptId = record.get("SubconceptId").trim();
+                    String programConceptDesc = record.get("programconcept_desc").trim();
+                    String positionStr = record.get("position").trim();
+
+                    int newPosition = positionStr.isEmpty() ? 0 : Integer.parseInt(positionStr);
+
+                    Program program = programRepository.findById(programId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Program not found: " + programId));
+                    Stage stage = stageRepository.findById(stageId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Stage not found: " + stageId));
+                    Unit unit = unitRepository.findById(unitId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Unit not found: " + unitId));
+                    Subconcept subconcept = subconceptRepository.findById(subconceptId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Subconcept not found: " + subconceptId));
+
+                    // Find existing mapping
+                    Optional<ProgramConceptsMapping> existingOpt = programConceptsMappingRepository.findAll().stream()
+                            .filter(m -> m.getProgram().getProgramId().equals(programId)
+                                    && m.getStage().getStageId().equals(stageId)
+                                    && m.getSubconcept().getSubconceptId().equals(subconceptId))
+                            .findFirst();
+
+                    if (existingOpt.isPresent()) {
+                        // ✅ Update existing record
+                        ProgramConceptsMapping existing = existingOpt.get();
+                        existing.setUnit(unit);
+                        existing.setPosition(newPosition);
+                        existing.setProgramConceptDesc(programConceptDesc);
+                        programConceptsMappingRepository.save(existing);
+                        successCount++;
+                    } else {
+                        // ❌ No record found, skip or optionally create new
+                        errorMessages.add("Mapping not found for ProgramId=" + programId +
+                                ", StageId=" + stageId + ", SubconceptId=" + subconceptId);
+                        failCount++;
+                    }
+
+                } catch (Exception e) {
+                    errorMessages.add("Error at row " + record.getRecordNumber() + ": " + e.getMessage());
+                    failCount++;
+                }
+            }
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Error reading CSV: " + e.getMessage()));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("successCount", successCount);
+        result.put("failCount", failCount);
+        result.put("errors", errorMessages);
+
+        return ResponseEntity.ok(result);
+    }
+
+    
     @Override
     @CacheEvict(value = {"programConceptsMappings", "programConceptsByUnit", "programConceptsByProgram", "conceptsByProgram", "conceptsAndProgress"}, allEntries = true)
     public void deleteProgramConceptsMapping(Long programConceptId) {

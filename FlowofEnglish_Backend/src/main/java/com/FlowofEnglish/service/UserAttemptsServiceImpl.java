@@ -1,5 +1,6 @@
 package com.FlowofEnglish.service;
 
+import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
@@ -9,6 +10,7 @@ import org.springframework.cache.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.*;
 import java.util.*;
 
 @Service
@@ -18,13 +20,34 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     private UserAttemptsRepository userAttemptsRepository;
 
     @Autowired
-    private UserCohortMappingService userCohortMappingService; 
+    private UserCohortMappingService userCohortMappingService;
+    
+    @Autowired
+    private ProgramConceptsMappingRepository programConceptsMappingRepository;
     
     @Autowired
     private UserSubConceptService userSubConceptService;
     
     @Autowired
     private CacheManagementService cacheManagementService;
+    
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UnitService unitService;
+
+    @Autowired
+    private ProgramService programService;
+
+    @Autowired
+    private StageService stageService;
+
+    @Autowired
+    private UserSessionMappingService userSessionMappingService;
+
+    @Autowired
+    private SubconceptService subconceptService;
  
     private static final Logger logger = LoggerFactory.getLogger(UserAttemptsServiceImpl.class);
 
@@ -269,6 +292,106 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
         throw new RuntimeException("Failed to update leaderboard. Please try again later.");
     }
 }
+
+    @Transactional(timeout = 30)
+    public UserAttempts autoCompleteSubconcept(String userId, String programId, 
+                                               String stageId, String unitId, 
+                                               String subconceptId, String cohortId) {
+        // 1. Fetch required entities
+        User user = userService.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Program program = programService.findByProgramId(programId)
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+        Stage stage = stageService.findByStageId(stageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stage not found"));
+        Unit unit = unitService.findByUnitId(unitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Unit not found"));
+        Subconcept subconcept = subconceptService.findBySubconceptId(subconceptId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subconcept not found"));
+
+        // 2. Create synthetic session if required
+        UserSessionMapping session = userSessionMappingService
+                .findOrCreateAutoSession(userId, cohortId);
+
+        // 3. Create UserAttempt
+        UserAttempts attempt = new UserAttempts();
+        attempt.setUser(user);
+        attempt.setProgram(program);
+        attempt.setStage(stage);
+        attempt.setUnit(unit);
+        attempt.setSession(session);
+        attempt.setSubconcept(subconcept);
+        attempt.setUserAttemptStartTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+        attempt.setUserAttemptEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+        attempt.setUserAttemptFlag(true);
+        attempt.setUserAttemptScore(subconcept.getSubconceptMaxscore()); // full score if auto-complete
+
+        UserAttempts savedAttempt = userAttemptsRepository.save(attempt);
+
+        // 4. Update leaderboard
+        updateLeaderboard(savedAttempt, cohortId);
+
+        // 5. Update UserSubConcept table
+        updateUserSubConceptCompletionStatus(savedAttempt);
+
+        // 6. Evict caches
+        cacheManagementService.evictUserCompletionCaches(userId, programId);
+        cacheManagementService.evictUnitReportCaches(userId, unitId, stageId, programId);
+
+        return savedAttempt;
+    }
+    
+    @Override
+    @Transactional(timeout = 900)
+    public List<UserAttempts> autoCompleteProgram(String userId, String programId, String cohortId) {
+        User user = userService.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Program program = programService.findByProgramId(programId)
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+
+        // Create or reuse session
+        UserSessionMapping session = userSessionMappingService.findOrCreateAutoSession(userId, cohortId);
+
+        // ✅ Fetch mappings instead of subconcepts directly
+        List<ProgramConceptsMapping> mappings =
+                programConceptsMappingRepository.findAllByProgram_ProgramId(programId);
+
+        List<UserAttempts> attempts = new ArrayList<>();
+
+        for (ProgramConceptsMapping mapping : mappings) {
+            Subconcept subconcept = mapping.getSubconcept();
+            Unit unit = mapping.getUnit();
+            Stage stage = mapping.getStage();
+
+            UserAttempts attempt = new UserAttempts();
+            attempt.setUser(user);
+            attempt.setProgram(program);
+            attempt.setStage(stage);
+            attempt.setUnit(unit);
+            attempt.setSession(session);
+            attempt.setSubconcept(subconcept);
+            attempt.setUserAttemptStartTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+            attempt.setUserAttemptEndTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+            attempt.setUserAttemptFlag(true);
+            attempt.setUserAttemptScore(subconcept.getSubconceptMaxscore());
+
+            UserAttempts savedAttempt = userAttemptsRepository.save(attempt);
+
+            updateLeaderboard(savedAttempt, cohortId);
+            updateUserSubConceptCompletionStatus(savedAttempt);
+
+            cacheManagementService.evictUserCompletionCaches(userId, programId);
+            cacheManagementService.evictUnitReportCaches(userId, unit.getUnitId(), stage.getStageId(), programId);
+
+            attempts.add(savedAttempt);
+        }
+
+        logger.info("Auto-completed {} subconcepts for user {} in program {}", 
+                     attempts.size(), userId, programId);
+
+        return attempts;
+    }
+
 
     @Override
     @CachePut(value = "userAttempts", key = "#userAttemptId")

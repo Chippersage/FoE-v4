@@ -21,4 +21,6 @@ public interface UserSessionMappingService {
     void deleteUserSessionMapping(String sessionId);
     void invalidateAllUserSessions(String userId);
     List<UserSessionMapping> findActiveSessionsForCleanup();
+    UserSessionMapping findOrCreateAutoSession(String userId, String cohortId);
+
 }

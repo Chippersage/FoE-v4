@@ -444,6 +444,48 @@ public class SubconceptServiceImpl implements SubconceptService {
                         hasUpdates = true;
                     }
                     
+                 // Update Concept (if conceptId column is present and valid)
+                    if (headerMap.containsKey("conceptid") && record.length > headerMap.get("conceptid")) {
+                        String conceptId = record[headerMap.get("conceptid")].trim();
+                        if (!conceptId.isEmpty()) {
+                            Optional<Concept> conceptOpt = conceptRepository.findById(conceptId);
+                            if (conceptOpt.isPresent()) {
+                                existingSubconcept.setConcept(conceptOpt.get());
+                                updatedFields.add("conceptId");
+                                hasUpdates = true;
+                            } else {
+                                String error = "SubconceptId: " + subconceptId + " failed - ConceptId " + conceptId + " not found";
+                                failedIds.add(error);
+                                logger.warn(error);
+                            }
+                        }
+                    }
+
+                    // Update Content (if contentId column is present and valid)
+                    if (headerMap.containsKey("contentid") && record.length > headerMap.get("contentid")) {
+                        String contentIdStr = record[headerMap.get("contentid")].trim();
+                        if (!contentIdStr.isEmpty()) {
+                            try {
+                                int contentId = Integer.parseInt(contentIdStr);
+                                Optional<ContentMaster> contentOpt = contentRepository.findById(contentId);
+                                if (contentOpt.isPresent()) {
+                                    existingSubconcept.setContent(contentOpt.get());
+                                    updatedFields.add("contentId");
+                                    hasUpdates = true;
+                                } else {
+                                    String error = "SubconceptId: " + subconceptId + " failed - ContentId " + contentId + " not found";
+                                    failedIds.add(error);
+                                    logger.warn(error);
+                                }
+                            } catch (NumberFormatException e) {
+                                String error = "SubconceptId: " + subconceptId + " failed - Invalid ContentId format: " + contentIdStr;
+                                failedIds.add(error);
+                                logger.warn(error);
+                            }
+                        }
+                    }
+
+                    
                     // Save only if there are updates
                     if (hasUpdates) {
                         subconceptRepository.save(existingSubconcept);

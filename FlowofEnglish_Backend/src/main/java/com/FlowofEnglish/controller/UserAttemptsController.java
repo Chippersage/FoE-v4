@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.exception.ResourceNotFoundException;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.service.*;
 import java.time.ZoneOffset;
@@ -86,7 +87,23 @@ public class UserAttemptsController {
     }
 }
     
-    
+    @PostMapping("/auto-complete/subconcept")
+    public ResponseEntity<?> autoCompleteSubconcept(@RequestBody UserAttemptRequestDTO dto) {
+        UserAttempts attempt = userAttemptsService.autoCompleteSubconcept(
+                dto.getUserId(), dto.getProgramId(), dto.getStageId(),
+                dto.getUnitId(), dto.getSubconceptId(), dto.getCohortId()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(attempt);
+    }
+
+    @PostMapping("/auto-complete/program")
+    public ResponseEntity<?> autoCompleteProgram(@RequestBody UserAttemptRequestDTO dto) {
+        List<UserAttempts> attempts = userAttemptsService.autoCompleteProgram(
+                dto.getUserId(), dto.getProgramId(), dto.getCohortId()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(attempts);
+    }
+
     @GetMapping
     public List<UserAttempts> getAllUserAttempts() {
         return userAttemptsService.getAllUserAttempts();
