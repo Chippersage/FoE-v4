@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   CheckCircle2,
   Clock,
+  Star,
   // BookOpen,
   // Mic,
   // PlayCircle,
@@ -68,6 +69,7 @@ interface Subconcept {
   subconceptType: string;
   subconceptLink: string;
   completionStatus: string;
+  showTo?: string;
 }
 
 interface SubconceptData {
@@ -180,6 +182,9 @@ export default function SubConceptsPage() {
   const [delayedPoints, setDelayedPoints] = useState<
     { x: number; y: number }[]
   >([]);
+
+  // MENTOR ACCESS: Check if user is Mentor
+  const isMentor = user?.userType === "Mentor";
 
   // Detect orientation changes
   useEffect(() => {
@@ -527,22 +532,29 @@ export default function SubConceptsPage() {
 
                 const isCompleted =
                   subconcept && subconcept.completionStatus === "yes";
-                const isEnabled =
-                  index === 0 ||
-                  (index === totalSteps - 1 &&
-                    subconcepts.every((s) => s.completionStatus === "yes")) ||
-                  (subconcept?.completionStatus !== "disabled" &&
-                    index !== totalSteps - 1);
+                
+                // MENTOR ACCESS: For Mentors - always enable access to all subconcepts
+                // For others - use existing logic
+                const isEnabled = isMentor 
+                  ? index !== totalSteps - 1 // Mentors can access all except finish
+                  : index === 0 ||
+                    (index === totalSteps - 1 &&
+                      subconcepts.every((s) => s.completionStatus === "yes")) ||
+                    (subconcept?.completionStatus !== "disabled" &&
+                      index !== totalSteps - 1);
 
                 return (
                   <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
                     <Link
                       to={
-                        index === totalSteps - 1 &&
-                        nextUnitId &&
-                        (unitCompletionStatus === "yes" ||
-                          unitCompletionStatus.toLowerCase() ===
-                            "unit completed without assignments")
+                        // MENTOR ACCESS: Allow mentors to access all subconcepts
+                        isMentor && index !== totalSteps - 1 && index !== 0
+                          ? `/subconcept/${subconcept?.subconceptId}`
+                          : index === totalSteps - 1 &&
+                            nextUnitId &&
+                            (unitCompletionStatus === "yes" ||
+                              unitCompletionStatus.toLowerCase() ===
+                                "unit completed without assignments")
                           ? "/dashboard"
                           : isEnabled &&
                             index !== totalSteps - 1 &&
@@ -551,7 +563,8 @@ export default function SubConceptsPage() {
                               subconcept?.subconceptType
                                 ?.toLowerCase()
                                 .startsWith("assessment") &&
-                              subconcept?.completionStatus === "yes"
+                              subconcept?.completionStatus === "yes" &&
+                              !isMentor // Allow mentors to access completed assessments
                             )
                           ? `/subconcept/${subconcept?.subconceptId}`
                           : null
@@ -566,6 +579,12 @@ export default function SubConceptsPage() {
                       onMouseEnter={() => setActiveTooltip(index)}
                       onMouseLeave={() => setActiveTooltip(null)}
                       onClick={(e) => {
+                        // MENTOR ACCESS: Skip restrictions for mentors
+                        if (isMentor && index !== totalSteps - 1 && index !== 0) {
+                          // Allow mentors to access everything, no restrictions
+                          return;
+                        }
+                        
                         if (
                           index === totalSteps - 1 &&
                           (unitCompletionStatus === "yes" ||
@@ -592,14 +611,14 @@ export default function SubConceptsPage() {
                           subconcept?.subconceptType
                             ?.toLowerCase()
                             .startsWith("assessment") &&
-                          subconcept?.completionStatus === "yes"
+                          subconcept?.completionStatus === "yes" &&
+                          !isMentor // Only restrict for non-mentors
                         ) {
                           e.preventDefault(); // prevent navigation
                           toast(
                             (t) => (
                               <div className="text-yellow-800 font-medium text-md">
-                                Assessment already completed, you can attempt
-                                only once!
+                                Assessment already completed, you can attempt only once!
                               </div>
                             ),
                             {
@@ -689,6 +708,7 @@ export default function SubConceptsPage() {
                           }`}
                         />
 
+                        {/* Completion tick mark - Right Top Side */}
                         {isCompleted && (
                           <g
                             className={`transition-transform duration-300 ease-out ${
@@ -712,6 +732,39 @@ export default function SubConceptsPage() {
                               color="white"
                             />
                           </g>
+                        )}
+
+                        {/* Star on Left Side - (Mentor Only Badge) */}
+                        {subconcept?.showTo === "Mentor"  && (
+                            <g
+                              className={`transition-transform duration-500 ease-out ${
+                                animationTrigger ? "scale-100" : "scale-0"
+                              }`}
+                              style={{
+                                transitionDelay: `${index * 100 + 300}ms`,
+                                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
+                              }}
+                            >
+                              {/* Outer Circle - thin stroke */}
+                              <circle
+                                cx={point.x - 18}
+                                cy={point.y - 20}
+                                r="10"
+                                fill="#FFFFFF"       // White inner
+                                stroke="#90CAF9"     // Soft blue border
+                                strokeWidth="1.5"    // Thin for sleek look
+                              />
+
+                              {/* Star - centered */}
+                              <Star
+                                x={point.x - 24}    // Adjust to visually center
+                                y={point.y - 26}
+                                width="12"
+                                height="12"
+                                color="#1976D2"     // Deep blue star
+                                fill="#1976D2"
+                              />
+                            </g>
                         )}
                       </g>
                       {/* Google Pin for the first incomplete subconcept */}
@@ -754,7 +807,14 @@ export default function SubConceptsPage() {
                           }}
                         >
                           {subconcept ? (
-                            subconcept.subconceptDesc
+                            <>
+                              {subconcept.subconceptDesc}
+                              {subconcept?.showTo === "Mentor" && (
+                              <div className="text-white text-[7px] mt-1 font-semibold flex items-center justify-center gap-1 bg-[#3B82F6] px-2 py-1 rounded"> 
+                               Mentor Only
+                              </div>
+                              )}
+                            </>
                           ) : index === 0 ? (
                             "Start"
                           ) : index === totalSteps - 1 &&

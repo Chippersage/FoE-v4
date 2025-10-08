@@ -63,7 +63,7 @@ export default function ViewProgressPage() {
         const response = await axios.get(
           `${API_BASE_URL}/users/${user?.userId}/cohorts`
         );
-        console.log("Fetched cohorts:", response.data);
+        // console.log("Fetched cohorts:", response.data);
         setFetchedCohorts(
           response.data.userDetails.allCohortsWithPrograms || response.data
         );
@@ -81,11 +81,40 @@ export default function ViewProgressPage() {
   }, [user?.userId, API_BASE_URL]);
 
   // Set default selected program when cohorts are loaded
-  useEffect(() => {
-    if (fetchedCohorts && fetchedCohorts.length > 0 && !selectedProgram) {
-      setSelectedProgram(fetchedCohorts[0]?.program?.programId);
+ useEffect(() => {
+  if (fetchedCohorts?.length > 0 && !selectedProgram) {
+    try {
+      const stored = localStorage.getItem("selectedCohortWithProgram");
+      const selectedCohortWithProgram = stored ? JSON.parse(stored) : null;
+
+      // console.log("Selected cohort from localStorage:", selectedCohortWithProgram);
+
+      if (selectedCohortWithProgram) {
+        const cohort = fetchedCohorts.find(
+          c => c.cohortId === selectedCohortWithProgram.cohortId
+        );
+        if (cohort?.program?.programId) {
+          setSelectedProgram(cohort.program.programId);
+          return; // ✅ stop here if found
+        }
+      }
+
+      // ✅ fallback to first cohort’s programId
+      if (fetchedCohorts[0]?.program?.programId) {
+        setSelectedProgram(fetchedCohorts[0].program.programId);
+      }
+
+    } catch (err) {
+      console.error("Error parsing localStorage cohort:", err);
+
+      // ✅ fallback even if parsing failed
+      if (fetchedCohorts[0]?.program?.programId) {
+        setSelectedProgram(fetchedCohorts[0].program.programId);
+      }
     }
-  }, [fetchedCohorts, selectedProgram]);
+  }
+}, [fetchedCohorts, selectedProgram]);
+
 
   // Load user progress data
   useEffect(() => {
@@ -95,10 +124,11 @@ export default function ViewProgressPage() {
       try {
         setLoading(true);
         const data = await fetchUserProgress(selectedProgram, user?.userId);
-        console.log(data);
+        // console.log(data);
         setUserData(data);
         const processed = processUserData(data?.concepts);
-        console.log(processed);
+        // console.log("data?.concepts: ", data?.concepts);
+        // console.log(processed);
         setProcessedData(processed);
       } catch (error) {
         console.error("Failed to fetch user progress:", error);
@@ -125,6 +155,7 @@ export default function ViewProgressPage() {
     strengths,
     areasToImprove,
     skillScores,
+    skillBasedConceptGroups
   } = processedData;
 
   // Get current program name
@@ -304,7 +335,7 @@ export default function ViewProgressPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-96">
-                  <BarChart data={conceptProgress} />
+                  <BarChart data={skillBasedConceptGroups || conceptProgress} />
                 </CardContent>
               </Card>
 

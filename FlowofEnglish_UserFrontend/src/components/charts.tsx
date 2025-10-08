@@ -142,13 +142,41 @@ export function PieChart({ data }: { data: any[] }) {
     "hsl(var(--primary)/0.6)",
     "hsl(var(--primary)/0.4)",
     "hsl(var(--primary)/0.2)",
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FECA57",
   ];
+
+  // Group small slices (less than 5%) into "Other" category
+  const processData = (data: any[]) => {
+    if (data.length <= 8) return data; // No need to group if few categories
+    
+    const threshold = 5; // 5% threshold
+    const mainData = data.filter(item => item.value >= threshold);
+    const otherData = data.filter(item => item.value < threshold);
+    
+    if (otherData.length > 0) {
+      const otherValue = otherData.reduce((sum, item) => sum + item.value, 0);
+      if (otherValue > 0) {
+        return [
+          ...mainData,
+          { name: `Other (${otherData.length} skills)`, value: otherValue }
+        ];
+      }
+    }
+    
+    return mainData;
+  };
+
+  const processedData = processData(data).slice(0, 10); // Limit to top 10
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsPieChart>
         <Pie
-          data={data}
+          data={processedData}
           cx="50%"
           cy="50%"
           labelLine={false}
@@ -157,22 +185,14 @@ export function PieChart({ data }: { data: any[] }) {
           fill="#8884d8"
           dataKey="value"
           nameKey="name"
-          label={({ percent, x, y }) => (
-            <text
-              x={x}
-              y={y}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill="#333"
-              // fontSize={10}
-              fontWeight="bold" // 👈 makes the text bold
-            >
-              {(percent * 100).toFixed(0)}%
-            </text>
-          )}
+          label={({ name, percent }) => {
+            // Only show label if slice is large enough
+            if (percent < 0.05) return null;
+            return `${(percent * 100).toFixed(0)}%`;
+          }}
           animationDuration={1500}
         >
-          {data.map((entry, index) => (
+          {processedData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
@@ -180,23 +200,23 @@ export function PieChart({ data }: { data: any[] }) {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                <div className="rounded-lg border bg-background p-3 shadow-sm max-w-xs">
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <span className="text-xs uppercase text-muted-foreground">
                         Skill
                       </span>
-                      <span className="font-bold text-sm">
+                      <p className="font-bold text-sm break-words">
                         {payload[0].name}
-                      </span>
+                      </p>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                    <div>
+                      <span className="text-xs uppercase text-muted-foreground">
                         Percentage
                       </span>
-                      <span className="font-bold text-sm">
-                        {(payload[0].value as number).toFixed(0)}%
-                      </span>
+                      <p className="font-bold text-sm">
+                        {(payload[0].value as number).toFixed(1)}%
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -205,53 +225,77 @@ export function PieChart({ data }: { data: any[] }) {
             return null;
           }}
         />
-        <Legend />
+        <Legend 
+          wrapperStyle={{ fontSize: '12px' }}
+          layout="vertical" 
+          verticalAlign="middle" 
+          align="right"
+          formatter={(value) => {
+            // Truncate long legend labels
+            if (value.length > 20) return value.substring(0, 20) + '...';
+            return value;
+          }}
+        />
       </RechartsPieChart>
     </ResponsiveContainer>
   );
 }
 
 // Radar Chart Component
+// Radar Chart Component with truncated labels
 export function RadarChart({ data }: { data: any[] }) {
-  console.log("Radar Chart Data:", data);
+  // console.log("Radar Chart Data:", data);
+
+  // Function to truncate long skill names
+  const truncateSkillName = (skill: string, maxLength: number = 15) => {
+    if (skill.length <= maxLength) return skill;
+    return skill.substring(0, maxLength) + '...';
+  };
+
+  // Process data to have truncated labels for display but full names in tooltip
+  const processedData = data.map(item => ({
+    ...item,
+    truncatedSkill: truncateSkillName(item.skill),
+    fullSkill: item.skill
+  }));
+
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <RechartsRadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+      <RechartsRadarChart cx="50%" cy="50%" outerRadius="80%" data={processedData}>
         <PolarGrid />
-        <PolarAngleAxis dataKey="skill" />
+        <PolarAngleAxis 
+          dataKey="truncatedSkill" 
+          tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+          tickLine={false}
+        />
         <PolarRadiusAxis angle={30} domain={[0, 100]} />
         <Radar
           name="Proficiency"
           dataKey="score"
-          data={data} // ✅ Required!
           stroke="hsl(var(--primary))"
-          fill="hsl(var(--primary)/0.5)" // ✅ Slightly darker for visibility
-          strokeWidth={2} // ✅ Makes radar lines clearer
-          fillOpacity={0.6} // ✅ Optional: ensure opacity override
+          fill="hsl(var(--primary)/0.5)"
+          strokeWidth={2}
+          fillOpacity={0.6}
           animationDuration={1500}
         />
         <Tooltip
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Skill
-                      </span>
-                      <span className="font-bold text-sm">
-                        {payload[0].payload.skill}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                        Score
-                      </span>
-                      <span className="font-bold text-sm">
-                        {payload[0].value}%
-                      </span>
-                    </div>
+                <div className="rounded-lg border bg-background p-3 shadow-sm max-w-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs uppercase text-muted-foreground">
+                      Skill
+                    </span>
+                    <span className="font-bold text-sm">
+                      {payload[0].payload.fullSkill}
+                    </span>
+                    <span className="text-xs uppercase text-muted-foreground mt-2">
+                      Proficiency Score
+                    </span>
+                    <span className="font-bold text-sm">
+                      {payload[0].value}%
+                    </span>
                   </div>
                 </div>
               );

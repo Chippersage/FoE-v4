@@ -24,7 +24,6 @@ export interface Question {
   marks: number;
   reference: string | null; // Reference to the question, can be null if not provided
   img?: string | null; // Optional image attribute for the question
-  titletext?: string | null; // Optional title for the passage when reference is a passage
 }
 
 export interface QuizState {
@@ -62,16 +61,7 @@ export interface ConceptProgress {
   skill2: string;
 }
 
-export interface SkillScore {
-  skill: string;
-  score: number;
-}
-
-export interface SkillDistribution {
-  name: string;
-  value: number;
-}
-
+// In your types.ts file, update the ProcessedUserData interface
 export interface ProcessedUserData {
   overallCompletion: number;
   totalScore: number;
@@ -81,4 +71,20 @@ export interface ProcessedUserData {
   skillDistribution: SkillDistribution[];
   strengths: ConceptProgress[];
   areasToImprove: ConceptProgress[];
+  skillBasedConceptGroups?: ConceptProgress[]; // Add this optional property
+}
+
+// Update SkillScore interface to include additional properties
+export interface SkillScore {
+  skill: string;
+  score: number;
+  rawScore?: number;
+  rawMaxScore?: number;
+  conceptCount?: number;
+}
+
+
+export interface SkillDistribution {
+  name: string;
+  value: number;
 }

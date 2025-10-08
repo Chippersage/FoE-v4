@@ -10,6 +10,8 @@ import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import {} from "lucide-react";
 import DashboardTour from "./tours/DashboardTour";
+import { useUserContext } from "@/context/AuthContext";
+
 // Define a type for the stage object
 // interface Stage {
 //   stageEnabled: boolean;
@@ -35,6 +37,10 @@ export default function Stages({
   const [stepIndex, setStepIndex] = useState(0);
   const [runTour, setRunTour] = useState(false);
   const [hasSeenDashboardTour, setHasSeenDashboardTour] = useState(false);
+  
+  // MENTOR ACCESS: Get user context and check if user is Mentor
+  const { user } = useUserContext();
+  const isMentor = user?.userType === "Mentor";
 
   useEffect(() => {
     // Check if user has seen the tour before or if cohort tour was skipped
@@ -63,9 +69,9 @@ export default function Stages({
 
   // @ts-ignore
   const toggleExpand = (index) => {
-    // Allow expansion only if the stage is enabled
+    // MENTOR ACCESS: Allow mentors to expand any stage
     // @ts-ignore
-    if (stagesArray[index]?.stageEnabled) {
+    if (stagesArray[index]?.stageEnabled || isMentor) {
       setExpandedModule(expandedModule === index ? null : index);
       setStepIndex((prevStepIndex) => prevStepIndex + 1);
     }
@@ -113,7 +119,7 @@ export default function Stages({
                       <CardTitle
                         className={`text-lg ${
                           // @ts-ignore
-                          stage.stageEnabled ? "text-gray-900" : "text-gray-500"
+                          stage.stageEnabled || isMentor ? "text-gray-900" : "text-gray-500"
                         }`}
                       >
                         {/* @ts-ignore */}
@@ -137,7 +143,7 @@ export default function Stages({
                           Completed
                         </Badge>
                       ) : (
-                        stage.stageEnabled && (
+                        (stage.stageEnabled || isMentor) && (
                           <ChevronDown
                             className={`h-5 w-5 transition-transform duration-300 ${
                               expandedModule === index ? "rotate-180" : ""
@@ -172,7 +178,7 @@ export default function Stages({
                     <p
                       className={`text-sm mb-4 font-openSans font-semibold ${
                         // @ts-ignore
-                        stage.stageEnabled ? "text-gray-600" : "text-gray-400"
+                        stage.stageEnabled || isMentor ? "text-gray-600" : "text-gray-400"
                       }`}
                     >
                       {/* @ts-ignore */}
@@ -187,7 +193,7 @@ export default function Stages({
                           }}
                           className={`w-full transition-all duration-300 ease-in-out h-9 ${
                             // @ts-ignore
-                            stage.stageEnabled
+                            stage.stageEnabled || isMentor
                               ? // @ts-ignore
                                 stage.stageCompletionStatus === "yes"
                                 ? "bg-green-500 text-white hover:bg-[#DB5788]"
@@ -196,20 +202,20 @@ export default function Stages({
                           } ${
                             index === 0 &&
                             stage?.stageCompletionStatus === "no" &&
-                            stage?.stageEnabled
+                            (stage?.stageEnabled || isMentor)
                               ? "lets-go-button"
                               : ""
                           }`}
                         >
                           <div className="flex items-center justify-center space-x-2">
                             <span>
-                              {stage.stageEnabled
+                              {stage.stageEnabled || isMentor
                                 ? stage.stageCompletionStatus === "yes"
                                   ? "Well Done!"
                                   : "Let's Go"
                                 : "Not Yet..."}
                             </span>
-                            {stage.stageEnabled ? (
+                            {stage.stageEnabled || isMentor ? (
                               stage.stageCompletionStatus === "yes" ? (
                                 <img
                                   src="/icons/User-icons/medal.png"
@@ -249,9 +255,11 @@ export default function Stages({
                           <Link
                             // @ts-ignore
                             to={
+                              // MENTOR ACCESS: Allow mentors to access all units
                               // @ts-ignore
                               unit.completionStatus !== "disabled" ||
-                              unitIndex === 0
+                              unitIndex === 0 ||
+                              isMentor
                                 ? // @ts-ignore
                                   `/subconcepts/${unit.unitId}`
                                 : null
@@ -264,12 +272,13 @@ export default function Stages({
                             } ${
                               // @ts-ignore
                               unit.completionStatus === "disabled" &&
+                              !isMentor && // MENTOR ACCESS: Don't disable for mentors
                               "hover:cursor-not-allowed"
                             } ${
                               // @ts-ignore
                               hoveredUnit === unit.unitId &&
                               // @ts-ignore
-                              unit.completionStatus !== "disabled"
+                              (unit.completionStatus !== "disabled" || isMentor) // MENTOR ACCESS: Allow hover for all units
                                 ? "bg-[#DB5788]"
                                 : ""
                             } hover:transform hover:scale-105 hover:perspective-[1000px]`}
@@ -297,7 +306,8 @@ export default function Stages({
                                 <CircleCheck
                                   className={`absolute top-0 left-0 ${
                                     hoveredUnit === unit.unitId &&
-                                    unit.completionStatus !== "disabled"
+                                    // @ts-ignore
+                                    (unit.completionStatus !== "disabled" || isMentor) // MENTOR ACCESS: Allow hover for all units
                                       ? "text-white"
                                       : "text-green-500"
                                   }`}
@@ -307,7 +317,8 @@ export default function Stages({
                                 <CircleAlert
                                   className={`absolute top-0 left-0 ${
                                     hoveredUnit === unit.unitId &&
-                                    unit.completionStatus !== "disabled"
+                                    // @ts-ignore
+                                    (unit.completionStatus !== "disabled" || isMentor) // MENTOR ACCESS: Allow hover for all units
                                       ? "text-white"
                                       : "text-red-500"
                                   }`}
@@ -320,7 +331,7 @@ export default function Stages({
                                   // @ts-ignore
                                   hoveredUnit === unit.unitId &&
                                   // @ts-ignore
-                                  unit.completionStatus !== "disabled"
+                                  (unit.completionStatus !== "disabled" || isMentor) // MENTOR ACCESS: Allow hover for all units
                                     ? "/icons/User-icons/unit.svg"
                                     : "icons/User-icons/unit.png"
                                 }
@@ -331,14 +342,14 @@ export default function Stages({
                             <span
                               className={`text-sm truncate ${
                                 // @ts-ignore
-                                stage.stageEnabled
+                                stage.stageEnabled || isMentor
                                   ? "text-gray-900"
                                   : "text-gray-400"
                               } ${
                                 // @ts-ignore
                                 hoveredUnit === unit.unitId &&
                                 // @ts-ignore
-                                unit.completionStatus !== "disabled"
+                                (unit.completionStatus !== "disabled" || isMentor) // MENTOR ACCESS: Allow hover for all units
                                   ? "opacity-100 transition-all duration-100 ease-in-out font-semibold text-white"
                                   : ""
                               }`}
