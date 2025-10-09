@@ -1,17 +1,15 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.UserSessionMapping;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.UserSessionMappingRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserSessionMappingServiceImpl implements UserSessionMappingService {
@@ -134,4 +132,34 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             throw new RuntimeException("Failed to invalidate user sessions", e);
         }
     }
+    
+    @Override
+    public UserSessionMapping findOrCreateAutoSession(String userId, String cohortId) {
+        // First check if an active auto session exists
+        List<UserSessionMapping> activeSessions = 
+            userSessionMappingRepository.findByUser_UserIdAndCohort_CohortIdAndSessionEndTimestampIsNull(userId, cohortId);
+
+        if (!activeSessions.isEmpty()) {
+            return activeSessions.get(0); // reuse the first active one
+        }
+
+        // Otherwise create a new auto session
+        UserSessionMapping session = new UserSessionMapping();
+        session.setSessionId(UUID.randomUUID().toString());
+        session.setUuid(UUID.randomUUID().toString());
+        session.setSessionStartTimestamp(OffsetDateTime.now(ZoneOffset.UTC));
+        session.setSessionEndTimestamp(null);
+
+        // Attach user & cohort refs
+        User user = new User();
+        user.setUserId(userId);
+        session.setUser(user);
+
+        Cohort cohort = new Cohort();
+        cohort.setCohortId(cohortId);
+        session.setCohort(cohort);
+
+        return userSessionMappingRepository.save(session);
+    }
+
 }

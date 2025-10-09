@@ -30,4 +30,7 @@ public interface ProgramConceptsMappingService {
 	List<Concept> getAllConceptsInProgram(String programId);
 
 	Map<String, Object> getConceptsAndUserProgress(String programId, String userId);
+	
+	ResponseEntity<Map<String, Object>> bulkUpdate(MultipartFile file);
+
 }

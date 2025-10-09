@@ -3,9 +3,7 @@ package com.FlowofEnglish.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
 import org.hibernate.annotations.CreationTimestamp;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name = "UserSessionMapping")

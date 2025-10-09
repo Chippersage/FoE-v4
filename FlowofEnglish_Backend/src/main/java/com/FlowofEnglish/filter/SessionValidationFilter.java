@@ -86,6 +86,7 @@ public class SessionValidationFilter implements Filter {
             "/api/v1/users/select-cohort",
             "/api/v1/users/logout",
             "/api/v1/organizations/login",
+            "/api/v1/user-attempts/auto-complete/",
             "/api/v1/users/create");
 
     @Override

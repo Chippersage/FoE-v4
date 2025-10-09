@@ -8,9 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/programconceptsmappings")
@@ -65,6 +63,29 @@ public class ProgramConceptsMappingController {
         return programConceptsMappingService.bulkUpload(file);
     }
     
+ 
+    @PutMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> bulkUpdate(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Please upload a CSV file",
+                    "error", "No file provided"
+            ));
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.equals("text/csv")) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Please upload a CSV file",
+                    "error", "Invalid file type"
+            ));
+        }
+
+        return programConceptsMappingService.bulkUpdate(file);
+    }
+
     
     @PutMapping("/{programConceptId}")
     public ResponseEntity<ProgramConceptsMapping> updateProgramConceptsMapping(@PathVariable Long programConceptId, @RequestBody ProgramConceptsMapping programConceptsMapping) {
