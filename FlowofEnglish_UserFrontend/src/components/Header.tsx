@@ -1,5 +1,5 @@
 
-import main_logo from "../assets/Img/main-logo.png";
+import main_logo from "../assets/Img/FoE_logo.png";
 import "../Styles/Header.css";
 import chipper_sage_logo from "../assets/Img/chipper-sage-logo.png";
 import { Link } from "react-router-dom";

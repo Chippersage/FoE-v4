@@ -25,6 +25,7 @@ import { fetchUserProgress } from "@/lib/api";
 import { processUserData } from "@/lib/data-processing";
 import type { UserProgressData, ProcessedUserData } from "@/types/types";
 import { useUserContext } from "@/context/AuthContext";
+import ExportButton from "@/components/ExportButton";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -40,32 +41,25 @@ interface CohortData {
 export default function ViewProgressPage() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserProgressData[]>([]);
-  const [processedData, setProcessedData] = useState<ProcessedUserData | null>(
-    null
-  );
+  const [processedData, setProcessedData] = useState<ProcessedUserData | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const { user } = useUserContext();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
-  // New state for cohort fetching
+  // Cohort states
   const [fetchedCohorts, setFetchedCohorts] = useState<CohortData[]>([]);
   const [isLoadingCohorts, setIsLoadingCohorts] = useState(false);
 
-  // You'll need to define your API_BASE_URL - either import it or define it here
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "your-api-base-url";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "your-api-base-url";
 
-  // Fetch cohorts from API
+  // Fetch cohorts
   useEffect(() => {
     const fetchCohorts = async () => {
       try {
         setIsLoadingCohorts(true);
-        const response = await axios.get(
-          `${API_BASE_URL}/users/${user?.userId}/cohorts`
-        );
-        // console.log("Fetched cohorts:", response.data);
+        const response = await axios.get(`${API_BASE_URL}/users/${user?.userId}/cohorts`);
         setFetchedCohorts(
-          response.data.userDetails.allCohortsWithPrograms || response.data
+          response.data.userDetails?.allCohortsWithPrograms || response.data
         );
       } catch (error) {
         console.error("Failed to fetch cohorts:", error);
@@ -75,60 +69,46 @@ export default function ViewProgressPage() {
       }
     };
 
-    if (user?.userId) {
-      fetchCohorts();
-    }
+    if (user?.userId) fetchCohorts();
   }, [user?.userId, API_BASE_URL]);
 
-  // Set default selected program when cohorts are loaded
- useEffect(() => {
-  if (fetchedCohorts?.length > 0 && !selectedProgram) {
-    try {
-      const stored = localStorage.getItem("selectedCohortWithProgram");
-      const selectedCohortWithProgram = stored ? JSON.parse(stored) : null;
+  // Set default selected program
+  useEffect(() => {
+    if (fetchedCohorts.length > 0 && !selectedProgram) {
+      try {
+        const stored = localStorage.getItem("selectedCohortWithProgram");
+        const selectedCohortWithProgram = stored ? JSON.parse(stored) : null;
 
-      // console.log("Selected cohort from localStorage:", selectedCohortWithProgram);
+        if (selectedCohortWithProgram) {
+          const cohort = fetchedCohorts.find(c => c.cohortId === selectedCohortWithProgram.cohortId);
+          if (cohort?.program?.programId) {
+            setSelectedProgram(cohort.program.programId);
+            return;
+          }
+        }
 
-      if (selectedCohortWithProgram) {
-        const cohort = fetchedCohorts.find(
-          c => c.cohortId === selectedCohortWithProgram.cohortId
-        );
-        if (cohort?.program?.programId) {
-          setSelectedProgram(cohort.program.programId);
-          return; // ✅ stop here if found
+        // fallback to first cohort
+        if (fetchedCohorts[0]?.program?.programId) {
+          setSelectedProgram(fetchedCohorts[0].program.programId);
+        }
+      } catch (err) {
+        console.error("Error parsing localStorage cohort:", err);
+        if (fetchedCohorts[0]?.program?.programId) {
+          setSelectedProgram(fetchedCohorts[0].program.programId);
         }
       }
-
-      // ✅ fallback to first cohort’s programId
-      if (fetchedCohorts[0]?.program?.programId) {
-        setSelectedProgram(fetchedCohorts[0].program.programId);
-      }
-
-    } catch (err) {
-      console.error("Error parsing localStorage cohort:", err);
-
-      // ✅ fallback even if parsing failed
-      if (fetchedCohorts[0]?.program?.programId) {
-        setSelectedProgram(fetchedCohorts[0].program.programId);
-      }
     }
-  }
-}, [fetchedCohorts, selectedProgram]);
-
+  }, [fetchedCohorts, selectedProgram]);
 
   // Load user progress data
   useEffect(() => {
     const loadData = async () => {
       if (!selectedProgram) return;
-
       try {
         setLoading(true);
         const data = await fetchUserProgress(selectedProgram, user?.userId);
-        // console.log(data);
         setUserData(data);
         const processed = processUserData(data?.concepts);
-        // console.log("data?.concepts: ", data?.concepts);
-        // console.log(processed);
         setProcessedData(processed);
       } catch (error) {
         console.error("Failed to fetch user progress:", error);
@@ -141,7 +121,6 @@ export default function ViewProgressPage() {
     loadData();
   }, [selectedProgram, user?.userId]);
 
-  // Show loading skeleton while loading cohorts or progress data
   if (isLoadingCohorts || loading || !processedData) {
     return <DashboardSkeleton />;
   }
@@ -158,11 +137,8 @@ export default function ViewProgressPage() {
     skillBasedConceptGroups
   } = processedData;
 
-  // Get current program name
   const currentProgramName =
-    fetchedCohorts?.find(
-      (cohort) => cohort?.program?.programId === selectedProgram
-    )?.program?.programName || "";
+    fetchedCohorts.find(c => c?.program?.programId === selectedProgram)?.program?.programName || "";
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden">
@@ -176,9 +152,8 @@ export default function ViewProgressPage() {
           backgroundRepeat: "no-repeat",
         }}
       />
-
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/10 -z-10" />
+
       <div className="container mx-auto py-8 px-4">
         <UserHeader
           username={user?.userName}
@@ -186,7 +161,8 @@ export default function ViewProgressPage() {
           overallCompletion={overallCompletion}
         />
 
-        {fetchedCohorts && fetchedCohorts.length > 0 && (
+        {/* Program Selector */}
+        {fetchedCohorts.length > 0 && (
           <div className="mb-4 max-w-sm">
             <label className="block mb-1 text-sm font-medium text-gray-700">
               Select Program
@@ -198,10 +174,7 @@ export default function ViewProgressPage() {
               disabled={isLoadingCohorts}
             >
               {fetchedCohorts.map((cohort) => (
-                <option
-                  key={cohort.cohortId}
-                  value={cohort?.program?.programId}
-                >
+                <option key={cohort.cohortId} value={cohort?.program?.programId}>
                   {cohort?.program?.programName}
                 </option>
               ))}
@@ -214,11 +187,17 @@ export default function ViewProgressPage() {
           </div>
         )}
 
-        <Tabs
-          defaultValue="overview"
-          className="mt-8"
-          onValueChange={setActiveTab}
-        >
+        {/* Export Button */}
+        <div className="flex justify-end mb-4">
+          <ExportButton
+            targetId={`tab-${activeTab}`}
+            fileName={`Progress_${activeTab}`}
+            padding={30}
+          />
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="mt-8" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
@@ -226,7 +205,7 @@ export default function ViewProgressPage() {
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6" id="tab-overview">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -307,7 +286,7 @@ export default function ViewProgressPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="skills">
+          <TabsContent value="skills" id="tab-skills">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -320,7 +299,7 @@ export default function ViewProgressPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="concepts">
+          <TabsContent value="concepts" id="tab-concepts">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -353,7 +332,7 @@ export default function ViewProgressPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="recommendations">
+          <TabsContent value="recommendations" id="tab-recommendations">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -383,6 +362,7 @@ export default function ViewProgressPage() {
   );
 }
 
+// Overview Card
 function OverviewCard({
   title,
   value,
@@ -411,6 +391,7 @@ function OverviewCard({
   );
 }
 
+// Skeleton while loading
 function DashboardSkeleton() {
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
