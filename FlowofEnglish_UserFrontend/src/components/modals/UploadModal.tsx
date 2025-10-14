@@ -122,7 +122,15 @@ export function UploadModal({
       formData.append("sessionId", userData.sessionId);
       formData.append("userAttemptStartTimestamp", userData.userAttemptStartTimestamp);
       formData.append("userAttemptEndTimestamp", formattedISTTimestamp);
-      formData.append("userAttemptScore", "0");
+      // Get the evaluation score if it exists (for speech activities)
+      const evaluationScore = localStorage.getItem('audioEvaluationScore');
+      console.log("evaluationScore", evaluationScore);
+      formData.append("userAttemptScore", evaluationScore || "0");
+      
+      // Clean up the stored score
+      if (evaluationScore) {
+        localStorage.removeItem('audioEvaluationScore');
+      }
       formData.append("userAttemptFlag", "true");
 
 

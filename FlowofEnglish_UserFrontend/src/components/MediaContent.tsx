@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { UploadModal } from "./modals/UploadModal";
@@ -12,6 +11,7 @@ import { Button } from "./ui/button";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Keyboard, EffectFade } from 'swiper/modules';
 import { usePdfToImages } from '../hooks/usePdfToImages';
+import Tesseract from 'tesseract.js';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -19,11 +19,117 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-// Browser-style PDF Viewer Component with Full Width and Scrolling
+// Types
+interface UserData {
+  userId: string;
+  unitId: string;
+  programId: string;
+  stageId: string;
+  sessionId: string;
+  cohortId: string;
+  subconceptId: string;
+  userAttemptStartTimestamp: string;
+  API_BASE_URL: string;
+}
+
+interface SubconceptData {
+  subconceptType: string;
+  subconceptLink: string;
+  subconceptId: string;
+  subconceptMaxscore: number;
+  completionStatus?: string;
+}
+
+interface MediaContentProps {
+  subconceptData: SubconceptData;
+  currentUnitId: string;
+}
+
+interface AssignmentData {
+  status?: string;
+  submittedFile?: {
+    name: string;
+    downloadUrl: string;
+  };
+  correctedFile?: {
+    name: string;
+    downloadUrl: string;
+  };
+  score?: number;
+  remarks?: string;
+}
+
+interface AudioEvaluationResult {
+  scores: {
+    image_relevance: number;
+    content_accuracy: number;
+    grammar_pronunciation: number;
+    vocabulary: number;
+    communication_clarity: number;
+    creativity: number;
+    completeness: number;
+    total: number;
+    max_possible_score: number;
+    weight_distribution: Record<string, number>;
+  };
+  feedback: Record<string, string>;
+  suggestions: string[];
+  transcription: string;
+  image_description: string;
+  instructions: string;
+}
+
+// Helper: Extract instructions from image using OCR
+async function extractInstructionsFromImage(imageUrl: string): Promise<string> {
+  try {
+    console.log(imageUrl)
+    const result = await Tesseract.recognize(imageUrl, 'eng');
+    return result.data.text;
+  } catch (err) {
+    console.error('OCR failed:', err);
+    return '';
+  }
+}
+
+// Helper: Parse instructions and determine rubric weights
+function getDynamicRubricWeights(instructions: string) {
+  const weights = {
+    completeness: 3,
+    image_relevance: 2,
+    content_accuracy: 1.5,
+    grammar_pronunciation: 1,
+    vocabulary: 1,
+    communication_clarity: 1,
+    creativity: 1,
+  };
+
+  if (/(\d+)\s+sentences?/i.test(instructions)) {
+    weights.completeness += 2;
+  }
+  if (/describe|explain|tell about/i.test(instructions)) {
+    weights.image_relevance += 1;
+    weights.vocabulary += 0.5;
+  }
+  if (/list|mention|identify/i.test(instructions)) {
+    weights.content_accuracy += 1;
+    weights.completeness += 1;
+  }
+  if (/details|specific/i.test(instructions)) {
+    weights.content_accuracy += 1;
+    weights.image_relevance += 0.5;
+  }
+  if (/speak clearly|pronounce/i.test(instructions)) {
+    weights.grammar_pronunciation += 1;
+    weights.communication_clarity += 0.5;
+  }
+  return weights;
+}
+
+// Browser-style PDF Viewer Component
 const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContentLoaded?: () => void }) => {
   const { images, totalPages, loading, error, progress } = usePdfToImages(pdfUrl);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [zoom, setZoom] = useState(1.2); // Start with slightly higher zoom for better quality
+  const [zoom, setZoom] = useState(1.2);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -47,28 +153,6 @@ const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onConte
     }
   };
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = `document-${Date.now()}.pdf`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const zoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.25, 3.0));
-  };
-
-  const zoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.25, 0.5));
-  };
-
-  const fitToWidth = () => {
-    setZoom(1.0);
-  };
-
   useEffect(() => {
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
@@ -88,13 +172,6 @@ const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onConte
           <h3 className="text-xl font-semibold text-gray-800 mb-2">PDF Loading Failed</h3>
           <p className="text-gray-600 mb-4 text-sm">{error}</p>
           <p className="text-gray-500 mb-6 text-sm">Unable to process the document. Please try reloading the page.</p>
-
-          {/* <button 
-            onClick={handleDownload}
-            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            📥 Download PDF
-          </button> */}
         </div>
       </div>
     );
@@ -113,7 +190,6 @@ const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onConte
             </div>
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Document</h3>
-          {/* <p className="text-gray-600 mb-4">Converting pages for viewing...</p> */}
           {totalPages > 0 && (
             <p className="text-gray-500 text-sm mb-4">
               Processing {totalPages} pages ({progress}% complete)
@@ -137,87 +213,6 @@ const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onConte
         }`}
       style={{ height: isFullscreen ? '100vh' : 'calc(100vh - 180px)' }}
     >
-      {/* Toolbar */}
-      {/* <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 z-20 px-4 py-2">
-        <div className="flex items-center justify-between"> */}
-      {/* Left side - Document info */}
-      {/* <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 rounded-lg p-1.5">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-gray-700">{images.length} pages</span>
-          </div> */}
-
-      {/* Center - Zoom controls */}
-      {/* <div className="flex items-center space-x-2">
-            <button
-              onClick={zoomOut}
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="Zoom Out"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-              </svg>
-            </button>
-            
-            <span className="text-xs font-medium text-gray-600 min-w-[60px] text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            
-            <button
-              onClick={zoomIn}
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="Zoom In"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-            
-            <button
-              onClick={fitToWidth}
-              className="px-2 py-1.5 text-xs rounded-md bg-gray-100 hover:bg-gray-200 transition-colors font-medium text-gray-600"
-              title="Fit to Width"
-            >
-              Fit
-            </button>
-          </div> */}
-
-      {/* Right side - Actions */}
-      {/* <div className="flex items-center space-x-2">
-            <button
-              onClick={handleDownload}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 transition-colors text-xs font-medium text-white"
-              title="Download PDF"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Download</span>
-            </button>
-
-            <button
-              onClick={handleFullscreen}
-              className="p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? (
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M15 9V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 15v4.5M15 15h4.5m-4.5 0l5.5 5.5" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      </div> */}
-
-      {/* PDF Content Area with Scrolling */}
       <div
         ref={scrollContainerRef}
         className="w-full h-full pt-12 overflow-auto"
@@ -239,7 +234,7 @@ const PDFBrowserViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onConte
                 alt={`Page ${page.pageNumber}`}
                 className="w-full h-auto block"
                 style={{
-                  imageRendering: 'auto', // Use browser's best quality algorithm
+                  imageRendering: 'auto',
                   objectFit: 'contain',
                   objectPosition: 'center',
                 }}
@@ -283,16 +278,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
     }
   };
 
-  // const handleDownload = () => {
-  //   const link = document.createElement('a');
-  //   link.href = pdfUrl;
-  //   link.download = `document-${Date.now()}.pdf`;
-  //   link.target = '_blank';
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  // };
-
   const goToSlide = (slideIndex: number) => {
     if (swiperInstance && slideIndex >= 0 && slideIndex < images.length) {
       swiperInstance.slideTo(slideIndex);
@@ -318,13 +303,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
           <h3 className="text-xl font-semibold text-gray-800 mb-2">PDF Loading Failed</h3>
           <p className="text-gray-600 mb-4 text-sm">{error}</p>
           <p className="text-gray-500 mb-6 text-sm">Unable to process document. Please try reloading.</p>
-
-          {/* <button
-            onClick={handleDownload}
-            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            📥 Download PDF
-          </button> */}
         </div>
       </div>
     );
@@ -343,7 +321,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
             </div>
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Document</h3>
-          {/* <p className="text-gray-600 mb-4">Converting pages to slides...</p> */}
           {totalPages > 0 && (
             <p className="text-gray-500 text-sm mb-4">
               Processing {totalPages} pages ({progress}% complete)
@@ -367,7 +344,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
         }`}
       style={{ height: isFullscreen ? '100vh' : 'calc(100vh - 180px)' }}
     >
-      {/* Minimal Header - Only Fullscreen Button */}
       <div className="absolute top-12 right-4 z-20">
         <button
           onClick={handleFullscreen}
@@ -386,7 +362,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
         </button>
       </div>
 
-      {/* Main Slide Area */}
       <div className="relative w-full h-full pt-4 pb-16">
         <Swiper
           modules={[Navigation, Pagination, Keyboard, EffectFade]}
@@ -432,7 +407,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
             </SwiperSlide>
           ))}
 
-          {/* Custom Navigation Buttons */}
           <div className="swiper-button-prev-custom absolute left-6 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-all duration-300 group shadow-md border border-gray-200 hover:border-gray-300 z-10 cursor-pointer">
             <svg className="w-6 h-6 text-gray-600 group-hover:text-gray-800 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -447,10 +421,8 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
         </Swiper>
       </div>
 
-      {/* Bottom Control Bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 text-gray-800 p-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
-          {/* Quick Navigation */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => goToSlide(currentSlide - 2)}
@@ -492,7 +464,6 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
             </button>
           </div>
 
-          {/* Progress Bar */}
           <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8">
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
@@ -505,14 +476,12 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
             </span>
           </div>
 
-          {/* Controls Info */}
           <div className="text-gray-400 text-xs hidden lg:block">
             Use arrow keys or swipe to navigate
           </div>
         </div>
       </div>
 
-      {/* Custom Pagination Styles */}
       <style jsx global>{`
         .swiper-pagination-bullet-custom {
           width: 10px;
@@ -539,11 +508,10 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
     </div>
   );
 };
-// @ts-ignore
-const MediaContent = ({ subconceptData, currentUnitId }) => {
+
+const MediaContent: React.FC<MediaContentProps> = ({ subconceptData, currentUnitId }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
-  // @ts-ignore
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const userData: UserData = JSON.parse(localStorage.getItem("userData") || "{}");
   const [isComplete, setIsComplete] = useState(
     !(
       subconceptData?.subconceptType?.startsWith("assessment") ||
@@ -554,53 +522,55 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       subconceptData?.subconceptType?.startsWith("youtube")
     )
   );
-  const contentRef = useRef(null);
+  const contentRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successCountdown, setSuccessCountdown] = useState(3);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorCountdown, setErrorCountdown] = useState(3);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [isAssignmentUploadSuccesfull, setIsAssignmentUploadSuccesfull] =
-    useState(false);
-  // const [isRetryPopupOpen, setIsRetryPopupOpen] = useState(false);
-  const [isAssessmentIntegrityChecked, setIsAssessmentIntegrityChecked] =
-    useState(false);
+  const [isAssignmentUploadSuccesfull, setIsAssignmentUploadSuccesfull] = useState(false);
+  const [isAssessmentIntegrityChecked, setIsAssessmentIntegrityChecked] = useState(false);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const [scorePercentage, setScorePercentage] = useState<null | number>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [assignmentData, setAssignmentData] = useState<{
-    not_corrected?: any;
-    corrected?: any;
-    corrected_with_file?: any;
+    not_corrected?: AssignmentData;
+    corrected?: AssignmentData;
+    corrected_with_file?: AssignmentData;
   }>({});
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
-  const [isAssignmentStatusModalOpen, setIsAssignmentStatusModalOpen] =
-    useState(false);
+  const [isAssignmentStatusModalOpen, setIsAssignmentStatusModalOpen] = useState(false);
 
-  // const handleContentLoaded = () => {
-  //   setIsComplete(false); // Enable the "Complete" button when content is fully loaded
-  // };
+  // Audio evaluation states
+  const [isEvaluatingAudio, setIsEvaluatingAudio] = useState(false);
+  const [audioEvaluationResult, setAudioEvaluationResult] = useState<AudioEvaluationResult | null>(null);
+  const [showAudioEvaluationModal, setShowAudioEvaluationModal] = useState(false);
+  const [audioEvaluationError, setAudioEvaluationError] = useState<string | null>(null);
+  const [currentAudioFile, setCurrentAudioFile] = useState<File | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
-  const appendParamsToUrl = (url, userId, cohortId) => {
-    const urlObj = new URL(url); // Parse the URL
-    const params = urlObj.searchParams; // Get the query parameters
+  const appendParamsToUrl = (url: string, userId: string, cohortId: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const params = urlObj.searchParams;
+      const keys = [...params.keys()];
+      
+      if (keys.length < 2) {
+        console.error("URL does not have enough entry parameters.");
+        return url;
+      }
 
-    // Dynamically find the keys for userId and cohortId
-    const keys = [...params.keys()]; // Get all query parameter keys
-    if (keys.length < 2) {
-      console.error("URL does not have enough entry parameters.");
+      params.set(keys[0], userId);
+      params.set(keys[1], cohortId);
+
+      return urlObj.toString();
+    } catch (error) {
+      console.error("Invalid URL:", error);
       return url;
     }
-
-    // Assign userId and cohortId to the first and second keys
-    params.set(keys[0], userId); // Set the first entry
-    params.set(keys[1], cohortId); // Set the second entry
-
-    // Return the modified URL
-    return urlObj.toString();
   };
 
   const openAssessment = () => {
@@ -611,98 +581,91 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
   };
 
   useEffect(() => {
-    const fetchAssignment = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
-        );
+const fetchAssignment = async () => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
+    );
 
-        const data = response.data;
+    const data = response.data;
+    
+    console.log('Raw API response:', data);
+    
+    // If no assignment found, don't proceed
+    if (!data || data.status === 'not_found' || data.message === 'No assignment found for this user and subconcept') {
+      console.log("No assignment found for this user and subconcept");
+      return; // DON'T open the modal
+    }
 
-        const formattedData = {
-          status: data.status, // "not_corrected" | "corrected"
-          submittedFile: {
-            name: data.submittedFile.fileName,
-            downloadUrl: data.submittedFile.downloadUrl,
-          },
-          correctedFile: data.correctedFile
-            ? {
-                name: data.correctedFile.fileName,
-                downloadUrl: data.correctedFile.downloadUrl,
-              }
-            : undefined,
-          score: data.score,
-          remarks: data.remarks,
-        };
-
-        // Categorize the data based on its status
-        if (data.status === "not_corrected") {
-          setAssignmentData((prev) => ({
-            ...prev,
-            not_corrected: formattedData,
-          }));
-          setCurrentStatus("not_corrected");
-        } else if (data.status === "corrected" && data.correctedFile) {
-          setAssignmentData((prev) => ({
-            ...prev,
-            corrected_with_file: formattedData,
-          }));
-          setCurrentStatus("corrected_with_file");
-        } else if (data.status === "corrected") {
-          setAssignmentData((prev) => ({
-            ...prev,
-            corrected: formattedData,
-          }));
-          setCurrentStatus("corrected");
-        }
-        setIsAssignmentStatusModalOpen(true); // Open modal when data is ready
-      } catch (error) {
-        console.error("Error fetching assignment:", error);
-      }
+    // Safe data extraction
+    const formattedData: AssignmentData = {
+      status: data.status || 'not_submitted',
+      submittedFile: data.submittedFile ? {
+        name: data.submittedFile.fileName || data.submittedFile.name || 'Unknown file',
+        downloadUrl: data.submittedFile.downloadUrl || data.submittedFile.url || ''
+      } : undefined,
+      correctedFile: data.correctedFile ? {
+        name: data.correctedFile.fileName || data.correctedFile.name || 'Corrected file',
+        downloadUrl: data.correctedFile.downloadUrl || data.correctedFile.url || ''
+      } : undefined,
+      score: data.score || data.marks || 0,
+      remarks: data.remarks || data.feedback || ''
     };
 
+    console.log('Formatted assignment data:', formattedData);
+
+    // Update assignment data based on status
+    if (data.status === "not_corrected") {
+      setAssignmentData((prev) => ({
+        ...prev,
+        not_corrected: formattedData,
+      }));
+      setCurrentStatus("not_corrected");
+    } else if (data.status === "corrected" && data.correctedFile) {
+      setAssignmentData((prev) => ({
+        ...prev,
+        corrected_with_file: formattedData,
+      }));
+      setCurrentStatus("corrected_with_file");
+    } else if (data.status === "corrected") {
+      setAssignmentData((prev) => ({
+        ...prev,
+        corrected: formattedData,
+      }));
+      setCurrentStatus("corrected");
+    }
+    
+    // Only open modal if there's actual assignment data with valid status
+    if (data.status && data.status !== 'not_found' && data.status !== 'not_submitted') {
+      setIsAssignmentStatusModalOpen(true);
+    }
+  } catch (error) {
+    console.error("Error fetching assignment:", error);
+    // Don't show error for 404 - it just means no assignment submitted yet
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        console.log("No assignment found for this user and subconcept");
+      } else {
+        console.error("Assignment fetch error:", error.response?.data);
+      }
+    }
+  }
+};
     if (
       userData?.userId &&
       subconceptData?.subconceptType?.toLowerCase().startsWith("assignment")
-    )
+    ) {
       fetchAssignment();
-  }, [userData?.userId]);
+    }
+  }, [userData?.userId, subconceptData?.subconceptId, subconceptData?.subconceptType]);
 
   useEffect(() => {
     if (isAssignmentUploadSuccesfull) {
-      // handleComplete();
       setShowSuccessPopup(true);
-      setSuccessCountdown(3); // Reset success countdown
+      setSuccessCountdown(3);
     }
   }, [isAssignmentUploadSuccesfull]);
 
-  // useEffect(() => {
-  //   if (subconceptData?.subconceptType.startsWith("assessment")) {
-  //     // Show the popup after a short delay
-  //     const timer = setTimeout(() => setShowAlert(true), 500);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [subconceptData]);
-
-  // Handle countdown for success overlay
-  // useEffect(() => {
-  //   if (
-  //     showSuccessPopup &&
-  //     successCountdown > 0 &&
-  //     ["assessment", "assignment"].some((type) =>
-  //       subconceptData?.subconceptType?.startsWith(type)
-  //     )
-  //   ) {
-  //     const interval = setInterval(() => {
-  //       setSuccessCountdown((prev) => prev - 1);
-  //     }, 1000);
-  //     return () => clearInterval(interval);
-  //   } else if (successCountdown <= 0) {
-  //     navigate(`/subconcepts/${userData?.unitId}`);
-  //   }
-  // }, [showSuccessPopup, successCountdown]);
-
-  // Handle countdown for error overlay
   useEffect(() => {
     if (showErrorPopup && errorCountdown > 0) {
       const interval = setInterval(() => {
@@ -710,7 +673,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       }, 1000);
       return () => clearInterval(interval);
     } else if (errorCountdown <= 0) {
-      setShowErrorPopup(false); // Close error overlay after countdown
+      setShowErrorPopup(false);
     }
   }, [showErrorPopup, errorCountdown]);
 
@@ -722,27 +685,28 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       subconceptData.subconceptType === "assignment_video"
     ) {
       const contentElement = contentRef.current;
-      //@ts-ignore
-      contentElement.addEventListener("timeupdate", handleTimeUpdate);
-      return () => {
-        // @ts-ignore
-        contentElement.removeEventListener("timeupdate", handleTimeUpdate);
-      };
+      if (contentElement) {
+        contentElement.addEventListener("timeupdate", handleTimeUpdate);
+        return () => {
+          contentElement.removeEventListener("timeupdate", handleTimeUpdate);
+        };
+      }
     }
   }, [subconceptData]);
 
   const handleTimeUpdate = () => {
     const contentElement = contentRef.current;
-    // @ts-ignore
-    const playedTime = contentElement.currentTime;
-    // @ts-ignore
-    const totalTime = contentElement.duration;
-    const percentage = (playedTime / totalTime) * 100;
-    setPlayedPercentage(percentage);
+    if (contentElement) {
+      const playedTime = contentElement.currentTime;
+      const totalTime = contentElement.duration;
+      if (totalTime > 0) {
+        const percentage = (playedTime / totalTime) * 100;
+        setPlayedPercentage(percentage);
 
-    // Check if percentage exceeds 80 and update state
-    if (percentage > 80 && isComplete) {
-      setIsComplete(false);
+        if (percentage > 80 && isComplete) {
+          setIsComplete(false);
+        }
+      }
     }
   };
 
@@ -754,8 +718,7 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       subconceptData.subconceptType === "assignment_audio" ||
       subconceptData.subconceptType === "assignment_video"
     ) {
-      // @ts-ignore
-      contentRef.current.pause();
+      contentRef.current?.pause();
     }
     sendAttemptData(userData);
   };
@@ -763,8 +726,8 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
   const handleGoBack = () => {
     navigate(`/subconcepts/${userData?.unitId}`);
   };
-  // @ts-ignore
-  const sendAttemptData = (userData) => {
+
+  const sendAttemptData = (userData: UserData) => {
     const finalScore =
       subconceptData?.subconceptType?.startsWith("assignment") ||
       subconceptData?.subconceptType?.startsWith("assessment")
@@ -775,8 +738,6 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
           ? subconceptData?.subconceptMaxscore
           : 0
         : subconceptData?.subconceptMaxscore;
-
-    // checking if subconceptMaxscore is 0 and setting scorePercentage to 100 otherwise low score variant of activity completion modal will be shown which is not correct
 
     setScorePercentage(
       subconceptData?.subconceptMaxscore == 0 ||
@@ -820,27 +781,242 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       .then((data) => {
         console.log("Data sent successfully", data);
         setShowSuccessPopup(true);
-        setSuccessCountdown(3); // Reset success countdown
+        setSuccessCountdown(3);
       })
       .catch((error) => {
         console.error("Error:", error);
-
-        // if (subconceptData?.subconceptType === "assignment" && retryCount < 1) {
-        //   setRetryCount((prev) => prev + 1);
-        //   sendAttemptData(userData);
-        // } else {
-          setShowErrorPopup(true);
-          setErrorCountdown(5); // Reset error countdown
-          setIsComplete(false);
-        // }
+        setShowErrorPopup(true);
+        setErrorCountdown(5);
+        setIsComplete(false);
       });
   };
 
   const handleUploadSuccess = () => {
-    setIsAssignmentUploadSuccesfull(true); // Trigger useEffect
+    setIsAssignmentUploadSuccesfull(true);
   };
-  // @ts-ignore
-  const renderOverlay = (type) => {
+
+  // Audio evaluation helper functions
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64Data = result.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const imageUrlToBase64 = async (imageUrl: string): Promise<string> => {
+    try {
+      // Add cache busting to avoid CORS issues
+      const urlWithCacheBust = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      
+      const response = await fetch(urlWithCacheBust, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'image/*',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      return blobToBase64(blob);
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      throw error;
+    }
+  };
+
+  const evaluateImageAudio = async (audioBlob: Blob, imageUrl: string, subconceptData: SubconceptData): Promise<AudioEvaluationResult> => {
+    try {
+      const audioBase64 = await blobToBase64(audioBlob);
+      
+      // FIX: Use the actual assessment image URL passed as parameter
+      const imageBase64 = await imageUrlToBase64(imageUrl);
+
+      // FIX: Use the same assessment image URL for OCR extraction
+      const instructions = await extractInstructionsFromImage(imageUrl);
+      const rubricWeights = getDynamicRubricWeights(instructions);
+
+      const prompt = `You are an English language teacher who wants to evaluate creativity, conciseness, completeness, correctness in the response. Analyze the student's audio response in relation to the provided image and its instructions.
+
+EVALUATION CONTEXT:
+- Student was given an image to observe
+- The image contains instructions: "${instructions.trim()}"
+- Student recorded an audio response describing or responding to this image
+- Evaluate how well the audio response relates to the image content and instructions
+- Evaluate how creative and interesting the user response was
+
+SCORING CRITERIA (1-10 each, weighted by importance):
+1. Completeness (${rubricWeights.completeness}x): Did the student fully follow ALL instructions? This is the most critical criterion.
+2. Image Relevance (${rubricWeights.image_relevance}x): How well does the response relate to what's shown in the image?
+3. Content Accuracy (${rubricWeights.content_accuracy}x): Are the details mentioned accurate and specific to the image?
+4. Grammar & Pronunciation (${rubricWeights.grammar_pronunciation}x): Quality of English grammar and pronunciation
+5. Vocabulary (${rubricWeights.vocabulary}x): Appropriate and varied use of vocabulary
+6. Communication Clarity (${rubricWeights.communication_clarity}x): Overall clarity and fluency of communication
+7. Creativity (${rubricWeights.creativity}x, out of 15): How original and engaging was the response?
+
+Important Note: Prioritize checking if ALL instructions were followed before evaluating other aspects.
+
+Return in valid JSON format:
+{
+  "scores": {
+    "image_relevance": [1-10],
+    "content_accuracy": [1-10],
+    "grammar_pronunciation": [1-10],
+    "vocabulary": [1-10],
+    "communication_clarity": [1-10],
+    "creativity": [1-15],
+    "completeness": [1-10],
+    "total": [weighted sum calculated as: (completeness_score * completeness_weight + image_relevance_score * image_relevance_weight + content_accuracy_score * content_accuracy_weight + grammar_pronunciation_score * grammar_pronunciation_weight + vocabulary_score * vocabulary_weight + communication_clarity_score * communication_clarity_weight + creativity_score * creativity_weight) / sum of all weights],
+    "max_possible_score": [maximum possible weighted score],
+    "weight_distribution": {
+      "completeness_weight": ${rubricWeights.completeness},
+      "image_relevance_weight": ${rubricWeights.image_relevance},
+      "content_accuracy_weight": ${rubricWeights.content_accuracy},
+      "grammar_pronunciation_weight": ${rubricWeights.grammar_pronunciation},
+      "vocabulary_weight": ${rubricWeights.vocabulary},
+      "communication_clarity_weight": ${rubricWeights.communication_clarity},
+      "creativity_weight": ${rubricWeights.creativity}
+    }
+  },
+  "feedback": {
+    "image_relevance": "feedback on image relevance",
+    "content_accuracy": "feedback on content accuracy",
+    "grammar_pronunciation": "feedback on grammar and pronunciation",
+    "vocabulary": "feedback on vocabulary",
+    "communication_clarity": "feedback on clarity",
+    "completeness": "feedback on completeness",
+    "creativity": "feedback on creativity"
+  },
+  "suggestions": [
+    "improvement tip 1",
+    "improvement tip 2",
+    "improvement tip 3"
+  ],
+  "transcription": "transcribed audio content if possible",
+  "image_description": "brief description of what you see in the image",
+  "instructions": "the instructions extracted from the image"
+}`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: "image/jpeg",
+                    data: imageBase64
+                  }
+                },
+                {
+                  inline_data: {
+                    mime_type: "audio/ogg",
+                    data: audioBase64
+                  }
+                }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 4096,
+              responseMimeType: "application/json"
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return JSON.parse(data.candidates[0].content.parts[0].text);
+    } catch (error) {
+      console.error('Image-Audio evaluation failed:', error);
+      throw error;
+    }
+  };
+
+  const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => {
+    // Only trigger for assignment_image type
+    if (subconceptData?.subconceptType !== "assignment_image") {
+      return true;
+    }
+
+    setIsEvaluatingAudio(true);
+    setShowAudioEvaluationModal(true);
+    setAudioEvaluationError(null);
+    
+    // FIX: Use the actual current assessment image URL from subconceptData
+    const currentAssessmentImageUrl = subconceptData?.subconceptLink;
+    setCurrentImageUrl(currentAssessmentImageUrl);
+    
+    try {
+      // FIX: Pass the actual current assessment image URL to the evaluation function
+      const evaluation = await evaluateImageAudio(audioBlob, currentAssessmentImageUrl, subconceptData);
+      setIsEvaluatingAudio(false);
+      setAudioEvaluationResult(evaluation);
+      
+      const audioFile = new File([audioBlob], `audio-response-${Date.now()}.ogg`, {
+        type: audioBlob.type
+      });
+      setCurrentAudioFile(audioFile);
+      
+      return true;
+      
+    } catch (error: any) {
+      setIsEvaluatingAudio(false);
+      setAudioEvaluationError(error.message || "Evaluation failed");
+      return false;
+    }
+  };
+
+  const handleCloseAudioEvaluation = () => {
+    setShowAudioEvaluationModal(false);
+    setAudioEvaluationResult(null);
+    setAudioEvaluationError(null);
+    setCurrentAudioFile(null);
+  };
+
+  const handleRetryAudioEvaluation = () => {
+    setShowAudioEvaluationModal(false);
+    setAudioEvaluationResult(null);
+    setAudioEvaluationError(null);
+  };
+
+  const handleSubmitAudioEvaluation = (): boolean => {
+    try {
+      if (!audioEvaluationResult) {
+        return false;
+      }
+
+      const evaluationPercentage = ((audioEvaluationResult.scores.total / audioEvaluationResult.scores.max_possible_score) * 100);
+      const actualScore = (evaluationPercentage * Number(subconceptData?.subconceptMaxscore)) / 100;
+      const roundedScore = Math.round(actualScore);
+      
+      localStorage.setItem('audioEvaluationScore', roundedScore.toString());
+      
+      setShowAudioEvaluationModal(false);
+      return true;
+    } catch (error) {
+      console.error('Error in handleSubmitAudioEvaluation:', error);
+      return false;
+    }
+  };
+
+  const renderOverlay = (type: "success" | "error") => {
     const countdown = type === "success" ? successCountdown : errorCountdown;
     const title =
       type === "success"
@@ -929,12 +1105,11 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       case "assignment_audio":
         return (
           <audio
-            // onLoadedData={handleContentLoaded}
             ref={contentRef}
             controls
-            controlsList="nodownload" // Restrict download
-            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            className="border-2 border-black rounded-md shadow-md w-full h-[300px] "
+            controlsList="nodownload"
+            onContextMenu={(e) => e.preventDefault()}
+            className="border-2 border-black rounded-md shadow-md w-full h-[300px]"
           >
             <source src={subconceptLink} type="audio/mp3" />
             Your browser does not support the audio element.
@@ -944,60 +1119,55 @@ const MediaContent = ({ subconceptData, currentUnitId }) => {
       case "assignment_video":
         return (
           <video
-            // onLoadedData={handleContentLoaded} // Called when video is loaded
             ref={contentRef}
             controls
-            controlsList="nodownload" // Restrict download
-            onContextMenu={(e) => e.preventDefault()} // Block right-click menu
+            controlsList="nodownload"
+            onContextMenu={(e) => e.preventDefault()}
             className="border-2 border-black rounded-md shadow-md max-h-[60vh]"
           >
             <source src={subconceptLink} type="video/mp4" />
             Your browser does not support the video element.
           </video>
         );
-      // In the renderContent function, modify the image case:
-case "image":
-case "assignment_image":
-  return (
-    <div className="flex flex-col items-center">
-      <img
-        // onLoad={handleContentLoaded}
-        src={subconceptLink}
-        alt="Image content"
-        style={{
-          maxWidth: "100%",
-          borderRadius: "10px",
-          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-        }}
-        onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-      />
-      {subconceptData?.subconceptType === "assignment_image" && (
-        <Button
-          onClick={() => {
-            const link = document.createElement('a');
-            link.href = subconceptLink;
-            link.download = `assignment_${subconceptData?.subconceptId || 'image'}`;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }}
-          className="mt-4 bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm transition-all"
-        >
-          Download Assignment
-        </Button>
-      )}
-    </div>
-  );
+      case "image":
+      case "assignment_image":
+        return (
+          <div className="flex flex-col items-center">
+            <img
+              src={subconceptLink}
+              alt="Image content"
+              style={{
+                maxWidth: "100%",
+                borderRadius: "10px",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+            {subconceptData?.subconceptType === "assignment_image" && (
+              <Button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = subconceptLink;
+                  link.download = `assignment_${subconceptData?.subconceptId || 'image'}`;
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="mt-4 bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm transition-all"
+              >
+                Download Assignment
+              </Button>
+            )}
+          </div>
+        );
       case "pdf":
       case "assignment_pdf":
         return (
           <div className="w-full">
             <PDFBrowserViewer
               pdfUrl={subconceptLink}
-              onContentLoaded={() => {
-                // Handle content loaded if needed
-              }}
+              onContentLoaded={() => {}}
             />
           </div>
         );
@@ -1006,34 +1176,26 @@ case "assignment_image":
           <div className="w-full">
             <PDFSlideViewer
               pdfUrl={subconceptLink}
-              onContentLoaded={() => {
-                // Handle content loaded if needed
-              }}
+              onContentLoaded={() => {}}
             />
           </div>
         );
       case "youtube":
         return (
           <div
-            onContextMenu={(e) => e.preventDefault()} // Disable right-click
+            onContextMenu={(e) => e.preventDefault()}
             className="w-11/12 iframe-wrapper"
             style={{ position: "relative" }}
           >
             <iframe
-              // onLoad={handleContentLoaded}
               className="h-[calc(100vh-300px)]"
-              src={`${subconceptLink}#toolbar=0`} // Disable PDF toolbar
+              src={`${subconceptLink}#toolbar=0`}
               width="100%"
-              // height=""
               title="YouTube Video"
               style={{
                 borderRadius: "10px",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-                // pointerEvents: "none",
               }}
-              // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-              // @ts-ignore
-              // controlsList="nodownload" // Restrict download
             />
           </div>
         );
@@ -1045,18 +1207,14 @@ case "assignment_image":
         );
         return (
           <iframe
-            src={updatedUrl} // Disable PDF toolbar
+            src={updatedUrl}
             width="100%"
             height="600px"
             title="PDF Document"
             style={{
               borderRadius: "10px",
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-              // pointerEvents: "none",
             }}
-            // onContextMenu={(e) => e.preventDefault()} // Block right-click menu
-            // @ts-ignore
-            // controlsList="nodownload" // Restrict download
           />
         );
       default:
@@ -1079,20 +1237,7 @@ case "assignment_image":
         subconceptMaxscore={subconceptData?.subconceptMaxscore}
       />
 
-      {/* {showSuccessPopup ? (
-        !["assessment", "assignment"].some((type) =>
-          subconceptData?.subconceptType?.startsWith(type)
-        ) ? (
-          <ActivityCompletionModal
-            countdownDuration={3}
-            onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
-            scorePercentage={scorePercentage}
-          />
-        ) : (
-          renderOverlay("success")
-        )
-      ) : null} */}
-      {showSuccessPopup ? (
+      {showSuccessPopup && (
         <ActivityCompletionModal
           countdownDuration={3}
           onClose={() => navigate(`/subconcepts/${currentUnitId}`)}
@@ -1101,14 +1246,14 @@ case "assignment_image":
               subconceptData?.subconceptType?.toLowerCase().startsWith(type)
             )
               ? 100
-              : scorePercentage
+              : scorePercentage || 0
           }
           subconceptType={subconceptData?.subconceptType}
         />
-      ) : null}
+      )}
+      
       {showErrorPopup && renderOverlay("error")}
-      {/* Rest of the component */}
-      {/* @ts-ignore */}
+
       <div
         className="bg-gradient-to-b from-[#CAF3BC] to-white text-center font-sans text-gray-800 w-full fixed"
         style={{
@@ -1138,11 +1283,6 @@ case "assignment_image":
               }`}
         </h1>
 
-        {/* <UploadModal
-          isOpen={isUploadModalOpen}
-          onClose={() => setIsUploadModalOpen(false)}
-          onUploadSuccess={handleUploadSuccess} // Pass callback
-        /> */}
         <div
           id="contentArea"
           className={`mb-6 mt-4 mx-auto p-4 sm:p-6 md:pb-24 flex justify-center items-center ${
@@ -1157,6 +1297,7 @@ case "assignment_image":
         >
           {renderContent()}
         </div>
+        
         <div
           className={` bg-white ${
             subconceptData?.subconceptType === "pdf" ||
@@ -1185,7 +1326,11 @@ case "assignment_image":
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
               subconceptData?.completionStatus === "ignored" ? (
-                <FileUploaderRecorder onUploadSuccess={handleUploadSuccess} />
+                <FileUploaderRecorder 
+                  onUploadSuccess={handleUploadSuccess}
+                  onImageAudioEvaluation={handleImageAudioEvaluation}
+                  subconceptType={subconceptData?.subconceptType}
+                />
               ) : (
                 <Button
                   onClick={() => setIsAssignmentStatusModalOpen(true)}
@@ -1223,12 +1368,6 @@ case "assignment_image":
               </Button>
             )}
 
-            {/* <button
-              onClick={handleGoBack}
-              className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-1 sm:px-4 sm:py-3 m-1 sm:m-2 rounded-[2px] text-sm sm:text-base md:text-lg transition-all max-w-[150px] sm:max-w-[200px]"
-            >
-              Go Back
-            </button> */}
             <Button
               onClick={handleGoBack}
               className="bg-[#00A66B] hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base md:text-lg max-w-[150px] sm:max-w-[200px] rounded-[5px]"
@@ -1238,6 +1377,169 @@ case "assignment_image":
           </div>
         </div>
       </div>
+
+      {/* Audio Evaluation Loading Modal */}
+      {showAudioEvaluationModal && isEvaluatingAudio && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 relative">
+                <div className="w-full h-full border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Evaluating Your Response</h3>
+              <p className="text-gray-600">Analyzing your audio response with the image context...</p>
+            </div>
+            <button
+              onClick={handleCloseAudioEvaluation}
+              className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Evaluation Result Modal */}
+      {showAudioEvaluationModal && !isEvaluatingAudio && audioEvaluationResult && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="bg-gray-50 rounded-t-2xl p-6 border-b border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Audio Response Evaluation</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2">Assignment Image</h4>
+                  <img src={currentImageUrl || ''} alt="Assignment" className="w-full h-48 object-cover rounded-lg" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2">Your Audio Response</h4>
+                  {currentAudioFile && (
+                    <audio controls className="w-full">
+                      <source src={URL.createObjectURL(currentAudioFile)} type="audio/ogg" />
+                    </audio>
+                  )}
+                  {audioEvaluationResult.transcription && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Transcription:</strong> {audioEvaluationResult.transcription}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {((audioEvaluationResult.scores.total / audioEvaluationResult.scores.max_possible_score) * 100).toFixed(1)}%
+                </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Overall Score</p>
+                  <p className="text-sm text-gray-500">
+                    Based on weighted criteria with emphasis on completion and relevance
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="mb-8">
+                <h4 className="text-xl font-semibold text-gray-800 mb-4">Detailed Analysis</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'completeness', label: 'Completeness (Primary)' },
+                    { key: 'image_relevance', label: 'Image Relevance (Secondary)' },
+                    { key: 'content_accuracy', label: 'Content Accuracy' },
+                    { key: 'grammar_pronunciation', label: 'Grammar & Pronunciation' },
+                    { key: 'vocabulary', label: 'Vocabulary' },
+                    { key: 'communication_clarity', label: 'Communication Clarity' },
+                    { key: 'creativity', label: 'Creativity' }
+                  ].map(({ key, label }) => (
+                    <div key={key} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">{label}</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          {audioEvaluationResult.scores[key]}/10
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {audioEvaluationResult.feedback[key]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {audioEvaluationResult.suggestions && audioEvaluationResult.suggestions.length > 0 && (
+                <div className="mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">Suggestions for Improvement</h4>
+                  <div className="space-y-3">
+                    {audioEvaluationResult.suggestions.map((suggestion: string, index: number) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+                        <div className="bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                          {index + 1}
+                        </div>
+                        <span className="text-gray-700 leading-relaxed">{suggestion}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {audioEvaluationResult.image_description && (
+                <div className="mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">What AI Sees in the Image</h4>
+                  <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-400">
+                    <p className="text-green-800 leading-relaxed">{audioEvaluationResult.image_description}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-50 rounded-b-2xl p-6 border-t border-gray-200">
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSubmitAudioEvaluation}
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Submit Assignment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Evaluation Error Modal */}
+      {showAudioEvaluationModal && !isEvaluatingAudio && audioEvaluationError && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Evaluation Failed</h3>
+              <p className="text-gray-600 mb-4">We couldn't evaluate your audio response. Please try again.</p>
+              <p className="text-sm text-red-600">{audioEvaluationError}</p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={handleRetryAudioEvaluation}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={handleCloseAudioEvaluation}
+                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
