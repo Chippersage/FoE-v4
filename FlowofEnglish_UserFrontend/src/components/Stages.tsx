@@ -122,15 +122,15 @@ export default function Stages({
                   ref={cardRef}
                   key={index}
                   className={`rounded-[2px] bg-gradient-to-b from-[#CAF2BC] to-white relative ${
-                    isStageLocked ? "opacity-60" : ""
+                    isStageLocked ? "opacity-80" : ""
                   }`}
                 >
                   {/* Lock overlay for locked stages */}
                   {isStageLocked && (
-                    <div className="absolute inset-0 bg-gray-100 bg-opacity-70 rounded-[2px] flex items-center justify-center z-10">
+                    <div className="absolute inset-0 bg-gray-100 bg-opacity-50 rounded-[2px] flex items-center justify-center z-10">
                       <div className="text-center">
-                        <Lock className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-gray-600 font-medium text-sm">
+                        <Lock className="w-8 h-8 text-black mx-auto mb-2" />
+                        <p className="text-black font-medium text-sm">
                           Available from {stage.stageAvailableDate}
                         </p>
                       </div>
@@ -147,7 +147,7 @@ export default function Stages({
                         {/* @ts-ignore */}
                         {stage.stageName}
                         {isStageLocked && (
-                          <Lock className="w-4 h-4 inline-block ml-2 text-gray-500" />
+                          <Lock className="w-4 h-4 inline-block ml-2 text-black" />
                         )}
                       </CardTitle>
                       <div className="flex items-center gap-2">
@@ -209,16 +209,6 @@ export default function Stages({
                     >
                       {/* @ts-ignore */}
                       {stage.stageDesc}
-                      {isStageLocked && (
-                        <span className="block text-xs text-gray-500 mt-1">
-                          🔒 Unlocks on {stage.stageAvailableDate}
-                          {daysUntilAvailable > 0 && (
-                            <span className="block text-blue-600 font-medium">
-                              Available in {daysUntilAvailable} day{daysUntilAvailable !== 1 ? 's' : ''}
-                            </span>
-                          )}
-                        </span>
-                      )}
                     </p>
                     {expandedModule !== index && (
                       <div className="absolute bottom-4 right-4 w-1/2">
@@ -405,7 +395,7 @@ export default function Stages({
                               {/* @ts-ignore */}
                               {unit.unitName}
                               {isStageLocked && !isMentor && (
-                                <Lock className="w-3 h-3 inline-block ml-1" />
+                                <Lock className="w-3 h-3 inline-block ml-1 text-black" />
                               )}
                             </span>
                           </Link>
