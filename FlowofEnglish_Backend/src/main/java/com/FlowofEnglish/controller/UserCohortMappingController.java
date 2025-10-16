@@ -1,9 +1,8 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.dto.UserCohortMappingDTO;
-import com.FlowofEnglish.model.UserCohortMapping;
-import com.FlowofEnglish.service.UserCohortMappingService;
-
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.service.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,14 +29,16 @@ public class UserCohortMappingController {
     
  // GET user cohort mappings by cohortId
     @GetMapping("/cohort/{cohortId}")
-    public ResponseEntity<Map<String, Object>> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
+    public ResponseEntity<LeaderboardResponseDTO> getUserCohortMappingsByCohortId(@PathVariable String cohortId) {
         try {
-            Map<String, Object> response = userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
+            LeaderboardResponseDTO response = userCohortMappingService.getUserCohortMappingsByCohortId(cohortId);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+            return ResponseEntity.badRequest()
+                .body(LeaderboardResponseDTO.error(ex.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred."));
+            return ResponseEntity.internalServerError()
+                .body(LeaderboardResponseDTO.error("An unexpected error occurred."));
         }
     }
 
@@ -47,15 +48,16 @@ public class UserCohortMappingController {
     }
     
     @GetMapping("/cohort/{cohortId}/leaderboard")
-    public ResponseEntity<Map<String, Object>> getCohortLeaderboard(@PathVariable String cohortId) {
+    public ResponseEntity<LeaderboardResponseDTO> getCohortLeaderboard(@PathVariable String cohortId) {
         try {
-            Map<String, Object> leaderboardData = userCohortMappingService.getUserCohortMappingsWithLeaderboard(cohortId);
+            LeaderboardResponseDTO leaderboardData = 
+                userCohortMappingService.getUserCohortMappingsWithLeaderboard(cohortId);
             return ResponseEntity.ok(leaderboardData);
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+            return ResponseEntity.badRequest()
+                .body(LeaderboardResponseDTO.error(ex.getMessage()));
         }
     }
-
     // GET user cohort mappings by userId
     @GetMapping("/user/{userId}")
     public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(@PathVariable String userId) {

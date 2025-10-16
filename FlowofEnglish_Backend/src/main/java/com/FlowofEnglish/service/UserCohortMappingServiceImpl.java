@@ -383,54 +383,63 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
     }
 
     @Override
+    @Cacheable(value = "cohortLeaderboards", key = "#cohortId")
+    public LeaderboardResponseDTO getUserCohortMappingsByCohortId(String cohortId) {
+        Cohort cohort = getCachedCohort(cohortId);
+        if (cohort == null) {
+            throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
+        }
+
+        if (!cohort.isShowLeaderboard()) {
+            return LeaderboardResponseDTO.notAvailable("Leaderboard is disabled for this cohort.");
+        }
+
+        List<UserCohortMappingDTO> mappingDTOs = getUserCohortMappingsCohortId(cohortId);
+        return LeaderboardResponseDTO.available(mappingDTOs);
+    }
+    @Override
     @Cacheable(value = "cohortMappings", key = "#cohortId")
     public List<UserCohortMappingDTO> getUserCohortMappingsCohortId(String cohortId) {
-        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
-        return mappings.stream().map(this::convertToDTO).collect(Collectors.toList());
-    }
+        logger.info("Fetching user cohort mappings for cohortId: {}", cohortId);
+        
+        if (cohortId == null || cohortId.isEmpty()) {
+            logger.error("Cohort ID is empty");
+            throw new IllegalArgumentException("Cohort ID cannot be empty");
+        }
 
-    @Override
-    @Cacheable(value = "cohortLeaderboards", key = "#cohortId")
-    public Map<String, Object> getUserCohortMappingsByCohortId(String cohortId) {
+        // Verify cohort exists (this will use cached lookup)
         Cohort cohort = getCachedCohort(cohortId);
         if (cohort == null) {
+            logger.error("Cohort not found with ID: {}", cohortId);
             throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
         }
 
-        // Check the Show_leaderboard flag
-        if (!cohort.isShowLeaderboard()) {
-            // If the leaderboard is disabled, return the information with a "not available"
-            // status
-            return Map.of("leaderboardStatus", "not available", "message", "Leaderboard is disabled for this cohort.");
-        }
-
-        // If the leaderboard is enabled, fetch and return the data
-        List<UserCohortMappingDTO> mappingDTOs = getUserCohortMappingsCohortId(cohortId);
-
-        return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
+        // Get all mappings for the cohort
+        List<UserCohortMapping> mappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+        
+        logger.info("Found {} user cohort mappings for cohortId: {}", mappings.size(), cohortId);
+        
+        // Convert to DTO and return
+        return mappings.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-
     @Override
     @Cacheable(value = "cohortLeaderboards", key = "#cohortId + ':withLeaderboard'")
-    public Map<String, Object> getUserCohortMappingsWithLeaderboard(String cohortId) {
+    public LeaderboardResponseDTO getUserCohortMappingsWithLeaderboard(String cohortId) {
         Cohort cohort = getCachedCohort(cohortId);
         if (cohort == null) {
             throw new IllegalArgumentException("Cohort not found with ID: " + cohortId);
         }
 
-        // Check the Show_leaderboard flag
         if (!cohort.isShowLeaderboard()) {
-            // If the leaderboard is disabled, return the information with a "not available"
-            // flag
-            return Map.of("leaderboardStatus", "not available");
+            return LeaderboardResponseDTO.notAvailable("Leaderboard is disabled for this cohort.");
         }
 
-        // Otherwise, return the leaderboard data
         List<UserCohortMappingDTO> mappingDTOs = getUserCohortMappingsCohortId(cohortId);
-
-        return Map.of("leaderboardStatus", "available", "leaderboardData", mappingDTOs);
+        return LeaderboardResponseDTO.available(mappingDTOs);
     }
-
+    
     @Override
     @Cacheable(value = "userMappings", key = "#userId + ':single'")
     public UserCohortMapping findByUserUserId(String userId) {
