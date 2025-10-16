@@ -40,7 +40,7 @@ export default function Stages({
   
   // MENTOR ACCESS: Get user context and check if user is Mentor
   const { user } = useUserContext();
-  const isMentor = user?.userType === "Mentor";
+  const isMentor = user?.userType?.toLowerCase() === "mentor";
 
   useEffect(() => {
     // Check if user has seen the tour before or if cohort tour was skipped
