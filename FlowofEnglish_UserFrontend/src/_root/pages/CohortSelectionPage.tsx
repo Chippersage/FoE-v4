@@ -478,75 +478,92 @@ const Dashboard: React.FC = () => {
   //   </Card>
   // );
 
-  const handleResume = async (cohortWithProgram) => {
-    const daysRemaining = calculateDaysRemaining(
-      cohortWithProgram.cohortEndDate
+const handleResume = async (cohortWithProgram) => {
+  const daysRemaining = calculateDaysRemaining(
+    cohortWithProgram.cohortEndDate
+  );
+  const status = getCohortStatus(daysRemaining).status;
+
+  if (status === "ended" || daysRemaining < 0) {
+    toast.error("This cohort has ended and is no longer accessible");
+    return;
+  }
+
+  setIsResuming(true);
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
+      userId: user?.userId,
+      cohortId: cohortWithProgram?.cohortId,
+    });
+
+    // ✅ ADD DEBUG LOGGING HERE
+    console.log("🎯 Cohort Selection API Response:", response.data);
+    console.log("🎯 enableAiEvaluation value from API:", response.data.enableAiEvaluation);
+
+    // ✅ ADD THIS: Store enableAiEvaluation in localStorage
+    const existingUserData = JSON.parse(localStorage.getItem("userData") || "{}");
+    const updatedUserData = {
+      ...existingUserData,
+      enableAiEvaluation: response.data.enableAiEvaluation // Store the AI evaluation flag
+    };
+    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+    
+    // ✅ ADD DEBUG LOGGING AFTER STORAGE
+    console.log("🎯 Updated userData in localStorage:", updatedUserData);
+    console.log("🎯 enableAiEvaluation stored:", updatedUserData.enableAiEvaluation);
+    // ✅ END OF ADDED CODE
+
+    setSelectedCohortWithProgram(cohortWithProgram);
+    localStorage.setItem(
+      "selectedCohortWithProgram",
+      JSON.stringify(cohortWithProgram)
     );
-    const status = getCohortStatus(daysRemaining).status;
+    localStorage.setItem("sessionId", response.data.sessionId);
 
-    if (status === "ended" || daysRemaining < 0) {
-      toast.error("This cohort has ended and is no longer accessible");
-      return;
-    }
-
-    setIsResuming(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
-        userId: user?.userId,
-        cohortId: cohortWithProgram?.cohortId,
-      });
-
-      setSelectedCohortWithProgram(cohortWithProgram);
-      localStorage.setItem(
-        "selectedCohortWithProgram",
-        JSON.stringify(cohortWithProgram)
-      );
-      localStorage.setItem("sessionId", response.data.sessionId);
-
-      navigate("/dashboard");
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // Server is down or not responding (network error)
-        if (!error.response) {
-          toast.error(
-            "Unable to connect to server. Please check your internet connection and try again."
-          );
-          return;
-        }
-
-        // Server errors (500+ range)
-        if (error.response.status >= 500) {
-          let errorMessage =
-            "An internal server error occurred. Please try again later.";
-          if (error.response.status === 503) {
-            errorMessage =
-              "Service is temporarily unavailable. Please try again later.";
-          }
-          toast.error(errorMessage);
-          return;
-        }
-
-        // Business logic errors (400 range) - show in modal
-        if (error.response.status >= 400 && error.response.status < 500) {
-          const data = error.response.data;
-          setErrorModalData({
-            error: data?.error || "An unexpected error occurred.",
-            deactivationDetails:
-              data?.deactivationDetails ||
-              "Please contact support for assistance.",
-            contactInfo: data?.contactInfo,
-          });
-          setShowErrorModalOpen(true);
-          return;
-        }
+    navigate("/dashboard");
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Server is down or not responding (network error)
+      if (!error.response) {
+        toast.error(
+          "Unable to connect to server. Please check your internet connection and try again."
+        );
+        return;
       }
 
-      // Fallback for any other unexpected errors
-      toast.error("An unexpected error occurred. Please try again later.");
-    } finally {
-      setIsResuming(false);
+      // Server errors (500+ range)
+      if (error.response.status >= 500) {
+        let errorMessage =
+          "An internal server error occurred. Please try again later.";
+        if (error.response.status === 503) {
+          errorMessage =
+            "Service is temporarily unavailable. Please try again later.";
+        }
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Business logic errors (400 range) - show in modal
+      if (error.response.status >= 400 && error.response.status < 500) {
+        const data = error.response.data;
+        setErrorModalData({
+          error: data?.error || "An unexpected error occurred.",
+          deactivationDetails:
+            data?.deactivationDetails ||
+            "Please contact support for assistance.",
+          contactInfo: data?.contactInfo,
+        });
+        setShowErrorModalOpen(true);
+        return;
+      }
     }
-  };
+
+    // Fallback for any other unexpected errors
+    toast.error("An unexpected error occurred. Please try again later.");
+  } finally {
+    setIsResuming(false);
+  }
+};
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;

@@ -16,6 +16,19 @@ interface FileUploaderRecorderProps {
   subconceptType?: string;
 }
 
+// Add SelectedCohortWithProgram interface
+interface SelectedCohortWithProgram {
+  cohortId: string;
+  cohortName: string;
+  cohortEndDate: string;
+  enableAiEvaluation?: boolean;
+  program: {
+    programId: string;
+    programName: string;
+  };
+  // Add other fields as needed
+}
+
 export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({ 
   onUploadSuccess, 
   onImageAudioEvaluation,
@@ -39,6 +52,20 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     type: "audio" | "video" | "photo";
     blob: Blob;
   } | null>(null);
+
+  // ✅ FIX: Get selectedCohortWithProgram from localStorage instead of userData
+  const selectedCohortWithProgram: SelectedCohortWithProgram = JSON.parse(
+    localStorage.getItem("selectedCohortWithProgram") || "{}"
+  );
+
+  // DEBUG: Log the AI evaluation status
+  useEffect(() => {
+    console.log("🔍 FileUploaderRecorder - AI Evaluation Status:", {
+      enableAiEvaluation: selectedCohortWithProgram?.enableAiEvaluation,
+      subconceptType: subconceptType,
+      selectedCohortWithProgram: selectedCohortWithProgram
+    });
+  }, [selectedCohortWithProgram, subconceptType]);
 
   const startRecordingTimer = () => {
     if (recordingInterval.current) clearInterval(recordingInterval.current);
@@ -96,23 +123,39 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
       return;
     }
 
-    // Handle audio evaluation for assignment_image type
+    // Handle audio evaluation for assignment_image type - WITH AI EVALUATION CHECK
     if (type === "audio" && onImageAudioEvaluation && subconceptType === "assignment_image") {
       setRecordedMedia({ type, blob });
       
-      try {
-        const evaluationComplete = await onImageAudioEvaluation(blob);
-        if (evaluationComplete) {
-          setIsUploadModalOpen(true);
+      // ✅ FIX: Check selectedCohortWithProgram.enableAiEvaluation instead of userData
+      // DEBUG: Log the decision process
+      console.log("🎯 AI Evaluation Decision:", {
+        enableAiEvaluation: selectedCohortWithProgram?.enableAiEvaluation,
+        shouldEvaluate: selectedCohortWithProgram?.enableAiEvaluation,
+        subconceptType: subconceptType
+      });
+
+      // Check if AI evaluation is enabled for this cohort
+      if (selectedCohortWithProgram?.enableAiEvaluation) {
+        try {
+          console.log('✅ AI evaluation enabled - proceeding with evaluation');
+          const evaluationComplete = await onImageAudioEvaluation(blob);
+          if (evaluationComplete) {
+            setIsUploadModalOpen(true);
+          }
+        } catch (error) {
+          console.error('❌ Audio evaluation failed:', error);
+          setIsUploadModalOpen(true); // Fallback to normal upload
         }
-      } catch (error) {
-        console.error('Audio evaluation failed:', error);
-        setIsUploadModalOpen(true); // Fallback to normal upload
+      } else {
+        console.log('⏭️ AI evaluation disabled - proceeding with normal upload');
+        setIsUploadModalOpen(true); // Skip AI evaluation and go directly to upload
       }
       return;
     }
     
     // Normal flow for other types
+    console.log('📁 Normal upload flow for non-audio or non-assignment_image type');
     setRecordedMedia({ type, blob });
     setIsUploadModalOpen(true);
   };

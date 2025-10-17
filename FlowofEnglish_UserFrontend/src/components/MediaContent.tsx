@@ -30,6 +30,7 @@ interface UserData {
   subconceptId: string;
   userAttemptStartTimestamp: string;
   API_BASE_URL: string;
+  enableAiEvaluation?: boolean; // ADD THIS LINE
 }
 
 interface SubconceptData {
@@ -950,40 +951,50 @@ Return in valid JSON format:
     }
   };
 
-  const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => {
-    // Only trigger for assignment_image type
-    if (subconceptData?.subconceptType !== "assignment_image") {
-      return true;
-    }
+const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => {
+  // ✅ FIX: Get selectedCohortWithProgram from localStorage
+  const selectedCohortWithProgram = JSON.parse(
+    localStorage.getItem("selectedCohortWithProgram") || "{}"
+  );
 
-    setIsEvaluatingAudio(true);
-    setShowAudioEvaluationModal(true);
-    setAudioEvaluationError(null);
-    
-    // FIX: Use the actual current assessment image URL from subconceptData
-    const currentAssessmentImageUrl = subconceptData?.subconceptLink;
-    setCurrentImageUrl(currentAssessmentImageUrl);
-    
-    try {
-      // FIX: Pass the actual current assessment image URL to the evaluation function
-      const evaluation = await evaluateImageAudio(audioBlob, currentAssessmentImageUrl, subconceptData);
-      setIsEvaluatingAudio(false);
-      setAudioEvaluationResult(evaluation);
-      
-      const audioFile = new File([audioBlob], `audio-response-${Date.now()}.ogg`, {
-        type: audioBlob.type
-      });
-      setCurrentAudioFile(audioFile);
-      
-      return true;
-      
-    } catch (error: any) {
-      setIsEvaluatingAudio(false);
-      setAudioEvaluationError(error.message || "Evaluation failed");
-      return false;
-    }
-  };
+  // ✅ FIX: Check selectedCohortWithProgram.enableAiEvaluation instead of userData
+  if (!selectedCohortWithProgram?.enableAiEvaluation) {
+    console.log('AI evaluation disabled for this cohort - skipping evaluation');
+    return true; // Skip AI evaluation and proceed with normal upload
+  }
 
+  // Only trigger for assignment_image type
+  if (subconceptData?.subconceptType !== "assignment_image") {
+    return true;
+  }
+
+  setIsEvaluatingAudio(true);
+  setShowAudioEvaluationModal(true);
+  setAudioEvaluationError(null);
+  
+  // FIX: Use the actual current assessment image URL from subconceptData
+  const currentAssessmentImageUrl = subconceptData?.subconceptLink;
+  setCurrentImageUrl(currentAssessmentImageUrl);
+  
+  try {
+    // FIX: Pass the actual current assessment image URL to the evaluation function
+    const evaluation = await evaluateImageAudio(audioBlob, currentAssessmentImageUrl, subconceptData);
+    setIsEvaluatingAudio(false);
+    setAudioEvaluationResult(evaluation);
+    
+    const audioFile = new File([audioBlob], `audio-response-${Date.now()}.ogg`, {
+      type: audioBlob.type
+    });
+    setCurrentAudioFile(audioFile);
+    
+    return true;
+    
+  } catch (error: any) {
+    setIsEvaluatingAudio(false);
+    setAudioEvaluationError(error.message || "Evaluation failed");
+    return false;
+  }
+};
   const handleCloseAudioEvaluation = () => {
     setShowAudioEvaluationModal(false);
     setAudioEvaluationResult(null);
