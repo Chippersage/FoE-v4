@@ -844,7 +844,8 @@ const fetchAssignment = async () => {
       const instructions = await extractInstructionsFromImage(imageUrl);
       const rubricWeights = getDynamicRubricWeights(instructions);
 
-      const prompt = `You are an English language teacher who wants to evaluate creativity, conciseness, completeness, correctness in the response. Analyze the student's audio response in relation to the provided image and its instructions.
+      const prompt = `You are an English language teacher who wants to evaluate creativity, conciseness, completeness, 
+      correctness in the response. Analyze the student's audio response in relation to the provided image and its instructions.
 
 EVALUATION CONTEXT:
 - Student was given an image to observe
@@ -1165,12 +1166,12 @@ Return in valid JSON format:
       case "assignment_pdf":
         return (
           <div className="w-full">
-            <PDFBrowserViewer
-              pdfUrl={subconceptLink}
-              onContentLoaded={() => {}}
-            />
-          </div>
-        );
+              <PDFBrowserViewer
+                pdfUrl={subconceptLink}
+                onContentLoaded={() => {}}
+              />
+            </div>
+          );
       case "pdfAsPpt":
         return (
           <div className="w-full">

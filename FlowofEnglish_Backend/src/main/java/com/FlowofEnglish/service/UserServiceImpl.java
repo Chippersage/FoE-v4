@@ -950,6 +950,11 @@ public class UserServiceImpl implements UserService {
                 cohortProgramDTO.setCohortName(cohort.getCohortName());
                 cohortProgramDTO.setCohortStartDate(cohort.getCohortStartDate());
                 cohortProgramDTO.setCohortEndDate(cohort.getCohortEndDate());
+                cohortProgramDTO.setEnableAiEvaluation(cohort.isEnableAiEvaluation());
+                cohortProgramDTO.setShowLeaderboard(cohort.isShowLeaderboard());
+                cohortProgramDTO.setDelayedStageUnlock(cohort.isDelayedStageUnlock());
+                cohortProgramDTO.setDelayInDays(cohort.getDelayInDays());
+                 // Set program details
 
                 ProgramDTO programDTO = new ProgramDTO();
                 programDTO.setProgramId(cohortProgram.getProgram().getProgramId());

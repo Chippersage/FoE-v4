@@ -7,6 +7,10 @@ import java.time.OffsetDateTime;
 	    private String cohortName;
 	    private OffsetDateTime cohortStartDate;
 	    private OffsetDateTime cohortEndDate;
+	    private boolean showLeaderboard;
+	    private boolean delayedStageUnlock;
+	    private Integer delayInDays;
+	    private boolean enableAiEvaluation;
 	    private ProgramDTO program;
 	    
 	 // Getters and Setters
@@ -39,6 +43,30 @@ import java.time.OffsetDateTime;
 		}
 		public void setProgram(ProgramDTO program) {
 			this.program = program;
+		}
+		public boolean isShowLeaderboard() {
+			return showLeaderboard;
+		}
+		public void setShowLeaderboard(boolean showLeaderboard) {
+			this.showLeaderboard = showLeaderboard;
+		}
+		public boolean isDelayedStageUnlock() {
+			return delayedStageUnlock;
+		}
+		public void setDelayedStageUnlock(boolean delayedStageUnlock) {
+			this.delayedStageUnlock = delayedStageUnlock;
+		}
+		public Integer getDelayInDays() {
+			return delayInDays;
+		}
+		public void setDelayInDays(Integer delayInDays) {
+			this.delayInDays = delayInDays;
+		}
+		public boolean isEnableAiEvaluation() {
+			return enableAiEvaluation;
+		}
+		public void setEnableAiEvaluation(boolean enableAiEvaluation) {
+			this.enableAiEvaluation = enableAiEvaluation;
 		}
 
 	    

@@ -189,6 +189,7 @@ public class CohortServiceImpl implements CohortService {
                         cohort.setShowLeaderboard(updatedCohort.isShowLeaderboard());
                         cohort.setDelayedStageUnlock(updatedCohort.isDelayedStageUnlock());
                         cohort.setDelayInDays(updatedCohort.getDelayInDays());
+                        cohort.setEnableAiEvaluation(updatedCohort.isEnableAiEvaluation());
                         cohort.setOrganization(updatedCohort.getOrganization());
                         
                         Cohort savedCohort = cohortRepository.save(cohort);
