@@ -103,6 +103,7 @@ const INITIAL_FORM_STATE = {
   showLeaderboard: true, // Default true
   delayedStageUnlock: false, // Default is false
   delayInDays: 0, // Default is 0 (no delay)
+  enableAiEvaluation: false, // Default is false
   organization: { organizationId: '' },
 };
 
@@ -203,6 +204,7 @@ function OrgCohort() {
       showLeaderboard: true, // Default tue
       delayedStageUnlock: false, // Default is false
       delayInDays: 0, // Default is 0 (no delay)
+      enableAiEvaluation: false, // Default is false
       organization: { organizationId },
     });
     setFormErrors({});
@@ -219,6 +221,7 @@ function OrgCohort() {
       showLeaderboard: row.showLeaderboard,
       delayedStageUnlock: row.delayedStageUnlock,
       delayInDays: row.delayInDays,
+      enableAiEvaluation: row.enableAiEvaluation,
       organization: { organizationId },
     });
     setFormErrors({});
@@ -555,6 +558,28 @@ function OrgCohort() {
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+  <InputLabel id="enable-ai-evaluation-label">Enable AI Evaluation</InputLabel>
+  <Select
+    labelId="enable-ai-evaluation-label"
+    id="enable-ai-evaluation"
+    name="enableAiEvaluation"
+    value={formData.enableAiEvaluation ? 'true' : 'false'}
+    label="Enable AI Evaluation"
+    onChange={(e) =>
+      setFormData((prevData) => ({
+        ...prevData,
+        enableAiEvaluation: e.target.value === 'true',
+      }))
+    }
+    sx={{ minHeight: '45px' }}
+  >
+    <MenuItem value="true">True</MenuItem>
+    <MenuItem value="false">False</MenuItem>
+  </Select>
+  <FormHelperText>Allow AI-powered evaluation features for this cohort</FormHelperText>
+</FormControl>
+
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
             <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
             <Select
               labelId="DelayedStageUnlock-label"
@@ -739,6 +764,28 @@ function OrgCohort() {
               <MenuItem value="false">False</MenuItem>
             </Select>
           </FormControl>
+          <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
+  <InputLabel id="enable-ai-evaluation-label">Enable AI Evaluation</InputLabel>
+  <Select
+    labelId="enable-ai-evaluation-label"
+    id="enable-ai-evaluation"
+    name="enableAiEvaluation"
+    value={formData.enableAiEvaluation ? 'true' : 'false'}
+    label="Enable AI Evaluation"
+    onChange={(e) =>
+      setFormData((prevData) => ({
+        ...prevData,
+        enableAiEvaluation: e.target.value === 'true',
+      }))
+    }
+    sx={{ minHeight: '45px' }}
+  >
+    <MenuItem value="true">True</MenuItem>
+    <MenuItem value="false">False</MenuItem>
+  </Select>
+  <FormHelperText>Allow AI-powered evaluation features for this cohort</FormHelperText>
+</FormControl>
+
           <FormControl fullWidth margin="normal" size="small" sx={{ mb: 2 }}>
             <InputLabel id="DelayedStageUnlock-label">DelayedStageUnlock</InputLabel>
             <Select

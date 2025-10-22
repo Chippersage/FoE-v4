@@ -56,7 +56,9 @@ public class SecurityConfig {
                         "https://d1pb9z6a4vrmi3.cloudfront.net/", // CloudFront URL chippersageblr
                         "https://d1kq2q5oc3pn5i.cloudfront.net/", // CloudFront Signed-in URL
                         "https://d27ig5p8mdmxxx.cloudfront.net/", // CloudFront Mindful Frontend
-                        "https://paymentpage-nine.vercel.app/" // Razorpay payment page
+                        "https://paymentpage-nine.vercel.app/", // Razorpay payment page
+                        "http://10.12.48.108:5173/", //Shajad Ip config to test local 
+                        "http://10.12.48.109:5173/" // Abhishek Ip config to test local
                     ));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));

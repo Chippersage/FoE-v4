@@ -704,6 +704,7 @@ public class UserController {
             response.put("cohortId", selectedCohortId);
             response.put("userId", userId);
             response.put("cohortName", selectedCohort.getCohortName());
+            response.put("enableAiEvaluation", selectedCohort.isEnableAiEvaluation());
             
             if (isFinalDay) {
                 response.put("warning", "FINAL_DAY");

@@ -15,6 +15,20 @@ interface UploadModalProps {
   onUploadSuccess: () => void;
 }
 
+// Add UserData interface for consistency
+interface UserData {
+  userId: string;
+  unitId: string;
+  programId: string;
+  stageId: string;
+  sessionId: string;
+  cohortId: string;
+  subconceptId: string;
+  userAttemptStartTimestamp: string;
+  API_BASE_URL: string;
+  enableAiEvaluation?: boolean;
+}
+
 export function UploadModal({
   isOpen,
   onClose,
@@ -32,11 +46,10 @@ export function UploadModal({
   const currentUnitId = location.state?.currentUnitId;
   const stageId = location.state?.stageId;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); // URL for preview
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const userData: UserData = JSON.parse(localStorage.getItem("userData") || "{}");
 
   // console.log("recordedMedia", recordedMedia);
   // console.log("file", file);
-
 
   useEffect(() => {
     if (recordedMedia) {
@@ -122,9 +135,21 @@ export function UploadModal({
       formData.append("sessionId", userData.sessionId);
       formData.append("userAttemptStartTimestamp", userData.userAttemptStartTimestamp);
       formData.append("userAttemptEndTimestamp", formattedISTTimestamp);
-      formData.append("userAttemptScore", "0");
+      
+      // Get the evaluation score if it exists (for speech activities)
+      // This will only exist if AI evaluation was enabled and completed
+      const evaluationScore = localStorage.getItem('audioEvaluationScore');
+      console.log("evaluationScore", evaluationScore);
+      
+      // Use evaluation score if available, otherwise use 0
+      // When AI evaluation is disabled, this will be null/undefined and default to 0
+      formData.append("userAttemptScore", evaluationScore || "0");
+      
+      // Clean up the stored score
+      if (evaluationScore) {
+        localStorage.removeItem('audioEvaluationScore');
+      }
       formData.append("userAttemptFlag", "true");
-
 
       const response = await axios.post(
         ` ${API_BASE_URL}/assignment-with-attempt/submit`,
@@ -261,4 +286,4 @@ export function UploadModal({
   );
 }
 
-export default UploadModal
+export default UploadModal;

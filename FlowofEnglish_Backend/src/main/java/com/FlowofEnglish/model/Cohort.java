@@ -3,7 +3,6 @@ package com.FlowofEnglish.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
 import org.hibernate.annotations.CreationTimestamp;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -37,6 +36,9 @@ public class Cohort {
     @Column(name = "delay_in_days", nullable = false)
     private Integer delayInDays = 0; // Default is 0 (no delay)
     
+    @Column(name = "enable_ai_evaluation", nullable = false)
+    private boolean enableAiEvaluation = false; // Default = false
+    
     @Column(name = "uuid", length = 255, nullable = false, unique = true, updatable = false)
     private String uuid;
 
@@ -50,9 +52,9 @@ public class Cohort {
     }
 
     // Parameterized constructor
-	public Cohort(String cohortId, String cohortName, OffsetDateTime cohortEndDate, OffsetDateTime cohortStartDate,
-			boolean showLeaderboard, boolean delayedStageUnlock, Integer delayInDays, String uuid,
-			Organization organization) {
+    public Cohort(String cohortId, String cohortName, OffsetDateTime cohortEndDate, OffsetDateTime cohortStartDate,
+			boolean showLeaderboard, boolean delayedStageUnlock, Integer delayInDays, boolean enableAiEvaluation,
+			String uuid, Organization organization) {
 		super();
 		this.cohortId = cohortId;
 		this.cohortName = cohortName;
@@ -61,9 +63,11 @@ public class Cohort {
 		this.showLeaderboard = showLeaderboard;
 		this.delayedStageUnlock = delayedStageUnlock;
 		this.delayInDays = delayInDays;
+		this.enableAiEvaluation = enableAiEvaluation;
 		this.uuid = uuid;
 		this.organization = organization;
 	}
+    
 // Getters and Setters 
 	public String getCohortId() {
 		return cohortId;
@@ -120,6 +124,14 @@ public class Cohort {
 	public void setDelayInDays(Integer delayInDays) {
 		this.delayInDays = delayInDays;
 	}
+	
+	public boolean isEnableAiEvaluation() {
+	    return enableAiEvaluation;
+	}
+
+	public void setEnableAiEvaluation(boolean enableAiEvaluation) {
+	    this.enableAiEvaluation = enableAiEvaluation;
+	}
 
 	public String getUuid() {
 		return uuid;
@@ -141,8 +153,9 @@ public class Cohort {
 	public String toString() {
 		return "Cohort [cohortId=" + cohortId + ", cohortName=" + cohortName + ", cohortEndDate=" + cohortEndDate
 				+ ", cohortStartDate=" + cohortStartDate + ", showLeaderboard=" + showLeaderboard
-				+ ", delayedStageUnlock=" + delayedStageUnlock + ", delayInDays=" + delayInDays + ", uuid=" + uuid
-				+ ", organization=" + organization + "]";
+				+ ", delayedStageUnlock=" + delayedStageUnlock + ", delayInDays=" + delayInDays
+				+ ", enableAiEvaluation=" + enableAiEvaluation + ", uuid=" + uuid + ", organization=" + organization
+				+ "]";
 	}
 
 	// Method to ensure UUID generate before persisting
