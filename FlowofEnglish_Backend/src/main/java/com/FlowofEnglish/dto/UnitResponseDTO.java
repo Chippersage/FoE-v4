@@ -1,12 +1,16 @@
 package com.FlowofEnglish.dto;
 
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UnitResponseDTO {
-	 private String unitId;
+	    private String unitId;
 	    private String unitName;
 	    private String unitDesc;
 	    private String completionStatus;
+	    private Map<String, SubconceptResponseDTO> subconcepts;
+	    
 		public String getUnitId() {
 			return unitId;
 		}
@@ -33,4 +37,11 @@ public class UnitResponseDTO {
 		}
 		public void setSub_concepts(Map<String, SubconceptResponseDTO> subconcepts) {
 		}
+		public Map<String, SubconceptResponseDTO> getSubconcepts() {
+			return subconcepts;
+		}
+		public void setSubconcepts(Map<String, SubconceptResponseDTO> subconcepts) {
+			this.subconcepts = subconcepts;
+		}
+		
 }
