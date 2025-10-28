@@ -2,8 +2,7 @@ package com.FlowofEnglish.controller;
 
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.FlowofEnglish.dto.*;
@@ -44,6 +43,19 @@ public class ProgramConceptsMappingController {
             @PathVariable String programId) {
 
         ProgramDTO response = programConceptsMappingService.getCompleteProgramStructure(userId, programId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    /**
+     * NEW API endpoint - returns complete program structure with array-based JSON
+     * Does NOT affect existing APIs
+     */
+    @GetMapping("{userId}/program/{programId}/complete")
+    public ResponseEntity<CompleteProgramDTO> getCompleteArrayProgramStructure(
+            @PathVariable String userId,
+            @PathVariable String programId) {
+        
+        CompleteProgramDTO response = programConceptsMappingService.getCompleteArrayProgramStructure(userId, programId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

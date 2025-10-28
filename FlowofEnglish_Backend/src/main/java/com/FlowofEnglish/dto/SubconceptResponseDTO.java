@@ -13,6 +13,7 @@ public class SubconceptResponseDTO {
 	 private String subconceptDesc2;
 	 private String subconceptType;
      private String subconceptLink;
+     private Integer subconceptDuration;
      private String completionStatus;
      
   // Getters and Setters
@@ -75,6 +76,12 @@ public class SubconceptResponseDTO {
 	}
 	public void setSubconceptLink(String subconceptLink) {
 		this.subconceptLink = subconceptLink;
+	}
+	public Integer getSubconceptDuration() {
+		return subconceptDuration;
+	}
+	public void setSubconceptDuration(Integer subconceptDuration) {
+		this.subconceptDuration = subconceptDuration;
 	}
 	public String getCompletionStatus() {
 		return completionStatus;

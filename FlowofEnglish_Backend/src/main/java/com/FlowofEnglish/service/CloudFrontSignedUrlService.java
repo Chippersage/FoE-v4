@@ -2,7 +2,6 @@ package com.FlowofEnglish.service;
 
 import com.FlowofEnglish.config.CloudFrontConfig;
 import com.amazonaws.services.cloudfront.CloudFrontUrlSigner;
-import com.amazonaws.services.cloudfront.util.SignerUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -28,9 +28,7 @@ public class CacheManagementService {
     @Autowired
     private StageRepository stageRepository;
     
-    @Autowired
-    private UnitRepository unitRepository;
-    
+ 
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
     

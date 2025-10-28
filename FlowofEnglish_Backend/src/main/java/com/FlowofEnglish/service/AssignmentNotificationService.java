@@ -23,7 +23,7 @@ public class AssignmentNotificationService {
     
     private static final Logger logger = LoggerFactory.getLogger(AssignmentNotificationService.class);
     private static final String PLATFORM_URL = "https://flowofenglish.thechippersage.com";
-    private static final String PLATFORM_URL_ADMIN = "https://flowofenglish.thechippersage.com/admin";
+    private static final String PLATFORM_URL_ADMIN = "https://flowofenglish-admin.thechippersage.com";
     
     @Scheduled(cron = "0 0 21 * * ?", zone = "Asia/Kolkata") // Every day at 9:00 PM IST
     public void notifyMentorsAndAdmins() {

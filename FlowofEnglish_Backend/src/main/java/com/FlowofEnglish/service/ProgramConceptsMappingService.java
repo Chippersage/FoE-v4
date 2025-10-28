@@ -19,5 +19,5 @@ public interface ProgramConceptsMappingService {
 	Map<String, Object> getConceptsAndUserProgress(String programId, String userId);
 	ResponseEntity<Map<String, Object>> bulkUpdate(MultipartFile file);
     ProgramDTO getCompleteProgramStructure(String userId, String programId);
-
+    CompleteProgramDTO getCompleteArrayProgramStructure(String userId, String programId);
 }

@@ -43,9 +43,9 @@ public class Subconcept {
     @Column(name = "uuid", length = 255, nullable = false, unique = true)
     private String uuid;
     
-//    @Column(name = "duration", nullable = true)
-//    private Integer duration; // duration in seconds (or minutes if you prefer)
-
+    @Column(name = "subconcept_duration", nullable = true)
+    private Integer subconceptDuration;
+    
     @ManyToOne
     @JoinColumn(name = "concept_id")
     private Concept concept;
@@ -61,7 +61,7 @@ public class Subconcept {
 
 	public Subconcept(String subconceptId, String dependency, String showTo, String subconceptDesc,
 			String subconceptDesc2, String subconceptGroup, String subconceptLink, String subconceptType,
-			Integer numQuestions, Integer subconceptMaxscore, String uuid, Concept concept,
+			Integer numQuestions, Integer subconceptMaxscore, String uuid, Integer subconceptDuration, Concept concept,
 			ContentMaster content) {
 		super();
 		this.subconceptId = subconceptId;
@@ -75,7 +75,7 @@ public class Subconcept {
 		this.numQuestions = numQuestions;
 		this.subconceptMaxscore = subconceptMaxscore;
 		this.uuid = uuid;
-		//this.duration = duration;
+		this.subconceptDuration = subconceptDuration;
 		this.concept = concept;
 		this.content = content;
 	}
@@ -169,15 +169,13 @@ public class Subconcept {
 		this.uuid = uuid;
 	}
 
-//	public Integer getDuration() {
-//		return duration;
-//	}
-//
-//
-//	public void setDuration(Integer duration) {
-//		this.duration = duration;
-//	}
+	public Integer getSubconceptDuration() {
+		return subconceptDuration;
+	}
 
+	public void setSubconceptDuration(Integer subconceptDuration) {
+		this.subconceptDuration = subconceptDuration;
+	}
 
 	public Concept getConcept() {
 		return concept;
@@ -203,8 +201,9 @@ public class Subconcept {
 		return "Subconcept [subconceptId=" + subconceptId + ", dependency=" + dependency + ", showTo=" + showTo
 				+ ", subconceptDesc=" + subconceptDesc + ", subconceptDesc2=" + subconceptDesc2 + ", subconceptGroup="
 				+ subconceptGroup + ", subconceptLink=" + subconceptLink + ", subconceptType=" + subconceptType
-				+ ", numQuestions=" + numQuestions + ", subconceptMaxscore=" + subconceptMaxscore + ", uuid=" + uuid
-				+ ", concept=" + concept + ", content=" + content + "]";
+				+ ", numQuestions=" + numQuestions + ", subconceptMaxscore=" + subconceptMaxscore
+				+ ", subconceptDuration=" + subconceptDuration + ", uuid=" + uuid + ", concept=" + concept
+				+ ", content=" + content + "]";
 	}
 
 

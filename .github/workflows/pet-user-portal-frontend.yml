@@ -1,0 +1,42 @@
+name: CI/CD - Deploy - PET User Portal Frontend (FoE)
+
+# on:
+#   push:
+#     branches:
+#       - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::325599888975:role/OIDCRole
+          aws-region: ap-south-1
+
+      - name: Install Dependencies (npm)
+        working-directory: FlowofEnglish-PET_UserFrontend
+        run: npm ci
+
+      - name: Download env file
+        working-directory: FlowofEnglish-PET_UserFrontend
+        run: aws s3 cp s3://chippersage-env-prod/pet-user/.env .
+
+      - name: Build React App
+        working-directory: FlowofEnglish-PET_UserFrontend
+        run: CI='' npm run build
+
+      - name: Sync to S3
+        run: aws s3 sync FlowofEnglish-PET_UserFrontend/dist/ s3://chippersage-flowofenglish-pet-userportal-prod --delete
+
+      - name: Invalidate CloudFront Cache
+        run: aws cloudfront create-invalidation --distribution-id E2S5PUVVHYXJIQ --paths "/*"

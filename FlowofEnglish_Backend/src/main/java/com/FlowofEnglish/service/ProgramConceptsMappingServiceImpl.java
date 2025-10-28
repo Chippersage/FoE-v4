@@ -6,9 +6,8 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import org.springframework.cache.annotation.*;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.*;
 import org.apache.commons.csv.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -831,34 +830,40 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             logger.info("Retrieving concepts and user progress for program ID: {} and user ID: {}", programId, userId);
 
             if (programId == null || programId.trim().isEmpty()) {
-                logger.error("Program ID is null or empty");
                 throw new IllegalArgumentException("Program ID cannot be null or empty");
             }
-
             if (userId == null || userId.trim().isEmpty()) {
-                logger.error("User ID is null or empty");
                 throw new IllegalArgumentException("User ID cannot be null or empty");
             }
 
-            // Step 1: Retrieve all ProgramConceptsMapping entries for the given programId
+            // ✅ Step 1: Get userType from DB
+            String userType = userRepository.findById(userId)
+                    .map(User::getUserType)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+            logger.debug("User ID {} has userType: {}", userId, userType);
+
+            // Step 2: Retrieve program mappings
             List<ProgramConceptsMapping> programMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
             logger.debug("Found {} program mappings for program ID: {}", programMappings.size(), programId);
 
-            // Step 2: Extract all unique subconcepts from the mappings
+            // Step 3: Extract all unique subconcepts
             Set<String> subconceptIds = programMappings.stream()
-                .map(mapping -> mapping.getSubconcept().getSubconceptId())
-                .collect(Collectors.toSet());
-            logger.debug("Extracted {} unique subconcept IDs", subconceptIds.size());
+                    .map(mapping -> mapping.getSubconcept().getSubconceptId())
+                    .collect(Collectors.toSet());
 
-            // Step 3: Retrieve all subconcepts by their IDs
             List<Subconcept> subconcepts = subconceptRepository.findAllById(subconceptIds);
-            logger.debug("Retrieved {} subconcepts from repository", subconcepts.size());
+            logger.debug("Retrieved {} subconcepts", subconcepts.size());
 
-            // Step 4: Retrieve user's completed subconcepts
+            // ✅ Step 4: Apply visibility filtering
+            List<Subconcept> visibleSubconcepts = subconcepts.stream()
+                    .filter(sub -> isSubconceptVisibleToUser(userType, sub))
+                    .collect(Collectors.toList());
+            logger.debug("After filtering, {} subconcepts are visible to userType {}", visibleSubconcepts.size(), userType);
+
+            // Step 5: User's completed subconcepts
             Set<String> completedSubconceptIds = userSubConceptRepository.findCompletedSubconceptIdsByUser_UserId(userId);
-            logger.debug("Found {} completed subconcepts for user ID: {}", completedSubconceptIds.size(), userId);
 
-            // Step 5: Retrieve user's best scores for each subconcept
+            // Step 6: User's best scores
             List<Object[]> userScoresList = userAttemptsRepository.findMaxScoresByUser(userId);
             Map<String, Integer> userMaxScoreMap = new HashMap<>();
             for (Object[] row : userScoresList) {
@@ -866,36 +871,31 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 Integer maxScore = ((Number) row[1]).intValue();
                 userMaxScoreMap.put(subId, maxScore);
             }
-            logger.debug("Retrieved max scores for {} subconcepts for user ID: {}", userMaxScoreMap.size(), userId);
-            
-            // Prepare response list
-            Map<String, Object> response = new HashMap<>();
-            List<Map<String, Object>> conceptList = new ArrayList<>();
-            
-            // Step 6: Group subconcepts by concept
+
+            // Step 7: Group subconcepts by concept
             Map<Concept, List<Subconcept>> conceptSubconceptMap = new HashMap<>();
-            for (Subconcept subconcept : subconcepts) {
+            for (Subconcept subconcept : visibleSubconcepts) {
                 Concept concept = subconcept.getConcept();
                 conceptSubconceptMap.computeIfAbsent(concept, k -> new ArrayList<>()).add(subconcept);
             }
-            logger.debug("Grouped subconcepts into {} concepts", conceptSubconceptMap.size());
-            
-            // Step 7: Build concept data with score aggregation
+
+            // Step 8: Build response
+            Map<String, Object> response = new HashMap<>();
+            List<Map<String, Object>> conceptList = new ArrayList<>();
+
             for (Map.Entry<Concept, List<Subconcept>> entry : conceptSubconceptMap.entrySet()) {
                 Concept concept = entry.getKey();
                 List<Subconcept> subconceptsInConcept = entry.getValue();
 
                 int totalSubconcepts = subconceptsInConcept.size();
                 int completedSubconcepts = (int) subconceptsInConcept.stream()
-                    .filter(sub -> completedSubconceptIds.contains(sub.getSubconceptId()))
-                    .count();
-                
-                // Sum the maximum possible score from each subconcept (if available)
+                        .filter(sub -> completedSubconceptIds.contains(sub.getSubconceptId()))
+                        .count();
+
                 int totalMaxScore = subconceptsInConcept.stream()
                         .map(sub -> sub.getSubconceptMaxscore() != null ? sub.getSubconceptMaxscore() : 0)
                         .reduce(0, Integer::sum);
 
-                // Sum the user's score across the subconcepts; if user didn't attempt, score is 0
                 int userTotalScore = subconceptsInConcept.stream()
                         .mapToInt(sub -> userMaxScoreMap.getOrDefault(sub.getSubconceptId(), 0))
                         .sum();
@@ -911,22 +911,13 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 conceptData.put("userTotalScore", userTotalScore);
 
                 conceptList.add(conceptData);
-                
-                logger.debug("Processed concept '{}' - Total: {}, Completed: {}, Max Score: {}, User Score: {}", 
-                            concept.getConceptName(), totalSubconcepts, completedSubconcepts, totalMaxScore, userTotalScore);
             }
 
             response.put("concepts", conceptList);
-            logger.info("Successfully retrieved concepts and progress data for program ID: {} and user ID: {} - {} concepts processed", 
-                    programId, userId, conceptList.size());
             return response;
 
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid argument for getConceptsAndUserProgress: {}", e.getMessage());
-            throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error occurred while retrieving concepts and user progress for program ID: {} and user ID: {}", 
-                        programId, userId, e);
+            logger.error("Failed to retrieve concepts and user progress", e);
             throw new RuntimeException("Failed to retrieve concepts and user progress", e);
         }
     }
@@ -1062,6 +1053,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 subconceptDTO.setNumQuestions(subconcept.getNumQuestions());
                 subconceptDTO.setShowTo(subconcept.getShowTo());
                 subconceptDTO.setSubconceptGroup(subconcept.getSubconceptGroup());
+                subconceptDTO.setSubconceptDuration(subconcept.getSubconceptDuration());
                 
                 // Determine completion status (reusing existing logic)
                 boolean isCompleted = completedSubconceptIds.contains(subconcept.getSubconceptId());
@@ -1116,6 +1108,280 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         } catch (Exception e) {
             logger.error("Error enriching unit {} with subconcepts: {}", unitDTO.getUnitId(), e.getMessage(), e);
             unitDTO.setSubconcepts(Collections.emptyMap());
+        }
+    }
+    
+    
+    @Override
+    @Cacheable(value = "completeArrayProgramStructure", key = "#userId + '_' + #programId")
+    public CompleteProgramDTO getCompleteArrayProgramStructure(String userId, String programId) {
+        try {
+            logger.info("Fetching complete program structure with array-based JSON for userId: {} and programId: {}", 
+                        userId, programId);
+            
+            // STEP 1: Get base program structure (Map-based from existing API)
+            ProgramDTO programDTO = unitService.getProgramWithStagesAndUnits(userId, programId);
+            
+            // STEP 2: Get user details for visibility filtering
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            String userType = user.getUserType();
+            
+            // STEP 3: Fetch ALL program mappings in ONE query
+            List<ProgramConceptsMapping> allMappings = programConceptsMappingRepository
+                .findByProgram_ProgramId(programId);
+            
+            // STEP 4: Group mappings by unitId for O(1) lookup
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allMappings.stream()
+                .collect(Collectors.groupingBy(
+                    mapping -> mapping.getUnit().getUnitId(),
+                    LinkedHashMap::new,
+                    Collectors.toList()
+                ));
+            
+            // STEP 5: Get ALL user completions in ONE query
+            List<UserSubConcept> userSubConcepts = userSubConceptRepository
+                .findByUser_UserIdAndProgram_ProgramId(userId, programId);
+            
+            // STEP 6: Create completion lookup set for O(1) checks
+            Set<String> completedSubconceptIds = userSubConcepts.stream()
+                .map(us -> us.getSubconcept().getSubconceptId())
+                .collect(Collectors.toSet());
+            
+            // STEP 7: Convert Map-based DTO to Array-based DTO
+            CompleteProgramDTO completeProgramDTO = convertToArrayBasedDTO(
+                programDTO, 
+                mappingsByUnit, 
+                userType, 
+                completedSubconceptIds
+            );
+            
+            logger.info("Successfully built complete program structure for userId: {} and programId: {}", 
+                        userId, programId);
+            return completeProgramDTO;
+            
+        } catch (ResourceNotFoundException e) {
+            logger.error("Resource not found: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unexpected error fetching complete program structure: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch complete program structure", e);
+        }
+    }
+
+    /**
+     * Converts Map-based ProgramDTO to Array-based CompleteProgramDTO
+     */
+    private CompleteProgramDTO convertToArrayBasedDTO(
+            ProgramDTO programDTO,
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
+            String userType,
+            Set<String> completedSubconceptIds) {
+        
+        CompleteProgramDTO completeDTO = new CompleteProgramDTO();
+        completeDTO.setProgramId(programDTO.getProgramId());
+        completeDTO.setProgramName(programDTO.getProgramName());
+        completeDTO.setProgramDesc(programDTO.getProgramDesc());
+        completeDTO.setStagesCount(programDTO.getStagesCount());
+        completeDTO.setUnitCount(programDTO.getUnitCount());
+        completeDTO.setProgramCompletionStatus(programDTO.getProgramCompletionStatus());
+        
+        // Convert Map<String, StageDTO> to List<CompleteStageDTO>
+        List<CompleteStageDTO> stages = programDTO.getStages().entrySet().stream()
+            .sorted(Map.Entry.comparingByKey()) // Sort by numeric key
+            .map(entry -> convertToCompleteStageDTO(
+                entry.getValue(), 
+                mappingsByUnit, 
+                userType, 
+                completedSubconceptIds
+            ))
+            .collect(Collectors.toList());
+        
+        completeDTO.setStages(stages);
+        return completeDTO;
+    }
+
+    /**
+     * Converts StageDTO to CompleteStageDTO with array-based units
+     */
+    private CompleteStageDTO convertToCompleteStageDTO(
+            StageDTO stageDTO,
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
+            String userType,
+            Set<String> completedSubconceptIds) {
+        
+        CompleteStageDTO completeStageDTO = new CompleteStageDTO();
+        completeStageDTO.setStageId(stageDTO.getStageId());
+        completeStageDTO.setStageName(stageDTO.getStageName());
+        completeStageDTO.setStageDesc(stageDTO.getStageDesc());
+        completeStageDTO.setStageCompletionStatus(stageDTO.getStageCompletionStatus());
+        completeStageDTO.setStageEnabled(stageDTO.isStageEnabled());
+        completeStageDTO.setDaysUntilNextStageEnabled(stageDTO.getDaysUntilNextStageEnabled());
+        completeStageDTO.setStageAvailableDate(stageDTO.getStageAvailableDate());
+        
+        // Convert Map<String, UnitResponseDTO> to List<CompleteUnitDTO>
+        List<CompleteUnitDTO> units = stageDTO.getUnits().entrySet().stream()
+            .sorted(Map.Entry.comparingByKey()) // Sort by numeric key
+            .map(entry -> convertToCompleteUnitDTO(
+                entry.getValue(), 
+                mappingsByUnit, 
+                userType, 
+                completedSubconceptIds
+            ))
+            .collect(Collectors.toList());
+        
+        completeStageDTO.setUnits(units);
+        return completeStageDTO;
+    }
+
+    /**
+     * Converts UnitResponseDTO to CompleteUnitDTO with subconcepts
+     */
+    private CompleteUnitDTO convertToCompleteUnitDTO(
+            UnitResponseDTO unitDTO,
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
+            String userType,
+            Set<String> completedSubconceptIds) {
+        
+        CompleteUnitDTO completeUnitDTO = new CompleteUnitDTO();
+        completeUnitDTO.setUnitId(unitDTO.getUnitId());
+        completeUnitDTO.setUnitName(unitDTO.getUnitName());
+        completeUnitDTO.setUnitDesc(unitDTO.getUnitDesc());
+        completeUnitDTO.setCompletionStatus(unitDTO.getCompletionStatus());
+        
+        // Enrich with subconcepts
+        List<SubconceptResponseDTO> subconcepts = buildSubconceptsList(
+            unitDTO.getUnitId(),
+            mappingsByUnit,
+            userType,
+            completedSubconceptIds
+        );
+        
+        completeUnitDTO.setSubconcepts(subconcepts);
+        return completeUnitDTO;
+    }
+
+    /**
+     * Builds subconcepts list with proper completion logic
+     */
+    private List<SubconceptResponseDTO> buildSubconceptsList(
+            String unitId,
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
+            String userType,
+            Set<String> completedSubconceptIds) {
+        
+        try {
+            List<ProgramConceptsMapping> unitMappings = mappingsByUnit.get(unitId);
+            
+            if (unitMappings == null || unitMappings.isEmpty()) {
+                return Collections.emptyList();
+            }
+            
+            // Filter by visibility and sort by position
+            List<ProgramConceptsMapping> accessibleMappings = unitMappings.stream()
+                .filter(mapping -> isSubconceptVisibleToUser(userType, mapping.getSubconcept()))
+                .sorted(Comparator.comparing(ProgramConceptsMapping::getPosition))
+                .collect(Collectors.toList());
+            
+            if (accessibleMappings.isEmpty()) {
+                return Collections.emptyList();
+            }
+            
+            // Build subconcepts list with completion logic
+            List<SubconceptResponseDTO> subconceptsList = new ArrayList<>();
+            boolean enableNextSubconcept = true;
+            int lastCompletedNormalIndex = -1;
+            
+            // First pass: find last completed normal concept
+            for (int i = 0; i < accessibleMappings.size(); i++) {
+                ProgramConceptsMapping mapping = accessibleMappings.get(i);
+                Subconcept subconcept = mapping.getSubconcept();
+                boolean isCompleted = completedSubconceptIds.contains(subconcept.getSubconceptId());
+                boolean isAssignment = subconcept.getSubconceptType().toLowerCase().startsWith("assignment");
+                
+                if (isCompleted && !isAssignment) {
+                    lastCompletedNormalIndex = i;
+                }
+            }
+            
+            logger.debug("Unit {} - Last completed normal concept index: {}", unitId, lastCompletedNormalIndex);
+            
+            // Second pass: build subconcepts with proper status
+            for (int i = 0; i < accessibleMappings.size(); i++) {
+                ProgramConceptsMapping mapping = accessibleMappings.get(i);
+                Subconcept subconcept = mapping.getSubconcept();
+                
+                SubconceptResponseDTO subconceptDTO = new SubconceptResponseDTO();
+                subconceptDTO.setSubconceptId(subconcept.getSubconceptId());
+                subconceptDTO.setSubconceptDesc(subconcept.getSubconceptDesc());
+                subconceptDTO.setSubconceptDesc2(subconcept.getSubconceptDesc2());
+                subconceptDTO.setSubconceptType(subconcept.getSubconceptType());
+                
+                // Process link for signed URLs
+                String originalLink = subconcept.getSubconceptLink();
+                String processedLink = processSubconceptLink(originalLink);
+                subconceptDTO.setSubconceptLink(processedLink);
+                
+                subconceptDTO.setDependency(subconcept.getDependency());
+                subconceptDTO.setSubconceptMaxscore(subconcept.getSubconceptMaxscore());
+                subconceptDTO.setNumQuestions(subconcept.getNumQuestions());
+                subconceptDTO.setShowTo(subconcept.getShowTo());
+                subconceptDTO.setSubconceptGroup(subconcept.getSubconceptGroup());
+                subconceptDTO.setSubconceptDuration(subconcept.getSubconceptDuration());
+                
+                // Determine completion status (reusing existing logic)
+                boolean isCompleted = completedSubconceptIds.contains(subconcept.getSubconceptId());
+                boolean isAssignment = subconcept.getSubconceptType().toLowerCase().startsWith("assignment");
+                
+                if (isCompleted) {
+                    subconceptDTO.setCompletionStatus("yes");
+                    if (!isAssignment) {
+                        enableNextSubconcept = true;
+                    }
+                } else {
+                    if (isAssignment) {
+                        // Assignment logic
+                        boolean prevConceptsCompleted = true;
+                        int prevAssignmentIndex = -1;
+                        
+                        // Find previous assignment
+                        for (int j = i - 1; j >= 0; j--) {
+                            if (accessibleMappings.get(j).getSubconcept().getSubconceptType()
+                                    .toLowerCase().startsWith("assignment")) {
+                                prevAssignmentIndex = j;
+                                break;
+                            }
+                        }
+                        
+                        // Check completion between assignments
+                        for (int j = prevAssignmentIndex + 1; j < i; j++) {
+                            Subconcept prev = accessibleMappings.get(j).getSubconcept();
+                            if (!prev.getSubconceptType().toLowerCase().startsWith("assignment") &&
+                                !completedSubconceptIds.contains(prev.getSubconceptId())) {
+                                prevConceptsCompleted = false;
+                                break;
+                            }
+                        }
+                        
+                        subconceptDTO.setCompletionStatus(prevConceptsCompleted ? "ignored" : "disabled");
+                        
+                    } else if (enableNextSubconcept) {
+                        subconceptDTO.setCompletionStatus("incomplete");
+                        enableNextSubconcept = false;
+                    } else {
+                        subconceptDTO.setCompletionStatus("disabled");
+                    }
+                }
+                
+                subconceptsList.add(subconceptDTO);
+            }
+            
+            logger.debug("Built {} subconcepts for unit {}", subconceptsList.size(), unitId);
+            return subconceptsList;
+            
+        } catch (Exception e) {
+            logger.error("Error building subconcepts list for unit {}: {}", unitId, e.getMessage(), e);
+            return Collections.emptyList();
         }
     }
 }

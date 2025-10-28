@@ -46,6 +46,7 @@ public class SecurityConfig {
                         "https://flowofenglish-admin.thechippersage.com",
                         "https://flowofenglish-old.thechippersage.com/",
                         "https://flowofenglish-backend.thechippersage.com",
+                        "http://localhost:5174",
                         "http://localhost:5173",
                         "http://10.12.131.110:5173/",
                         "http://10.12.116.213:5173/",
@@ -57,6 +58,9 @@ public class SecurityConfig {
                         "https://d1kq2q5oc3pn5i.cloudfront.net/", // CloudFront Signed-in URL
                         "https://d27ig5p8mdmxxx.cloudfront.net/", // CloudFront Mindful Frontend
                         "https://paymentpage-nine.vercel.app/", // Razorpay payment page
+                        "https://courses-api.mindfultalk.in",
+                        "https://courses-admin.mindfultalk.in",
+                        "https://courses.mindfultalk.in",
                         "http://10.12.48.108:5173/", //Shajad Ip config to test local 
                         "http://10.12.48.109:5173/" // Abhishek Ip config to test local
                     ));

@@ -9,7 +9,6 @@ public class OrganizationDTO {
     private String organizationAdminPhone;
 
     // Getters and Setters
-
     public String getOrganizationId() {
         return organizationId;
     }

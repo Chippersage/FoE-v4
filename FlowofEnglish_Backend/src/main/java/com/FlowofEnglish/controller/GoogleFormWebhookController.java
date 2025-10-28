@@ -3,14 +3,12 @@ package com.FlowofEnglish.controller;
 import com.FlowofEnglish.dto.UserCohortMappingDTO;
 import com.FlowofEnglish.service.UserCohortMappingService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/webhooks")

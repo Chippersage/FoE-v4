@@ -3,16 +3,13 @@ package com.FlowofEnglish.controller;
 import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.service.*;
-
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 
 @RestController
@@ -218,42 +215,3 @@ public class OrganizationController {
         }
     }
 }
-
- // Modified forgot password API
-//  @PostMapping("/forgot-password")
-//  public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
-//      String organizationName = request.get("organizationName");
-//      String email = request.get("email");
-//
-//      try {
-//          organizationService.sendForgotPasswordOTP(organizationName, email);
-//          Map<String, String> response = new HashMap<>();
-//          response.put("message", "An OTP has been sent to your email address.");
-//          System.out.println("POST request received: " + request);
-//          return ResponseEntity.ok(response);
-//      } catch (RuntimeException e) {
-//          Map<String, String> response = new HashMap<>();
-//          response.put("message", e.getMessage());
-//          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//      }
-//  }
- // Reset the password
-//    @PostMapping("/reset-password")
-//    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
-//        String organizationName = request.get("organizationName");
-//        String email = request.get("email");
-//        String otp = request.get("otp");
-//        String newPassword = request.get("newPassword");
-//
-//        try {
-//            organizationService.resetPassword(organizationName, email, otp, newPassword);
-//            Map<String, String> response = new HashMap<>();
-//            response.put("message", "Your password has been reset successfully. The new password has been sent to your email.");
-//            return ResponseEntity.ok(response);
-//        } catch (RuntimeException e) {
-//            Map<String, String> response = new HashMap<>();
-//            response.put("message", e.getMessage());
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//        }
-//    }
-

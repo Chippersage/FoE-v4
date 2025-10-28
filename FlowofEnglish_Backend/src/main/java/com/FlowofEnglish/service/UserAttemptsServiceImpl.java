@@ -48,7 +48,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
 
     @Autowired
     private SubconceptService subconceptService;
- 
+
     private static final Logger logger = LoggerFactory.getLogger(UserAttemptsServiceImpl.class);
 
 

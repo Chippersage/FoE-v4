@@ -10,9 +10,9 @@ public class StageDTO {
     private boolean stageEnabled;
     private Integer daysUntilNextStageEnabled;
     private String stageAvailableDate;
-    private Map<String, UnitResponseDTO> units; // Use a Map for dynamic keys
+    private Map<String, UnitResponseDTO> units;
     
-    // Getters and Setters  
+    // Getters and Setters
     public Map<String, UnitResponseDTO> getUnits() {
 		return units;
 	}
