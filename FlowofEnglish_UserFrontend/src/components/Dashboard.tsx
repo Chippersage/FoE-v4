@@ -27,7 +27,7 @@ function Dashboard() {
   const [error, setError] = useState(null);
 
   const [leaderBoardInfo, setLeaderBoardInfo] = useState(null);
-  const [userProgress, setUserProgress] = useState({});
+  const [userProgress, setUserProgress] = useState(null); // Changed to null instead of {}
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const [completedStagesCount, setCompletedStagesCount] = useState(null);
@@ -102,6 +102,8 @@ function Dashboard() {
         // console.log(res.data);
       } catch (error) {
         console.error("Error fetching user progress:", error);
+        // Set to empty object instead of null to trigger the component
+        setUserProgress({});
       }
     };
 
@@ -188,6 +190,43 @@ function Dashboard() {
     }
   }, [programInfo]);
 
+  // Function to check if stage is locked based on date
+  const isStageLocked = (stageAvailableDate) => {
+    if (!stageAvailableDate) return false;
+    
+    const availableDate = new Date(stageAvailableDate);
+    const currentDate = new Date(); // Use today's date
+    
+    return currentDate < availableDate;
+  };
+
+  // Function to calculate days until stage is available
+  const getDaysUntilAvailable = (stageAvailableDate) => {
+    if (!stageAvailableDate) return 0;
+    
+    const availableDate = new Date(stageAvailableDate);
+    const currentDate = new Date(); // Use today's date
+    const timeDiff = availableDate.getTime() - currentDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    return daysDiff > 0 ? daysDiff : 0;
+  };
+
+  // Process program info to add locked status to stages
+  const processedProgramInfo = programInfo ? {
+    ...programInfo,
+    stages: Object.fromEntries(
+      Object.entries(programInfo.stages || {}).map(([key, stage]) => [
+        key,
+        {
+          ...stage,
+          isLocked: isStageLocked(stage.stageAvailableDate),
+          daysUntilAvailable: getDaysUntilAvailable(stage.stageAvailableDate),
+        }
+      ])
+    )
+  } : null;
+
   return (
     <div className="w-full flex flex-col md:flex-row gap-2 px-2 pb-10 items-start">
       <KidFriendlyModal
@@ -200,11 +239,11 @@ function Dashboard() {
       {/* Audio Element */}
       {isModalOpen && <audio src="/youaresuperb.mp3" autoPlay />}
       {/* @ts-ignore */}
-      {programInfo && programInfo.stages ? (
+      {processedProgramInfo && processedProgramInfo.stages ? (
         <div className="md:w-[50%] w-full">
           <Stages
-            stages={programInfo?.stages}
-            programCompletionStatus={programInfo?.programCompletionStatus}
+            stages={processedProgramInfo?.stages}
+            programCompletionStatus={processedProgramInfo?.programCompletionStatus}
             isDataLoaded={isDataLoaded}
           />
         </div>
@@ -213,7 +252,8 @@ function Dashboard() {
       )}
 
       <div className="w-full md:w-[50%] flex flex-col">
-        {userProgress && currentUserLeaderBoardInfo ? (
+        {/* Simplified condition - show if we have userProgress data OR show skeleton */}
+        {userProgress ? (
           <div className="flex flex-col mb-6 mx-auto max-w-lg w-full px-6 py-2 bg-white gap-1 rounded-[3px] bg-opacity-50 m-3 progress-section">
             <div className="flex justify-between py-2">
               <h3 className="text-xl font-semibold font-openSans">
@@ -232,11 +272,11 @@ function Dashboard() {
             <div className="flex justify-between items-center mt-2">
               <p className="text-sm font-bold font-openSans">
                 {/* @ts-ignore */}
-                Total Points: {currentUserLeaderBoardInfo.leaderboardScore}{" "}
+                Total Points: {currentUserLeaderBoardInfo?.leaderboardScore || 0}{" "}
               </p>
               <div className="flex items-center space-x-2">
                 {/* @ts-ignore */}
-                {Array.from({ length: completedStagesCount }).map(
+                {Array.from({ length: completedStagesCount || 0 }).map(
                   (_, index) => (
                     <img
                       key={index}
