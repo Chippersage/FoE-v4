@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.*;
 import com.FlowofEnglish.repository.*;
 
-
 @Service
 @Component
 public class CacheManagementService {
@@ -28,7 +27,6 @@ public class CacheManagementService {
     @Autowired
     private StageRepository stageRepository;
     
- 
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
     
@@ -39,12 +37,15 @@ public class CacheManagementService {
         try {
             logger.info("Evicting completion caches for userId: {}, programId: {}", userId, programId);
             
-         // Get all units and stages for this program to evict specific caches
+            // Get all units and stages for this program to evict specific caches
             List<String> unitIds = getUnitIdsForProgram(programId);
             List<String> stageIds = getStageIdsForProgram(programId);
             
             // Evict program-level cache
             evictFromCache("programStagesUnits", userId + "_" + programId);
+            
+            // Evict complete array program structure cache
+            evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
             
             // Evict all unit-level caches for this user in this program
             for (String unitId : unitIds) {
@@ -162,6 +163,9 @@ public class CacheManagementService {
             // Evict the program report (since unit completion affects program stats)
             evictFromCache("programReports", userId + "_" + programId);
             
+            // NEW: Evict complete array program structure cache
+            evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
+            
             // Evict subconcept-specific attempts cache for this unit
             List<String> subconceptIds = getSubconceptIdsForUnit(unitId);
             for (String subconceptId : subconceptIds) {
@@ -194,6 +198,12 @@ public class CacheManagementService {
             evictFromCache("stageReports", userId + "_" + stageId);
             evictFromCache("programReports", userId + "_" + programId);
             
+            // Evict complete array program structure cache
+            evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
+            
+            // Evict unit-level concepts cache
+            evictFromCache("programConceptsByUnit", userId + "_" + unitId);
+            
             // IMPORTANT: Evict user progress caches since attempts affect progress calculations
             evictUserProgressCaches(userId, programId);
             
@@ -203,6 +213,27 @@ public class CacheManagementService {
         } catch (Exception e) {
             logger.error("Error evicting caches on user attempt for userId: {}, subconceptId: {}", 
                         userId, subconceptId, e);
+        }
+    }
+    
+    /**
+     *  Evict program structure cache for a specific program
+     * Useful when program structure itself changes (not just user progress)
+     */
+    public void evictProgramStructureCache(String userId, String programId) {
+        try {
+            logger.info("Evicting program structure cache for userId: {}, programId: {}", userId, programId);
+            
+            // Evict the complete array program structure cache
+            evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
+            
+            // Also evict the base program structure cache
+            evictFromCache("programStagesUnits", userId + "_" + programId);
+            
+            logger.info("Successfully evicted program structure cache for userId: {}, programId: {}", userId, programId);
+            
+        } catch (Exception e) {
+            logger.error("Error evicting program structure cache for userId: {}, programId: {}", userId, programId, e);
         }
     }
     
@@ -303,7 +334,7 @@ public class CacheManagementService {
                 if (cache != null) {
                     // This is Redis-specific - you might need to adapt based on your cache implementation
                     try {
-                        // Pattern-based deletion for Redis - fix the type declaration
+                        // Pattern-based deletion for Redis
                         Set<String> keys = redisTemplate.keys(cacheName + "::" + userId + "*");
                         if (keys != null && !keys.isEmpty()) {
                             redisTemplate.delete(keys);
@@ -320,19 +351,21 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Manually clear user progress cache for specific user and program
-     */
+     //   Manually clear user progress cache for specific user and program
     public void clearUserProgressCache(String programId, String userId) {
         logger.info("Manually clearing user progress cache for programId: {} and userId: {}", programId, userId);
         evictFromCache("userProgress", programId + "_" + userId);
     }
     
-    /**
-     * Manually clear cohort progress cache for specific program and cohort
-     */
+    //  Manually clear cohort progress cache for specific program and cohort
     public void clearCohortProgressCache(String programId, String cohortId) {
         logger.info("Manually clearing cohort progress cache for programId: {} and cohortId: {}", programId, cohortId);
         evictFromCache("cohortProgress", programId + "_" + cohortId);
+    }
+    
+    // Manually clear complete array program structure cache
+    public void clearCompleteProgramStructureCache(String userId, String programId) {
+        logger.info("Manually clearing complete program structure cache for userId: {} and programId: {}", userId, programId);
+        evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
     }
 }

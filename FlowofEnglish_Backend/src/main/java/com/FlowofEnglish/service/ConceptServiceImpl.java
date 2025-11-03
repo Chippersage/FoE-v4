@@ -256,17 +256,17 @@ public class ConceptServiceImpl implements ConceptService {
                     boolean hasUpdates = false;
                     
                     // Update fields dynamically based on header mapping
-                    hasUpdates |= updateField(headerMap, record, "conceptname", 
+                    hasUpdates |= updateField(headerMap, record, "conceptname",
                         existingConcept::setConceptName, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "conceptdesc", 
+                    hasUpdates |= updateField(headerMap, record, "conceptdesc",
                         existingConcept::setConceptDesc, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "conceptskill1", 
+                    hasUpdates |= updateField(headerMap, record, "conceptskill1",
                         existingConcept::setConceptSkill1, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "conceptskill2", 
+                    hasUpdates |= updateField(headerMap, record, "conceptskill2",
                         existingConcept::setConceptSkill2, updatedFields);
                     
                     // Update contentId field with validation
-                    if (updateContentField(headerMap, record, "contentid", existingConcept, 
+                    if (updateContentField(headerMap, record, "contentid", existingConcept,
                         updatedFields, conceptId, failedIds)) {
                         hasUpdates = true;
                     }
@@ -308,13 +308,13 @@ public class ConceptServiceImpl implements ConceptService {
         result.put("message", "Update completed. Only non-empty fields were updated, existing data preserved for empty fields.");
         
         logger.info("CSV update completed. Updated: {}, Failed: {}, Not Found: {}, Total processed: {}", 
-                   updatedCount, failedCount, notFoundCount, updatedCount + failedCount + notFoundCount);
+                    updatedCount, failedCount, notFoundCount, updatedCount + failedCount + notFoundCount);
         return result;
     }
 
     // Helper method to update string fields (same as subconcepts)
     private boolean updateField(Map<String, Integer> headerMap, String[] record, String fieldName, 
-                               java.util.function.Consumer<String> setter, List<String> updatedFields) {
+                            java.util.function.Consumer<String> setter, List<String> updatedFields) {
         if (headerMap.containsKey(fieldName) && 
             record.length > headerMap.get(fieldName) && 
             !record[headerMap.get(fieldName)].trim().isEmpty()) {
@@ -327,10 +327,10 @@ public class ConceptServiceImpl implements ConceptService {
 
     // Helper method to update ContentMaster field
     private boolean updateContentField(Map<String, Integer> headerMap, String[] record, String fieldName,
-                                     Concept concept, List<String> updatedFields,
-                                     String conceptId, List<String> failedIds) {
-        if (headerMap.containsKey(fieldName) && 
-            record.length > headerMap.get(fieldName) && 
+                                    Concept concept, List<String> updatedFields,
+                                    String conceptId, List<String> failedIds) {
+        if (headerMap.containsKey(fieldName) &&
+            record.length > headerMap.get(fieldName) &&
             !record[headerMap.get(fieldName)].trim().isEmpty()) {
             try {
                 int contentId = Integer.parseInt(record[headerMap.get(fieldName)].trim());
