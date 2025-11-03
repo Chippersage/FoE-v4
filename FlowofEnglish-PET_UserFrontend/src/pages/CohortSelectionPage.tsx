@@ -10,58 +10,100 @@ const CohortSelectionPage = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
 
+  // Helper function to check if the cohort has expired
+  const isCohortActive = (cohort) => {
+    if (!cohort.cohortEndDate) return true;
+    const endDate = new Date(cohort.cohortEndDate).getTime();
+    const now = Date.now();
+    return endDate > now;
+  };
+
   useEffect(() => {
     const fetchCohorts = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/cohorts`);
-        setCohorts(response.data || []);
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (!storedUser?.userId) {
+          console.error("No userId found in localStorage");
+          return;
+        }
+
+        const response = await axios.get(
+          `${API_BASE_URL}/users/${storedUser.userId}/cohorts`
+        );
+
+        const userDetails = response.data?.userDetails;
+        const fetchedCohorts = userDetails?.allCohortsWithPrograms || [];
+
+        const formattedCohorts = fetchedCohorts.map((c) => ({
+          cohortId: c.cohortId,
+          cohortName: c.cohortName,
+          cohortStartDate: new Date(c.cohortStartDate * 1000).toISOString(),
+          cohortEndDate: new Date(c.cohortEndDate * 1000).toISOString(),
+          showLeaderboard: c.showLeaderboard,
+          delayedStageUnlock: c.delayedStageUnlock,
+          delayInDays: c.delayInDays,
+          enableAiEvaluation: c.enableAiEvaluation,
+          organization: userDetails.organization,
+          programId: c.program?.programId,
+          programName: c.program?.programName,
+          programDesc: c.program?.programDesc,
+          stagesCount: c.program?.stagesCount,
+          unitCount: c.program?.unitCount,
+        }));
+
+        const activeCohorts = formattedCohorts.filter(isCohortActive);
+        setCohorts(activeCohorts);
       } catch (error) {
         console.error("Error fetching cohorts:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchCohorts();
   }, []);
 
-  // ✅ Handle selecting a cohort
   const handleSelectCohort = (cohort) => {
-    const selected = {
-      cohortId: cohort.cohortId,
-      cohortName: cohort.cohortName,
-      programName: cohort.programName,
-    };
+    if (!cohort) return console.error("No cohort passed to handleSelectCohort");
+    console.log("Selected cohort:", cohort);
 
-    // Save to localStorage
-    localStorage.setItem("selectedCohortWithProgram", JSON.stringify(selected));
-
-    // Redirect to course page
-    navigate("/course");
+    // ✅ Navigate to /course/:programId route and pass cohort details in state
+    navigate(`/course/${cohort.programId}`, { state: { selectedCohort: cohort } });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500">
-        Loading cohorts...
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-full border-4 border-[#0EA5E9] opacity-25" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-[#0EA5E9] border-transparent animate-spin" />
+        </div>
+        <p className="mt-4 text-[#0EA5E9] font-medium text-base animate-pulse tracking-wide">
+          Loading Cohorts...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-12">
+    <div className="min-h-screen bg-slate-50 pt-2 md:pt-4 px-4 md:px-12">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-8 text-center md:text-left">
           Select Your Cohort
         </h1>
 
         {cohorts.length === 0 ? (
-          <p className="text-center text-slate-600">No cohorts found.</p>
+          <p className="text-center text-slate-600">
+            No active cohorts available.
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {cohorts.map((c) => (
-              <div key={c.cohortId} onClick={() => handleSelectCohort(c)}>
-                <CohortCard cohort={c} />
-              </div>
+              <CohortCard
+                key={c.cohortId}
+                cohort={c}
+                onResume={() => handleSelectCohort(c)}
+              />
             ))}
           </div>
         )}

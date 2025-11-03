@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Basic user model
 type User = {
   userId: string;
   userName: string;
@@ -10,7 +9,6 @@ type User = {
   userType: "learner" | "mentor" | "";
 };
 
-// Initial state for user
 const INITIAL_USER_STATE: User = {
   userId: "",
   userName: "",
@@ -18,7 +16,6 @@ const INITIAL_USER_STATE: User = {
   userType: "",
 };
 
-// Auth context type
 interface AuthContextType {
   user: User;
   isLoading: boolean;
@@ -27,10 +24,10 @@ interface AuthContextType {
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
   checkAuthUser: () => Promise<boolean>;
   selectedCohort: any;
-  setSelectedCohort: React.Dispatch<React.SetStateAction<any>>;
+  setSelectedCohort: (cohort: any) => void;
+  logout: () => void;
 }
 
-// Default context values
 const INITIAL_STATE: AuthContextType = {
   user: INITIAL_USER_STATE,
   isLoading: false,
@@ -40,56 +37,108 @@ const INITIAL_STATE: AuthContextType = {
   checkAuthUser: async () => false,
   selectedCohort: null,
   setSelectedCohort: () => {},
+  logout: () => {},
 };
 
-// Create context
 const AuthContext = createContext<AuthContextType>(INITIAL_STATE);
 
-// Provider
+function safeParse(item: string | null) {
+  try {
+    if (!item || item === "undefined" || item === "null") return null;
+    return JSON.parse(item);
+  } catch (err) {
+    console.error("safeParse error:", err, item);
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(INITIAL_USER_STATE);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedCohort, setSelectedCohort] = useState(() => {
-    const saved = localStorage.getItem("selectedCohort");
-    return saved ? JSON.parse(saved) : null;
+
+  const [user, setUser] = useState<User>(() => {
+    const stored = safeParse(localStorage.getItem("user"));
+    return stored || INITIAL_USER_STATE;
   });
 
-  // Check authentication
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // selectedCohort persisted + exposed via context
+  const [selectedCohort, setSelectedCohortState] = useState(() => {
+    const stored = safeParse(localStorage.getItem("selectedCohort"));
+    return stored || null;
+  });
+
+  const setSelectedCohort = (cohort) => {
+    // Accept either full object or null
+    setSelectedCohortState((prev) => {
+      // If cohort is null/undefined => clear
+      if (!cohort) {
+        localStorage.removeItem("selectedCohort");
+        return null;
+      }
+
+      // If previous exists and cohort is partial, merge
+      if (prev && typeof prev === "object") {
+        const merged = { ...prev, ...cohort };
+        localStorage.setItem("selectedCohort", JSON.stringify(merged));
+        return merged;
+      }
+
+      // Otherwise set cohort directly
+      localStorage.setItem("selectedCohort", JSON.stringify(cohort));
+      return cohort;
+    });
+  };
+
+  const logout = () => {
+    setUser(INITIAL_USER_STATE);
+    setIsAuthenticated(false);
+    setSelectedCohort(null);
+    localStorage.removeItem("user");
+  };
+
+  useEffect(() => {
+    console.log("Auth Debug => user:", user);
+    console.log("Auth Debug => isAuthenticated:", isAuthenticated);
+    console.log("Auth Debug => selectedCohort:", selectedCohort);
+  }, [user, isAuthenticated, selectedCohort]);
+
   const checkAuthUser = async () => {
-    setIsLoading(true);
     try {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const storedUser = safeParse(localStorage.getItem("user"));
       if (storedUser && storedUser.userId) {
         setUser(storedUser);
         setIsAuthenticated(true);
-        console.log("User is authenticated:", storedUser);
         return true;
       }
+      setIsAuthenticated(false);
       return false;
     } catch (err) {
       console.error("Auth check error:", err);
+      setIsAuthenticated(false);
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Run check on mount
   useEffect(() => {
     const init = async () => {
       const ok = await checkAuthUser();
+
       if (!ok) {
         navigate("/sign-in");
+        setIsLoading(false);
         return;
       }
 
       const currentPath = window.location.pathname;
-      if (!selectedCohort && currentPath !== "/select-cohort" && currentPath !== "/sign-in") {
+      if (!selectedCohort && !["/select-cohort", "/sign-in"].includes(currentPath)) {
         navigate("/select-cohort");
       }
+
+      setIsLoading(false);
     };
+
     init();
   }, [navigate, selectedCohort]);
 
@@ -102,10 +151,18 @@ export const AuthProvider = ({ children }) => {
     checkAuthUser,
     selectedCohort,
     setSelectedCohort,
+    logout,
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-lg">
+        Loading authentication...
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook
 export const useUserContext = () => useContext(AuthContext);
