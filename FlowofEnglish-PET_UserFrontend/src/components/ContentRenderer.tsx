@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import QuizActivity from "./ActivityComponents/QuizActitivy";
 import PDFRenderer from './PDFRenderer';
-import { BookOpen, Mic, ExternalLink, Clock, CheckCircle, FileText } from 'lucide-react';
+import { BookOpen, Mic,  FileText } from 'lucide-react';
+// import { BookOpen, Mic, ExternalLink, Clock, CheckCircle, FileText } from 'lucide-react';
 
 interface ContentRendererProps {
   type: string;
@@ -12,38 +13,38 @@ interface ContentRendererProps {
 }
 
 // Configuration for different content types (only for redirect types)
-const contentConfig = {
-  medium: {
-    icon: BookOpen,
-    title: 'Medium Article',
-    defaultDescription: 'Read this insightful article',
-    bgGradient: 'from-emerald-50 to-green-100',
-    borderColor: 'border-emerald-100',
-    iconColor: 'text-emerald-600',
-    buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
-    loadingColor: 'border-emerald-600'
-  },
-  toastmasters: {
-    icon: Mic,
-    title: 'Toastmasters Content',
-    defaultDescription: 'Explore this Toastmasters resource',
-    bgGradient: 'from-blue-50 to-indigo-100',
-    borderColor: 'border-blue-100',
-    iconColor: 'text-blue-600',
-    buttonColor: 'bg-blue-600 hover:bg-blue-700',
-    loadingColor: 'border-blue-600'
-  },
-  assessment: {
-    icon: FileText,
-    title: 'Assessment',
-    defaultDescription: 'Complete this assessment',
-    bgGradient: 'from-purple-50 to-violet-100',
-    borderColor: 'border-purple-100',
-    iconColor: 'text-purple-600',
-    buttonColor: 'bg-purple-600 hover:bg-purple-700',
-    loadingColor: 'border-purple-600'
-  }
-};
+// const contentConfig = {
+//   medium: {
+//     icon: BookOpen,
+//     title: 'Medium Article',
+//     defaultDescription: 'Read this insightful article',
+//     bgGradient: 'from-emerald-50 to-green-100',
+//     borderColor: 'border-emerald-100',
+//     iconColor: 'text-emerald-600',
+//     buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
+//     loadingColor: 'border-emerald-600'
+//   },
+//   toastmasters: {
+//     icon: Mic,
+//     title: 'Toastmasters Content',
+//     defaultDescription: 'Explore this Toastmasters resource',
+//     bgGradient: 'from-blue-50 to-indigo-100',
+//     borderColor: 'border-blue-100',
+//     iconColor: 'text-blue-600',
+//     buttonColor: 'bg-blue-600 hover:bg-blue-700',
+//     loadingColor: 'border-blue-600'
+//   },
+//   assessment: {
+//     icon: FileText,
+//     title: 'Assessment',
+//     defaultDescription: 'Complete this assessment',
+//     bgGradient: 'from-purple-50 to-violet-100',
+//     borderColor: 'border-purple-100',
+//     iconColor: 'text-purple-600',
+//     buttonColor: 'bg-purple-600 hover:bg-purple-700',
+//     loadingColor: 'border-purple-600'
+//   }
+// };
 
 
 const handleTriggerSubmit = () => {

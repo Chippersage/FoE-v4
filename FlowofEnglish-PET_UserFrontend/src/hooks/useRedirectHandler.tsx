@@ -15,7 +15,8 @@ export const useRedirectHandler = (): UseRedirectHandlerReturn => {
   const [showManualButton, setShowManualButton] = useState(false);
 
   useEffect(() => {
-    let countdownInterval: NodeJS.Timeout;
+    let countdownInterval: ReturnType<typeof setInterval>;
+
 
     if (isRedirecting && redirectCountdown > 0) {
       countdownInterval = setInterval(() => {

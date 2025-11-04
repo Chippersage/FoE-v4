@@ -16,7 +16,7 @@ interface PDFRendererProps {
   className?: string;
 }
 
-function PDFRenderer({ pdfUrl, title, className = "" }: PDFRendererProps) {
+function PDFRenderer({ pdfUrl, className = "" }: PDFRendererProps) {
     const [pageNumber, setPageNumber] = useState(1);
     const [numPages, setNumPages] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
