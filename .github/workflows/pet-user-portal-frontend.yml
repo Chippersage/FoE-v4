@@ -1,9 +1,9 @@
 name: CI/CD - Deploy - PET User Portal Frontend (FoE)
 
-# on:
-#   push:
-#     branches:
-#       - master
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
@@ -39,4 +39,4 @@ jobs:
         run: aws s3 sync FlowofEnglish-PET_UserFrontend/dist/ s3://chippersage-flowofenglish-pet-userportal-prod --delete
 
       - name: Invalidate CloudFront Cache
-        run: aws cloudfront create-invalidation --distribution-id E2S5PUVVHYXJIQ --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id E1YUA3DEF60VTU --paths "/*"

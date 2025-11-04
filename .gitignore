@@ -15,7 +15,6 @@ FlowofEnglish_UserFrontend/.env
 Mindful_FrontEnd/.env
 Mindful_FrontEnd/node_modules/
 Mindful_FrontEnd/dist/
-Mindful_FrontEnd/public/Learner-v4/
 Mindful_FrontEnd/tsconfig.app.tsbuildinfo
 Mindful_FrontEnd/public/Grammar/
 Mindful_FrontEnd/public/Sentences/

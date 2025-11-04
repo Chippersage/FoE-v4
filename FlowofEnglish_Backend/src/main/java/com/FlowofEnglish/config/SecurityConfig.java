@@ -61,6 +61,7 @@ public class SecurityConfig {
                         "https://courses-api.mindfultalk.in",
                         "https://courses-admin.mindfultalk.in",
                         "https://courses.mindfultalk.in",
+                        "https://dfnbe0ztrhlg6.cloudfront.net/", // Cloudfront for PET user portal
                         "http://10.12.48.108:5173/", //Shajad Ip config to test local 
                         "http://10.12.48.109:5173/" // Abhishek Ip config to test local
                     ));
