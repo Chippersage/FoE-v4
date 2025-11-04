@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Video, FileText, Check } from "lucide-react";
 
 interface SidebarProps {
   programName: string;
-  onSelectSubconcept: (url: string, id: string, type: string) => void;
+  onSelectSubconcept: (url: string, type: string, id: string, stageId?: string, unitId?: string, subconceptId?: string) => void;
   currentActiveId: string;
   stages: any[];
 }
@@ -63,7 +63,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           {programName}
         </div>
 
-
         {/* Legend */}
         <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
           <div className="flex items-center gap-3 text-xs text-gray-600">
@@ -109,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <li
                         onClick={() =>
                           unit.unitLink &&
-                          onSelectSubconcept(unit.unitLink, unit.unitId, "video")
+                          onSelectSubconcept(unit.unitLink, "video", unit.unitId, stage.stageId, unit.unitId, unit.unitId)
                         }
                         className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
                           currentActiveId === unit.unitId
@@ -136,7 +135,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <li
                             key={sub.subconceptId}
                             onClick={() =>
-                              onSelectSubconcept(sub.subconceptLink, sub.subconceptId, sub.subconceptType)
+                              onSelectSubconcept(
+                                sub.subconceptLink, 
+                                sub.subconceptType,  // TYPE parameter
+                                sub.subconceptId,    // ID parameter
+                                stage.stageId, 
+                                unit.unitId, 
+                                sub.subconceptId
+                              )
                             }
                             className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
                               currentActiveId === sub.subconceptId
@@ -205,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <li
                         onClick={() =>
                           unit.unitLink &&
-                          onSelectSubconcept(unit.unitLink, unit.unitId, "video")
+                          onSelectSubconcept(unit.unitLink, "video", unit.unitId, stage.stageId, unit.unitId, unit.unitId)
                         }
                         className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
                           currentActiveId === unit.unitId
@@ -230,8 +236,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                             onClick={() =>
                               onSelectSubconcept(
                                 sub.subconceptLink,
-                                sub.subconceptId,
-                                sub.subconceptType
+                                sub.subconceptType,  // TYPE parameter
+                                sub.subconceptId,    // ID parameter
+                                stage.stageId,
+                                unit.unitId,
+                                sub.subconceptId
                               )
                             }
                             className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${

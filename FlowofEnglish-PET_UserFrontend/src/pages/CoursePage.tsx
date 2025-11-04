@@ -221,6 +221,9 @@ const CoursePage: React.FC = () => {
     );
   }
 
+    console.log("Current content type:", currentContent.type);
+    console.log("Is assignment:", currentContent.type?.toLowerCase().startsWith("assignment"));
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
       {/* Sidebar - Desktop */}
@@ -272,8 +275,6 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
-          console.log("Current content type:", currentContent.type);
-          console.log("Is assignment:", currentContent.type?.toLowerCase().startsWith("assignment"));
 
           {/* Assignment or Next Button */}
           {currentContent.type?.toLowerCase().startsWith("assignment") ? (
