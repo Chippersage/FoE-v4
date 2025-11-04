@@ -125,6 +125,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
+    case 'assignment_image':
     case 'image':
       return (
         <div className={`relative w-full h-full bg-white ${className}`}>

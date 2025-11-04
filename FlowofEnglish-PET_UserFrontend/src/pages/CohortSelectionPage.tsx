@@ -49,6 +49,7 @@ const CohortSelectionPage = () => {
           programDesc: c.program?.programDesc,
           stagesCount: c.program?.stagesCount,
           unitCount: c.program?.unitCount,
+          progress: 30,
         }));
 
         const activeCohorts = formattedCohorts.filter(isCohortActive);
@@ -63,12 +64,37 @@ const CohortSelectionPage = () => {
     fetchCohorts();
   }, []);
 
-  const handleSelectCohort = (cohort) => {
+  const handleSelectCohort = async (cohort) => {
     if (!cohort) return console.error("No cohort passed to handleSelectCohort");
-    console.log("Selected cohort:", cohort);
 
-    // ✅ Navigate to /course/:programId route and pass cohort details in state
-    navigate(`/course/${cohort.programId}`, { state: { selectedCohort: cohort } });
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser?.userId) {
+        console.error("No user found in localStorage");
+        return;
+      }
+
+      // Call the API to select cohort
+      const res = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
+        userId: storedUser.userId,
+        programId: cohort.programId,
+        cohortId: cohort.cohortId,
+      });
+
+      // Extract sessionId from response and save it to localStorage
+      if (res.data?.sessionId) {
+        localStorage.setItem("sessionId", res.data.sessionId);
+        console.log("Session ID saved:", res.data.sessionId);
+      } else {
+        console.warn("No sessionId found in response:", res.data);
+      }
+
+      // Navigate to /course/:programId route and pass cohort details in state
+      navigate(`/course/${cohort.programId}`, { state: { selectedCohort: cohort } });
+    } catch (error) {
+      console.error("Error selecting cohort:", error);
+      alert("Something went wrong while selecting the cohort!");
+    }
   };
 
   if (loading) {
