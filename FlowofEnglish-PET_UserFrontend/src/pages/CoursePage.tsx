@@ -272,6 +272,9 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
+          console.log("Current content type:", currentContent.type);
+          console.log("Is assignment:", currentContent.type?.toLowerCase().startsWith("assignment"));
+
           {/* Assignment or Next Button */}
           {currentContent.type?.toLowerCase().startsWith("assignment") ? (
             <div className="mt-4 w-full max-w-3xl flex flex-row items-center justify-around gap-4">
