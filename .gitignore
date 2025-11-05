@@ -36,3 +36,4 @@ FlowofEnglish_Backend/logs
 FlowofEnglish_Backend/src/main/resources/application-docker.properties
 
 Mindful_FrontEnd/
+redis_cheat_sheet.md
