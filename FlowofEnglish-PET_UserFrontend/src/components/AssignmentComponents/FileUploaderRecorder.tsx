@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useRef, type ReactNode, useEffect } from "react";
-import  FileUploader  from "./FileUploader";
-import  AudioRecorder  from "./AudioRecorder";
+import FileUploader from "./FileUploader";
+import AudioRecorder from "./AudioRecorder";
 import { VideoRecorder } from "./VideoRecorder";
 import { Preview } from "./Preview";
 import { Upload, Mic, Video, Camera } from "lucide-react";
-import  UploadModal  from "../modals/UploadModal";
+import UploadModal from "../modals/UploadModal";
 import { PhotoCapture } from "./PhotoCapture";
 
 type RecordingState = "recording" | "paused" | "stopped";
@@ -131,10 +131,10 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     <>
       {/* Action Buttons (Upload, Audio, Video, Photo) */}
       <div
-        className="flex justify-center h-12 items-center"
+        className="flex justify-center h-10 sm:h-11 md:h-12 items-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex space-x-2 bg-white rounded-full shadow-lg p-2">
+        <div className="flex space-x-1.5 sm:space-x-2 bg-white rounded-full shadow-md p-1.5 sm:p-2">
           <ActionButton
             icon={<Upload />}
             onClick={() => setActiveAction("upload")}
@@ -238,9 +238,12 @@ const ActionButton: React.FC<ActionButtonProps> = ({
         e.stopPropagation();
         onClick();
       }}
-      className={`p-2 rounded-full flex items-center h-10 w-10 transition-colors ${
-        isActive ? "bg-green-500 text-white" : "text-gray-500 hover:bg-gray-200"
-      }`}
+    className={`rounded-full flex items-center justify-center transition-colors
+      h-10 w-10 sm:h-9 sm:w-9 md:h-8 md:w-8
+      p-2 sm:p-1.5
+      ${isActive ? "bg-green-500 text-white" : "text-gray-500 hover:bg-gray-200"}
+    `}
+
     >
       {icon}
     </button>

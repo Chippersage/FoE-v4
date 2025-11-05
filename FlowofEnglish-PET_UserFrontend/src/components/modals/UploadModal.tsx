@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, FileIcon } from "lucide-react";
 import axios from "axios";
 import { SuccessModal } from "./SuccessModal";
-import { useUserContext } from "../../context/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useCourseContext } from "../../pages/CoursePage";
 
 interface RecordedMedia {
   type: "audio" | "video" | "photo";
@@ -27,18 +26,20 @@ const UploadModal: React.FC<UploadModalProps> = ({
   recordedMedia,
   onUploadSuccess,
 }) => {
-  const location = useLocation();
+  const courseContext = useCourseContext();
+  
+  // Safely destructure with fallbacks
+  const currentContent = courseContext?.currentContent || {};
+  const user = courseContext?.user || {};
+  const selectedCohort = courseContext?.selectedCohort || {};
+  const programId = courseContext?.programId || "";
+  
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
-  const { user, selectedCohort } = useUserContext();
-
-  const subconcept = location.state?.subconcept;
-  const currentUnitId = location.state?.currentUnitId;
-  const stageId = location.state?.stageId;
 
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
@@ -82,12 +83,22 @@ const UploadModal: React.FC<UploadModalProps> = ({
     try {
       const formData = new FormData();
 
+      // Use data from context with safe access
+      const stageId = currentContent?.stageId || "";
+      const unitId = currentContent?.unitId || "";
+      const subconceptId = currentContent?.subconceptId || "";
+      const programIdValue = programId || selectedCohort?.programId || "";
+      const cohortId = selectedCohort?.cohortId || "";
+      const userId = user?.userId || "";
+      const sessionId = localStorage.getItem("sessionId") || "";
+      
+
       if (file) {
         const ext = file.name.split(".").pop() || "dat";
         formData.append(
           "file",
           file,
-          `${user?.userId}-${selectedCohort?.cohortId}-${selectedCohort?.program?.programId}-${subconcept?.subconceptId}.${ext}`
+          `${userId}-${cohortId}-${programIdValue}-${subconceptId}.${ext}`
         );
       } else if (recordedMedia) {
         const extension =
@@ -100,7 +111,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
         formData.append(
           "file",
           recordedMedia.blob,
-          `${user?.userId}-${selectedCohort?.cohortId}-${selectedCohort?.program?.programId}-${subconcept?.subconceptId}.${extension}`
+          `${userId}-${cohortId}-${programIdValue}-${subconceptId}.${extension}`
         );
       } else {
         throw new Error("No file or media found for upload.");
@@ -110,21 +121,36 @@ const UploadModal: React.FC<UploadModalProps> = ({
       const ISTOffset = 5.5 * 60 * 60 * 1000;
       const ISTTime = new Date(date.getTime() + ISTOffset);
       const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
+      
+      // Start time: 15 seconds before current time
+      const startTime = new Date(date.getTime() - 15000); // Subtract 15 seconds
+      const ISTStartTime = new Date(startTime.getTime() + ISTOffset);
+      const userAttemptStartTimestamp = ISTStartTime.toISOString().slice(0, 19);
 
-      formData.append("userId", user?.userId ?? "");
-      formData.append("cohortId", selectedCohort?.cohortId ?? "");
-      formData.append("programId", selectedCohort?.program?.programId ?? "");
-      formData.append("stageId", stageId ?? "");
-      formData.append("unitId", currentUnitId ?? "");
-      formData.append("subconceptId", subconcept?.subconceptId ?? "");
-      formData.append("sessionId", userData?.sessionId ?? "");
+      formData.append("userId", userId);
+      formData.append("cohortId", cohortId);
+      formData.append("programId", programIdValue);
+      formData.append("stageId", stageId);
+      formData.append("unitId", unitId);
+      formData.append("subconceptId", subconceptId);
+      formData.append("sessionId", sessionId ?? "");
       formData.append(
         "userAttemptStartTimestamp",
-        userData?.userAttemptStartTimestamp ?? ""
+        userAttemptStartTimestamp ?? ""
       );
       formData.append("userAttemptEndTimestamp", formattedISTTimestamp);
       formData.append("userAttemptScore", "0");
       formData.append("userAttemptFlag", "true");
+
+      console.log("FormData being sent:", {
+        userId: userId,
+        cohortId: cohortId,
+        programId: programIdValue,
+        stageId: stageId,
+        unitId: unitId,
+        subconceptId: subconceptId,
+        sessionId: sessionId
+      });
 
       const response = await axios.post(
         `${API_BASE_URL}/assignment-with-attempt/submit`,

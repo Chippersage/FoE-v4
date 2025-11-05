@@ -66,10 +66,13 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [scorePercentage, setScorePercentage] = useState<number>(0);
+    useEffect(() => {
+    console.log("Rendering content:", url);
+  }, [url]);
 
   useEffect(() => {
     setIsLoading(true);
-  }, [url, type]);
+  }, [url]);
 
   const handleContentLoaded = () => {
     setIsLoading(false);
@@ -126,20 +129,26 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
-    case 'assignment_image':
-    case 'image':
-      return (
-        <div className={`relative w-full h-full bg-white ${className}`}>
-          {isLoading && renderLoading()}
-          <img
-            src={url}
-            alt={title || 'Image content'}
-            className="w-full h-full object-contain"
-            onLoad={handleContentLoaded}
-            onError={handleError}
-          />
-        </div>
-      );
+case "assignment_image":
+case "image":
+  return (
+    <div className={`relative w-full h-full bg-white ${className}`}>
+      {isLoading && renderLoading()}
+
+      <img
+        src={url}
+        alt={title || "Image content"}
+        className="w-full h-full object-contain relative z-10"
+        onLoad={() => {
+          setIsLoading(false);
+          console.log("✅ Image loaded:", url);
+        }}
+        onError={() => setIsLoading(false)}
+      />
+    </div>
+  );
+
+
 
     case 'googleform':
       return (
