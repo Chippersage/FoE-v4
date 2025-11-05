@@ -235,6 +235,7 @@ const CoursePage: React.FC = () => {
       />
     ) : (
       <ContentRenderer
+        key={currentContent.id || currentContent.url}
         type={currentContent.type}
         url={currentContent.url}
         title="Course Content"
@@ -338,7 +339,10 @@ const CoursePage: React.FC = () => {
                 className="relative w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white"
                 style={{ height: "80vh" }}
               >
-                <ContentArea />
+                    <div key={currentContent.id || currentContent.url} className="h-full w-full">
+                      <ContentArea />
+                    </div>
+
               </div>
             </div>
             <ControlButtons />
