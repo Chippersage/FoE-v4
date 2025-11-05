@@ -63,14 +63,12 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
   if (!nextSub) return null;
 
   return (
-    <div className="flex justify-end mt-4">
-      <button
-        onClick={() => onNext(nextSub)}
-        className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-medium px-5 py-2 rounded-lg shadow-md cursor-pointer transition-all duration-200 active:scale-95"
-      >
-        Go To Next →
-      </button>
-    </div>
+    <button
+      onClick={() => onNext(nextSub)}
+      className="bg-[#0EA5E9] hover:bg-[#DB5788] text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+    >
+      Go To Next →
+    </button>
   );
 };
 

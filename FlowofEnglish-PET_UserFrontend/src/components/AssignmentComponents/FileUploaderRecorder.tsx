@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useRef, type ReactNode, useEffect } from "react";
-import  FileUploader  from "./FileUploader";
-import  AudioRecorder  from "./AudioRecorder";
+import FileUploader from "./FileUploader";
+import AudioRecorder from "./AudioRecorder";
 import { VideoRecorder } from "./VideoRecorder";
 import { Preview } from "./Preview";
 import { Upload, Mic, Video, Camera } from "lucide-react";
-import  UploadModal  from "../modals/UploadModal";
+import UploadModal from "../modals/UploadModal";
 import { PhotoCapture } from "./PhotoCapture";
 
 type RecordingState = "recording" | "paused" | "stopped";
