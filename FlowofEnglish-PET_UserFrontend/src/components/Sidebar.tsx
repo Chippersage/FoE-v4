@@ -46,11 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         className={`
           w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
-          ${
-            completed
-              ? "bg-[#0EA5E9] border-[#0EA5E9]"
-              : "border-gray-300 group-hover:border-[#7DD3FC]"
-          }
+          ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
           ${active ? "border-[#0EA5E9]" : ""}
         `}
       >
@@ -62,7 +58,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     </div>
   );
 
-  // Build a flattened list of subconcepts in reading order
   const buildGlobalList = () => {
     const list: {
       stageId: string;
@@ -89,7 +84,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     return list;
   };
 
-  // Determines whether a subconcept should be locked
   const isSubconceptLocked = (unit: any, indexInUnit: number) => {
     if (isMentor) return false;
 
@@ -106,11 +100,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     const currentType = (sub.subconceptType || "").toLowerCase();
     const isAssignment = currentType.startsWith("assignment");
-
-    // Assignments are always unlocked
     if (isAssignment) return false;
 
-    // Find last completed non-assignment subconcept globally
     let lastCompletedIndex = -1;
     for (let i = 0; i < global.length; i++) {
       const g = global[i];
@@ -119,13 +110,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     }
 
-    // If nothing completed yet, unlock only the first subconcept (start point)
     if (lastCompletedIndex === -1) return currentGlobalIndex !== 0;
-
-    // If current is already completed, it’s unlocked
     if (global[currentGlobalIndex].completed) return false;
 
-    // Find the first non-assignment subconcept after all consecutive assignments
     let nextUnlockIndex = lastCompletedIndex + 1;
     while (
       nextUnlockIndex < global.length &&
@@ -134,109 +121,137 @@ const Sidebar: React.FC<SidebarProps> = ({
       nextUnlockIndex++;
     }
 
-    // Unlock if within range (<= nextUnlockIndex)
     return currentGlobalIndex > nextUnlockIndex;
   };
 
   return (
-    <aside className="bg-white text-black flex flex-col">
+    <aside className="bg-white text-black flex flex-col h-full">
+      {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-72 border-r border-gray-300 z-20 bg-white">
         <div className="h-16 w-full" />
         <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200">
           {programName}
         </div>
+        <SidebarList />
+      </div>
 
-        <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-          <div className="flex items-center gap-3 text-xs text-gray-600">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full border-2 border-gray-300 bg-white"></div>
-              <span>Not started</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full border-2 border-[#0EA5E9] bg-[#0EA5E9] flex items-center justify-center">
-                <Check size={8} className="text-white stroke-[3]" />
-              </div>
-              <span>Completed</span>
-            </div>
-          </div>
+      {/* Mobile Sidebar (scrollable, visible) */}
+      <div className="flex md:hidden flex-col h-full overflow-y-auto border-t border-gray-200">
+        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-base sticky top-0 bg-white z-10 border-b border-gray-200">
+          {programName}
         </div>
-
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-          {stages.map((stage, stageIndex) => (
-            <li key={stage.stageId} className="list-none border-b border-gray-200 pb-3">
-              <button
-                onClick={() => toggleStage(stage.stageId)}
-                className="flex flex-col w-full text-left text-gray-800 hover:text-gray-900 cursor-pointer"
-              >
-                <span className="text-xs font-semibold text-gray-500 mb-1">
-                  {`Module ${stageIndex + 1}`}
-                </span>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{stage.stageName}</span>
-                  {openStages.includes(stage.stageId) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </div>
-              </button>
-
-              {openStages.includes(stage.stageId) && (
-                <ul className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
-                  {stage.units.map((unit: any, unitIndex: number) => (
-                    <div key={unit.unitId} className="flex flex-col">
-                      {/* Unit */}
-                      <li
-                        onClick={() =>
-                          unit.unitLink &&
-                          onSelectSubconcept(unit.unitLink, "video", unit.unitId, stage.stageId, unit.unitId, unit.unitId)
-                        }
-                        className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
-                          currentActiveId === unit.unitId
-                            ? "bg-[#E0F2FE] text-[#0EA5E9]"
-                            : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
-                        } ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        <RoundCheckbox completed={unit.completionStatus?.toLowerCase() === "yes"} active={currentActiveId === unit.unitId} />
-                        <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
-                        <span className="text-sm flex-1">{unit.unitName}</span>
-                      </li>
-
-                      {/* Subconcepts */}
-                      {unit.subconcepts?.map((sub: any, subIndex: number) => {
-                        const subCompleted = (sub.completionStatus || "").toLowerCase() === "yes";
-                        const type = (sub.subconceptType || "").toLowerCase();
-                        const isVideo = type === "video";
-                        const isLocked = isSubconceptLocked(unit, subIndex);
-
-                        return (
-                          <li
-                            key={sub.subconceptId}
-                            onClick={() => {
-                              if (isLocked) return;
-                              onSelectSubconcept(sub.subconceptLink, sub.subconceptType, sub.subconceptId, stage.stageId, unit.unitId, sub.subconceptId);
-                            }}
-                            className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
-                              currentActiveId === sub.subconceptId
-                                ? "bg-[#E0F2FE] text-[#0EA5E9]"
-                                : isLocked
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
-                            }`}
-                          >
-                            <RoundCheckbox completed={subCompleted} active={currentActiveId === sub.subconceptId} />
-                            {isVideo ? <Video size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" /> : <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />}
-                            <span className="text-sm flex-1">{`${unitIndex + 1}.${subIndex + 1} ${sub.subconceptDesc}`}</span>
-                            {!isMentor && isLocked && <Lock size={14} className="text-gray-500" />}
-                          </li>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </div>
+        <SidebarList />
       </div>
     </aside>
   );
+
+  function SidebarList() {
+    return (
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+        {stages.map((stage, stageIndex) => (
+          <li key={stage.stageId} className="list-none border-b border-gray-200 pb-3">
+            <button
+              onClick={() => toggleStage(stage.stageId)}
+              className="flex flex-col w-full text-left text-gray-800 hover:text-gray-900 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-gray-500 mb-1">
+                {`Module ${stageIndex + 1}`}
+              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{stage.stageName}</span>
+                {openStages.includes(stage.stageId) ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </div>
+            </button>
+
+            {openStages.includes(stage.stageId) && (
+              <ul className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
+                {stage.units.map((unit: any, unitIndex: number) => (
+                  <div key={unit.unitId} className="flex flex-col">
+                    <li
+                      onClick={() =>
+                        unit.unitLink &&
+                        onSelectSubconcept(
+                          unit.unitLink,
+                          "video",
+                          unit.unitId,
+                          stage.stageId,
+                          unit.unitId,
+                          unit.unitId
+                        )
+                      }
+                      className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
+                        currentActiveId === unit.unitId
+                          ? "bg-[#E0F2FE] text-[#0EA5E9]"
+                          : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
+                      } ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <RoundCheckbox
+                        completed={unit.completionStatus?.toLowerCase() === "yes"}
+                        active={currentActiveId === unit.unitId}
+                      />
+                      <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
+                      <span className="text-sm flex-1">{unit.unitName}</span>
+                    </li>
+
+                    {unit.subconcepts?.map((sub: any, subIndex: number) => {
+                      const subCompleted =
+                        (sub.completionStatus || "").toLowerCase() === "yes";
+                      const type = (sub.subconceptType || "").toLowerCase();
+                      const isVideo = type === "video";
+                      const isLocked = isSubconceptLocked(unit, subIndex);
+
+                      return (
+                        <li
+                          key={sub.subconceptId}
+                          onClick={() => {
+                            if (isLocked) return;
+                            localStorage.setItem("lastViewedSubconcept", sub.subconceptId);
+                            onSelectSubconcept(
+                              sub.subconceptLink,
+                              sub.subconceptType,
+                              sub.subconceptId,
+                              stage.stageId,
+                              unit.unitId,
+                              sub.subconceptId
+                            );
+                          }}
+                          className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
+                            currentActiveId === sub.subconceptId
+                              ? "bg-[#E0F2FE] text-[#0EA5E9]"
+                              : isLocked
+                              ? "opacity-50 cursor-not-allowed"
+                              : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
+                          }`}
+                        >
+                          <RoundCheckbox
+                            completed={subCompleted}
+                            active={currentActiveId === sub.subconceptId}
+                          />
+                          {isVideo ? (
+                            <Video size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
+                          ) : (
+                            <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
+                          )}
+                          <span className="text-sm flex-1">{`${unitIndex + 1}.${subIndex + 1} ${sub.subconceptDesc}`}</span>
+                          {!isMentor && isLocked && (
+                            <Lock size={14} className="text-gray-500" />
+                          )}
+                        </li>
+                      );
+                    })}
+                  </div>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </div>
+    );
+  }
 };
 
 export default Sidebar;

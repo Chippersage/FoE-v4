@@ -9,6 +9,7 @@ import NextSubconceptButton from "../components/NextSubconceptButton";
 import { FileUploaderRecorder } from "../components/AssignmentComponents/FileUploaderRecorder";
 import AssignmentModal from "../components//modals/AssignmentModal";
 import { useUserContext } from "../context/AuthContext";
+import { getInitialSubconcept } from "../utils/courseProgressUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
@@ -54,10 +55,8 @@ const CoursePage: React.FC = () => {
   const [showSubmit, setShowSubmit] = useState(false);
   const [assignmentStatus, setAssignmentStatus] = useState(null);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const submitBtnRef = useRef<HTMLButtonElement>(null);
-
   const passedCohort = location.state?.selectedCohort || null;
 
   const [currentContent, setCurrentContent] = useState<CurrentContent>({
@@ -126,7 +125,7 @@ const CoursePage: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Fetch program stages and initialize first subconcept
+  // Fetch program stages and initialize initial subconcept (uses util)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -140,22 +139,18 @@ const CoursePage: React.FC = () => {
         setStages(stagesData);
         setProgramName(data.programName || "Program");
 
-        for (const stage of stagesData) {
-          if (stage.units?.length) {
-            const firstUnit = stage.units[0];
-            if (firstUnit.subconcepts?.length) {
-              const firstSubconcept = firstUnit.subconcepts[0];
-              setCurrentContent({
-                url: firstSubconcept.subconceptLink,
-                type: firstSubconcept.subconceptType,
-                id: firstSubconcept.subconceptId,
-                stageId: stage.stageId,
-                unitId: firstUnit.unitId,
-                subconceptId: firstSubconcept.subconceptId,
-              });
-              break;
-            }
-          }
+        // Use getInitialSubconcept util to pick which subconcept to open initially
+        const initialSubconcept = getInitialSubconcept(stagesData);
+        if (initialSubconcept) {
+          const { stage, unit, sub } = initialSubconcept;
+          setCurrentContent({
+            url: sub.subconceptLink,
+            type: sub.subconceptType,
+            id: sub.subconceptId,
+            stageId: stage.stageId,
+            unitId: unit.unitId,
+            subconceptId: sub.subconceptId,
+          });
         }
       } catch (err) {
         console.error("Error fetching course data:", err);
@@ -166,6 +161,13 @@ const CoursePage: React.FC = () => {
 
     if (programId && user?.userId) fetchData();
   }, [programId, user?.userId]);
+
+  // Save last viewed subconcept
+  useEffect(() => {
+    if (currentContent?.subconceptId) {
+      localStorage.setItem("lastViewedSubconcept", currentContent.subconceptId);
+    }
+  }, [currentContent?.subconceptId]);
 
   // Fetch assignment status when subconcept changes
   useEffect(() => {
@@ -362,6 +364,7 @@ const CoursePage: React.FC = () => {
   return (
     <CourseContext.Provider value={courseContextValue}>
       <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
+        {/* Desktop Sidebar */}
         <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
           <Sidebar
             programName={programName}
@@ -380,7 +383,9 @@ const CoursePage: React.FC = () => {
           />
         </div>
 
+        {/* Main Content */}
         <div className="flex-1 flex flex-col md:ml-72">
+          {/* Desktop */}
           <div className="hidden md:flex flex-1 flex-col justify-center items-center p-4">
             <div className="w-full flex justify-center">
               <div
@@ -394,6 +399,56 @@ const CoursePage: React.FC = () => {
             </div>
             <ControlButtons />
           </div>
+
+          {/* Mobile (45% content, 55% sidebar) */}
+{/* Mobile layout - fixed vh heights for precision */}
+<div className="md:hidden flex flex-col h-screen">
+  {/* Top 45% - Content Renderer */}
+  <div className="h-[45vh] flex-shrink-0 bg-white border-b border-gray-200">
+    <div className="p-4 h-full">
+      <div className="w-full h-full rounded-xl shadow-md overflow-hidden bg-white">
+        <ContentArea />
+      </div>
+    </div>
+
+    {/* Floating Submit Button */}
+    {showIframe && showSubmit && (
+      <div className="fixed bottom-24 right-4 z-20">
+        <button
+          ref={submitBtnRef}
+          onClick={handleSubmit}
+          className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1"
+        >
+          <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
+          Submit
+        </button>
+      </div>
+    )}
+
+    {/* Floating Next Button */}
+    <div className="fixed bottom-4 right-4 z-20">{renderNextButton()}</div>
+  </div>
+
+  {/* Bottom 55% - Sidebar */}
+  <div className="h-[55vh] overflow-y-auto bg-white">
+    <Sidebar
+      programName={programName}
+      onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
+        setCurrentContent({
+          url,
+          type,
+          id,
+          stageId: stageId || currentContent.stageId,
+          unitId: unitId || currentContent.unitId,
+          subconceptId: subconceptId || currentContent.subconceptId,
+        })
+      }
+      currentActiveId={currentContent.id}
+      stages={stages}
+    />
+  </div>
+</div>
+
         </div>
       </div>
 
