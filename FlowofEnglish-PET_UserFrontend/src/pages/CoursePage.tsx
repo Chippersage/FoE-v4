@@ -362,10 +362,63 @@ const CoursePage: React.FC = () => {
   // Final Render ---------------------------------------------------------------
 
   return (
-    <CourseContext.Provider value={courseContextValue}>
-      <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
+  <CourseContext.Provider value={courseContextValue}>
+    <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
+
+      {/* Sidebar (Desktop fixed) */}
+      <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
+        <Sidebar
+          programName={programName}
+          onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
+            setCurrentContent({
+              url,
+              type,
+              id,
+              stageId: stageId || currentContent.stageId,
+              unitId: unitId || currentContent.unitId,
+              subconceptId: subconceptId || currentContent.subconceptId,
+            })
+          }
+          currentActiveId={currentContent.id}
+          stages={stages}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col md:ml-72">
+        
+        {/* Single unified ContentArea for both Desktop & Mobile */}
+        <div
+          className="bg-white border-b border-gray-200 flex justify-center items-center p-4"
+          style={{
+            height: window.innerWidth >= 768 ? "80vh" : "45vh", // responsive height
+            transition: "height 0.2s ease-in-out",
+          }}
+        >
+          <div className="w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white h-full">
+            <ContentArea />
+          </div>
+        </div>
+
+        {/* Floating Submit Button (for both desktop & mobile) */}
+        {showIframe && showSubmit && (
+          <div className="fixed bottom-24 right-4 z-20">
+            <button
+              ref={submitBtnRef}
+              onClick={handleSubmit}
+              className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1 shadow-md"
+            >
+              <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
+              Submit
+            </button>
+          </div>
+        )}
+
+        {/* Floating Next Button */}
+        {/*<div className="fixed bottom-4 right-4 z-20">{renderNextButton()}</div>*/}
+
+        {/* Sidebar (Mobile only, below content) */}
+        <div className="md:hidden flex-shrink-0 bg-white overflow-y-auto border-t border-gray-300" style={{ height: "45vh" }}>
           <Sidebar
             programName={programName}
             onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
@@ -383,85 +436,24 @@ const CoursePage: React.FC = () => {
           />
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col md:ml-72">
-          {/* Desktop */}
-          <div className="hidden md:flex flex-1 flex-col justify-center items-center p-4">
-            <div className="w-full flex justify-center">
-              <div
-                className="relative w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white"
-                style={{ height: "80vh" }}
-              >
-                <div key={currentContent.id || currentContent.url} className="h-full w-full">
-                  <ContentArea />
-                </div>
-              </div>
-            </div>
-            <ControlButtons />
-          </div>
-
-          {/* Mobile (45% content, 55% sidebar) */}
-{/* Mobile layout - fixed vh heights for precision */}
-<div className="md:hidden flex flex-col h-screen">
-  {/* Top 45% - Content Renderer */}
-  <div className="h-[45vh] flex-shrink-0 bg-white border-b border-gray-200">
-    <div className="p-4 h-full">
-      <div className="w-full h-full rounded-xl shadow-md overflow-hidden bg-white">
-        <ContentArea />
+        {/* Desktop Control Buttons (below video) */}
+        <div className="hidden md:flex justify-center mt-4">
+          <ControlButtons />
+        </div>
       </div>
     </div>
 
-    {/* Floating Submit Button */}
-    {showIframe && showSubmit && (
-      <div className="fixed bottom-24 right-4 z-20">
-        <button
-          ref={submitBtnRef}
-          onClick={handleSubmit}
-          className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1"
-        >
-          <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
-          Submit
-        </button>
-      </div>
+    {showAssignmentModal && (
+      <AssignmentModal
+        onClose={() => setShowAssignmentModal(false)}
+        submissionDate={assignmentStatus?.submittedDate}
+        status={assignmentStatus?.status}
+        fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
+      />
     )}
+  </CourseContext.Provider>
+);
 
-    {/* Floating Next Button */}
-    <div className="fixed bottom-4 right-4 z-20">{renderNextButton()}</div>
-  </div>
-
-  {/* Bottom 55% - Sidebar */}
-  <div className="h-[55vh] overflow-y-auto bg-white">
-    <Sidebar
-      programName={programName}
-      onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
-        setCurrentContent({
-          url,
-          type,
-          id,
-          stageId: stageId || currentContent.stageId,
-          unitId: unitId || currentContent.unitId,
-          subconceptId: subconceptId || currentContent.subconceptId,
-        })
-      }
-      currentActiveId={currentContent.id}
-      stages={stages}
-    />
-  </div>
-</div>
-
-        </div>
-      </div>
-
-      {showAssignmentModal && (
-        <AssignmentModal
-          onClose={() => setShowAssignmentModal(false)}
-          submissionDate={assignmentStatus?.submittedDate}
-          status={assignmentStatus?.status}
-          fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
-        />
-      )}
-    </CourseContext.Provider>
-  );
 };
 
 export default CoursePage;
