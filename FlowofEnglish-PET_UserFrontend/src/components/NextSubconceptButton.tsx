@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { ArrowRight } from "lucide-react"; // Lucide icon
 
 interface NextSubconceptButtonProps {
   stages: any[];
@@ -13,44 +14,59 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
   onNext,
 }) => {
   const findNextSubconcept = () => {
-    for (let stage of stages) {
-      for (let unit of stage.units) {
-        // within subconcepts
-        if (unit.subconcepts && unit.subconcepts.length > 0) {
-          for (let i = 0; i < unit.subconcepts.length; i++) {
-            const sub = unit.subconcepts[i];
-            if (sub.subconceptId === currentContentId) {
-              // found current → next subconcept
-              if (i + 1 < unit.subconcepts.length) {
-                return {
-                  ...unit.subconcepts[i + 1],
+    for (let stageIndex = 0; stageIndex < stages.length; stageIndex++) {
+      const stage = stages[stageIndex];
+
+      for (let unitIndex = 0; unitIndex < stage.units.length; unitIndex++) {
+        const unit = stage.units[unitIndex];
+        const subs = unit.subconcepts || [];
+
+        for (let subIndex = 0; subIndex < subs.length; subIndex++) {
+          const sub = subs[subIndex];
+
+          if (sub.subconceptId === currentContentId) {
+            // Case 1: Next subconcept exists in same unit
+            if (subIndex + 1 < subs.length) {
+              const next = subs[subIndex + 1];
+              return {
+                next,
+                label: "Go To Next",
+              };
+            }
+
+            // Case 2: End of unit → move to first subconcept of next unit
+            const nextUnit = stage.units[unitIndex + 1];
+            if (nextUnit?.subconcepts?.length) {
+              const next = nextUnit.subconcepts[0];
+              return {
+                next: {
+                  ...next,
                   stageId: stage.stageId,
-                  unitId: unit.unitId,
+                  unitId: nextUnit.unitId,
+                },
+                label: "Next Session",
+              };
+            }
+
+            // Case 3: End of module → move to first subconcept of next stage
+            const nextStage = stages[stageIndex + 1];
+            if (nextStage?.units?.length) {
+              const firstUnit = nextStage.units[0];
+              if (firstUnit.subconcepts?.length) {
+                const next = firstUnit.subconcepts[0];
+                return {
+                  next: {
+                    ...next,
+                    stageId: nextStage.stageId,
+                    unitId: firstUnit.unitId,
+                  },
+                  label: "Next Module",
                 };
               }
             }
-          }
-        }
 
-        // If current content is a unit
-        if (unit.unitId === currentContentId) {
-          const nextUnitIndex = stage.units.indexOf(unit) + 1;
-          if (nextUnitIndex < stage.units.length) {
-            const nextUnit = stage.units[nextUnitIndex];
-            if (nextUnit.subconcepts?.length)
-              return {
-                ...nextUnit.subconcepts[0],
-                stageId: stage.stageId,
-                unitId: nextUnit.unitId,
-              };
-            else if (nextUnit.unitLink)
-              return {
-                subconceptLink: nextUnit.unitLink,
-                subconceptId: nextUnit.unitId,
-                subconceptType: "video",
-                stageId: stage.stageId,
-                unitId: nextUnit.unitId,
-              };
+            // Case 4: End of entire program
+            return null;
           }
         }
       }
@@ -58,16 +74,30 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
     return null;
   };
 
-  const nextSub = findNextSubconcept();
+  const nextResult = findNextSubconcept();
 
-  if (!nextSub) return null;
+  // Case 4: End of program → show disabled completion button
+  if (!nextResult) {
+    return (
+      <button
+        disabled
+        className="bg-gray-300 text-gray-600 px-4 py-2 rounded-md text-sm font-medium shadow-sm cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        Course Completed
+      </button>
+    );
+  }
 
+  // Other cases → active navigation button
   return (
     <button
-      onClick={() => onNext(nextSub)}
-      className="bg-[#0EA5E9] hover:bg-[#DB5788] text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+      onClick={() => onNext(nextResult.next)}
+      className="bg-[#0EA5E9] hover:bg-[#DB5788] text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 flex items-center justify-center gap-2"
     >
-      Go To Next →
+      <span className="flex items-center gap-2">
+        <span className="align-middle">{nextResult.label}</span>
+        <ArrowRight size={16} className="relative top-[1px]" />
+      </span>
     </button>
   );
 };

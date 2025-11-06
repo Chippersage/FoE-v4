@@ -10,12 +10,11 @@ const CohortSelectionPage = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
 
-  // Helper function to check if the cohort has expired
+  // Helper: Check if the cohort is still active
   const isCohortActive = (cohort) => {
     if (!cohort.cohortEndDate) return true;
     const endDate = new Date(cohort.cohortEndDate).getTime();
-    const now = Date.now();
-    return endDate > now;
+    return endDate > Date.now();
   };
 
   useEffect(() => {
@@ -27,6 +26,7 @@ const CohortSelectionPage = () => {
           return;
         }
 
+        // Step 1: Get all cohorts for this user
         const response = await axios.get(
           `${API_BASE_URL}/users/${storedUser.userId}/cohorts`
         );
@@ -34,6 +34,7 @@ const CohortSelectionPage = () => {
         const userDetails = response.data?.userDetails;
         const fetchedCohorts = userDetails?.allCohortsWithPrograms || [];
 
+        // Step 2: Format cohort data
         const formattedCohorts = fetchedCohorts.map((c) => ({
           cohortId: c.cohortId,
           cohortName: c.cohortName,
@@ -49,11 +50,40 @@ const CohortSelectionPage = () => {
           programDesc: c.program?.programDesc,
           stagesCount: c.program?.stagesCount,
           unitCount: c.program?.unitCount,
-          progress: 30,
+          progress: 0, // default placeholder
         }));
 
+        // Filter active cohorts
         const activeCohorts = formattedCohorts.filter(isCohortActive);
-        setCohorts(activeCohorts);
+
+        // Step 3: Fetch progress for each cohort (parallel API calls)
+        const progressPromises = activeCohorts.map(async (cohort) => {
+          try {
+            const progressRes = await axios.get(
+              `https://flowofenglish-backend.thechippersage.com/api/v1/reports/program/${cohort.programId}/user/${storedUser.userId}/progress`
+            );
+
+            const progressData = progressRes.data;
+            const total = progressData?.totalSubconcepts || 0;
+            const completed = progressData?.completedSubconcepts || 0;
+
+            const progressPercent =
+              total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            return { ...cohort, progress: progressPercent };
+          } catch (err) {
+            console.warn(
+              `Failed to fetch progress for ${cohort.programId}:`,
+              err.message
+            );
+            return { ...cohort, progress: 0 };
+          }
+        });
+
+        // Wait for all progress results
+        const cohortsWithProgress = await Promise.all(progressPromises);
+
+        setCohorts(cohortsWithProgress);
       } catch (error) {
         console.error("Error fetching cohorts:", error);
       } finally {
@@ -64,6 +94,7 @@ const CohortSelectionPage = () => {
     fetchCohorts();
   }, []);
 
+  // Handle cohort selection
   const handleSelectCohort = async (cohort) => {
     if (!cohort) return console.error("No cohort passed to handleSelectCohort");
 
@@ -73,6 +104,7 @@ const CohortSelectionPage = () => {
         console.error("No user found in localStorage");
         return;
       }
+      localStorage.setItem("selectedCohort", JSON.stringify(cohort));
 
       // Call the API to select cohort
       const res = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
@@ -81,15 +113,13 @@ const CohortSelectionPage = () => {
         cohortId: cohort.cohortId,
       });
 
-      // Extract sessionId from response and save it to localStorage
+      // Save sessionId (if returned)
       if (res.data?.sessionId) {
         localStorage.setItem("sessionId", res.data.sessionId);
         console.log("Session ID saved:", res.data.sessionId);
-      } else {
-        console.warn("No sessionId found in response:", res.data);
       }
 
-      // Navigate to /course/:programId route and pass cohort details in state
+      // Navigate to course page
       navigate(`/course/${cohort.programId}`, { state: { selectedCohort: cohort } });
     } catch (error) {
       console.error("Error selecting cohort:", error);
@@ -97,6 +127,7 @@ const CohortSelectionPage = () => {
     }
   };
 
+  // Loader while fetching data
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
@@ -111,6 +142,7 @@ const CohortSelectionPage = () => {
     );
   }
 
+  // Main UI
   return (
     <div className="min-h-screen bg-slate-50 pt-2 md:pt-4 px-4 md:px-12">
       <div className="max-w-6xl mx-auto">
@@ -119,9 +151,7 @@ const CohortSelectionPage = () => {
         </h1>
 
         {cohorts.length === 0 ? (
-          <p className="text-center text-slate-600">
-            No active cohorts available.
-          </p>
+          <p className="text-center text-slate-600">No active cohorts available.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {cohorts.map((c) => (

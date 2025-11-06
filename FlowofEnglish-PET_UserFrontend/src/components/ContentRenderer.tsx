@@ -207,9 +207,11 @@ case "image":
           {isLoading && renderLoading()}
           <video 
             controls 
+            controlsList="nodownload noremoteplayback"
             autoPlay
             className="w-full h-full bg-black rounded-xl"
             src={url}
+            onContextMenu={(e) => e.preventDefault()}
             onLoadStart={handleContentLoaded}
             onLoadedData={handleContentLoaded}
             onError={handleError}

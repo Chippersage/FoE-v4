@@ -25,8 +25,10 @@ const LoginPage = () => {
   const { checkAuthUser } = useUserContext();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // Toggle password visibility
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -55,6 +57,8 @@ const LoginPage = () => {
       const message =
         err.response?.data?.error || "An unexpected error occurred.";
       setError(message);
+
+      // Handle specific deactivation or contact info errors
       if (
         err.response?.data?.deactivationDetails ||
         err.response?.data?.contactInfo
@@ -73,6 +77,7 @@ const LoginPage = () => {
 
   return (
     <>
+      {/* --- ERROR MODAL --- */}
       {showErrorModalOpen && (
         <ErrorModal
           isOpen={showErrorModalOpen}
@@ -91,7 +96,9 @@ const LoginPage = () => {
               alt="Company Logo"
               className="mx-auto w-16 h-16 sm:w-20 sm:h-20 object-contain mb-3"
             />
-            <h1 className="text-2xl font-bold text-slate-800">Flow of English</h1>
+            <h1 className="text-2xl font-bold text-slate-800">
+              Flow of English
+            </h1>
             <p className="text-slate-600 text-sm mt-1">
               Master English, One Step at a Time
             </p>
@@ -99,6 +106,7 @@ const LoginPage = () => {
 
           {/* --- FORM STARTS HERE --- */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* User ID Field */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 User ID
@@ -113,6 +121,7 @@ const LoginPage = () => {
               />
             </div>
 
+            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Password
@@ -140,6 +149,7 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Access Level (Learner/Mentor) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Access Level
@@ -175,12 +185,14 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-2 text-center">
                 <p className="text-red-700 text-sm font-medium">{error}</p>
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
@@ -193,14 +205,14 @@ const LoginPage = () => {
           {/* Support Section */}
           <div className="mt-6 pt-4 border-t border-slate-200 text-center space-y-2">
             <a
-              href="mailto:support@mindfultalk.in?subject=Platform%20Support%20Request"
+              href="mailto:support@chippersage.com?subject=Platform%20Support%20Request"
               className="text-[#0EA5E9] hover:text-[#0284C7] text-sm font-medium"
             >
               Need technical support?
             </a>
             <br />
             <a
-              href="mailto:support@mindfultalk.in?subject=Platform%20Account%20Request"
+              href="mailto:support@chippersage.com?subject=Platform%20Account%20Request"
               className="text-slate-600 hover:text-slate-700 text-sm"
             >
               Request new account access

@@ -1,12 +1,16 @@
 // @ts-nocheck
+import React, { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import LogInPage from "./_auth/forms/LoginForm";
-import CohortSelectionPage from "./pages/CohortSelectionPage";
-import CoursePage from "./pages/CoursePage";
-import ViewProgressPage from "./pages/ViewProgressPage";
-import NotFoundPage from "./pages/NotFoundPage";
-import RootLayout from "./pages/RootLayout";
 import { useUserContext } from "./context/AuthContext";
+import Loader from "./components/Loader";
+
+// Lazy load all pages to prevent unnecessary imports in dev/prod
+const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
+const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
+const CoursePage = lazy(() => import("./pages/CoursePage"));
+const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const RootLayout = lazy(() => import("./pages/RootLayout"));
 
 const App: React.FC = () => {
   const { user } = useUserContext();
@@ -18,66 +22,73 @@ const App: React.FC = () => {
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
 
   return (
-    <Routes>
-      {/* Auth Route */}
-      <Route
-        path="/sign-in"
-        element={
-          isAuthenticatedAndValid ? <Navigate to="/select-cohort" /> : <LogInPage />
-        }
-      />
-
-      {/* All protected pages inside RootLayout */}
-      <Route element={<RootLayout />}>
+    // Suspense ensures lazy-loaded components show a fallback loader
+    <Suspense fallback={<Loader />}>
+      <Routes>
+        {/* --- Authentication Route --- */}
         <Route
-          path="/select-cohort"
+          path="/sign-in"
           element={
             isAuthenticatedAndValid ? (
-              <CohortSelectionPage />
+              <Navigate to="/select-cohort" />
+            ) : (
+              <LogInPage />
+            )
+          }
+        />
+
+        {/* --- Protected Layout --- */}
+        <Route element={<RootLayout />}>
+          <Route
+            path="/select-cohort"
+            element={
+              isAuthenticatedAndValid ? (
+                <CohortSelectionPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          <Route
+            path="/course/:programId"
+            element={
+              isAuthenticatedAndValid ? (
+                <CoursePage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          <Route
+            path="/view-progress"
+            element={
+              isAuthenticatedAndValid ? (
+                <ViewProgressPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+        </Route>
+
+        {/* --- Default Root Redirect --- */}
+        <Route
+          path="/"
+          element={
+            isAuthenticatedAndValid ? (
+              <Navigate to="/select-cohort" />
             ) : (
               <Navigate to="/sign-in" />
             )
           }
         />
 
-        {/* ✅ Added programId parameter here */}
-        <Route
-          path="/course/:programId"
-          element={
-            isAuthenticatedAndValid ? (
-              <CoursePage />
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-
-        <Route
-          path="/view-progress"
-          element={
-            isAuthenticatedAndValid ? (
-              <ViewProgressPage />
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-      </Route>
-
-      {/* Default Root */}
-      <Route
-        path="/"
-        element={
-          isAuthenticatedAndValid ? (
-            <Navigate to="/select-cohort" />
-          ) : (
-            <Navigate to="/sign-in" />
-          )
-        }
-      />
-
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* --- Catch-all for 404 --- */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 };
 
