@@ -4,28 +4,31 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useUserContext } from "./context/AuthContext";
 import Loader from "./components/Loader";
 
-// Lazy load all pages to prevent unnecessary imports in dev/prod
+// Lazy load all pages
 const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
 const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
 const CoursePage = lazy(() => import("./pages/CoursePage"));
 const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
+const AssignmentsPage = lazy(() => import("./pages/AssignmentsPage"));
+const ViewSubmissions = lazy(() => import("./pages/ViewSubmissions"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RootLayout = lazy(() => import("./pages/RootLayout"));
 
 const App: React.FC = () => {
   const { user } = useUserContext();
 
+  // Validate user role
   const isValidUserType =
     user?.userType?.toLowerCase() === "learner" ||
     user?.userType?.toLowerCase() === "mentor";
 
+  // Authentication + role check
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
 
   return (
-    // Suspense ensures lazy-loaded components show a fallback loader
     <Suspense fallback={<Loader />}>
       <Routes>
-        {/* --- Authentication Route --- */}
+        {/* ---------------- AUTHENTICATION ---------------- */}
         <Route
           path="/sign-in"
           element={
@@ -37,8 +40,9 @@ const App: React.FC = () => {
           }
         />
 
-        {/* --- Protected Layout --- */}
+        {/* ---------------- PROTECTED LAYOUT ---------------- */}
         <Route element={<RootLayout />}>
+          {/* Select cohort before proceeding */}
           <Route
             path="/select-cohort"
             element={
@@ -50,6 +54,7 @@ const App: React.FC = () => {
             }
           />
 
+          {/* Course page (main learning area) */}
           <Route
             path="/course/:programId"
             element={
@@ -61,6 +66,7 @@ const App: React.FC = () => {
             }
           />
 
+          {/* View Progress page */}
           <Route
             path="/view-progress"
             element={
@@ -71,9 +77,33 @@ const App: React.FC = () => {
               )
             }
           />
+
+          {/* Assignments page */}
+          <Route
+            path="/assignments"
+            element={
+              isAuthenticatedAndValid ? (
+                <AssignmentsPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* Submissions page */}
+          <Route
+            path="/view-submissions"
+            element={
+              isAuthenticatedAndValid ? (
+                <ViewSubmissions />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
         </Route>
 
-        {/* --- Default Root Redirect --- */}
+        {/* ---------------- DEFAULT ROOT REDIRECT ---------------- */}
         <Route
           path="/"
           element={
@@ -85,7 +115,7 @@ const App: React.FC = () => {
           }
         />
 
-        {/* --- Catch-all for 404 --- */}
+        {/* ---------------- 404 CATCH ---------------- */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>

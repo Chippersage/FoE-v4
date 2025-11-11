@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -10,35 +10,9 @@ import { FileUploaderRecorder } from "../components/AssignmentComponents/FileUpl
 import AssignmentModal from "../components//modals/AssignmentModal";
 import { useUserContext } from "../context/AuthContext";
 import { getInitialSubconcept } from "../utils/courseProgressUtils";
+import CourseContext from "../context/CourseContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-
-// Context types
-interface CurrentContent {
-  url: string;
-  type: string;
-  id: string;
-  stageId: string;
-  unitId: string;
-  subconceptId: string;
-}
-
-interface CourseContextType {
-  currentContent: CurrentContent;
-  setCurrentContent: (content: CurrentContent) => void;
-  stages: any[];
-  programName: string;
-  user: any;
-  programId: string | undefined;
-}
-
-export const CourseContext = createContext<CourseContextType | undefined>(undefined);
-
-export const useCourseContext = (): CourseContextType => {
-  const context = useContext(CourseContext);
-  if (!context) throw new Error("useCourseContext must be used within a CoursePage");
-  return context;
-};
 
 const CoursePage: React.FC = () => {
   // Routing and context
@@ -55,11 +29,13 @@ const CoursePage: React.FC = () => {
   const [showSubmit, setShowSubmit] = useState(false);
   const [assignmentStatus, setAssignmentStatus] = useState(null);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [canGoNext, setCanGoNext] = useState(true);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   const submitBtnRef = useRef<HTMLButtonElement>(null);
   const passedCohort = location.state?.selectedCohort || null;
 
-  const [currentContent, setCurrentContent] = useState<CurrentContent>({
+  const [currentContent, setCurrentContent] = useState({
     url: "",
     type: "video",
     id: "",
@@ -68,14 +44,33 @@ const CoursePage: React.FC = () => {
     subconceptId: "",
   });
 
+  // ADDED: states for Google Form checkbox & persisted submission
+  const [formChecked, setFormChecked] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
   // Context value
-  const courseContextValue: CourseContextType = {
-    currentContent,
-    setCurrentContent,
-    stages,
-    programName,
-    user,
-    programId,
+  const courseContextValue = useMemo(
+    () => ({
+      currentContent,
+      setCurrentContent,
+      stages,
+      setStages,
+      programName,
+      user,
+      programId,
+      canGoNext,
+      setCanGoNext,
+      remainingTime,
+      setRemainingTime,
+    }),
+    [currentContent, stages, programName, user, programId]
+  );
+
+  // Helper to detect Google Form type (includes "assessment")
+  const isGoogleFormType = (type: string) => {
+    if (!type) return false;
+    const normalized = type.toLowerCase();
+    return normalized === "googleform" || normalized === "assessment";
   };
 
   // Helpers
@@ -113,6 +108,9 @@ const CoursePage: React.FC = () => {
     const shouldShow = shouldShowIframe(currentContent.type);
     setShowIframe(shouldShow);
     setShowSubmit(false);
+
+    setFormChecked(false);
+    setFormSubmitted(false);
   }, [currentContent]);
 
   // Listen for postMessage events from iframe
@@ -139,7 +137,6 @@ const CoursePage: React.FC = () => {
         setStages(stagesData);
         setProgramName(data.programName || "Program");
 
-        // Use getInitialSubconcept util to pick which subconcept to open initially
         const initialSubconcept = getInitialSubconcept(stagesData);
         if (initialSubconcept) {
           const { stage, unit, sub } = initialSubconcept;
@@ -194,6 +191,27 @@ const CoursePage: React.FC = () => {
     }
   }, [currentContent?.type, currentContent?.subconceptId, user?.userId]);
 
+  // Restore checkbox/submission state for google forms from localStorage
+  useEffect(() => {
+    try {
+      if (currentContent?.subconceptId && isGoogleFormType(currentContent.type)) {
+        const saved = localStorage.getItem(`submitted_${currentContent.subconceptId}`);
+        if (saved === "true") {
+          setFormChecked(true);
+          setFormSubmitted(true);
+        } else {
+          setFormChecked(false);
+          setFormSubmitted(false);
+        }
+      } else {
+        setFormChecked(false);
+        setFormSubmitted(false);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [currentContent.subconceptId, currentContent.type]);
+
   // Handlers --------------------------------------------------------------------
 
   const handleSubmit = () => {
@@ -203,51 +221,42 @@ const CoursePage: React.FC = () => {
     }
   };
 
-  const handleUserAttempt = async () => {
+  // Helper to record attempt for googleform via API
+  const recordGoogleFormAttempt = async () => {
     try {
-      const sessionId = localStorage.getItem("sessionId");
-      const { cohortId } = passedCohort || {};
-      const { stageId, unitId, subconceptId } = currentContent;
-
-      if (!sessionId || !cohortId || !programId || !user?.userId) return;
-
-      const payload = {
-        cohortId,
-        programId,
-        sessionId,
-        stageId,
-        unitId,
-        subconceptId,
+      if (!user?.userId || !currentContent?.subconceptId) return;
+      await axios.post(`${API_BASE_URL}/user-attempt`, {
         userId: user.userId,
-        userAttemptStartTimestamp: new Date().toISOString(),
-        userAttemptEndTimestamp: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
-        userAttemptFlag: true,
-        userAttemptScore: 2,
-      };
+        subconceptId: currentContent.subconceptId,
+        attemptStatus: "completed",
+      });
 
-      await axios.post(`${API_BASE_URL}/user-attempts`, payload);
-
-      // Update local progress instantly after successful API
-      setStages((prevStages) =>
-        prevStages.map((stage) => ({
-          ...stage,
-          units: stage.units.map((unit) => ({
-            ...unit,
-            subconcepts: unit.subconcepts.map((sub) =>
-              sub.subconceptId === subconceptId
-                ? { ...sub, completionStatus: "yes" }
-                : sub
-            ),
-          })),
-        }))
+      window.dispatchEvent(
+        new CustomEvent("updateSidebarCompletion", {
+          detail: { subconceptId: currentContent.subconceptId },
+        })
       );
+
+      localStorage.setItem(`submitted_${currentContent.subconceptId}`, "true");
+      setFormSubmitted(true);
     } catch (err) {
-      console.error("Error posting user-attempt:", err);
+      console.error("Error recording google form attempt:", err);
+      throw err;
     }
   };
 
+  // Next subconcept handler
   const handleNextSubconcept = async (nextSub) => {
-    await handleUserAttempt();
+    if (isGoogleFormType(currentContent.type) && (formChecked || formSubmitted)) {
+      try {
+        if (!formSubmitted) {
+          await recordGoogleFormAttempt();
+        }
+      } catch (err) {
+        console.error("Failed to record google form attempt before moving next:", err);
+      }
+    }
+
     setCurrentContent({
       url: nextSub.subconceptLink,
       type: nextSub.subconceptType,
@@ -259,12 +268,12 @@ const CoursePage: React.FC = () => {
   };
 
   // Render helpers --------------------------------------------------------------
-
-  const renderNextButton = () => (
+  const renderNextButton = (disabled = false) => (
     <NextSubconceptButton
       stages={stages}
       currentContentId={currentContent.id}
       onNext={handleNextSubconcept}
+      disabled={disabled}
     />
   );
 
@@ -279,13 +288,26 @@ const CoursePage: React.FC = () => {
       />
     ) : (
       <ContentRenderer
-        key={currentContent.id || currentContent.url}
         type={currentContent.type}
         url={currentContent.url}
         title="Course Content"
         className="w-full h-full"
       />
     );
+
+  const GoogleFormCheckbox =
+    isGoogleFormType(currentContent.type) ? (
+      <label className="flex items-center space-x-3 mb-2">
+        <input
+          type="checkbox"
+          checked={formChecked || formSubmitted}
+          disabled={formSubmitted}
+          onChange={(e) => setFormChecked(e.target.checked)}
+          className="w-5 h-5 text-[#0EA5E9] border-gray-300 rounded focus:ring-[#0EA5E9]"
+        />
+        <span className="text-gray-700">I have submitted this Google Form</span>
+      </label>
+    ) : null;
 
   const ControlButtons = () => (
     <>
@@ -311,11 +333,12 @@ const CoursePage: React.FC = () => {
             >
               View Assignment Status
             </button>
-            {renderNextButton()}
+            {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
           </div>
         ) : (
           <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
             <FileUploaderRecorder
+              assignmentStatus={assignmentStatus}
               onSuccess={() =>
                 setStages((prevStages) =>
                   prevStages.map((stage) => ({
@@ -332,19 +355,19 @@ const CoursePage: React.FC = () => {
                 )
               }
             />
-            {renderNextButton()}
+            {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
           </div>
         )
       ) : (
         <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
-          {renderNextButton()}
+          {GoogleFormCheckbox}
+          {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
         </div>
       )}
     </>
   );
 
   // Loader ----------------------------------------------------------------------
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
@@ -360,65 +383,11 @@ const CoursePage: React.FC = () => {
   }
 
   // Final Render ---------------------------------------------------------------
-
   return (
-  <CourseContext.Provider value={courseContextValue}>
-    <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
-
-      {/* Sidebar (Desktop fixed) */}
-      <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
-        <Sidebar
-          programName={programName}
-          onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
-            setCurrentContent({
-              url,
-              type,
-              id,
-              stageId: stageId || currentContent.stageId,
-              unitId: unitId || currentContent.unitId,
-              subconceptId: subconceptId || currentContent.subconceptId,
-            })
-          }
-          currentActiveId={currentContent.id}
-          stages={stages}
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col md:ml-72">
-        
-        {/* Single unified ContentArea for both Desktop & Mobile */}
-        <div
-          className="bg-white border-b border-gray-200 flex justify-center items-center p-4"
-          style={{
-            height: window.innerWidth >= 768 ? "80vh" : "45vh", // responsive height
-            transition: "height 0.2s ease-in-out",
-          }}
-        >
-          <div className="w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white h-full">
-            <ContentArea />
-          </div>
-        </div>
-
-        {/* Floating Submit Button (for both desktop & mobile) */}
-        {showIframe && showSubmit && (
-          <div className="fixed bottom-24 right-4 z-20">
-            <button
-              ref={submitBtnRef}
-              onClick={handleSubmit}
-              className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1 shadow-md"
-            >
-              <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
-              Submit
-            </button>
-          </div>
-        )}
-
-        {/* Floating Next Button */}
-        {/*<div className="fixed bottom-4 right-4 z-20">{renderNextButton()}</div>*/}
-
-        {/* Sidebar (Mobile only, below content) */}
-        <div className="md:hidden flex-shrink-0 bg-white overflow-y-auto border-t border-gray-300" style={{ height: "45vh" }}>
+    <CourseContext.Provider value={courseContextValue}>
+      <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
+        {/* Sidebar (Desktop fixed) */}
+        <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
           <Sidebar
             programName={programName}
             onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
@@ -436,24 +405,73 @@ const CoursePage: React.FC = () => {
           />
         </div>
 
-        {/* Desktop Control Buttons (below video) */}
-        <div className="hidden md:flex justify-center mt-4">
-          <ControlButtons />
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col md:ml-72">
+          <div
+            className="bg-white border-b border-gray-200 flex justify-center items-center p-4"
+            style={{
+              height: window.innerWidth >= 768 ? "80vh" : "45vh",
+              transition: "height 0.2s ease-in-out",
+            }}
+          >
+            <div className="w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white h-full">
+              <ContentArea />
+            </div>
+          </div>
+
+          {/* Floating Submit Button (for both desktop & mobile) */}
+          {showIframe && showSubmit && (
+            <div className="fixed bottom-24 right-4 z-20">
+              <button
+                ref={submitBtnRef}
+                onClick={handleSubmit}
+                className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1 shadow-md"
+              >
+                <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
+                Submit
+              </button>
+            </div>
+          )}
+
+          {/* Sidebar (Mobile only, below content) */}
+          <div
+            className="md:hidden flex-shrink-0 bg-white overflow-y-auto border-t border-gray-300"
+            style={{ height: "45vh" }}
+          >
+            <Sidebar
+              programName={programName}
+              onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
+                setCurrentContent({
+                  url,
+                  type,
+                  id,
+                  stageId: stageId || currentContent.stageId,
+                  unitId: unitId || currentContent.unitId,
+                  subconceptId: subconceptId || currentContent.subconceptId,
+                })
+              }
+              currentActiveId={currentContent.id}
+              stages={stages}
+            />
+          </div>
+
+          {/* Desktop Control Buttons (below video) */}
+          <div className="hidden md:flex justify-center mt-4">
+            <ControlButtons />
+          </div>
         </div>
       </div>
-    </div>
 
-    {showAssignmentModal && (
-      <AssignmentModal
-        onClose={() => setShowAssignmentModal(false)}
-        submissionDate={assignmentStatus?.submittedDate}
-        status={assignmentStatus?.status}
-        fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
-      />
-    )}
-  </CourseContext.Provider>
-);
-
+      {showAssignmentModal && (
+        <AssignmentModal
+          onClose={() => setShowAssignmentModal(false)}
+          submissionDate={assignmentStatus?.submittedDate}
+          status={assignmentStatus?.status}
+          fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
+        />
+      )}
+    </CourseContext.Provider>
+  );
 };
 
 export default CoursePage;

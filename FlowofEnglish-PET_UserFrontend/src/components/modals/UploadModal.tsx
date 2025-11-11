@@ -5,7 +5,7 @@ import { X, Send, Loader2, FileIcon } from "lucide-react";
 import axios from "axios";
 import { SuccessModal } from "./SuccessModal";
 import { useUserContext } from "../../context/AuthContext";
-import { useCourseContext } from "../../pages/CoursePage";
+import { useCourseContext } from "../../context/CourseContext";
 
 interface RecordedMedia {
   type: "audio" | "video" | "photo";

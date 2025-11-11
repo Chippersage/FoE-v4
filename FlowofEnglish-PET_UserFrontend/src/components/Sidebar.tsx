@@ -1,5 +1,8 @@
 // @ts-nocheck
-import { useState } from "react";
+// Sidebar component: displays course modules, units, and subconcepts
+// Handles locking/unlocking, completion indicators, and live updates via custom events
+
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-react";
 import { useUserContext } from "../context/AuthContext";
 
@@ -23,10 +26,54 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentActiveId,
   stages,
 }) => {
+  // --------------------------------------------------------------------------
+  // Local state and user context
+  // --------------------------------------------------------------------------
   const [openStages, setOpenStages] = useState<string[]>([]);
+  const [localStages, setLocalStages] = useState<any[]>(stages);
   const { user } = useUserContext();
   const isMentor = user?.userType === "mentor";
 
+  // --------------------------------------------------------------------------
+  // Effects
+  // --------------------------------------------------------------------------
+
+  // Sync local stages when parent updates
+  useEffect(() => {
+    setLocalStages(stages);
+  }, [stages]);
+
+  // Listen for video completion event to mark subconcept as completed
+  useEffect(() => {
+    const handleCompletionUpdate = (e: CustomEvent) => {
+      const { subconceptId } = e.detail;
+      if (!subconceptId) return;
+
+      setLocalStages((prev) =>
+        prev.map((stage) => ({
+          ...stage,
+          units: stage.units.map((unit) => ({
+            ...unit,
+            subconcepts: unit.subconcepts.map((sub) =>
+              sub.subconceptId === subconceptId
+                ? { ...sub, completionStatus: "yes" }
+                : sub
+            ),
+          })),
+        }))
+      );
+    };
+
+    window.addEventListener("updateSidebarCompletion", handleCompletionUpdate as EventListener);
+    return () =>
+      window.removeEventListener("updateSidebarCompletion", handleCompletionUpdate as EventListener);
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // Handlers
+  // --------------------------------------------------------------------------
+
+  // Expand/collapse module section
   const toggleStage = (stageId: string) => {
     setOpenStages((prev) =>
       prev.includes(stageId)
@@ -35,55 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  const RoundCheckbox = ({
-    completed,
-    active,
-  }: {
-    completed: boolean;
-    active: boolean;
-  }) => (
-    <div className="relative flex-shrink-0 self-center">
-      <div
-        className={`
-          w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
-          ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
-          ${active ? "border-[#0EA5E9]" : ""}
-        `}
-      >
-        {completed && <Check size={10} className="text-white stroke-[3]" />}
-      </div>
-      {completed && (
-        <div className="absolute inset-0 rounded-full bg-[#0EA5E9] opacity-20 animate-pulse" />
-      )}
-    </div>
-  );
-
-  const buildGlobalList = () => {
-    const list: {
-      stageId: string;
-      unitId: string;
-      subconceptId: string;
-      type: string;
-      completed: boolean;
-    }[] = [];
-
-    stages?.forEach((stage: any) => {
-      stage.units?.forEach((unit: any) => {
-        unit.subconcepts?.forEach((sub: any) => {
-          list.push({
-            stageId: stage.stageId,
-            unitId: unit.unitId,
-            subconceptId: sub.subconceptId,
-            type: (sub.subconceptType || "").toLowerCase(),
-            completed: (sub.completionStatus || "").toLowerCase() === "yes",
-          });
-        });
-      });
-    });
-
-    return list;
-  };
-
+  // Determines whether a subconcept should be locked based on completion order
   const isSubconceptLocked = (unit: any, indexInUnit: number) => {
     if (isMentor) return false;
 
@@ -124,6 +123,62 @@ const Sidebar: React.FC<SidebarProps> = ({
     return currentGlobalIndex > nextUnlockIndex;
   };
 
+  // Builds a flat list of all subconcepts across stages for progress tracking
+  const buildGlobalList = () => {
+    const list: {
+      stageId: string;
+      unitId: string;
+      subconceptId: string;
+      type: string;
+      completed: boolean;
+    }[] = [];
+
+    localStages?.forEach((stage: any) => {
+      stage.units?.forEach((unit: any) => {
+        unit.subconcepts?.forEach((sub: any) => {
+          list.push({
+            stageId: stage.stageId,
+            unitId: unit.unitId,
+            subconceptId: sub.subconceptId,
+            type: (sub.subconceptType || "").toLowerCase(),
+            completed: (sub.completionStatus || "").toLowerCase() === "yes",
+          });
+        });
+      });
+    });
+
+    return list;
+  };
+
+  // --------------------------------------------------------------------------
+  // Render helpers
+  // --------------------------------------------------------------------------
+
+  // Round checkbox indicator for subconcept completion
+  const RoundCheckbox = ({
+    completed,
+    active,
+  }: {
+    completed: boolean;
+    active: boolean;
+  }) => (
+    <div className="relative flex-shrink-0 self-center">
+      <div
+        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
+          ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
+          ${active ? "border-[#0EA5E9]" : ""}`}
+      >
+        {completed && <Check size={10} className="text-white stroke-[3]" />}
+      </div>
+      {completed && (
+        <div className="absolute inset-0 rounded-full bg-[#0EA5E9] opacity-20 animate-pulse" />
+      )}
+    </div>
+  );
+
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
   return (
     <aside className="bg-white text-black flex flex-col h-full">
       {/* Desktop Sidebar */}
@@ -135,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <SidebarList />
       </div>
 
-      {/* Mobile Sidebar (scrollable, visible) */}
+      {/* Mobile Sidebar */}
       <div className="flex md:hidden flex-col h-full overflow-y-auto border-t border-gray-200">
         <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-base sticky top-0 bg-white z-10 border-b border-gray-200">
           {programName}
@@ -145,11 +200,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 
+  // --------------------------------------------------------------------------
+  // Nested Component: SidebarList
+  // --------------------------------------------------------------------------
   function SidebarList() {
     return (
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-        {stages.map((stage, stageIndex) => (
+        {localStages.map((stage, stageIndex) => (
           <li key={stage.stageId} className="list-none border-b border-gray-200 pb-3">
+            {/* Stage Header */}
             <button
               onClick={() => toggleStage(stage.stageId)}
               className="flex flex-col w-full text-left text-gray-800 hover:text-gray-900 cursor-pointer"
@@ -167,10 +226,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </button>
 
+            {/* Units and Subconcepts */}
             {openStages.includes(stage.stageId) && (
               <ul className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
                 {stage.units.map((unit: any, unitIndex: number) => (
                   <div key={unit.unitId} className="flex flex-col">
+                    {/* Unit Row */}
                     <li
                       onClick={() =>
                         unit.unitLink &&
@@ -197,6 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <span className="text-sm flex-1">{unit.unitName}</span>
                     </li>
 
+                    {/* Subconcept Rows */}
                     {unit.subconcepts?.map((sub: any, subIndex: number) => {
                       const subCompleted =
                         (sub.completionStatus || "").toLowerCase() === "yes";

@@ -12,7 +12,7 @@ type NavbarProps = {
   toggleSidebar?: () => void;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
+const Navbar: React.FC<NavbarProps> = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -24,14 +24,13 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const isSelectCohortPage = location.pathname === "/select-cohort";
 
   const menuItems = [
-    { title: "Profile" },
-    { title: "View Progress" },
-    { title: "About Program" },
-    { title: "Help" },
-    { title: "Terms of Use" },
+    { title: "Profile", path: "/profile" },
+    { title: "View Progress", path: "/view-progress" },
+    { title: "About Program", path: "/about-program" },
+    { title: "Help", path: "/help" },
+    { title: "Terms of Use", path: "/terms" },
   ];
 
-  // Logout handler
   const handleLogout = async () => {
     setIsLoading(true);
     try {
@@ -63,6 +62,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     }
   };
 
+  const handleMenuClick = (item) => {
+    if (item.path) {
+      navigate(item.path);
+      setMenuOpen(false);
+    } else {
+      toast("Coming soon...");
+    }
+  };
+
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm"
@@ -71,16 +79,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
     >
       <div className="flex items-center justify-between px-4 py-2 h-14">
-        {/* Sidebar Toggle (Visible on Mobile) */}
-        {toggleSidebar && (
-          <button
-            onClick={toggleSidebar}
-            className="md:hidden text-[#0EA5E9] text-2xl font-bold"
-          >
-            ☰
-          </button>
-        )}
-
         {/* Branding */}
         <div
           className={`flex items-center gap-2 select-none ${
@@ -93,12 +91,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           }}
         >
           <img
-            src="/icons/FoE_logo.png"
+            src="/icons/chipper-sage-logo.png"
             alt="Logo"
-            className="w-8 h-8 object-contain"
+            className="w-20 h-20 object-contain"
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">
-            Flow of English
+            Professional English for Teachers
           </h1>
         </div>
 
@@ -111,7 +109,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             </span>
           </div>
 
-          {/* Avatar */}
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0EA5E9] flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
             onMouseEnter={() => setMenuOpen(true)}
@@ -120,7 +117,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             {userName?.trim().charAt(0).toUpperCase()}
           </div>
 
-          {/* Dropdown Menu */}
           <AnimatePresence>
             {menuOpen && (
               <motion.div
@@ -135,6 +131,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                 {menuItems.map((item, idx) => (
                   <button
                     key={idx}
+                    onClick={() => handleMenuClick(item)}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] transition-all cursor-pointer"
                   >
                     {item.title}
@@ -149,7 +146,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                   className={`w-full text-left px-4 py-2 text-sm font-medium transition-all ${
                     isLoading
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-red-600 hover:bg-red-50 hover:text-red-700"
+                      : "text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
                   }`}
                 >
                   {isLoading ? "Logging out..." : "Logout"}
