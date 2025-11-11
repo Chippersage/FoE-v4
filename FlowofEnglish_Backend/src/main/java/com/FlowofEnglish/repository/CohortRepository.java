@@ -12,20 +12,18 @@ import java.util.List;
 @Repository
 public interface CohortRepository extends JpaRepository<Cohort, String> {
 
-    List<Cohort> findByOrganizationOrganizationId(String organizationId);
-    
- // Find cohorts by exact name and organization ID
-    List<Cohort> findByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
-    
-    // Custom method to count existing cohorts
-    @Query("SELECT COUNT(c) FROM Cohort c WHERE c.cohortName = :cohortName AND c.organization.organizationId = :orgId")
-    long countByCohortNameAndOrganization(@Param("cohortName") String cohortName, @Param("orgId") String orgId);
-    
-    @Query("SELECT c FROM Cohort c WHERE c.cohortEndDate BETWEEN :startDate AND :endDate")
-    List<Cohort> findCohortsEndingSoon(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);
+   List<Cohort> findByOrganizationOrganizationId(String organizationId);
 
-    @Query("SELECT c, DATEDIFF(c.cohortEndDate, CURRENT_DATE) as daysToEnd " +
-    	       "FROM Cohort c WHERE c.cohortEndDate > CURRENT_DATE")
-    	List<Object[]> findCohortsWithDaysToEnd();
+   List<Cohort> findByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
+   
+   @Query("SELECT COUNT(c) FROM Cohort c WHERE c.cohortName = :cohortName AND c.organization.organizationId = :orgId")
+   long countByCohortNameAndOrganization(@Param("cohortName") String cohortName, @Param("orgId") String orgId);
+   
+   @Query("SELECT c FROM Cohort c WHERE c.cohortEndDate BETWEEN :startDate AND :endDate")
+   List<Cohort> findCohortsEndingSoon(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);
+
+   @Query("SELECT c, DATEDIFF(c.cohortEndDate, CURRENT_DATE) as daysToEnd " +
+            "FROM Cohort c WHERE c.cohortEndDate > CURRENT_DATE")
+   List<Object[]> findCohortsWithDaysToEnd();
 
 }

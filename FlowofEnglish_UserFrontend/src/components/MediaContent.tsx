@@ -1338,7 +1338,7 @@ const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => 
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
               subconceptData?.completionStatus === "ignored" ? (
-                <FileUploaderRecorder 
+                <FileUploaderRecorder
                   onUploadSuccess={handleUploadSuccess}
                   onImageAudioEvaluation={handleImageAudioEvaluation}
                   subconceptType={subconceptData?.subconceptType}
