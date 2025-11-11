@@ -6,11 +6,22 @@ import {
   MagnifyingGlassIcon,
   ArrowPathRoundedSquareIcon,
   ChevronUpDownIcon,
-  ArrowLeftIcon,
   DocumentArrowDownIcon,
   ArrowTopRightOnSquareIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "video/mp4",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 const ViewSubmissions: React.FC = () => {
   const location = useLocation();
@@ -27,7 +38,7 @@ const ViewSubmissions: React.FC = () => {
   const [maxScore, setMaxScore] = useState(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // Fetch API
+  // Fetch all assignments
   useEffect(() => {
     if (!cohortId) return;
     const fetchAssignments = async () => {
@@ -49,13 +60,13 @@ const ViewSubmissions: React.FC = () => {
           submittedDate: a.submittedDate,
           correctedDate: a.correctedDate,
           program: a.program?.programName,
+          correctedFile: null,
         }));
 
         setAssignments(formatted);
         setFilteredAssignments(formatted);
         setStats(statistics);
 
-        // Determine global max score (they’re same for all)
         if (formatted.length > 0) {
           setMaxScore(formatted[0].maxScore);
         }
@@ -68,7 +79,7 @@ const ViewSubmissions: React.FC = () => {
     fetchAssignments();
   }, [cohortId]);
 
-  // Search
+  // Search functionality
   useEffect(() => {
     const q = searchQuery.toLowerCase();
     const filtered = assignments.filter(
@@ -81,7 +92,7 @@ const ViewSubmissions: React.FC = () => {
     setFilteredAssignments(filtered);
   }, [searchQuery, assignments]);
 
-  // Sort
+  // Sorting logic
   const handleSort = () => {
     const sorted = [...filteredAssignments].sort((a, b) => {
       const field =
@@ -98,6 +109,52 @@ const ViewSubmissions: React.FC = () => {
     });
     setFilteredAssignments(sorted);
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  };
+
+  // API call with FormData
+  const handleSave = async (assignment) => {
+    const { id, score, remarks, correctedFile } = assignment;
+
+    if (!score) {
+      alert("Please enter a score before saving.");
+      return;
+    }
+
+    if (correctedFile) {
+      if (!ALLOWED_FILE_TYPES.includes(correctedFile.type)) {
+        alert("Invalid file type. Please upload an image, video, PDF, or document file.");
+        return;
+      }
+      if (correctedFile.size > MAX_FILE_SIZE) {
+        alert("File size exceeds 10MB limit. Please upload a smaller file.");
+        return;
+      }
+    }
+
+    const formData = new FormData();
+    formData.append("score", score);
+    formData.append("remarks", remarks || "");
+    formData.append("correctedDate", new Date().toISOString());
+    if (correctedFile) formData.append("file", correctedFile);
+
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/assignments/${id}/correct`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" }, withCredentials: true }
+      );
+
+      if (res.status === 200) {
+        setFilteredAssignments((prev) =>
+          prev.map((a) =>
+            a.id === id ? { ...a, correctedDate: Date.now() / 1000, score, remarks } : a
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error saving correction:", err);
+      alert("Failed to save correction.");
+    }
   };
 
   if (loading)
@@ -132,7 +189,6 @@ const ViewSubmissions: React.FC = () => {
 
         {/* Search + Stats + Sort */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-          {/* Search */}
           <div className="relative w-full md:w-1/3">
             <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
             <input
@@ -144,7 +200,6 @@ const ViewSubmissions: React.FC = () => {
             />
           </div>
 
-          {/* Stats */}
           <div className="flex flex-wrap gap-2 justify-center text-sm">
             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
               Total: {stats?.totalAssignments || 0}
@@ -160,7 +215,6 @@ const ViewSubmissions: React.FC = () => {
             </span>
           </div>
 
-          {/* Sort */}
           <button
             onClick={handleSort}
             className="flex items-center justify-center gap-2 text-sm border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 transition"
@@ -184,6 +238,7 @@ const ViewSubmissions: React.FC = () => {
                 <th className="py-3 px-4 text-center">Score</th>
                 <th className="py-3 px-4">Remarks</th>
                 <th className="py-3 px-4 text-center">Corrected On</th>
+                <th className="py-3 px-4 text-center">Upload</th>
                 <th className="py-3 px-4 text-center">Action</th>
               </tr>
             </thead>
@@ -196,26 +251,17 @@ const ViewSubmissions: React.FC = () => {
                   transition={{ delay: idx * 0.02 }}
                   className="hover:bg-slate-50 transition border-b border-slate-100"
                 >
-                  <td className="py-2.5 px-4 font-medium text-slate-800">
-                    {a.userId}
-                  </td>
-
-                  {/* Topic with hover tooltip */}
-                  <td
-                    className="py-2.5 px-4 max-w-[250px] truncate cursor-help"
-                    title={a.topic}
-                  >
+                  <td className="py-2.5 px-4 font-medium text-slate-800">{a.userId}</td>
+                  <td className="py-2.5 px-4 max-w-[250px] truncate" title={a.topic}>
                     {a.topic}
                   </td>
-
-                  {/* Reference clickable */}
                   <td className="py-2.5 px-4">
                     {a.referenceLink ? (
                       <a
                         href={a.referenceLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[#0EA5E9] hover:text-[#0284C7] font-medium transition"
+                        className="flex items-center gap-1 text-[#0EA5E9] font-medium"
                       >
                         {a.reference}
                         <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -224,29 +270,19 @@ const ViewSubmissions: React.FC = () => {
                       a.reference
                     )}
                   </td>
-
-                  {/* Max score (common for all) */}
-                  <td className="py-2.5 px-4 text-center">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                      {maxScore || a.maxScore}
-                    </span>
-                  </td>
-
-                  {/* Submitted Date */}
+                  <td className="py-2.5 px-4 text-center">{a.maxScore}</td>
                   <td className="py-2.5 px-4">
                     {a.submittedDate
                       ? new Date(a.submittedDate * 1000).toLocaleString()
                       : "—"}
                   </td>
-
-                  {/* File link */}
                   <td className="py-2.5 px-4 text-center">
                     {a.fileUrl ? (
                       <a
                         href={a.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#0EA5E9] hover:text-[#0284C7] font-semibold text-sm"
+                        className="text-[#0EA5E9] font-semibold"
                       >
                         VIEW
                       </a>
@@ -255,47 +291,60 @@ const ViewSubmissions: React.FC = () => {
                     )}
                   </td>
 
-                  {/* Score */}
+                  {/* Editable fields */}
                   <td className="py-2.5 px-4 text-center">
                     <input
                       type="number"
                       defaultValue={a.score ?? ""}
-                      className="w-12 text-center border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-[#0EA5E9] outline-none"
+                      className="w-12 text-center border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-[#0EA5E9]"
+                      onChange={(e) => (a.score = Number(e.target.value))}
                     />
                   </td>
-
-                  {/* Remarks */}
                   <td className="py-2.5 px-4">
                     <input
                       type="text"
                       defaultValue={a.remarks ?? ""}
-                      className="w-full border border-slate-300 rounded-md text-sm px-2 py-1 focus:ring-1 focus:ring-[#0EA5E9] outline-none"
+                      className="w-full border border-slate-300 rounded-md text-sm px-2 py-1 focus:ring-1 focus:ring-[#0EA5E9]"
+                      onChange={(e) => (a.remarks = e.target.value)}
                     />
                   </td>
-
-                  {/* Corrected Date with time */}
-                  <td className="py-2.5 px-4 text-center text-slate-600 text-sm">
+                  <td className="py-2.5 px-4 text-center text-slate-600">
                     {a.correctedDate
                       ? new Date(a.correctedDate * 1000).toLocaleString()
                       : "—"}
                   </td>
 
-                  {/* Save / Corrected button */}
-                    <td className="py-2.5 px-4 text-center">
-                    {a.correctedDate ? (
-                        <button
-                        disabled
-                        className="flex items-center justify-center gap-1 bg-slate-200 text-slate-600 px-3 py-1 rounded-md text-sm shadow-sm cursor-not-allowed"
-                        >
-                        Corrected
-                        </button>
-                    ) : (
-                        <button className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-3 py-1 rounded-md text-sm shadow-sm transition">
-                        Save
-                        </button>
-                    )}
-                    </td>
+                  {/* File Upload */}
+                  <td className="py-2.5 px-4 text-center">
+                    <label className="cursor-pointer flex justify-center items-center">
+                      <ArrowUpTrayIcon className="w-5 h-5 text-[#0EA5E9]" />
+                      <input
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.mp4,.pdf,.doc,.docx"
+                        className="hidden"
+                        onChange={(e) => (a.correctedFile = e.target.files[0])}
+                      />
+                    </label>
+                  </td>
 
+                  {/* Save button */}
+                  <td className="py-2.5 px-4 text-center">
+                    {a.correctedDate ? (
+                      <button
+                        disabled
+                        className="bg-slate-200 text-slate-600 px-3 py-1 rounded-md text-sm cursor-not-allowed"
+                      >
+                        Corrected
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleSave(a)}
+                        className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-3 py-1 rounded-md text-sm transition"
+                      >
+                        Save
+                      </button>
+                    )}
+                  </td>
                 </motion.tr>
               ))}
             </tbody>

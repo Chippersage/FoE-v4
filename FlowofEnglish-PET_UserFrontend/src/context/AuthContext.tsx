@@ -145,13 +145,47 @@ export const AuthProvider = ({ children }) => {
     checkCohort,
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-lg">
-        Loading authentication...
-      </div>
-    );
-  }
+if (isLoading) {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
+      }}
+    >
+      {/* Thin elegant circular loader */}
+      <div
+        style={{
+          width: "60px",
+          height: "60px",
+          border: "3px solid rgba(14,165,233,0.2)",
+          borderTop: "3px solid #0EA5E9",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          boxShadow: "0 0 8px rgba(14,165,233,0.3)",
+        }}
+      ></div>
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
+  );
+}
+
+
+
+
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

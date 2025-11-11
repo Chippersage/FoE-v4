@@ -7,6 +7,7 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUserContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
+import { XCircle } from "lucide-react"; // hover cross icon
 
 type NavbarProps = {
   toggleSidebar?: () => void;
@@ -15,6 +16,7 @@ type NavbarProps = {
 const Navbar: React.FC<NavbarProps> = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setIsAuthenticated, setUser } = useUserContext();
@@ -63,12 +65,15 @@ const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const handleMenuClick = (item) => {
-    if (item.path) {
+    // View Progress should work normally
+    if (item.title === "View Progress") {
       navigate(item.path);
       setMenuOpen(false);
-    } else {
-      toast("Coming soon...");
+      return;
     }
+
+    // all others (Profile, Help, Terms, About Program) disabled
+    toast("Coming soon...");
   };
 
   return (
@@ -100,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           </h1>
         </div>
 
-        {/* Right Section: Username + Avatar */}
+        {/* Right Section */}
         <div className="flex items-center gap-3 relative">
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-sm text-gray-500">Welcome back,</span>
@@ -128,15 +133,43 @@ const Navbar: React.FC<NavbarProps> = () => {
                 onMouseEnter={() => setMenuOpen(true)}
                 onMouseLeave={() => setMenuOpen(false)}
               >
-                {menuItems.map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleMenuClick(item)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] transition-all cursor-pointer"
-                  >
-                    {item.title}
-                  </button>
-                ))}
+                {menuItems.map((item, idx) => {
+                  const isDisabled =
+                    item.title !== "View Progress"; // only view-progress enabled
+                  const isHovered = hoveredItem === idx;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleMenuClick(item)}
+                      onMouseEnter={() => setHoveredItem(idx)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-all ${
+                        isDisabled
+                          ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] cursor-pointer"
+                      }`}
+                    >
+                      <span>{item.title}</span>
+
+                      {/* ❌ icon on hover for disabled items only */}
+                      {isDisabled && isHovered && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <XCircle
+                            size={16}
+                            className="text-gray-400 transition-all duration-150"
+                          />
+                        </motion.div>
+                      )}
+                    </button>
+                  );
+                })}
 
                 <div className="border-t border-gray-200 my-1" />
 
