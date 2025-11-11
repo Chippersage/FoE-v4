@@ -1,9 +1,15 @@
-// components/ContentRenderer.tsx
-import React, { useState, useEffect } from 'react';
+// @ts-nocheck
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Video as VideoIcon,
+  RotateCcw,
+  XCircle,
+  ChevronRight,
+} from "lucide-react";
 import QuizActivity from "./ActivityComponents/QuizActitivy";
-import PDFRenderer from './PDFRenderer';
-import { BookOpen, Mic,  FileText } from 'lucide-react';
-// import { BookOpen, Mic, ExternalLink, Clock, CheckCircle, FileText } from 'lucide-react';
+import PDFRenderer from "./PDFRenderer";
+import { useCourseContext } from "../context/CourseContext";
+import { useUserAttempt } from "../hooks/useUserAttempt";
 
 interface ContentRendererProps {
   type: string;
@@ -12,210 +18,298 @@ interface ContentRendererProps {
   className?: string;
 }
 
-// Configuration for different content types (only for redirect types)
-// const contentConfig = {
-//   medium: {
-//     icon: BookOpen,
-//     title: 'Medium Article',
-//     defaultDescription: 'Read this insightful article',
-//     bgGradient: 'from-emerald-50 to-green-100',
-//     borderColor: 'border-emerald-100',
-//     iconColor: 'text-emerald-600',
-//     buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
-//     loadingColor: 'border-emerald-600'
-//   },
-//   toastmasters: {
-//     icon: Mic,
-//     title: 'Toastmasters Content',
-//     defaultDescription: 'Explore this Toastmasters resource',
-//     bgGradient: 'from-blue-50 to-indigo-100',
-//     borderColor: 'border-blue-100',
-//     iconColor: 'text-blue-600',
-//     buttonColor: 'bg-blue-600 hover:bg-blue-700',
-//     loadingColor: 'border-blue-600'
-//   },
-//   assessment: {
-//     icon: FileText,
-//     title: 'Assessment',
-//     defaultDescription: 'Complete this assessment',
-//     bgGradient: 'from-purple-50 to-violet-100',
-//     borderColor: 'border-purple-100',
-//     iconColor: 'text-purple-600',
-//     buttonColor: 'bg-purple-600 hover:bg-purple-700',
-//     loadingColor: 'border-purple-600'
-//   }
-// };
-
-
-const handleTriggerSubmit = () => {
-  console.log("Quiz submitted");
-};
-
-const handleSetSubmissionPayload = (payload: {
-  userAttemptFlag: boolean;
-  userAttemptScore: number;
-} | null) => {
-  console.log("Submission payload:", payload);
-};
-
-const ContentRenderer: React.FC<ContentRendererProps> = ({ 
-  type, 
-  url, 
-  title, 
-  className = "" 
+const ContentRenderer: React.FC<ContentRendererProps> = ({
+  type,
+  url,
+  title,
+  className = "",
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [scorePercentage, setScorePercentage] = useState<number>(0);
-    useEffect(() => {
-    console.log("Rendering content:", url);
-  }, [url]);
+  const { currentContent, stages, setCurrentContent, canGoNext, setCanGoNext, remainingTime, setRemainingTime } = useCourseContext();
+  const { recordAttempt } = useUserAttempt();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [attemptRecorded, setAttemptRecorded] = useState(false);
+  const [showNextOverlay, setShowNextOverlay] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // ----------------------------------------------------------
+  // Detect fullscreen mode
+  // ----------------------------------------------------------
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fsElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      setIsFullscreen(!!fsElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+    };
+  }, []);
+
+  // ----------------------------------------------------------
+  // Reset state when content changes
+  // ----------------------------------------------------------
   useEffect(() => {
     setIsLoading(true);
+    setAttemptRecorded(false);
+    setShowNextOverlay(false);
+    setCountdown(5);
   }, [url]);
 
-  const handleContentLoaded = () => {
-    setIsLoading(false);
+  // ----------------------------------------------------------
+  // Handle video progress and mark attempt
+  // ----------------------------------------------------------
+  const handleVideoProgress = async (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    const progress = (video.currentTime / video.duration) * 100;
+
+    if (progress >= 95 && !attemptRecorded) {
+      setAttemptRecorded(true);
+      try {
+        await recordAttempt();
+        window.dispatchEvent(
+          new CustomEvent("updateSidebarCompletion", {
+            detail: { subconceptId: currentContent.subconceptId },
+          })
+        );
+        console.log("Attempt recorded for:", currentContent.subconceptId);
+      } catch (err) {
+        console.error("Error recording user attempt:", err);
+      }
+    }
   };
 
-  const handleError = () => {
-    setIsLoading(false);
+  // ----------------------------------------------------------
+  // When video ends, show overlay
+  // ----------------------------------------------------------
+  const handleVideoEnded = () => {
+    if (!showNextOverlay) {
+      setShowNextOverlay(true);
+      setCountdown(5);
+    }
   };
 
+  // ----------------------------------------------------------
+  // Countdown logic - auto click next button when done
+  // ----------------------------------------------------------
+  useEffect(() => {
+    if (!showNextOverlay) return;
+
+    if (countdown === 0) {
+      const nextBtn = document.querySelector("#next-subconcept-btn");
+      if (nextBtn) {
+        nextBtn.click();
+        console.log("Auto-clicked NextSubconceptButton after countdown.");
+      } else {
+        console.warn("NextSubconceptButton not found in DOM.");
+      }
+
+      setShowNextOverlay(false);
+      setCountdown(5);
+      return;
+    }
+
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [showNextOverlay, countdown]);
+
+  // ----------------------------------------------------------
+  // Overlay component shown after video ends
+  // ----------------------------------------------------------
+  const NextOverlay = () =>
+    showNextOverlay && (
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center text-white z-20 bg-black/60 backdrop-blur-sm transition-opacity animate-fadeIn ${
+          isFullscreen ? "text-[1rem]" : ""
+        }`}
+      >
+        <div className="bg-gradient-to-br from-[#0EA5E9]/95 to-[#5bc3cd]/95 p-6 rounded-2xl shadow-2xl text-center w-80 md:w-[28rem]">
+          <div className="flex flex-col items-center gap-3">
+            <VideoIcon size={isFullscreen ? 60 : 48} className="text-white" />
+            <h2 className="text-lg md:text-2xl font-bold">
+              Next Topic starting in{" "}
+              <span className="text-yellow-200 ml-2">{countdown}</span> sec
+            </h2>
+            <p className="text-sm text-gray-100 mt-1">
+              Click below to replay or go to the next topic.
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              onClick={() => {
+                const video = videoRef.current;
+                if (video) {
+                  video.currentTime = 0;
+                  video.play();
+                }
+                setShowNextOverlay(false);
+                setCountdown(5);
+              }}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md text-sm font-medium transition-all"
+            >
+              <RotateCcw size={16} /> Replay
+            </button>
+
+            <button
+              onClick={() => {
+                const btn = document.querySelector("#next-subconcept-btn");
+                btn?.click();
+              }}
+              className="flex items-center gap-2 bg-white text-[#0EA5E9] hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold transition-all"
+            >
+              Go To Next <ChevronRight size={16} />
+            </button>
+
+            <button
+              onClick={() => {
+                setShowNextOverlay(false);
+                setCountdown(5);
+              }}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-all"
+            >
+              <XCircle size={16} /> Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+  // ----------------------------------------------------------
+  // Loading spinner
+  // ----------------------------------------------------------
+  const renderLoading = () => (
+    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+      <div className="animate-spin h-6 w-6 border-b-2 border-blue-500 rounded-full" />
+    </div>
+  );
+
+  // ----------------------------------------------------------
+  // Type-based content rendering
+  // ----------------------------------------------------------
   if (!url) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
+      <div
+        className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
+      >
         <p>No content available</p>
       </div>
     );
   }
 
-  const renderLoading = () => (
-    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-5">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading...</p>
-      </div>
-    </div>
-  );
-
   switch (type) {
-    case 'youtube':
-    case 'ted':
+    case "video":
       return (
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
-          <iframe
+          <video
+            ref={videoRef}
+            controls
+            controlsList="nodownload noremoteplayback"
+            autoPlay
+            className="w-full h-full bg-black rounded-xl"
             src={url}
-            className="w-full h-full rounded-xl"
-            allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            title={title || 'Embedded video'}
-            frameBorder="0"
-            onLoad={handleContentLoaded}
-            onError={handleError}
-            loading="lazy"
+            onContextMenu={(e) => e.preventDefault()}
+            onLoadedData={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            onTimeUpdate={handleVideoProgress}
+            onEnded={handleVideoEnded}
           />
+          <NextOverlay />
         </div>
       );
 
-    case 'pdf':
+    case "pdf":
+    case "assignment_pdf":
       return (
-        <div className={`w-full h-full ${className}`}>
-          <PDFRenderer
-            pdfUrl={url}
-            title={title}
-          />
-        </div>
-      );
-
-case "assignment_image":
-case "image":
-  return (
-    <div className={`relative w-full h-full bg-white ${className}`}>
-      {isLoading && renderLoading()}
-
-      <img
-        src={url}
-        alt={title || "Image content"}
-        className="w-full h-full object-contain relative z-10"
-        onLoad={() => {
-          setIsLoading(false);
-          console.log("✅ Image loaded:", url);
-        }}
-        onError={() => setIsLoading(false)}
-      />
-    </div>
-  );
-
-
-
-    case 'googleform':
-      return (
-        <div className={`relative w-full h-full ${className}`}>
+        <div className={`relative w-full h-full bg-white ${className}`}>
           {isLoading && renderLoading()}
-          <iframe
+          <PDFRenderer pdfUrl={url} title={title} />
+        </div>
+      );
+
+    case "image":
+    case "assignment_image":
+      return (
+        <div
+          className={`relative w-full h-full flex items-center justify-center bg-white ${className}`}
+        >
+          {isLoading && renderLoading()}
+          <img
             src={url}
-            className="w-full h-full rounded-xl bg-white"
-            title={title || 'Google Form'}
-            frameBorder="0"
-            onLoad={handleContentLoaded}
-            onError={handleError}
-            loading="lazy"
+            alt={title || "Image content"}
+            className="max-w-full max-h-full object-contain rounded-xl"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
           />
         </div>
       );
 
-    case 'medium':
-    case 'toastmasters':
-    case 'assessment':
-      // These types will use the redirect logic (if you still want to keep it for these)
-      // For now, let's just show a simple iframe like googleform
+    case "googleform":
+    case "medium":
+    case "toastmasters":
+    case "assessment":
       return (
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
             src={url}
             className="w-full h-full rounded-xl bg-white"
-            title={title || 'External Content'}
+            title={title || "External Content"}
             frameBorder="0"
-            onLoad={handleContentLoaded}
-            onError={handleError}
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
             loading="lazy"
           />
         </div>
       );
-    
+
     case "mcq":
       return (
         <div className={`relative w-full h-full ${className}`}>
           <QuizActivity
-            triggerSubmit={handleTriggerSubmit}
+            triggerSubmit={() => console.log("Quiz submitted")}
             xmlUrl={url}
             key={url}
-            setScorePercentage={setScorePercentage}
-            subconceptMaxscore={10} // ✅ You can pass actual total marks from parent
-            setSubmissionPayload={handleSetSubmissionPayload}
+            subconceptMaxscore={10}
+            setSubmissionPayload={(payload) =>
+              console.log("Submission payload:", payload)
+            }
           />
         </div>
       );
 
-    case 'video':
     default:
       return (
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
-          <video 
-            controls 
-            autoPlay
-            className="w-full h-full bg-black rounded-xl"
+          <iframe
             src={url}
-            onLoadStart={handleContentLoaded}
-            onLoadedData={handleContentLoaded}
-            onError={handleError}
-          >
-            Your browser does not support the video tag.
-          </video>
+            className="w-full h-full rounded-xl bg-white"
+            title={title || "External Content"}
+            frameBorder="0"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            loading="lazy"
+          />
         </div>
       );
   }

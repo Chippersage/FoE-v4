@@ -55,6 +55,7 @@ const LoginPage = () => {
       const message =
         err.response?.data?.error || "An unexpected error occurred.";
       setError(message);
+
       if (
         err.response?.data?.deactivationDetails ||
         err.response?.data?.contactInfo
@@ -81,24 +82,29 @@ const LoginPage = () => {
         />
       )}
 
-      {/* Centered container for card */}
-      <div className="flex justify-center min-h-screen items-center bg-[#F8FAFB]">
-        <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-md border border-slate-200 p-6 sm:p-8">
-          {/* Logo + Title */}
-          <div className="text-center mb-6">
+      {/* Responsive Center Layout */}
+      <div className="flex justify-center items-center min-h-screen bg-[#F8FAFB] px-4 sm:px-0">
+        <div className="w-full max-w-[380px] sm:max-w-[420px] bg-white rounded-2xl shadow-md border border-slate-200 pt-0 px-5 pb-6 sm:px-8 sm:pb-8 flex flex-col justify-center">
+          
+          {/* Logo + Title Section */}
+          <div className="text-center mb-3">
             <img
-              src="/icons/FoE_logo.png"
+              src="/icons/chipper-sage-logo.png"
               alt="Company Logo"
-              className="mx-auto w-16 h-16 sm:w-20 sm:h-20 object-contain mb-3"
+              className="mx-auto w-24 h-24 sm:w-28 sm:h-28 object-contain mb-1 block"
+              style={{ padding: "0px", display: "block" }}
             />
-            <h1 className="text-2xl font-bold text-slate-800">Flow of English</h1>
-            <p className="text-slate-600 text-sm mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 leading-tight">
+              Professional English for Teachers
+            </h1>
+            <p className="text-slate-600 text-xs sm:text-sm mt-1">
               Master English, One Step at a Time
             </p>
           </div>
 
-          {/* --- FORM STARTS HERE --- */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form Section */}
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            {/* User ID Field */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 User ID
@@ -113,6 +119,7 @@ const LoginPage = () => {
               />
             </div>
 
+            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Password
@@ -140,6 +147,7 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Access Level (Learner/Mentor) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Access Level
@@ -175,32 +183,34 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-2 text-center">
                 <p className="text-red-700 text-sm font-medium">{error}</p>
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#0EA5E9] hover:bg-[#0284C7] disabled:bg-[#7DD3FC] text-white font-medium text-sm py-2 rounded-md transition"
+              className="w-full bg-[#0EA5E9] hover:bg-[#0284C7] disabled:bg-[#7DD3FC] text-white font-medium text-sm py-2 rounded-md transition cursor-pointer"
             >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
-          {/* Support Section */}
-          <div className="mt-6 pt-4 border-t border-slate-200 text-center space-y-2">
+          {/* Support Links */}
+          <div className="mt-5 pt-4 border-t border-slate-200 text-center space-y-2">
             <a
-              href="mailto:support@mindfultalk.in?subject=Platform%20Support%20Request"
+              href="mailto:support@chippersage.com?subject=Platform%20Support%20Request"
               className="text-[#0EA5E9] hover:text-[#0284C7] text-sm font-medium"
             >
               Need technical support?
             </a>
             <br />
             <a
-              href="mailto:support@mindfultalk.in?subject=Platform%20Account%20Request"
+              href="mailto:support@chippersage.com?subject=Platform%20Account%20Request"
               className="text-slate-600 hover:text-slate-700 text-sm"
             >
               Request new account access

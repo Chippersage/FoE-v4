@@ -12,7 +12,7 @@ interface FileUploaderProps {
  * FileUploader Component
  * ----------------------
  * - Automatically opens file picker when mounted.
- * - Accepts only PDF, DOCX, and image files (PNG, JPG, JPEG, GIF).
+ * - Accepts PDF, DOC, DOCX, image, audio, and video files.
  * - Limits file size to 10MB.
  * - Calls onUpload when a valid file is selected.
  * - Calls onClose if user cancels the file picker.
@@ -45,19 +45,28 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUpload, onClose }) => {
       return;
     }
 
-    // Allowed file types
+    // Allowed file types (documents, images, audio, video)
     const allowedTypes = [
       "application/pdf",
+      "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "image/png",
       "image/jpeg",
       "image/jpg",
       "image/gif",
+      "audio/mpeg",
+      "audio/ogg",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+      "video/x-msvideo",
     ];
 
     // Validate file type
     if (!allowedTypes.includes(file.type)) {
-      alert("Invalid file type! Only PDF, DOCX, and image files (PNG, JPG, JPEG, GIF) are allowed.");
+      alert(
+        "Invalid file type! Only PDF, DOC, DOCX, Image, Audio, and Video files are allowed."
+      );
       event.target.value = "";
       return;
     }
@@ -79,7 +88,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUpload, onClose }) => {
       ref={fileInputRef}
       type="file"
       className="hidden"
-      accept=".pdf,.docx,.png,.jpg,.jpeg,.gif"
+      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.mp3,.ogg,.mp4,.webm,.mov,.avi"
       onChange={handleFileChange}
     />
   );

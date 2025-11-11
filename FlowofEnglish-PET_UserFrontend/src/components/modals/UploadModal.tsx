@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, FileIcon } from "lucide-react";
 import axios from "axios";
 import { SuccessModal } from "./SuccessModal";
-import { useCourseContext } from "../../pages/CoursePage";
+import { useUserContext } from "../../context/AuthContext";
+import { useCourseContext } from "../../context/CourseContext";
 
 interface RecordedMedia {
   type: "audio" | "video" | "photo";
@@ -26,22 +27,19 @@ const UploadModal: React.FC<UploadModalProps> = ({
   recordedMedia,
   onUploadSuccess,
 }) => {
+  const { user, cohort } = useUserContext(); // Access user + cohort globally
   const courseContext = useCourseContext();
-  
-  // Safely destructure with fallbacks
+
   const currentContent = courseContext?.currentContent || {};
-  const user = courseContext?.user || {};
-  const selectedCohort = courseContext?.selectedCohort || {};
-  const programId = courseContext?.programId || "";
-  
+  const programId = courseContext?.programId || cohort?.programId || "";
+  const cohortId = cohort?.cohortId || "";
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
-
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
   // Manage preview URL
   useEffect(() => {
@@ -81,25 +79,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
     setIsLoading(true);
 
     try {
+      if (!user?.userId || !cohortId || !programId) {
+        throw new Error("User or cohort details are missing. Please reselect your cohort.");
+      }
+
       const formData = new FormData();
-
-      // Use data from context with safe access
-      const stageId = currentContent?.stageId || "";
-      const unitId = currentContent?.unitId || "";
-      const subconceptId = currentContent?.subconceptId || "";
-      const programIdValue = programId || selectedCohort?.programId || "";
-      const cohortId = selectedCohort?.cohortId || "";
-      const userId = user?.userId || "";
+      const { stageId, unitId, subconceptId } = currentContent;
       const sessionId = localStorage.getItem("sessionId") || "";
-      
 
+      // Prepare file or media
       if (file) {
         const ext = file.name.split(".").pop() || "dat";
-        formData.append(
-          "file",
-          file,
-          `${userId}-${cohortId}-${programIdValue}-${subconceptId}.${ext}`
-        );
+        formData.append("file", file, `${user.userId}-${cohortId}-${programId}-${subconceptId}.${ext}`);
       } else if (recordedMedia) {
         const extension =
           recordedMedia.type === "audio"
@@ -111,54 +102,47 @@ const UploadModal: React.FC<UploadModalProps> = ({
         formData.append(
           "file",
           recordedMedia.blob,
-          `${userId}-${cohortId}-${programIdValue}-${subconceptId}.${extension}`
+          `${user.userId}-${cohortId}-${programId}-${subconceptId}.${extension}`
         );
       } else {
         throw new Error("No file or media found for upload.");
       }
 
-      const date = new Date();
+      // Generate timestamps in IST
+      const now = new Date();
       const ISTOffset = 5.5 * 60 * 60 * 1000;
-      const ISTTime = new Date(date.getTime() + ISTOffset);
-      const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
-      
-      // Start time: 15 seconds before current time
-      const startTime = new Date(date.getTime() - 15000); // Subtract 15 seconds
-      const ISTStartTime = new Date(startTime.getTime() + ISTOffset);
-      const userAttemptStartTimestamp = ISTStartTime.toISOString().slice(0, 19);
+      const ISTNow = new Date(now.getTime() + ISTOffset);
+      const userAttemptEndTimestamp = ISTNow.toISOString().slice(0, 19);
+      const userAttemptStartTimestamp = new Date(now.getTime() - 15000 + ISTOffset)
+        .toISOString()
+        .slice(0, 19);
 
-      formData.append("userId", userId);
+      // Append all metadata
+      formData.append("userId", user.userId);
       formData.append("cohortId", cohortId);
-      formData.append("programId", programIdValue);
-      formData.append("stageId", stageId);
-      formData.append("unitId", unitId);
-      formData.append("subconceptId", subconceptId);
+      formData.append("programId", programId);
+      formData.append("stageId", stageId || "");
+      formData.append("unitId", unitId || "");
+      formData.append("subconceptId", subconceptId || "");
       formData.append("sessionId", sessionId ?? "");
-      formData.append(
-        "userAttemptStartTimestamp",
-        userAttemptStartTimestamp ?? ""
-      );
-      formData.append("userAttemptEndTimestamp", formattedISTTimestamp);
+      formData.append("userAttemptStartTimestamp", userAttemptStartTimestamp);
+      formData.append("userAttemptEndTimestamp", userAttemptEndTimestamp);
       formData.append("userAttemptScore", "0");
       formData.append("userAttemptFlag", "true");
 
       console.log("FormData being sent:", {
-        userId: userId,
-        cohortId: cohortId,
-        programId: programIdValue,
-        stageId: stageId,
-        unitId: unitId,
-        subconceptId: subconceptId,
-        sessionId: sessionId
+        userId: user.userId,
+        cohortId,
+        programId,
+        stageId,
+        unitId,
+        subconceptId,
+        sessionId,
       });
 
-      const response = await axios.post(
-        `${API_BASE_URL}/assignment-with-attempt/submit`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/assignment-with-attempt/submit`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (response.status === 200) {
         setShowSuccessModal(true);
@@ -167,11 +151,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
         throw new Error("Upload failed. Please try again.");
       }
     } catch (error: any) {
-      setErrorMessage(
-        error.response?.data?.message ||
-          error.message ||
-          "An unknown error occurred."
-      );
+      console.error("Upload Error:", error);
+      setErrorMessage(error.response?.data?.message || error.message || "An unknown error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +179,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
               exit={{ scale: 0.9, opacity: 0 }}
               className="relative w-full max-w-lg p-6 bg-white rounded-[3px] shadow-xl"
             >
-              {/* Close Button */}
               <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -207,12 +187,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
                 <X size={24} />
               </button>
 
-              {/* Header */}
               <h2 className="text-2xl font-bold mb-4">
                 {file ? "Upload File" : `Upload ${recordedMedia?.type ?? ""}`}
               </h2>
 
-              {/* File Preview */}
               {file && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -222,13 +200,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={handleFileClick}
                 >
                   <FileIcon className="w-8 h-8 mr-2 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700 truncate">
-                    {file.name}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
                 </motion.div>
               )}
 
-              {/* Recorded Media Preview */}
               {recordedMedia && previewUrl && (
                 <div className="mt-4 p-2 rounded-md bg-gray-100">
                   {recordedMedia.type === "audio" ? (
@@ -242,21 +217,13 @@ const UploadModal: React.FC<UploadModalProps> = ({
                       Your browser does not support the video element.
                     </video>
                   ) : (
-                    <img
-                      src={previewUrl}
-                      alt="Captured"
-                      className="w-full rounded-lg"
-                    />
+                    <img src={previewUrl} alt="Captured" className="w-full rounded-lg" />
                   )}
                 </div>
               )}
 
-              {/* Error Message */}
-              {errorMessage && (
-                <p className="text-sm text-red-500 mt-4">{errorMessage}</p>
-              )}
+              {errorMessage && <p className="text-sm text-red-500 mt-4">{errorMessage}</p>}
 
-              {/* Submit Button */}
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSubmit}
@@ -280,11 +247,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-      />
+      <SuccessModal isOpen={showSuccessModal} onClose={handleSuccessModalClose} />
     </>
   );
 };

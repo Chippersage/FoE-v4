@@ -1,83 +1,124 @@
 // @ts-nocheck
+import React, { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import LogInPage from "./_auth/forms/LoginForm";
-import CohortSelectionPage from "./pages/CohortSelectionPage";
-import CoursePage from "./pages/CoursePage";
-import ViewProgressPage from "./pages/ViewProgressPage";
-import NotFoundPage from "./pages/NotFoundPage";
-import RootLayout from "./pages/RootLayout";
 import { useUserContext } from "./context/AuthContext";
+import Loader from "./components/Loader";
+
+// Lazy load all pages
+const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
+const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
+const CoursePage = lazy(() => import("./pages/CoursePage"));
+const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
+const AssignmentsPage = lazy(() => import("./pages/AssignmentsPage"));
+const ViewSubmissions = lazy(() => import("./pages/ViewSubmissions"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const RootLayout = lazy(() => import("./pages/RootLayout"));
 
 const App: React.FC = () => {
   const { user } = useUserContext();
 
+  // Validate user role
   const isValidUserType =
     user?.userType?.toLowerCase() === "learner" ||
     user?.userType?.toLowerCase() === "mentor";
 
+  // Authentication + role check
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
 
   return (
-    <Routes>
-      {/* Auth Route */}
-      <Route
-        path="/sign-in"
-        element={
-          isAuthenticatedAndValid ? <Navigate to="/select-cohort" /> : <LogInPage />
-        }
-      />
-
-      {/* All protected pages inside RootLayout */}
-      <Route element={<RootLayout />}>
+    <Suspense fallback={<Loader />}>
+      <Routes>
+        {/* ---------------- AUTHENTICATION ---------------- */}
         <Route
-          path="/select-cohort"
+          path="/sign-in"
           element={
             isAuthenticatedAndValid ? (
-              <CohortSelectionPage />
+              <Navigate to="/select-cohort" />
+            ) : (
+              <LogInPage />
+            )
+          }
+        />
+
+        {/* ---------------- PROTECTED LAYOUT ---------------- */}
+        <Route element={<RootLayout />}>
+          {/* Select cohort before proceeding */}
+          <Route
+            path="/select-cohort"
+            element={
+              isAuthenticatedAndValid ? (
+                <CohortSelectionPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* Course page (main learning area) */}
+          <Route
+            path="/course/:programId"
+            element={
+              isAuthenticatedAndValid ? (
+                <CoursePage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* View Progress page */}
+          <Route
+            path="/view-progress"
+            element={
+              isAuthenticatedAndValid ? (
+                <ViewProgressPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* Assignments page */}
+          <Route
+            path="/assignments"
+            element={
+              isAuthenticatedAndValid ? (
+                <AssignmentsPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* Submissions page */}
+          <Route
+            path="/view-submissions"
+            element={
+              isAuthenticatedAndValid ? (
+                <ViewSubmissions />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+        </Route>
+
+        {/* ---------------- DEFAULT ROOT REDIRECT ---------------- */}
+        <Route
+          path="/"
+          element={
+            isAuthenticatedAndValid ? (
+              <Navigate to="/select-cohort" />
             ) : (
               <Navigate to="/sign-in" />
             )
           }
         />
 
-        {/* ✅ Added programId parameter here */}
-        <Route
-          path="/course/:programId"
-          element={
-            isAuthenticatedAndValid ? (
-              <CoursePage />
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-
-        <Route
-          path="/view-progress"
-          element={
-            isAuthenticatedAndValid ? (
-              <ViewProgressPage />
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
-        />
-      </Route>
-
-      {/* Default Root */}
-      <Route
-        path="/"
-        element={
-          isAuthenticatedAndValid ? (
-            <Navigate to="/select-cohort" />
-          ) : (
-            <Navigate to="/sign-in" />
-          )
-        }
-      />
-
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* ---------------- 404 CATCH ---------------- */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 };
 

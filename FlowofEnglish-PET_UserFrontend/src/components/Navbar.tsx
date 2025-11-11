@@ -7,14 +7,16 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUserContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
+import { XCircle } from "lucide-react"; // hover cross icon
 
 type NavbarProps = {
   toggleSidebar?: () => void;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
+const Navbar: React.FC<NavbarProps> = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setIsAuthenticated, setUser } = useUserContext();
@@ -24,14 +26,13 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const isSelectCohortPage = location.pathname === "/select-cohort";
 
   const menuItems = [
-    { title: "Profile" },
-    { title: "View Progress" },
-    { title: "About Program" },
-    { title: "Help" },
-    { title: "Terms of Use" },
+    { title: "Profile", path: "/profile" },
+    { title: "View Progress", path: "/view-progress" },
+    { title: "About Program", path: "/about-program" },
+    { title: "Help", path: "/help" },
+    { title: "Terms of Use", path: "/terms" },
   ];
 
-  // Logout handler
   const handleLogout = async () => {
     setIsLoading(true);
     try {
@@ -63,6 +64,18 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     }
   };
 
+  const handleMenuClick = (item) => {
+    // View Progress should work normally
+    if (item.title === "View Progress") {
+      navigate(item.path);
+      setMenuOpen(false);
+      return;
+    }
+
+    // all others (Profile, Help, Terms, About Program) disabled
+    toast("Coming soon...");
+  };
+
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm"
@@ -71,16 +84,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
     >
       <div className="flex items-center justify-between px-4 py-2 h-14">
-        {/* Sidebar Toggle (Visible on Mobile) */}
-        {toggleSidebar && (
-          <button
-            onClick={toggleSidebar}
-            className="md:hidden text-[#0EA5E9] text-2xl font-bold"
-          >
-            ☰
-          </button>
-        )}
-
         {/* Branding */}
         <div
           className={`flex items-center gap-2 select-none ${
@@ -93,16 +96,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           }}
         >
           <img
-            src="/icons/FoE_logo.png"
+            src="/icons/chipper-sage-logo.png"
             alt="Logo"
-            className="w-8 h-8 object-contain"
+            className="w-20 h-20 object-contain"
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">
-            Flow of English
+            Professional English for Teachers
           </h1>
         </div>
 
-        {/* Right Section: Username + Avatar */}
+        {/* Right Section */}
         <div className="flex items-center gap-3 relative">
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-sm text-gray-500">Welcome back,</span>
@@ -111,7 +114,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             </span>
           </div>
 
-          {/* Avatar */}
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0EA5E9] flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
             onMouseEnter={() => setMenuOpen(true)}
@@ -120,7 +122,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             {userName?.trim().charAt(0).toUpperCase()}
           </div>
 
-          {/* Dropdown Menu */}
           <AnimatePresence>
             {menuOpen && (
               <motion.div
@@ -132,14 +133,43 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                 onMouseEnter={() => setMenuOpen(true)}
                 onMouseLeave={() => setMenuOpen(false)}
               >
-                {menuItems.map((item, idx) => (
-                  <button
-                    key={idx}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] transition-all cursor-pointer"
-                  >
-                    {item.title}
-                  </button>
-                ))}
+                {menuItems.map((item, idx) => {
+                  const isDisabled =
+                    item.title !== "View Progress"; // only view-progress enabled
+                  const isHovered = hoveredItem === idx;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleMenuClick(item)}
+                      onMouseEnter={() => setHoveredItem(idx)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-all ${
+                        isDisabled
+                          ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] cursor-pointer"
+                      }`}
+                    >
+                      <span>{item.title}</span>
+
+                      {/* ❌ icon on hover for disabled items only */}
+                      {isDisabled && isHovered && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <XCircle
+                            size={16}
+                            className="text-gray-400 transition-all duration-150"
+                          />
+                        </motion.div>
+                      )}
+                    </button>
+                  );
+                })}
 
                 <div className="border-t border-gray-200 my-1" />
 
@@ -149,7 +179,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                   className={`w-full text-left px-4 py-2 text-sm font-medium transition-all ${
                     isLoading
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-red-600 hover:bg-red-50 hover:text-red-700"
+                      : "text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
                   }`}
                 >
                   {isLoading ? "Logging out..." : "Logout"}

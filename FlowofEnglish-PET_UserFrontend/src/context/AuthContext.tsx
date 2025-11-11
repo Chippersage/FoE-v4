@@ -9,6 +9,12 @@ type User = {
   userType: "learner" | "mentor" | "";
 };
 
+type Cohort = {
+  cohortId: string;
+  programId: string;
+  cohortName: string;
+} | null;
+
 const INITIAL_USER_STATE: User = {
   userId: "",
   userName: "",
@@ -20,11 +26,12 @@ interface AuthContextType {
   user: User;
   isLoading: boolean;
   isAuthenticated: boolean;
+  cohort: Cohort;
   setUser: React.Dispatch<React.SetStateAction<User>>;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  setCohort: React.Dispatch<React.SetStateAction<Cohort>>;
   checkAuthUser: () => Promise<boolean>;
-  selectedCohort: any;
-  setSelectedCohort: (cohort: any) => void;
+  checkCohort: () => boolean;
   logout: () => void;
 }
 
@@ -32,11 +39,12 @@ const INITIAL_STATE: AuthContextType = {
   user: INITIAL_USER_STATE,
   isLoading: false,
   isAuthenticated: false,
+  cohort: null,
   setUser: () => {},
   setIsAuthenticated: () => {},
+  setCohort: () => {},
   checkAuthUser: async () => false,
-  selectedCohort: null,
-  setSelectedCohort: () => {},
+  checkCohort: () => false,
   logout: () => {},
 };
 
@@ -60,49 +68,22 @@ export const AuthProvider = ({ children }) => {
     return stored || INITIAL_USER_STATE;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // selectedCohort persisted + exposed via context
-  const [selectedCohort, setSelectedCohortState] = useState(() => {
+  const [cohort, setCohort] = useState<Cohort>(() => {
     const stored = safeParse(localStorage.getItem("selectedCohort"));
     return stored || null;
   });
 
-  const setSelectedCohort = (cohort) => {
-    // Accept either full object or null
-    setSelectedCohortState((prev) => {
-      // If cohort is null/undefined => clear
-      if (!cohort) {
-        localStorage.removeItem("selectedCohort");
-        return null;
-      }
-
-      // If previous exists and cohort is partial, merge
-      if (prev && typeof prev === "object") {
-        const merged = { ...prev, ...cohort };
-        localStorage.setItem("selectedCohort", JSON.stringify(merged));
-        return merged;
-      }
-
-      // Otherwise set cohort directly
-      localStorage.setItem("selectedCohort", JSON.stringify(cohort));
-      return cohort;
-    });
-  };
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const logout = () => {
     setUser(INITIAL_USER_STATE);
+    setCohort(null);
     setIsAuthenticated(false);
-    setSelectedCohort(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("selectedCohort");
+    localStorage.removeItem("sessionId");
   };
-
-  useEffect(() => {
-    console.log("Auth Debug => user:", user);
-    console.log("Auth Debug => isAuthenticated:", isAuthenticated);
-    console.log("Auth Debug => selectedCohort:", selectedCohort);
-  }, [user, isAuthenticated, selectedCohort]);
 
   const checkAuthUser = async () => {
     try {
@@ -121,6 +102,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkCohort = () => {
+    try {
+      const stored = safeParse(localStorage.getItem("selectedCohort"));
+      if (stored && stored.cohortId && stored.programId) {
+        setCohort(stored);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Cohort check error:", err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       const ok = await checkAuthUser();
@@ -131,16 +126,11 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const currentPath = window.location.pathname;
-      if (!selectedCohort && !["/select-cohort", "/sign-in"].includes(currentPath)) {
-        navigate("/select-cohort");
-      }
-
       setIsLoading(false);
     };
 
     init();
-  }, [navigate, selectedCohort]);
+  }, [navigate]);
 
   const value = {
     user,
@@ -149,18 +139,53 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     setIsAuthenticated,
     checkAuthUser,
-    selectedCohort,
-    setSelectedCohort,
     logout,
+    cohort,
+    setCohort,
+    checkCohort,
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-lg">
-        Loading authentication...
-      </div>
-    );
-  }
+if (isLoading) {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
+      }}
+    >
+      {/* Thin elegant circular loader */}
+      <div
+        style={{
+          width: "60px",
+          height: "60px",
+          border: "3px solid rgba(14,165,233,0.2)",
+          borderTop: "3px solid #0EA5E9",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          boxShadow: "0 0 8px rgba(14,165,233,0.3)",
+        }}
+      ></div>
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
+  );
+}
+
+
+
+
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
