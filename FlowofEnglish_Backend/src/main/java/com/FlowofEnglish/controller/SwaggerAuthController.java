@@ -18,8 +18,8 @@ public class SwaggerAuthController {
 
     @GetMapping("/login")
     public String showLoginPage(@RequestParam(value = "error", required = false) String error,
-                               @RequestParam(value = "logout", required = false) String logout,
-                               Model model) {
+                                @RequestParam(value = "logout", required = false) String logout,
+                                Model model) {
         if (error != null) {
             model.addAttribute("error", true);
         }
@@ -31,9 +31,9 @@ public class SwaggerAuthController {
 
     @PostMapping("/authenticate")
     public String authenticate(@RequestParam String userId,
-                              @RequestParam String password,
-                              HttpSession session,
-                              RedirectAttributes redirectAttributes) {
+                                @RequestParam String password,
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
 
         try {
             SuperAdmin superAdmin = superAdminService.findByUserId(userId);

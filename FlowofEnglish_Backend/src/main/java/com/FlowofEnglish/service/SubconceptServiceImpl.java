@@ -4,6 +4,9 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.cache.annotation.*;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -393,150 +396,141 @@ public class SubconceptServiceImpl implements SubconceptService {
  
 
     @Override
+    @Transactional
     @CacheEvict(value = {"subconcepts", "subconceptDTOs"}, allEntries = true)
     public Map<String, Object> updateSubconceptsCSV(MultipartFile file) {
-        logger.info("Starting CSV update process for file: {}", file.getOriginalFilename());
-        
+        logger.info("Starting CSV update process for file: {}", file != null ? file.getOriginalFilename() : "null");
+
         Map<String, Object> result = new HashMap<>();
-        int updatedCount = 0;
-        int failedCount = 0;
-        int notFoundCount = 0;
+        int updatedCount = 0, failedCount = 0, notFoundCount = 0;
         List<String> failedIds = new ArrayList<>();
         List<String> notFoundIds = new ArrayList<>();
         List<String> updateLogs = new ArrayList<>();
 
-        if (file.isEmpty()) {
-            logger.error("Uploaded file is empty");
+        if (file == null || file.isEmpty()) {
             throw new RuntimeException("File is empty");
         }
 
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
             List<String[]> records = reader.readAll();
-            
-            // Validate header row exists
-            if (records.isEmpty()) {
-                logger.error("CSV file is empty");
-                throw new RuntimeException("CSV file is empty");
-            }
-            
-            logger.info("Processing {} records from CSV file", records.size() - 1);
-            
-            // Read and validate header row
+            if (records.isEmpty()) throw new RuntimeException("CSV file is empty");
+
+            logger.info("Processing {} records (including header)", records.size());
+
+            // Map headers
             String[] headers = records.get(0);
             Map<String, Integer> headerMap = new HashMap<>();
-            
-            // Create header mapping
             for (int i = 0; i < headers.length; i++) {
                 headerMap.put(headers[i].trim().toLowerCase(), i);
             }
-            
-            // Validate required subconceptId column exists
+
             if (!headerMap.containsKey("subconceptid")) {
-                logger.error("CSV must contain 'subconceptId' column");
                 throw new RuntimeException("CSV must contain 'subconceptId' column");
             }
-            
-            int subconceptIdIndex = headerMap.get("subconceptid");
-            logger.debug("Found subconceptId column at index: {}", subconceptIdIndex);
-            
-            // Process data rows
+
+            Integer subconceptIdIndex = headerMap.get("subconceptid");
+            Integer conceptIndex = headerMap.get("conceptid");
+            Integer contentIndex = headerMap.get("contentid");
+
             for (int i = 1; i < records.size(); i++) {
                 String[] record = records.get(i);
                 int lineNumber = i + 1;
-                
+
                 try {
-                    // Skip rows with insufficient data
                     if (record.length <= subconceptIdIndex) {
-                        String error = "Line " + lineNumber + ": Missing subconceptId column";
-                        logger.warn(error);
+                        failedIds.add("Line " + lineNumber + ": Missing subconceptId");
                         failedCount++;
-                        failedIds.add(error);
                         continue;
                     }
-                    
+
                     String subconceptId = record[subconceptIdIndex].trim();
-                    
-                    // Skip empty subconcept IDs
                     if (subconceptId.isEmpty()) {
-                        String error = "Line " + lineNumber + ": Empty SubconceptId";
-                        logger.warn(error);
+                        failedIds.add("Line " + lineNumber + ": Empty subconceptId");
                         failedCount++;
-                        failedIds.add(error);
                         continue;
                     }
 
-                    // Check if subconcept exists
-                    Optional<Subconcept> existingSubconceptOpt = subconceptRepository.findById(subconceptId);
-                    if (existingSubconceptOpt.isEmpty()) {
-                        String error = "SubconceptId: " + subconceptId + " not found";
-                        logger.warn(error);
+                    Optional<Subconcept> existingOpt = subconceptRepository.findById(subconceptId);
+                    if (existingOpt.isEmpty()) {
+                        notFoundIds.add("Line " + lineNumber + ": SubconceptId " + subconceptId + " not found");
                         notFoundCount++;
-                        notFoundIds.add(error);
                         continue;
                     }
 
-                    Subconcept existingSubconcept = existingSubconceptOpt.get();
+                    Subconcept existing = existingOpt.get();
                     List<String> updatedFields = new ArrayList<>();
                     boolean hasUpdates = false;
-                    
-                    // Update fields dynamically based on header mapping
-                    hasUpdates |= updateField(headerMap, record, "dependency",
-                        existingSubconcept::setDependency, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "showto",
-                        existingSubconcept::setShowTo, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "subconceptdesc",
-                        existingSubconcept::setSubconceptDesc, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "subconceptdesc2",
-                        existingSubconcept::setSubconceptDesc2, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "subconceptgroup",
-                        existingSubconcept::setSubconceptGroup, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "subconceptlink",
-                        existingSubconcept::setSubconceptLink, updatedFields);
-                    hasUpdates |= updateField(headerMap, record, "subconcepttype",
-                        existingSubconcept::setSubconceptType, updatedFields);
-                 // Update numeric fields with validation
-                    if (updateNumericField(headerMap, record, "subconceptDuration",
-                            existingSubconcept::setSubconceptDuration, updatedFields, subconceptId, failedIds));{
+
+                    // ✅ Update concept
+                    if (conceptIndex != null && record.length > conceptIndex && !record[conceptIndex].trim().isEmpty()) {
+                        String conceptId = record[conceptIndex].trim();
+                        Optional<Concept> conceptOpt = conceptRepository.findById(conceptId);
+                        if (conceptOpt.isPresent()) {
+                            existing.setConcept(conceptOpt.get());
+                            updatedFields.add("conceptId");
+                            hasUpdates = true;
+                        } else {
+                            failedIds.add("Line " + lineNumber + ": Invalid conceptId '" + conceptId + "'");
+                            failedCount++;
+                            continue;
+                        }
+                    }
+
+                    // ✅ Update content
+                    if (contentIndex != null && record.length > contentIndex && !record[contentIndex].trim().isEmpty()) {
+                        String contentVal = record[contentIndex].trim();
+                        try {
+                            Integer contentId = Integer.parseInt(contentVal);
+                            Optional<ContentMaster> contentOpt = contentRepository.findById(contentId);
+                            if (contentOpt.isPresent()) {
+                                existing.setContent(contentOpt.get());
+                                updatedFields.add("contentId");
                                 hasUpdates = true;
+                            } else {
+                                failedIds.add("Line " + lineNumber + ": Invalid contentId '" + contentVal + "'");
+                                failedCount++;
+                                continue;
                             }
-                    
-                    if (updateNumericField(headerMap, record, "numquestions", 
-                        existingSubconcept::setNumQuestions, updatedFields, subconceptId, failedIds)) {
-                        hasUpdates = true;
+                        } catch (NumberFormatException e) {
+                            failedIds.add("Line " + lineNumber + ": Invalid number format for contentId '" + contentVal + "'");
+                            failedCount++;
+                            continue;
+                        }
                     }
-                    
-                    if (updateNumericField(headerMap, record, "subconceptmaxscore", 
-                        existingSubconcept::setSubconceptMaxscore, updatedFields, subconceptId, failedIds)) {
-                        hasUpdates = true;
-                    }
-                    
-                    // Save only if there are updates
+
+                    // ✅ Update other string and numeric fields
+                    hasUpdates |= updateField(headerMap, record, "dependency", existing::setDependency, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "showto", existing::setShowTo, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconceptdesc", existing::setSubconceptDesc, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconceptdesc2", existing::setSubconceptDesc2, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconceptgroup", existing::setSubconceptGroup, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconceptlink", existing::setSubconceptLink, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconcepttype", existing::setSubconceptType, updatedFields);
+                    hasUpdates |= updateNumericField(headerMap, record, "numquestions", existing::setNumQuestions, updatedFields, subconceptId, failedIds);
+                    hasUpdates |= updateNumericField(headerMap, record, "subconceptduration", existing::setSubconceptDuration, updatedFields, subconceptId, failedIds);
+                    hasUpdates |= updateNumericField(headerMap, record, "subconceptmaxscore", existing::setSubconceptMaxscore, updatedFields, subconceptId, failedIds);
+
                     if (hasUpdates) {
-                        subconceptRepository.save(existingSubconcept);
+                        subconceptRepository.save(existing);
                         updatedCount++;
-                        String logMessage = "SubconceptId: " + subconceptId + " updated fields: " + String.join(", ", updatedFields);
-                        updateLogs.add(logMessage);
-                        logger.debug(logMessage);
+                        updateLogs.add("Line " + lineNumber + ": SubconceptId " + subconceptId + " updated fields: " + String.join(", ", updatedFields));
                     } else {
-                        String logMessage = "SubconceptId: " + subconceptId + " - No fields to update (all provided fields were empty)";
-                        updateLogs.add(logMessage);
-                        logger.debug(logMessage);
+                        updateLogs.add("Line " + lineNumber + ": SubconceptId " + subconceptId + " - no changes");
                     }
-                    
+
                 } catch (Exception e) {
-                    String error = "Line " + lineNumber + ": Unexpected error - " + e.getMessage();
-                    logger.error(error, e);
+                    String err = "Line " + lineNumber + ": Unexpected error - " + e.getMessage();
+                    logger.error(err, e);
+                    failedIds.add(err);
                     failedCount++;
-                    failedIds.add(error);
                 }
             }
-            
+
         } catch (Exception e) {
-            logger.error("Failed to process CSV file: {}", file.getOriginalFilename(), e);
-            throw new RuntimeException("Failed to process CSV file: " + e.getMessage());
+            logger.error("CSV processing failed: {}", e.getMessage(), e);
+            throw new RuntimeException("CSV processing failed: " + e.getMessage(), e);
         }
 
-        // Prepare result summary
         result.put("updatedCount", updatedCount);
         result.put("failedCount", failedCount);
         result.put("notFoundCount", notFoundCount);
@@ -544,49 +538,48 @@ public class SubconceptServiceImpl implements SubconceptService {
         result.put("failedIds", failedIds);
         result.put("notFoundIds", notFoundIds);
         result.put("updateLogs", updateLogs);
-        result.put("message", "Update completed. Only non-empty fields were updated, existing data preserved for empty fields.");
-        
-        logger.info("CSV update completed. Updated: {}, Failed: {}, Not Found: {}, Total processed: {}", 
-                updatedCount, failedCount, notFoundCount, updatedCount + failedCount + notFoundCount);
+
+        logger.info("CSV update completed → Updated: {}, Failed: {}, Not Found: {}",
+                updatedCount, failedCount, notFoundCount);
         return result;
     }
-    
-    // Helper method to update string fields
-    private boolean updateField(Map<String, Integer> headerMap, String[] record, String fieldName, 
-                            java.util.function.Consumer<String> setter, List<String> updatedFields) {
-        if (headerMap.containsKey(fieldName) && 
-            record.length > headerMap.get(fieldName) && 
-            !record[headerMap.get(fieldName)].trim().isEmpty()) {
-            setter.accept(record[headerMap.get(fieldName)].trim());
+
+    // --- Helper methods ---
+    private boolean updateField(Map<String, Integer> headerMap, String[] record, String fieldName,
+                                java.util.function.Consumer<String> setter, List<String> updatedFields) {
+        String key = fieldName.toLowerCase();
+        if (headerMap.containsKey(key) && record.length > headerMap.get(key) && !record[headerMap.get(key)].trim().isEmpty()) {
+            setter.accept(record[headerMap.get(key)].trim());
             updatedFields.add(fieldName);
             return true;
         }
         return false;
     }
-    
-    // Helper method to update numeric fields
+
     private boolean updateNumericField(Map<String, Integer> headerMap, String[] record, String fieldName,
-                                    java.util.function.Consumer<Integer> setter, List<String> updatedFields,
-                                    String subconceptId, List<String> failedIds) {
-        if (headerMap.containsKey(fieldName) && 
-            record.length > headerMap.get(fieldName) && 
-            !record[headerMap.get(fieldName)].trim().isEmpty()) {
+                                       java.util.function.Consumer<Integer> setter, List<String> updatedFields,
+                                       String subconceptId, List<String> failedIds) {
+        String key = fieldName.toLowerCase();
+        if (headerMap.containsKey(key) && record.length > headerMap.get(key) && !record[headerMap.get(key)].trim().isEmpty()) {
+            String raw = record[headerMap.get(key)].trim();
             try {
-                int value = Integer.parseInt(record[headerMap.get(fieldName)].trim());
+                int value = Integer.parseInt(raw);
                 if (value < 0) {
-                    failedIds.add("SubconceptId: " + subconceptId + " failed - " + fieldName + " cannot be negative");
+                    failedIds.add("SubconceptId: " + subconceptId + " - " + fieldName + " cannot be negative");
                     return false;
                 }
                 setter.accept(value);
                 updatedFields.add(fieldName);
                 return true;
             } catch (NumberFormatException e) {
-                failedIds.add("SubconceptId: " + subconceptId + " failed - Invalid number format for " + fieldName);
+                failedIds.add("SubconceptId: " + subconceptId + " - Invalid number format for " + fieldName);
                 return false;
             }
         }
         return false;
     }
+
+
     
     @Override
     @CacheEvict(value = {"subconcepts", "subconceptDTOs"}, allEntries = true)

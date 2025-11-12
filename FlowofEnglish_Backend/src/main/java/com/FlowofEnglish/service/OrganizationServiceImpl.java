@@ -54,7 +54,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     private String generatePassword() {
         return RandomStringUtil.generateRandomAlphabetic(6); // Generates a random string of 6 letters
     }
- 
+
  // Method to generate a random OTP
     private String generateOTP() {
         return RandomStringUtil.generateRandomNumeric(6); // Generates a random 6-digit OTP
@@ -177,7 +177,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     private void sendWelcomeEmail(Organization organization, String plainPassword) {
         String adminName = organization.getOrganizationAdminName();
         String adminEmail = organization.getOrganizationAdminEmail();
-        String orgAdminUrl = "https://flowofenglish.thechippersage.com/admin"; // Replace with actual URL
+        String orgAdminUrl = "https://flowofenglish-admin.thechippersage.com"; // Replace with actual URL
         String superAdminEmail = "support@thechippersage.com"; // Replace with actual Super Admin email
 
         String subject = "Welcome to Chippersage's Flow of English!";

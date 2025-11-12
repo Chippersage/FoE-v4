@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ConceptRepository extends JpaRepository<Concept, String> {
-    // Add custom query methods if needed
 }
