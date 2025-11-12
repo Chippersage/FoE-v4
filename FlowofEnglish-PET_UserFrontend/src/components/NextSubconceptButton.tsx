@@ -49,7 +49,11 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
             if (subIndex + 1 < subs.length) {
               const next = subs[subIndex + 1];
               return {
-                next,
+                next: {
+                  ...next,
+                  stageId: stage.stageId,
+                  unitId: unit.unitId,
+                },
                 label: "Go To Next",
               };
             }
@@ -112,7 +116,16 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
   return (
     <button
       id="next-subconcept-btn"
-      onClick={!disabled ? () => onNext(nextResult.next) : undefined}
+      onClick={
+        !disabled
+          ? () =>
+              onNext({
+                ...nextResult.next,
+                stageId: nextResult.next.stageId,
+                unitId: nextResult.next.unitId,
+              })
+          : undefined
+      }
       disabled={disabled}
       className={`px-4 py-2 rounded-md text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all duration-200 ${
         disabled
