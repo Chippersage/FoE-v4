@@ -11,6 +11,7 @@ import AssignmentModal from "../components//modals/AssignmentModal";
 import { useUserContext } from "../context/AuthContext";
 import { getInitialSubconcept } from "../utils/courseProgressUtils";
 import CourseContext from "../context/CourseContext";
+import GoogleFormControl from "../components/GoogleFormControl";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
@@ -44,8 +45,7 @@ const CoursePage: React.FC = () => {
     subconceptId: "",
   });
 
-  // ADDED: states for Google Form checkbox & persisted submission
-  const [formChecked, setFormChecked] = useState(false);
+  // ADDED: states for Google Form submission lock and visibility
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Context value
@@ -108,9 +108,6 @@ const CoursePage: React.FC = () => {
     const shouldShow = shouldShowIframe(currentContent.type);
     setShowIframe(shouldShow);
     setShowSubmit(false);
-
-    setFormChecked(false);
-    setFormSubmitted(false);
   }, [currentContent]);
 
   // Listen for postMessage events from iframe
@@ -191,24 +188,17 @@ const CoursePage: React.FC = () => {
     }
   }, [currentContent?.type, currentContent?.subconceptId, user?.userId]);
 
-  // Restore checkbox/submission state for google forms from localStorage
+  // Detect if Google Form is already submitted (for lock overlay)
   useEffect(() => {
     try {
-      if (currentContent?.subconceptId && isGoogleFormType(currentContent.type)) {
+      if (isGoogleFormType(currentContent.type)) {
         const saved = localStorage.getItem(`submitted_${currentContent.subconceptId}`);
-        if (saved === "true") {
-          setFormChecked(true);
-          setFormSubmitted(true);
-        } else {
-          setFormChecked(false);
-          setFormSubmitted(false);
-        }
+        setFormSubmitted(saved === "true");
       } else {
-        setFormChecked(false);
         setFormSubmitted(false);
       }
     } catch (err) {
-      // ignore
+      setFormSubmitted(false);
     }
   }, [currentContent.subconceptId, currentContent.type]);
 
@@ -247,16 +237,7 @@ const CoursePage: React.FC = () => {
 
   // Next subconcept handler
   const handleNextSubconcept = async (nextSub) => {
-    if (isGoogleFormType(currentContent.type) && (formChecked || formSubmitted)) {
-      try {
-        if (!formSubmitted) {
-          await recordGoogleFormAttempt();
-        }
-      } catch (err) {
-        console.error("Failed to record google form attempt before moving next:", err);
-      }
-    }
-
+    // GoogleFormControl now handles this for assessments
     setCurrentContent({
       url: nextSub.subconceptLink,
       type: nextSub.subconceptType,
@@ -277,37 +258,38 @@ const CoursePage: React.FC = () => {
     />
   );
 
-  const ContentArea = () =>
-    showIframe ? (
-      <iframe
-        id="embeddedContent"
-        src={currentContent.url}
-        title="Embedded Content"
-        className="w-full h-full"
-        allow="autoplay"
-      />
-    ) : (
-      <ContentRenderer
-        type={currentContent.type}
-        url={currentContent.url}
-        title="Course Content"
-        className="w-full h-full"
-      />
-    );
+  const ContentArea = () => {
+    const isLockedGoogleForm =
+      isGoogleFormType(currentContent.type) && formSubmitted;
 
-  const GoogleFormCheckbox =
-    isGoogleFormType(currentContent.type) ? (
-      <label className="flex items-center space-x-3 mb-2">
-        <input
-          type="checkbox"
-          checked={formChecked || formSubmitted}
-          disabled={formSubmitted}
-          onChange={(e) => setFormChecked(e.target.checked)}
-          className="w-5 h-5 text-[#0EA5E9] border-gray-300 rounded focus:ring-[#0EA5E9]"
+    if (showIframe) {
+      return (
+        <iframe
+          id="embeddedContent"
+          src={currentContent.url}
+          title="Embedded Content"
+          className="w-full h-full"
+          allow="autoplay"
         />
-        <span className="text-gray-700">I have submitted this Google Form</span>
-      </label>
-    ) : null;
+      );
+    }
+
+    return (
+      <div className="relative w-full h-full">
+        <ContentRenderer
+          type={currentContent.type}
+          url={currentContent.url}
+          title="Course Content"
+          className="w-full h-full"
+        />
+        {isLockedGoogleForm && (
+          <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center text-gray-700 font-medium">
+            You have already submitted this form.
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const ControlButtons = () => (
     <>
@@ -333,7 +315,7 @@ const CoursePage: React.FC = () => {
             >
               View Assignment Status
             </button>
-            {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
+            {renderNextButton()}
           </div>
         ) : (
           <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
@@ -355,13 +337,14 @@ const CoursePage: React.FC = () => {
                 )
               }
             />
-            {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
+            {renderNextButton()}
           </div>
         )
+      ) : isGoogleFormType(currentContent.type) ? (
+        <GoogleFormControl onNext={handleNextSubconcept} />
       ) : (
         <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
-          {GoogleFormCheckbox}
-          {renderNextButton(isGoogleFormType(currentContent.type) && !formChecked && !formSubmitted)}
+          {renderNextButton()}
         </div>
       )}
     </>

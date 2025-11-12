@@ -32,7 +32,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [localStages, setLocalStages] = useState<any[]>(stages);
   const { user } = useUserContext();
-  const isMentor = user?.userType === "mentor";
+  const isMentor = user?.userType?.toLowerCase() === "mentor";
+
 
   // --------------------------------------------------------------------------
   // Effects
