@@ -279,7 +279,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                               sub.subconceptId,
                               stage.stageId,
                               unit.unitId,
-                              sub.subconceptId
+                              sub.subconceptId,
+                              sub.completionStatus
                             );
                           }}
                           className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
