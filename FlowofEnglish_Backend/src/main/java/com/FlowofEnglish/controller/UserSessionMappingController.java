@@ -1,13 +1,12 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.model.UserSessionMapping;
-import com.FlowofEnglish.service.UserSessionMappingService;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.service.*;
+import com.FlowofEnglish.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/user-session-mappings")
@@ -32,6 +31,59 @@ public class UserSessionMappingController {
         List<UserSessionMapping> mappings = userSessionMappingService.getUserSessionMappingsByUserId(userId);
         return ResponseEntity.ok(mappings);
     }
+    
+        
+        @GetMapping("/cohort/{cohortId}/mentor/{mentorUserId}")
+        public ResponseEntity<?> getLatestSessionsForCohort(
+                @PathVariable String cohortId,
+                @PathVariable String mentorUserId) {
+            try {
+                List<UserSessionDTO> sessions = userSessionMappingService.getLatestSessionsForCohortWithMentorValidation(mentorUserId, cohortId);
+                return ResponseEntity.ok(sessions);
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred"));
+            }
+        }
+
+        @GetMapping("/cohort/{cohortId}/mentor/{mentorUserId}/user/{targetUserId}")
+        public ResponseEntity<?> getLatestSessionForUser(
+                @PathVariable String cohortId,
+                @PathVariable String mentorUserId,
+                @PathVariable String targetUserId) {
+            try {
+                UserSessionDTO session = userSessionMappingService.getLatestSessionForUserInCohort(mentorUserId, targetUserId, cohortId);
+                return ResponseEntity.ok(session);
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred"));
+            }
+        }
+
+        @GetMapping("/latest")
+        public ResponseEntity<?> getLatestSession(
+                @RequestParam String mentorUserId,
+                @RequestParam String cohortId,
+                @RequestParam(required = false) String targetUserId) {
+            try {
+                if (targetUserId != null) {
+                    // Get specific user's latest session
+                    UserSessionDTO session = userSessionMappingService.getLatestSessionForUserInCohort(mentorUserId, targetUserId, cohortId);
+                    return ResponseEntity.ok(session);
+                } else {
+                    // Get all users' latest sessions in the cohort
+                    List<UserSessionDTO> sessions = userSessionMappingService.getLatestSessionsForCohortWithMentorValidation(mentorUserId, cohortId);
+                    return ResponseEntity.ok(sessions);
+                }
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred"));
+            }
+        }
+    
     
     @PostMapping
     public UserSessionMapping createUserSessionMapping(@RequestBody UserSessionMapping userSessionMapping) {

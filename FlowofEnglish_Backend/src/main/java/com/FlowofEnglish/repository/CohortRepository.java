@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.*;
 
 @Repository
 public interface CohortRepository extends JpaRepository<Cohort, String> {
@@ -15,6 +15,8 @@ public interface CohortRepository extends JpaRepository<Cohort, String> {
    List<Cohort> findByOrganizationOrganizationId(String organizationId);
 
    List<Cohort> findByCohortNameAndOrganizationOrganizationId(String cohortName, String orgId);
+   
+   Optional<Cohort> findByCohortId(String cohortId);
    
    @Query("SELECT COUNT(c) FROM Cohort c WHERE c.cohortName = :cohortName AND c.organization.organizationId = :orgId")
    long countByCohortNameAndOrganization(@Param("cohortName") String cohortName, @Param("orgId") String orgId);

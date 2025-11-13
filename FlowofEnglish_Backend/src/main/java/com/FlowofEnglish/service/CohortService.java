@@ -9,9 +9,10 @@ public interface CohortService {
     List<Cohort> getAllCohorts();
 
     Optional<Cohort> getCohortById(String cohortId);
-
+    
+//    OrganizationCohortsDTO getCohortsByOrganizationId(String organizationId);
     List<Cohort> getCohortsByOrganizationId(String organizationId);
-
+    
     Cohort createCohort(Cohort cohort);
 
     Cohort updateCohort(String cohortId, Cohort cohort);

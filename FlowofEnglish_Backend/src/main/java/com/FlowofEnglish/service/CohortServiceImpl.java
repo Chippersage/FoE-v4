@@ -60,6 +60,51 @@ public class CohortServiceImpl implements CohortService {
             throw new RuntimeException("Failed to retrieve cohort", e);
         }
     }
+//    @Override
+//    @Cacheable(value = "cohortsByOrg", key = "#organizationId")
+//    public OrganizationCohortsDTO getCohortsByOrganizationId(String organizationId) {
+//
+//        List<Cohort> cohorts = cohortRepository.findByOrganizationOrganizationId(organizationId);
+//
+//        if (cohorts.isEmpty()) {
+//            throw new RuntimeException("No cohorts found for organization " + organizationId);
+//        }
+//
+//        Organization organization = cohorts.get(0).getOrganization(); // SAME org for all cohorts
+//
+//        OrganizationCohortsDTO response = new OrganizationCohortsDTO();
+//
+//        // Convert org to DTO
+//        OrganizationDTO orgDTO = new OrganizationDTO();
+//        orgDTO.setOrganizationId(organization.getOrganizationId());
+//        orgDTO.setOrganizationName(organization.getOrganizationName());
+//        orgDTO.setOrganizationAdminName(organization.getOrganizationAdminName());
+//        orgDTO.setOrganizationAdminEmail(organization.getOrganizationAdminEmail());
+//        orgDTO.setOrganizationAdminPhone(organization.getOrganizationAdminPhone());
+//        orgDTO.setCreatedAt(organization.getCreatedAt());
+//        orgDTO.setUpdatedAt(organization.getUpdatedAt());
+//        orgDTO.setDeletedAt(organization.getDeletedAt());
+//
+//        response.setOrganization(orgDTO);
+//
+//        // Convert cohort list to DTO list
+//        List<CohortDTO> cohortDTOs = cohorts.stream().map(c -> {
+//            CohortDTO dto = new CohortDTO();
+//            dto.setCohortId(c.getCohortId());
+//            dto.setCohortName(c.getCohortName());
+//            dto.setCohortStartDate(c.getCohortStartDate());
+//            dto.setCohortEndDate(c.getCohortEndDate());
+//            dto.setShowLeaderboard(c.isShowLeaderboard());
+//            dto.setDelayedStageUnlock(c.isDelayedStageUnlock());
+//            dto.setDelayInDays(c.getDelayInDays());
+//            dto.setEnableAiEvaluation(c.isEnableAiEvaluation());
+//            return dto;
+//        }).toList();
+//
+//        response.setCohorts(cohortDTOs);
+//
+//        return response;
+//    }
 
     @Override
     @Cacheable(value = "cohortsByOrg", key = "#organizationId")

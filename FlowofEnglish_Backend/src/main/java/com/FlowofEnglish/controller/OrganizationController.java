@@ -21,14 +21,14 @@ public class OrganizationController {
 
     // Get all organizations
     @GetMapping
-    public ResponseEntity<List<Organization>> getAllOrganizations() {
-        List<Organization> organizations = organizationService.getAllOrganizations();
+    public ResponseEntity<List<OrganizationDTO>> getAllOrganizations() {
+        List<OrganizationDTO> organizations = organizationService.getAllOrganizations();
         return ResponseEntity.ok(organizations);
     }
     
     @GetMapping("/{organizationId}")
-    public ResponseEntity<Organization> getOrganizationById(@PathVariable String organizationId) {
-    	Optional<Organization> organizationOpt = organizationService.getOrganizationById(organizationId);
+    public ResponseEntity<OrganizationDTO> getOrganizationById(@PathVariable String organizationId) {
+    	Optional<OrganizationDTO> organizationOpt = organizationService.getOrganizationById(organizationId);
         
         if (organizationOpt.isPresent()) {
             return ResponseEntity.ok(organizationOpt.get());

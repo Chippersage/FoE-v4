@@ -21,6 +21,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -206,26 +207,34 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
 
-    @Override
-    @Cacheable(value = "organizationByEmail", key = "#email")
-    public Organization getOrganizationByEmail(String email) {
-        System.out.println("OrganizationByEmail");
-        return organizationRepository.findByOrganizationAdminEmail(email);
-    }
+    @Override 
+    @Cacheable(value = "organizationByEmail", key = "#email") 
+    public Organization getOrganizationByEmail(String email) 
+    { 
+    	System.out.println("OrganizationByEmail"); 
+    	return organizationRepository.findByOrganizationAdminEmail(email); 
+    	}
+
 
     // Retrieve all organizations
     @Override
     @Cacheable(value = "organizations", key = "'all'")
-    public List<Organization> getAllOrganizations() {
-        return organizationRepository.findAll();
+    public List<OrganizationDTO> getAllOrganizations() {
+        return organizationRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
+
 
     // Retrieve an organization by ID
     @Override
     @Cacheable(value = "organizations", key = "#organizationId")
-    public Optional<Organization> getOrganizationById(String organizationId) {
-        return organizationRepository.findById(organizationId);
+    public Optional<OrganizationDTO> getOrganizationById(String organizationId) {
+        return organizationRepository.findById(organizationId)
+                .map(this::toDTO);
     }
+
 
 
 
@@ -486,5 +495,21 @@ public class OrganizationServiceImpl implements OrganizationService {
         mailMessage.setText(message);
         mailSender.send(mailMessage);
     }
+    
+    private OrganizationDTO toDTO(Organization org) {
+        if (org == null) return null;
+        OrganizationDTO dto = new OrganizationDTO();
+        dto.setOrganizationId(org.getOrganizationId());
+        dto.setOrganizationName(org.getOrganizationName());
+        dto.setOrganizationAdminName(org.getOrganizationAdminName());
+        dto.setOrganizationAdminEmail(org.getOrganizationAdminEmail());
+        dto.setOrganizationAdminPhone(org.getOrganizationAdminPhone());
+        // timestamps (if you want them)
+        dto.setCreatedAt(org.getCreatedAt());
+        dto.setUpdatedAt(org.getUpdatedAt());
+        dto.setDeletedAt(org.getDeletedAt());
+        return dto;
+    }
+
 }
 

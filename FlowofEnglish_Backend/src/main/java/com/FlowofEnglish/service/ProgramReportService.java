@@ -10,6 +10,8 @@ public interface ProgramReportService {
     List<AttemptDTO> getUserAttempts(String userId, String subconceptId);
     CohortProgressDTO getCohortProgress(String programId, String cohortId);
     
+    byte[] generateCohortPdfReport(String programId, String cohortId);
+    byte[] generateCohortCsvReport(String programId, String cohortId);
     byte[] generatePdfReport(String userId, String programId); 
     byte[] generateCsvReport(String userId, String programId);
 	UserProgressDTO getUserProgress(String programId, String userId);

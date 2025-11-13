@@ -9,8 +9,8 @@ import java.util.*;
 public interface OrganizationService {
     
     // Basic CRUD operations
-    List<Organization> getAllOrganizations();
-    Optional<Organization> getOrganizationById(String organizationId);
+    List<OrganizationDTO> getAllOrganizations();
+    Optional<OrganizationDTO> getOrganizationById(String organizationId);
     Organization getOrganizationByEmail(String email);
     Organization createOrganization(Organization organization);
     Organization updateOrganization(String organizationId, Organization updatedOrganization);
