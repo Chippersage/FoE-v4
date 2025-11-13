@@ -1,92 +1,77 @@
 // @ts-nocheck
 import React, { useRef, useState, useEffect } from "react";
+import NextSubconceptButton from "./NextSubconceptButton";
 import { useCourseContext } from "../context/CourseContext";
 import { useUserAttempt } from "../hooks/useUserAttempt";
-import NextSubconceptButton from "./NextSubconceptButton";
 
 /**
  * GoogleFormControl
  *
- * Handles the "I have submitted this Google Form" checkbox and Next button.
- * The user-attempt API triggers only once — when the user clicks "Go To Next"
- * for the first submission. Once submitted, it becomes locked.
+ * Handles the checkbox + next button for Google Forms (assessment type).
+ * Uses completionStatus sent from CoursePage.
+ * When user checks and clicks Next, user-attempt API will be triggered.
  */
+
 type GoogleFormControlProps = {
   onNext: (nextSubconcept: any) => void;
+  completionStatus: string;      // "yes" or "no"
+  subconceptType: string;        // "assessment" | "googleform"
 };
 
-const GoogleFormControl: React.FC<GoogleFormControlProps> = ({ onNext }) => {
-  const { currentContent, stages, user } = useCourseContext();
+const GoogleFormControl: React.FC<GoogleFormControlProps> = ({
+  onNext,
+  completionStatus,
+  subconceptType,
+}) => {
+  const { stages, currentContent } = useCourseContext();
   const { recordAttempt } = useUserAttempt();
 
-  const formCheckedRef = useRef(false);
-  const formSubmittedRef = useRef(false);
-  const [, forceRender] = useState(0);
+  // Detect if the form was already submitted based on completionStatus
+  const alreadySubmitted =
+    String(subconceptType).toLowerCase() === "assessment" &&
+    String(completionStatus).toLowerCase() === "yes";
 
-  // Restore checkbox/submission state from localStorage
+  // Local checkbox state
+  const [checked, setChecked] = useState(false);
+
+  // Whenever subconcept changes or completionStatus changes,
+  // set checkbox accordingly
   useEffect(() => {
-    if (!currentContent?.subconceptId) return;
-    const saved = localStorage.getItem(`submitted_${currentContent.subconceptId}`);
-    if (saved === "true") {
-      formCheckedRef.current = true;
-      formSubmittedRef.current = true;
+    if (alreadySubmitted) {
+      setChecked(true);
     } else {
-      formCheckedRef.current = false;
-      formSubmittedRef.current = false;
+      setChecked(false);
     }
-    forceRender((x) => x + 1);
-  }, [currentContent?.subconceptId]);
+  }, [alreadySubmitted, currentContent.subconceptId]);
 
-  // Handles "Go To Next" click — records attempt only if first submission
+  // Disable next button if no check and not submitted already
+  const disabledNext = !checked && !alreadySubmitted;
+
+  // Handles next click: record attempt if first time, then navigate
   const handleNextClick = async (nextSub) => {
     try {
-      // Only record if first-time submission
-      if (formCheckedRef.current && !formSubmittedRef.current) {
-        await recordAttempt({
-          userId: user?.userId,
-          subconceptId: currentContent.subconceptId,
-          attemptStatus: "completed",
-        });
-
-        // Persist status to localStorage
-        localStorage.setItem(`submitted_${currentContent.subconceptId}`, "true");
-        formSubmittedRef.current = true;
-
-        // Notify Sidebar about completion
-        window.dispatchEvent(
-          new CustomEvent("updateSidebarCompletion", {
-            detail: { subconceptId: currentContent.subconceptId },
-          })
-        );
-
-        console.log("Recorded user-attempt for assessment:", currentContent.subconceptId);
+      if (!alreadySubmitted && checked) {
+        await recordAttempt();
       }
     } catch (err) {
-      console.error("Error recording user attempt:", err);
+      console.error("Error when recording attempt for Google Form:", err);
     } finally {
-      // Navigate to next subconcept regardless of submission state
       onNext(nextSub);
     }
   };
-
-  // Disable Next button unless form checked or already submitted
-  const disabled = !formCheckedRef.current && !formSubmittedRef.current;
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
       <label className="flex items-center space-x-3">
         <input
           type="checkbox"
-          checked={formCheckedRef.current || formSubmittedRef.current}
-          disabled={formSubmittedRef.current}
-          onChange={(e) => {
-            formCheckedRef.current = e.target.checked;
-            forceRender((x) => x + 1);
-          }}
+          checked={checked}
+          disabled={alreadySubmitted}
+          onChange={(e) => setChecked(e.target.checked)}
           className="w-5 h-5 text-[#0EA5E9] border-gray-300 rounded focus:ring-[#0EA5E9]"
         />
         <span className="text-gray-700 text-sm">
-          I have submitted this Google Form(You can Attempt only once.)
+          I have submitted this Google Form (You can Attempt only once.)
         </span>
       </label>
 
@@ -94,14 +79,8 @@ const GoogleFormControl: React.FC<GoogleFormControlProps> = ({ onNext }) => {
         stages={stages}
         currentContentId={currentContent.id}
         onNext={handleNextClick}
-        disabled={disabled}
+        disabled={disabledNext}
       />
-
-      {formSubmittedRef.current && (
-        <p className="text-gray-500 text-xs mt-2">
-          Submitted
-        </p>
-      )}
     </div>
   );
 };

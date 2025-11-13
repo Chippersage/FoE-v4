@@ -43,10 +43,8 @@ const CoursePage: React.FC = () => {
     stageId: "",
     unitId: "",
     subconceptId: "",
+    completionStatus: "",
   });
-
-  // ADDED: states for Google Form submission lock and visibility
-  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Context value
   const courseContextValue = useMemo(
@@ -63,13 +61,13 @@ const CoursePage: React.FC = () => {
       remainingTime,
       setRemainingTime,
     }),
-    [currentContent, stages, programName, user, programId]
+    [currentContent, stages, programName, user, programId, canGoNext, remainingTime]
   );
 
   // Helper to detect Google Form type (includes "assessment")
   const isGoogleFormType = (type: string) => {
     if (!type) return false;
-    const normalized = type.toLowerCase();
+    const normalized = String(type).toLowerCase();
     return normalized === "googleform" || normalized === "assessment";
   };
 
@@ -96,21 +94,21 @@ const CoursePage: React.FC = () => {
 
   // Effects ---------------------------------------------------------------------
 
-  // Disable right-click
+  // Disable right-click (single-purpose effect)
   useEffect(() => {
     const disableContext = (e) => e.preventDefault();
     document.addEventListener("contextmenu", disableContext);
     return () => document.removeEventListener("contextmenu", disableContext);
   }, []);
 
-  // Set iframe visibility on content change
+  // Set iframe visibility on content change and reset submit visibility
   useEffect(() => {
     const shouldShow = shouldShowIframe(currentContent.type);
     setShowIframe(shouldShow);
     setShowSubmit(false);
-  }, [currentContent]);
+  }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
 
-  // Listen for postMessage events from iframe
+  // Listen for postMessage events from iframe (controls Show Submit button)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data === "enableSubmit") setShowSubmit(true);
@@ -144,6 +142,7 @@ const CoursePage: React.FC = () => {
             stageId: stage.stageId,
             unitId: unit.unitId,
             subconceptId: sub.subconceptId,
+            completionStatus: sub.completionStatus,
           });
         }
       } catch (err) {
@@ -188,20 +187,6 @@ const CoursePage: React.FC = () => {
     }
   }, [currentContent?.type, currentContent?.subconceptId, user?.userId]);
 
-  // Detect if Google Form is already submitted (for lock overlay)
-  useEffect(() => {
-    try {
-      if (isGoogleFormType(currentContent.type)) {
-        const saved = localStorage.getItem(`submitted_${currentContent.subconceptId}`);
-        setFormSubmitted(saved === "true");
-      } else {
-        setFormSubmitted(false);
-      }
-    } catch (err) {
-      setFormSubmitted(false);
-    }
-  }, [currentContent.subconceptId, currentContent.type]);
-
   // Handlers --------------------------------------------------------------------
 
   const handleSubmit = () => {
@@ -211,33 +196,8 @@ const CoursePage: React.FC = () => {
     }
   };
 
-  // Helper to record attempt for googleform via API
-  const recordGoogleFormAttempt = async () => {
-    try {
-      if (!user?.userId || !currentContent?.subconceptId) return;
-      await axios.post(`${API_BASE_URL}/user-attempt`, {
-        userId: user.userId,
-        subconceptId: currentContent.subconceptId,
-        attemptStatus: "completed",
-      });
-
-      window.dispatchEvent(
-        new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
-        })
-      );
-
-      localStorage.setItem(`submitted_${currentContent.subconceptId}`, "true");
-      setFormSubmitted(true);
-    } catch (err) {
-      console.error("Error recording google form attempt:", err);
-      throw err;
-    }
-  };
-
   // Next subconcept handler
   const handleNextSubconcept = async (nextSub) => {
-    // GoogleFormControl now handles this for assessments
     setCurrentContent({
       url: nextSub.subconceptLink,
       type: nextSub.subconceptType,
@@ -245,6 +205,7 @@ const CoursePage: React.FC = () => {
       stageId: nextSub.stageId,
       unitId: nextSub.unitId,
       subconceptId: nextSub.subconceptId,
+      completionStatus: nextSub.completionStatus,
     });
   };
 
@@ -259,10 +220,20 @@ const CoursePage: React.FC = () => {
   );
 
   const ContentArea = () => {
-    const isLockedGoogleForm =
-      isGoogleFormType(currentContent.type) && formSubmitted;
+    const isAssessment = String(currentContent.type).toLowerCase() === "assessment";
+    const isCompleted = String(currentContent.completionStatus).toLowerCase() === "yes";
+
+    const isLockedGoogleForm = isAssessment && isCompleted;
 
     if (showIframe) {
+      if (isLockedGoogleForm) {
+        return (
+          <div className="w-full h-full flex items-center justify-center text-gray-700 font-medium">
+            You have already submitted this form.
+          </div>
+        );
+      }
+
       return (
         <iframe
           id="embeddedContent"
@@ -282,6 +253,7 @@ const CoursePage: React.FC = () => {
           title="Course Content"
           className="w-full h-full"
         />
+
         {isLockedGoogleForm && (
           <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center text-gray-700 font-medium">
             You have already submitted this form.
@@ -341,7 +313,11 @@ const CoursePage: React.FC = () => {
           </div>
         )
       ) : isGoogleFormType(currentContent.type) ? (
-        <GoogleFormControl onNext={handleNextSubconcept} />
+        <GoogleFormControl
+          onNext={handleNextSubconcept}
+          completionStatus={currentContent.completionStatus}
+          subconceptType={currentContent.type}
+        />
       ) : (
         <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
           {renderNextButton()}
@@ -373,7 +349,7 @@ const CoursePage: React.FC = () => {
         <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
           <Sidebar
             programName={programName}
-            onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
+            onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId, completionStatus) =>
               setCurrentContent({
                 url,
                 type,
@@ -381,6 +357,7 @@ const CoursePage: React.FC = () => {
                 stageId: stageId || currentContent.stageId,
                 unitId: unitId || currentContent.unitId,
                 subconceptId: subconceptId || currentContent.subconceptId,
+                completionStatus: completionStatus || currentContent.completionStatus,
               })
             }
             currentActiveId={currentContent.id}
@@ -423,7 +400,7 @@ const CoursePage: React.FC = () => {
           >
             <Sidebar
               programName={programName}
-              onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId) =>
+              onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId, completionStatus) =>
                 setCurrentContent({
                   url,
                   type,
@@ -431,6 +408,7 @@ const CoursePage: React.FC = () => {
                   stageId: stageId || currentContent.stageId,
                   unitId: unitId || currentContent.unitId,
                   subconceptId: subconceptId || currentContent.subconceptId,
+                  completionStatus: completionStatus || currentContent.completionStatus,
                 })
               }
               currentActiveId={currentContent.id}
@@ -438,7 +416,7 @@ const CoursePage: React.FC = () => {
             />
           </div>
 
-          {/* Desktop Control Buttons (below video) */}
+          {/* Desktop Control Buttons */}
           <div className="hidden md:flex justify-center mt-4">
             <ControlButtons />
           </div>
