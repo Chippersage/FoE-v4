@@ -1,5 +1,7 @@
 package com.FlowofEnglish.dto;
 
+import java.time.OffsetDateTime;
+
 public class OrganizationDTO {
 
     private String organizationId;
@@ -7,6 +9,9 @@ public class OrganizationDTO {
     private String organizationAdminName;
     private String organizationAdminEmail;
     private String organizationAdminPhone;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
+    private OffsetDateTime deletedAt;
 
     // Getters and Setters
     public String getOrganizationId() {
@@ -48,4 +53,29 @@ public class OrganizationDTO {
     public void setOrganizationAdminPhone(String organizationAdminPhone) {
         this.organizationAdminPhone = organizationAdminPhone;
     }
+
+	public OffsetDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(OffsetDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(OffsetDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public OffsetDateTime getDeletedAt() {
+		return deletedAt;
+	}
+
+	public void setDeletedAt(OffsetDateTime deletedAt) {
+		this.deletedAt = deletedAt;
+	}
+    
 }

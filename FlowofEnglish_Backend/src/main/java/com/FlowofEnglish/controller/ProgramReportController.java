@@ -4,6 +4,9 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.service.*;
 
 import org.springframework.http.HttpHeaders;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -60,13 +63,34 @@ public class ProgramReportController {
             return ResponseEntity.badRequest().body("Invalid format");
         }
     }
+    @GetMapping("/cohort/{cohortId}/program/{programId}/download")
+    public ResponseEntity<?> downloadCohortReport(
+            @PathVariable String cohortId,
+            @PathVariable String programId,
+            @RequestParam String format) {
+        if ("csv".equalsIgnoreCase(format)) {
+            byte[] csvData = programReportService.generateCohortCsvReport(programId, cohortId);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=cohort_report.csv")
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(csvData);
+        } else if ("pdf".equalsIgnoreCase(format)) {
+            byte[] pdfData = programReportService.generateCohortPdfReport(programId, cohortId);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=cohort_report.pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfData);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid format");
+        }
+    }
 
-//    /**
-//     * Get concept summaries for a specific stage
-//     * @param userId User ID
-//     * @param stageId Stage ID
-//     * @return List of concept summaries with their associated subconcepts
-//     */
+    /**
+     * Get concept summaries for a specific stage
+     * @param userId User ID
+     * @param stageId Stage ID
+     * @return List of concept summaries with their associated subconcepts
+     */
 //    @GetMapping("/stage/{userId}/{stageId}/concepts")
 //    public ResponseEntity<List<ConceptSummaryDTO>> getConceptSummariesForStage(
 //            @PathVariable String userId,
@@ -74,14 +98,14 @@ public class ProgramReportController {
 //        List<ConceptSummaryDTO> conceptSummaries = programReportService.getConceptSummariesForStage(userId, stageId);
 //        return ResponseEntity.ok(conceptSummaries);
 //    }
-//    
-//    /**
-//     * Get concept summaries for a specific stage with detailed progress
-//     * @param userId User ID
-//     * @param stageId Stage ID
-//     * @param includeProgress Include detailed progress information
-//     * @return List of concept summaries
-//     */
+    
+    /**
+     * Get concept summaries for a specific stage with detailed progress
+     * @param userId User ID
+     * @param stageId Stage ID
+     * @param includeProgress Include detailed progress information
+     * @return List of concept summaries
+     */
 //    @GetMapping("/stage/{userId}/{stageId}/concepts/progress")
 //    public ResponseEntity<List<ConceptSummaryDTO>> getConceptSummariesWithProgress(
 //            @PathVariable String userId,

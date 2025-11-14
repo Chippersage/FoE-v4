@@ -1,5 +1,6 @@
 package com.FlowofEnglish.controller;
 
+//import com.FlowofEnglish.dto.OrganizationCohortsDTO;
 import com.FlowofEnglish.exception.CohortNotFoundException;
 import com.FlowofEnglish.exception.CohortValidationException;
 import com.FlowofEnglish.model.Cohort;
@@ -30,6 +31,11 @@ public class CohortController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+//    @GetMapping("/organization/{organizationId}")
+//    public OrganizationCohortsDTO  getCohortsByOrganizationId(@PathVariable String organizationId) {
+//        return cohortService.getCohortsByOrganizationId(organizationId);
+//    }
+    
     @GetMapping("/organization/{organizationId}")
     public List<Cohort> getCohortsByOrganizationId(@PathVariable String organizationId) {
         return cohortService.getCohortsByOrganizationId(organizationId);

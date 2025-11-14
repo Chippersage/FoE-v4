@@ -1,9 +1,8 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.model.UserSessionMapping;
-
-import java.util.List;
-import java.util.Optional;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.dto.*;
+import java.util.*;
 
 public interface UserSessionMappingService {
 	
@@ -12,7 +11,6 @@ public interface UserSessionMappingService {
     List<UserSessionMapping> getUserSessionMappingsByUserId(String userId);
     
     Optional<UserSessionMapping> findBySessionId(String sessionId);
-  //  List<UserSessionMapping> findActiveSessionByUserIdAndCohortId(String userId, String cohortId);
     List<UserSessionMapping> findActiveSessionsByUserIdAndCohortId(String userId, String cohortId);
     void invalidateSession(String sessionId);
     void invalidateAllActiveSessions(String userId, String cohortId);
@@ -22,5 +20,11 @@ public interface UserSessionMappingService {
     void invalidateAllUserSessions(String userId);
     List<UserSessionMapping> findActiveSessionsForCleanup();
     UserSessionMapping findOrCreateAutoSession(String userId, String cohortId);
+    
+    List<UserSessionDTO> getLatestSessionsByCohortId(String cohortId);
+    UserSessionDTO getLatestSessionForUserInCohort(String mentorUserId, String targetUserId, String cohortId);
+    
+    //  Get latest sessions for all users in a cohort with mentor validation
+    List<UserSessionDTO> getLatestSessionsForCohortWithMentorValidation(String mentorUserId, String cohortId);
 
 }

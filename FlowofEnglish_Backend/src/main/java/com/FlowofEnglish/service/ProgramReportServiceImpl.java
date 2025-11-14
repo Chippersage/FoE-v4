@@ -13,10 +13,13 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import org.springframework.cache.annotation.*;
 import java.io.IOException;
+
 import com.itextpdf.io.source.ByteArrayOutputStream;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+
 
 
 @Service
@@ -886,18 +889,12 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         logger.info("Clearing cohort progress cache for programId: {} and cohortId: {}", programId, cohortId);
     }
     
-    /**
-     * Method to manually evict report caches when called externally
-     * This can be called from your UserAttempts creation logic
-     */
     @CacheEvict(value = {"programReports", "stageReports", "unitReports", "userAttempts"}, allEntries = false)
     public void evictUserReportCaches(String userId, String programId, String stageId, String unitId, String subconceptId) {
         logger.info("Manually evicting report caches for userId: {}, programId: {}", userId, programId);
-        
-        // The @CacheEvict annotation above will handle the eviction,
-        // but we can also use the CacheManagementService for more granular control
+       
         try {
-            // Get all related IDs for comprehensive cache eviction
+            
             List<String> stageIds = Collections.singletonList(stageId);
             List<String> unitIds = Collections.singletonList(unitId);
             
@@ -908,4 +905,201 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             logger.error("Error in manual cache eviction for userId: {}, programId: {}", userId, programId, e);
         }
     }
+    
+    @Override
+    @CacheEvict(value = {"cohortProgress"}, allEntries = true)
+    public byte[] generateCohortPdfReport(String programId, String cohortId) {
+        logger.info("Generating Cohort PDF report for programId: {} and cohortId: {}", programId, cohortId);
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            CohortProgressDTO cohortProgress = getCohortProgress(programId, cohortId);
+
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                PdfWriter writer = new PdfWriter(out);
+                PdfDocument pdfDoc = new PdfDocument(writer);
+                Document document = new Document(pdfDoc);
+
+                // Add title and header information
+                document.add(new Paragraph("Cohort Progress Report").setBold().setFontSize(18));
+                document.add(new Paragraph(" ")); // Empty line
+                
+                // Program and Cohort details
+                document.add(new Paragraph("Program: " + cohortProgress.getProgramName()));
+                document.add(new Paragraph("Program Description: " + cohortProgress.getProgramDesc()));
+                document.add(new Paragraph("Cohort: " + cohortProgress.getCohortName()));
+                document.add(new Paragraph(" "));
+                
+                // Summary Statistics
+                int totalUsers = cohortProgress.getUsers().size();
+                double avgStageCompletion = cohortProgress.getUsers().stream()
+                        .mapToDouble(u -> calculatePercentage(u.getCompletedStages(), u.getTotalStages()))
+                        .average()
+                        .orElse(0.0);
+                double avgUnitCompletion = cohortProgress.getUsers().stream()
+                        .mapToDouble(u -> calculatePercentage(u.getCompletedUnits(), u.getTotalUnits()))
+                        .average()
+                        .orElse(0.0);
+                double avgSubconceptCompletion = cohortProgress.getUsers().stream()
+                        .mapToDouble(u -> calculatePercentage(u.getCompletedSubconcepts(), u.getTotalSubconcepts()))
+                        .average()
+                        .orElse(0.0);
+                
+                document.add(new Paragraph("Summary Statistics").setBold().setFontSize(14));
+                document.add(new Paragraph("Total Users: " + totalUsers));
+                document.add(new Paragraph("Average Stage Completion: " + String.format("%.2f%%", avgStageCompletion)));
+                document.add(new Paragraph("Average Unit Completion: " + String.format("%.2f%%", avgUnitCompletion)));
+                document.add(new Paragraph("Average Subconcept Completion: " + String.format("%.2f%%", avgSubconceptCompletion)));
+                document.add(new Paragraph(" "));
+                
+                // User Progress Table
+                document.add(new Paragraph("User Progress Details").setBold().setFontSize(14));
+                document.add(new Paragraph(" "));
+                
+                // Create a table with user progress
+                float[] columnWidths = {3, 2, 2, 2, 2, 2, 2, 2};
+                Table table = new Table(columnWidths);
+                
+                // Table headers
+                table.addHeaderCell(new Paragraph("User Name").setBold());
+                table.addHeaderCell(new Paragraph("Stages Completed").setBold());
+                table.addHeaderCell(new Paragraph("Units Completed").setBold());
+                table.addHeaderCell(new Paragraph("Subconcepts Completed").setBold());
+                table.addHeaderCell(new Paragraph("Stage %").setBold());
+                table.addHeaderCell(new Paragraph("Unit %").setBold());
+                table.addHeaderCell(new Paragraph("Subconcept %").setBold());
+                table.addHeaderCell(new Paragraph("Leaderboard Score").setBold());
+                
+                // Table data
+                for (UserProgressDTO user : cohortProgress.getUsers()) {
+                    double userStagePercentage = calculatePercentage(user.getCompletedStages(), user.getTotalStages());
+                    double userUnitPercentage = calculatePercentage(user.getCompletedUnits(), user.getTotalUnits());
+                    double userSubconceptPercentage = calculatePercentage(user.getCompletedSubconcepts(), user.getTotalSubconcepts());
+                    
+                    table.addCell(new Paragraph(user.getUserName()));
+                    table.addCell(new Paragraph(user.getCompletedStages() + "/" + user.getTotalStages()));
+                    table.addCell(new Paragraph(user.getCompletedUnits() + "/" + user.getTotalUnits()));
+                    table.addCell(new Paragraph(user.getCompletedSubconcepts() + "/" + user.getTotalSubconcepts()));
+                    table.addCell(new Paragraph(String.format("%.1f%%", userStagePercentage)));
+                    table.addCell(new Paragraph(String.format("%.1f%%", userUnitPercentage)));
+                    table.addCell(new Paragraph(String.format("%.1f%%", userSubconceptPercentage)));
+                    table.addCell(new Paragraph(String.valueOf(user.getLeaderboardScore())));
+                }
+                
+                document.add(table);
+                document.add(new Paragraph(" "));
+                
+                // Completion Distribution
+                document.add(new Paragraph("Completion Distribution").setBold().setFontSize(14));
+                
+                // Stage completion distribution
+                Map<String, Long> stageCompletionRanges = cohortProgress.getUsers().stream()
+                    .collect(Collectors.groupingBy(
+                        user -> getCompletionRange(calculatePercentage(user.getCompletedStages(), user.getTotalStages())),
+                        Collectors.counting()
+                    ));
+                
+                document.add(new Paragraph("Stage Completion:"));
+                for (String range : new String[]{"0-20%", "21-40%", "41-60%", "61-80%", "81-100%"}) {
+                    long count = stageCompletionRanges.getOrDefault(range, 0L);
+                    document.add(new Paragraph("  " + range + ": " + count + " users"));
+                }
+                
+                document.add(new Paragraph(" "));
+                document.add(new Paragraph("Report Generated On: " + new java.util.Date()));
+                
+                document.close();
+                byte[] result = out.toByteArray();
+                
+                long endTime = System.currentTimeMillis();
+                logger.info("Successfully generated Cohort PDF report for programId: {} and cohortId: {} in {}ms. " +
+                        "Generated report for {} users, file size: {} bytes", 
+                        programId, cohortId, (endTime - startTime), totalUsers, result.length);
+                
+                return result;
+            }
+        } catch (IOException e) {
+            logger.error("IOException while generating Cohort PDF report for programId: {} and cohortId: {}", programId, cohortId, e);
+            throw new RuntimeException("Failed to generate Cohort PDF", e);
+        } catch (Exception e) {
+            logger.error("Error generating Cohort PDF report for programId: {} and cohortId: {}", programId, cohortId, e);
+            throw e;
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"cohortProgress"}, allEntries = true)
+    public byte[] generateCohortCsvReport(String programId, String cohortId) {
+        logger.info("Generating Cohort CSV report for programId: {} and cohortId: {}", programId, cohortId);
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            CohortProgressDTO cohortProgress = getCohortProgress(programId, cohortId);
+
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+                CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(out), CSVFormat.DEFAULT)) {
+
+                // Header
+                csvPrinter.printRecord("User Name", "User ID", "Program ID", "Program Name", 
+                                      "Cohort ID", "Cohort Name", "Stages Completed", "Total Stages", 
+                                      "Units Completed", "Total Units", "Subconcepts Completed", 
+                                      "Total Subconcepts", "Stage Completion %", "Unit Completion %", 
+                                      "Subconcept Completion %", "Leaderboard Score");
+
+                int recordCount = 0;
+                // Data
+                for (UserProgressDTO user : cohortProgress.getUsers()) {
+                    double stagePercentage = calculatePercentage(user.getCompletedStages(), user.getTotalStages());
+                    double unitPercentage = calculatePercentage(user.getCompletedUnits(), user.getTotalUnits());
+                    double subconceptPercentage = calculatePercentage(user.getCompletedSubconcepts(), user.getTotalSubconcepts());
+                    
+                    csvPrinter.printRecord(
+                        user.getUserName(),
+                        user.getUserId(),
+                        programId,
+                        cohortProgress.getProgramName(),
+                        cohortId,
+                        cohortProgress.getCohortName(),
+                        user.getCompletedStages(),
+                        user.getTotalStages(),
+                        user.getCompletedUnits(),
+                        user.getTotalUnits(),
+                        user.getCompletedSubconcepts(),
+                        user.getTotalSubconcepts(),
+                        String.format("%.2f", stagePercentage),
+                        String.format("%.2f", unitPercentage),
+                        String.format("%.2f", subconceptPercentage),
+                        user.getLeaderboardScore()
+                    );
+                    recordCount++;
+                }
+
+                csvPrinter.flush();
+                byte[] result = out.toByteArray();
+                
+                long endTime = System.currentTimeMillis();
+                logger.info("Successfully generated Cohort CSV report for programId: {} and cohortId: {} in {}ms. " +
+                        "Generated {} records, file size: {} bytes", 
+                        programId, cohortId, (endTime - startTime), recordCount, result.length);
+                
+                return result;
+            }
+        } catch (IOException e) {
+            logger.error("IOException while generating Cohort CSV report for programId: {} and cohortId: {}", programId, cohortId, e);
+            throw new RuntimeException("Failed to generate Cohort CSV", e);
+        } catch (Exception e) {
+            logger.error("Error generating Cohort CSV report for programId: {} and cohortId: {}", programId, cohortId, e);
+            throw e;
+        }
+    }
+
+    // Helper method to get completion range for distribution
+    private String getCompletionRange(double percentage) {
+        if (percentage <= 20) return "0-20%";
+        else if (percentage <= 40) return "21-40%";
+        else if (percentage <= 60) return "41-60%";
+        else if (percentage <= 80) return "61-80%";
+        else return "81-100%";
+    }
+    
 }

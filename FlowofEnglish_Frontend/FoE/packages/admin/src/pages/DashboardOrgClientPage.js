@@ -1,16 +1,4 @@
-import {
-  Container,
-  Grid,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TablePagination,
-} from '@mui/material';
+import { Container, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, } from '@mui/material';
 import axios from 'axios';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -27,6 +15,27 @@ const formatLastActivity = (timestamp) => {
   const relativeTime = formatDistanceToNow(date, { addSuffix: true });
   const formattedTime = format(date, 'hh:mm a');
   return `${relativeTime} at ${formattedTime}`;
+};
+
+// Function to get the latest session for a user across all cohorts
+const getLatestSession = (sessions) => {
+  if (!sessions || sessions.length === 0) return null;
+
+  // Filter out sessions with null end timestamp (ongoing sessions)
+  const validSessions = sessions.filter(session =>
+    session.sessionEndTimestamp !== null
+  );
+
+  if (validSessions.length === 0) return null;
+
+  // Find the session with the latest end timestamp
+  const latestSession = validSessions.reduce((latest, current) => {
+    const currentTime = new Date(current.sessionEndTimestamp);
+    const latestTime = new Date(latest.sessionEndTimestamp);
+    return currentTime > latestTime ? current : latest;
+  });
+
+  return latestSession;
 };
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -70,25 +79,30 @@ export default function DashboardOrgClientPage() {
 
         // Fetch session mappings for each user
         const fetchMappings = fetchedUsers.map(async (user) => {
-          //  console.log('Fetching session mappings for user:', user.userId);
           const sessionMappings = await getUserSessionMappingsByUserId(user.userId);
-          //  console.log(`Session Mappings for user ${user.userId}:`, sessionMappings);
-          const lastSession = sessionMappings?.[0];
+          
+          // Get the latest session across all cohorts
+          const latestSession = getLatestSession(sessionMappings);
+          
           return {
             ...user,
-            cohortName: user.cohort?.cohortName || 'N/A',
-            sessionStartTimestamp: lastSession?.sessionStartTimestamp
-              ? new Date(lastSession.sessionStartTimestamp).toISOString()
+            cohortName: latestSession ? latestSession.cohort.cohortName : (user.cohort?.cohortName || 'N/A'),
+            sessionStartTimestamp: latestSession?.sessionStartTimestamp
+              ? new Date(latestSession.sessionStartTimestamp).toISOString()
+              : null,
+            sessionEndTimestamp: latestSession?.sessionEndTimestamp
+              ? new Date(latestSession.sessionEndTimestamp).toISOString()
               : null,
           };
         });
+        
         Promise.all(fetchMappings)
           .then((learners) => {
-            // Sort learners by sessionStartTimestamp in descending order (most recent first)
+            // Sort learners by sessionEndTimestamp in descending order (most recent first)
             learners.sort((a, b) => {
-              if (!a.sessionStartTimestamp) return 1; // Place users without a login at the end
-              if (!b.sessionStartTimestamp) return -1;
-              return new Date(b.sessionStartTimestamp) - new Date(a.sessionStartTimestamp);
+              if (!a.sessionEndTimestamp) return 1; // Place users without activity at the end
+              if (!b.sessionEndTimestamp) return -1;
+              return new Date(b.sessionEndTimestamp) - new Date(a.sessionEndTimestamp);
             });
             setRegisteredLearners(learners);
           })
@@ -119,13 +133,11 @@ export default function DashboardOrgClientPage() {
       </Helmet>
 
       <Container maxWidth="xl">
-        {/* Welcome message */}
         <Typography variant="h4" sx={{ mb: 5 }}>
           Welcome, {orgData.organizationName}!
         </Typography>
 
         <Grid container spacing={0} justifyContent="space-between" alignItems="center">
-          {/* Learners Card */}
           <Grid item xs={12} sm={6} md={3} lg={3.5}>
             <AppWidgetSummary
               title="Learners"
@@ -136,7 +148,6 @@ export default function DashboardOrgClientPage() {
             />
           </Grid>
 
-          {/* Cohorts Card */}
           <Grid item xs={12} sm={6} md={3} lg={3.5}>
             <AppWidgetSummary
               title="Cohorts"
@@ -147,7 +158,7 @@ export default function DashboardOrgClientPage() {
               }
             />
           </Grid>
-          {/* Programs Card */}
+          
           <Grid item xs={12} sm={6} md={3} lg={3.5}>
             <AppWidgetSummary
               title="Programs"
@@ -159,8 +170,8 @@ export default function DashboardOrgClientPage() {
             />
           </Grid>
         </Grid>
+        
         <Grid container spacing={6}>
-          {/* Registered Learners Table */}
           <Grid item xs={12}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
@@ -170,18 +181,10 @@ export default function DashboardOrgClientPage() {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
-                        <strong>Learner ID</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>Learner Name</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>Cohort Name</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>Last Activity</strong>
-                      </TableCell>
+                      <TableCell><strong>Learner ID</strong></TableCell>
+                      <TableCell><strong>Learner Name</strong></TableCell>
+                      <TableCell><strong>Cohort Name</strong></TableCell>
+                      <TableCell><strong>Last Activity</strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -191,8 +194,7 @@ export default function DashboardOrgClientPage() {
                           <TableCell>{user.userId}</TableCell>
                           <TableCell>{user.userName}</TableCell>
                           <TableCell>{user.cohortName}</TableCell>
-                          {/* <TableCell>{user.sessionStartTimestamp || 'N/A'}</TableCell> */}
-                          <TableCell>{formatLastActivity(user.sessionStartTimestamp)}</TableCell>
+                          <TableCell>{formatLastActivity(user.sessionEndTimestamp || user.sessionStartTimestamp)}</TableCell>
                         </TableRow>
                       ))
                     ) : (

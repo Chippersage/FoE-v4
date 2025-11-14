@@ -6,6 +6,7 @@ public class ProgramCountDTO {
 	    private int totalStages;
 	    private int totalUnits;
 	    private int totalSubconcepts;
+	  
 	    
 	 // Getters and Setters
 		public String getProgramId() {
@@ -38,8 +39,5 @@ public class ProgramCountDTO {
 		public void setTotalSubconcepts(int totalSubconcepts) {
 			this.totalSubconcepts = totalSubconcepts;
 		}
-
-	    
-	
 
 }
