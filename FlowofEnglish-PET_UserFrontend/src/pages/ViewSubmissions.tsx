@@ -238,7 +238,7 @@ const ViewSubmissions: React.FC = () => {
                 <th className="py-3 px-4 text-center">Score</th>
                 <th className="py-3 px-4">Remarks</th>
                 <th className="py-3 px-4 text-center">Corrected On</th>
-                <th className="py-3 px-4 text-center">Upload</th>
+                <th className="py-3 px-4 text-center">Corrected File</th>
                 <th className="py-3 px-4 text-center">Action</th>
               </tr>
             </thead>
@@ -315,16 +315,40 @@ const ViewSubmissions: React.FC = () => {
                   </td>
 
                   {/* File Upload */}
-                  <td className="py-2.5 px-4 text-center">
-                    <label className="cursor-pointer flex justify-center items-center">
-                      <ArrowUpTrayIcon className="w-5 h-5 text-[#0EA5E9]" />
-                      <input
-                        type="file"
-                        accept=".png,.jpg,.jpeg,.mp4,.pdf,.doc,.docx"
-                        className="hidden"
-                        onChange={(e) => (a.correctedFile = e.target.files[0])}
-                      />
-                    </label>
+                  <td className="py-2.5 px-4">
+                    {a.correctedDate ? (
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <ArrowUpTrayIcon className="w-5 h-5 text-slate-400" />
+                        <span className="font-medium">Uploaded</span>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer flex items-center gap-2">
+                        <ArrowUpTrayIcon className="w-5 h-5 text-[#0EA5E9]" />
+
+                        <span className="text-[#0EA5E9] font-medium hover:underline">
+                          {a.correctedFile ? "Change File" : "Upload"}
+                        </span>
+
+                        <input
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.mp4,.pdf,.doc,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            a.correctedFile = file;
+
+                            // Trigger UI re-render
+                            setFilteredAssignments((prev) => [...prev]);
+                          }}
+                        />
+                      </label>
+                    )}
+
+                    {a.correctedFile && (
+                      <div className="mt-1 text-xs text-green-600">
+                        <span className="font-semibold">Selected:</span> {a.correctedFile.name}
+                      </div>
+                    )}
                   </td>
 
                   {/* Save button */}

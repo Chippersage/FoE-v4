@@ -283,7 +283,7 @@ const CoursePage: React.FC = () => {
           <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
             <button
               onClick={() => setShowAssignmentModal(true)}
-              className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
             >
               View Assignment Status
             </button>
@@ -423,14 +423,18 @@ const CoursePage: React.FC = () => {
         </div>
       </div>
 
-      {showAssignmentModal && (
-        <AssignmentModal
-          onClose={() => setShowAssignmentModal(false)}
-          submissionDate={assignmentStatus?.submittedDate}
-          status={assignmentStatus?.status}
-          fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
-        />
-      )}
+{showAssignmentModal && (
+  <AssignmentModal
+    onClose={() => setShowAssignmentModal(false)}
+    submissionDate={assignmentStatus?.submittedDate}
+    status={assignmentStatus?.status}
+    fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
+    correctedFile={assignmentStatus?.correctedFile}
+    correctedDate={assignmentStatus?.correctedDate}
+    remarks={assignmentStatus?.remarks}
+    score={assignmentStatus?.score}
+  />
+)}
     </CourseContext.Provider>
   );
 };

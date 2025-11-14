@@ -67,11 +67,16 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   // ----------------------------------------------------------
   // Reset state when content changes
   // ----------------------------------------------------------
+  const prevUrlRef = useRef(url);
+
   useEffect(() => {
-    setIsLoading(true);
-    setAttemptRecorded(false);
-    setShowNextOverlay(false);
-    setCountdown(5);
+    if (url !== prevUrlRef.current) {
+      setIsLoading(true);
+      setAttemptRecorded(false);
+      setShowNextOverlay(false);
+      setCountdown(5);
+      prevUrlRef.current = url;
+    }
   }, [url]);
 
   // ----------------------------------------------------------
