@@ -8,6 +8,7 @@ export interface CurrentContent {
   stageId: string;
   unitId: string;
   subconceptId: string;
+  subconceptMaxscore: number;
 }
 
 export interface CourseContextType {

@@ -7,24 +7,41 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUserContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { XCircle } from "lucide-react"; // hover cross icon
+import { XCircle } from "lucide-react";
 
+// ---------------------------------------------------------
+// Component
+// ---------------------------------------------------------
 type NavbarProps = {
   toggleSidebar?: () => void;
 };
 
 const Navbar: React.FC<NavbarProps> = () => {
+
+  // ---------------------------------------------------------
+  // State variables
+  // ---------------------------------------------------------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  // ---------------------------------------------------------
+  // Routing and context
+  // ---------------------------------------------------------
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setIsAuthenticated, setUser } = useUserContext();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // ---------------------------------------------------------
+  // Derived values used in UI
+  // ---------------------------------------------------------
   const userName = user?.userName || "User";
   const isSelectCohortPage = location.pathname === "/select-cohort";
 
+  // ---------------------------------------------------------
+  // Menu list
+  // ---------------------------------------------------------
   const menuItems = [
     { title: "Profile", path: "/profile" },
     { title: "View Progress", path: "/view-progress" },
@@ -33,6 +50,9 @@ const Navbar: React.FC<NavbarProps> = () => {
     { title: "Terms of Use", path: "/terms" },
   ];
 
+  // ---------------------------------------------------------
+  // Full logout handler (clears all localStorage)
+  // ---------------------------------------------------------
   const handleLogout = async () => {
     setIsLoading(true);
     try {
@@ -64,18 +84,43 @@ const Navbar: React.FC<NavbarProps> = () => {
     }
   };
 
+  // ---------------------------------------------------------
+  // Partial logout: remove only sessionId + selectedCohort
+  // ---------------------------------------------------------
+  const handleendCohortSession = async () => {
+    try {
+      await axios.post(
+        `${API_BASE_URL}/users/logout`,
+        {},
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    } catch (err) {
+      console.error("Session cleanup failed:", err);
+    }
+
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("selectedCohort");
+  };
+
+  // ---------------------------------------------------------
+  // Menu item click handler
+  // ---------------------------------------------------------
   const handleMenuClick = (item) => {
-    // View Progress should work normally
     if (item.title === "View Progress") {
       navigate(item.path);
       setMenuOpen(false);
       return;
     }
 
-    // all others (Profile, Help, Terms, About Program) disabled
     toast("Coming soon...");
   };
 
+  // ---------------------------------------------------------
+  // JSX Render
+  // ---------------------------------------------------------
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm"
@@ -84,14 +129,16 @@ const Navbar: React.FC<NavbarProps> = () => {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
     >
       <div className="flex items-center justify-between px-4 py-2 h-14">
-        {/* Branding */}
+
+        {/* Branding section */}
         <div
           className={`flex items-center gap-2 select-none ${
             isSelectCohortPage
               ? "cursor-default opacity-80"
               : "cursor-pointer hover:opacity-90"
           }`}
-          onClick={() => {
+          onClick={async () => {
+            await handleendCohortSession();
             if (!isSelectCohortPage) navigate("/select-cohort");
           }}
         >
@@ -105,8 +152,10 @@ const Navbar: React.FC<NavbarProps> = () => {
           </h1>
         </div>
 
-        {/* Right Section */}
+        {/* Right section: welcome text + avatar + menu */}
         <div className="flex items-center gap-3 relative">
+          
+          {/* Welcome message */}
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-sm text-gray-500">Welcome back,</span>
             <span className="text-sm font-medium text-[#0EA5E9] break-words max-w-[160px] text-right leading-tight">
@@ -114,6 +163,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             </span>
           </div>
 
+          {/* Avatar */}
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0EA5E9] flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
             onMouseEnter={() => setMenuOpen(true)}
@@ -122,6 +172,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             {userName?.trim().charAt(0).toUpperCase()}
           </div>
 
+          {/* Dropdown */}
           <AnimatePresence>
             {menuOpen && (
               <motion.div
@@ -134,8 +185,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                 onMouseLeave={() => setMenuOpen(false)}
               >
                 {menuItems.map((item, idx) => {
-                  const isDisabled =
-                    item.title !== "View Progress"; // only view-progress enabled
+                  const isDisabled = item.title !== "View Progress";
                   const isHovered = hoveredItem === idx;
 
                   return (
@@ -153,7 +203,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                     >
                       <span>{item.title}</span>
 
-                      {/* ❌ icon on hover for disabled items only */}
+                      {/* Disabled hover indicator */}
                       {isDisabled && isHovered && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -161,10 +211,7 @@ const Navbar: React.FC<NavbarProps> = () => {
                           exit={{ opacity: 0, scale: 0.8 }}
                           transition={{ duration: 0.15 }}
                         >
-                          <XCircle
-                            size={16}
-                            className="text-gray-400 transition-all duration-150"
-                          />
+                          <XCircle size={16} className="text-gray-400 transition-all duration-150" />
                         </motion.div>
                       )}
                     </button>
@@ -173,6 +220,7 @@ const Navbar: React.FC<NavbarProps> = () => {
 
                 <div className="border-t border-gray-200 my-1" />
 
+                {/* Logout button */}
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}

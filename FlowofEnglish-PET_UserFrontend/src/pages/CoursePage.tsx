@@ -43,6 +43,7 @@ const CoursePage: React.FC = () => {
     stageId: "",
     unitId: "",
     subconceptId: "",
+    subconceptMaxscore: 0,
     completionStatus: "",
   });
 
@@ -108,6 +109,12 @@ const CoursePage: React.FC = () => {
     setShowSubmit(false);
   }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
 
+
+  useEffect(() => {
+  console.log("CurrentContent:", currentContent);
+}, [currentContent]);
+
+
   // Listen for postMessage events from iframe (controls Show Submit button)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -118,7 +125,7 @@ const CoursePage: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Fetch program stages and initialize initial subconcept (uses util)
+  // Fetch program stages + initial content
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -142,7 +149,8 @@ const CoursePage: React.FC = () => {
             stageId: stage.stageId,
             unitId: unit.unitId,
             subconceptId: sub.subconceptId,
-            completionStatus: sub.completionStatus,
+            subconceptMaxscore: Number(sub.subconceptMaxscore || 0),
+            completionStatus: sub.completionStatus
           });
         }
       } catch (err) {
@@ -206,6 +214,7 @@ const CoursePage: React.FC = () => {
       unitId: nextSub.unitId,
       subconceptId: nextSub.subconceptId,
       completionStatus: nextSub.completionStatus,
+      subconceptMaxscore: Number(nextSub.subconceptMaxscore || 0),
     });
   };
 
@@ -349,7 +358,16 @@ const CoursePage: React.FC = () => {
         <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
           <Sidebar
             programName={programName}
-            onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId, completionStatus) =>
+            onSelectSubconcept={(
+              url,
+              type,
+              id,
+              stageId,
+              unitId,
+              subconceptId,
+              subconceptMaxscore,
+              completionStatus
+            ) =>
               setCurrentContent({
                 url,
                 type,
@@ -358,6 +376,7 @@ const CoursePage: React.FC = () => {
                 unitId: unitId || currentContent.unitId,
                 subconceptId: subconceptId || currentContent.subconceptId,
                 completionStatus: completionStatus || currentContent.completionStatus,
+                subconceptMaxscore: Number(subconceptMaxscore || 0),
               })
             }
             currentActiveId={currentContent.id}
@@ -379,7 +398,7 @@ const CoursePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Floating Submit Button (for both desktop & mobile) */}
+          {/* Floating Submit Button */}
           {showIframe && showSubmit && (
             <div className="fixed bottom-24 right-4 z-20">
               <button
@@ -393,14 +412,23 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
-          {/* Sidebar (Mobile only, below content) */}
+          {/* Mobile Sidebar */}
           <div
             className="md:hidden flex-shrink-0 bg-white overflow-y-auto border-t border-gray-300"
             style={{ height: "45vh" }}
           >
             <Sidebar
               programName={programName}
-              onSelectSubconcept={(url, type, id, stageId, unitId, subconceptId, completionStatus) =>
+              onSelectSubconcept={(
+                url,
+                type,
+                id,
+                stageId,
+                unitId,
+                subconceptId,
+                subconceptMaxscore,
+                completionStatus
+              ) =>
                 setCurrentContent({
                   url,
                   type,
@@ -409,6 +437,7 @@ const CoursePage: React.FC = () => {
                   unitId: unitId || currentContent.unitId,
                   subconceptId: subconceptId || currentContent.subconceptId,
                   completionStatus: completionStatus || currentContent.completionStatus,
+                  subconceptMaxscore: Number(subconceptMaxscore || 0),
                 })
               }
               currentActiveId={currentContent.id}
@@ -416,25 +445,25 @@ const CoursePage: React.FC = () => {
             />
           </div>
 
-          {/* Desktop Control Buttons */}
+          {/* Control Buttons (Desktop) */}
           <div className="hidden md:flex justify-center mt-4">
             <ControlButtons />
           </div>
         </div>
       </div>
 
-{showAssignmentModal && (
-  <AssignmentModal
-    onClose={() => setShowAssignmentModal(false)}
-    submissionDate={assignmentStatus?.submittedDate}
-    status={assignmentStatus?.status}
-    fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
-    correctedFile={assignmentStatus?.correctedFile}
-    correctedDate={assignmentStatus?.correctedDate}
-    remarks={assignmentStatus?.remarks}
-    score={assignmentStatus?.score}
-  />
-)}
+      {showAssignmentModal && (
+        <AssignmentModal
+          onClose={() => setShowAssignmentModal(false)}
+          submissionDate={assignmentStatus?.submittedDate}
+          status={assignmentStatus?.status}
+          fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
+          correctedFile={assignmentStatus?.correctedFile}
+          correctedDate={assignmentStatus?.correctedDate}
+          remarks={assignmentStatus?.remarks}
+          score={assignmentStatus?.score}
+        />
+      )}
     </CourseContext.Provider>
   );
 };
