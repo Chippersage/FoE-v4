@@ -1,37 +1,49 @@
 // -----------------------------------------------------------------------------
 // useUserAttempt.ts
 // -----------------------------------------------------------------------------
-// Custom hook to handle user-attempt creation and progress tracking.
-// It sends an API request to record attempts and dispatches an event
-// to update UI components (Sidebar) without causing global re-renders.
+// Hook for creating and submitting user attempt records.
+// Prepares attempt data, calculates score, and updates progress state.
 // -----------------------------------------------------------------------------
 
 import { useCourseContext } from "../context/CourseContext";
 import { postUserAttempt } from "../services/userAttemptService";
 import type { UserAttemptPayload } from "../services/userAttemptService";
+import { useAttemptScore } from "./useAttemptScore";
 
 export const useUserAttempt = () => {
   const { user, programId, currentContent } = useCourseContext();
+  const { getScore } = useAttemptScore();
 
   const recordAttempt = async (): Promise<void> => {
     try {
-      // -----------------------------------------------------------------------
-      // Fetch necessary IDs and session info
-      // -----------------------------------------------------------------------
+      // Read identifiers and session info
       const selectedCohortRaw = localStorage.getItem("selectedCohort");
       const selectedCohort = selectedCohortRaw ? JSON.parse(selectedCohortRaw) : null;
       const cohortId = selectedCohort?.cohortId;
       const sessionId = localStorage.getItem("sessionId");
-      const { stageId, unitId, subconceptId } = currentContent;
 
-      // -----------------------------------------------------------------------
-      // Validate required fields before proceeding
-      // -----------------------------------------------------------------------
+      const {
+        stageId,
+        unitId,
+        subconceptId,
+        type,
+        subconceptMaxscore
+      } = currentContent;
+
+      // Validate essential fields
       if (!sessionId || !cohortId || !programId || !user?.userId) return;
 
-      // -----------------------------------------------------------------------
-      // Prepare payload for backend API
-      // -----------------------------------------------------------------------
+      // Ensure subconceptMaxScore is a valid number
+      const safeMaxScore = typeof subconceptMaxscore === "number" ? subconceptMaxscore : 0;
+
+      if (typeof subconceptMaxscore !== "number") {
+        console.warn("Missing subconceptMaxScore for subconcept:", subconceptId);
+      }
+
+      // Compute score for this attempt
+      const userAttemptScore = getScore(type, safeMaxScore);
+
+      // Build API payload
       const payload: UserAttemptPayload = {
         cohortId,
         programId,
@@ -43,24 +55,20 @@ export const useUserAttempt = () => {
         userAttemptStartTimestamp: new Date().toISOString(),
         userAttemptEndTimestamp: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
         userAttemptFlag: true,
-        userAttemptScore: 2,
+        userAttemptScore
       };
 
-      // -----------------------------------------------------------------------
-      // API call to save attempt
-      // -----------------------------------------------------------------------
+      // Submit attempt to backend
       await postUserAttempt(payload);
 
-      // -----------------------------------------------------------------------
-      // Dispatch event for Sidebar update (non-reactive)
-      // -----------------------------------------------------------------------
+      // Notify components of progress update
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId },
+          detail: { subconceptId }
         })
       );
 
-      console.log("✅ User attempt recorded for:", subconceptId);
+      console.log("User attempt recorded for:", subconceptId);
     } catch (err) {
       console.error("Error recording user attempt:", err);
     }

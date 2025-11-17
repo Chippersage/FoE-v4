@@ -14,7 +14,9 @@ interface SidebarProps {
     id: string,
     stageId?: string,
     unitId?: string,
-    subconceptId?: string
+    subconceptId?: string,
+    subconceptMaxscore?: number,
+    completionStatus?: string
   ) => void;
   currentActiveId: string;
   stages: any[];
@@ -33,7 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [localStages, setLocalStages] = useState<any[]>(stages);
   const { user } = useUserContext();
   const isMentor = user?.userType?.toLowerCase() === "mentor";
-
 
   // --------------------------------------------------------------------------
   // Effects
@@ -74,7 +75,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Handlers
   // --------------------------------------------------------------------------
 
-  // Expand/collapse module section
   const toggleStage = (stageId: string) => {
     setOpenStages((prev) =>
       prev.includes(stageId)
@@ -83,7 +83,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Determines whether a subconcept should be locked based on completion order
   const isSubconceptLocked = (unit: any, indexInUnit: number) => {
     if (isMentor) return false;
 
@@ -124,7 +123,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     return currentGlobalIndex > nextUnlockIndex;
   };
 
-  // Builds a flat list of all subconcepts across stages for progress tracking
   const buildGlobalList = () => {
     const list: {
       stageId: string;
@@ -155,7 +153,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Render helpers
   // --------------------------------------------------------------------------
 
-  // Round checkbox indicator for subconcept completion
   const RoundCheckbox = ({
     completed,
     active,
@@ -178,8 +175,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
 
   // --------------------------------------------------------------------------
-  // Render
+  // Render Sidebar
   // --------------------------------------------------------------------------
+
   return (
     <aside className="bg-white text-black flex flex-col h-full">
       {/* Desktop Sidebar */}
@@ -204,11 +202,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   // --------------------------------------------------------------------------
   // Nested Component: SidebarList
   // --------------------------------------------------------------------------
+
   function SidebarList() {
     return (
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
         {localStages.map((stage, stageIndex) => (
           <li key={stage.stageId} className="list-none border-b border-gray-200 pb-3">
+            
             {/* Stage Header */}
             <button
               onClick={() => toggleStage(stage.stageId)}
@@ -227,11 +227,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </button>
 
-            {/* Units and Subconcepts */}
+            {/* Units + Subconcepts */}
             {openStages.includes(stage.stageId) && (
               <ul className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
+                
                 {stage.units.map((unit: any, unitIndex: number) => (
                   <div key={unit.unitId} className="flex flex-col">
+                    
                     {/* Unit Row */}
                     <li
                       onClick={() =>
@@ -242,7 +244,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                           unit.unitId,
                           stage.stageId,
                           unit.unitId,
-                          unit.unitId
+                          unit.unitId,
+                          Number(unit.subconceptMaxscore || 0),
+                          unit.completionStatus
                         )
                       }
                       className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
@@ -261,8 +265,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                     {/* Subconcept Rows */}
                     {unit.subconcepts?.map((sub: any, subIndex: number) => {
-                      const subCompleted =
-                        (sub.completionStatus || "").toLowerCase() === "yes";
+                      const subCompleted = (sub.completionStatus || "").toLowerCase() === "yes";
                       const type = (sub.subconceptType || "").toLowerCase();
                       const isVideo = type === "video";
                       const isLocked = isSubconceptLocked(unit, subIndex);
@@ -280,6 +283,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               stage.stageId,
                               unit.unitId,
                               sub.subconceptId,
+                              Number(sub.subconceptMaxscore || 0),
                               sub.completionStatus
                             );
                           }}
@@ -295,18 +299,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                             completed={subCompleted}
                             active={currentActiveId === sub.subconceptId}
                           />
+
                           {isVideo ? (
                             <Video size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
                           ) : (
                             <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
                           )}
-                          <span className="text-sm flex-1">{`${unitIndex + 1}.${subIndex + 1} ${sub.subconceptDesc}`}</span>
+
+                          <span className="text-sm flex-1">
+                            {`${unitIndex + 1}.${subIndex + 1} ${sub.subconceptDesc}`}
+                          </span>
+
                           {!isMentor && isLocked && (
                             <Lock size={14} className="text-gray-500" />
                           )}
                         </li>
                       );
                     })}
+
                   </div>
                 ))}
               </ul>

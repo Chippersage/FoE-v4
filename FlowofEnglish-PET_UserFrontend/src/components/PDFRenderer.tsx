@@ -14,9 +14,11 @@ interface PDFRendererProps {
   pdfUrl: string;
   title?: string;
   className?: string;
+  onLoadSuccess?: () => void;
+  onLoadError?: () => void;
 }
 
-function PDFRenderer({ pdfUrl, className = "" }: PDFRendererProps) {
+function PDFRenderer({ pdfUrl, className = "", onLoadSuccess, onLoadError }: PDFRendererProps) {
     const [pageNumber, setPageNumber] = useState(1);
     const [numPages, setNumPages] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -28,12 +30,16 @@ function PDFRenderer({ pdfUrl, className = "" }: PDFRendererProps) {
         setPageNumber(1);
         setLoading(false);
         setError(null);
+
+        if (onLoadSuccess) onLoadSuccess();
     }
 
     function onDocumentLoadError(error: Error) {
         console.error("Error loading PDF:", error);
         setError('Failed to load PDF document');
         setLoading(false);
+
+        if (onLoadError) onLoadError();
     }
 
     function nextPage() {

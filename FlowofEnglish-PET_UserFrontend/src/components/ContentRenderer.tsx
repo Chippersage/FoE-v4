@@ -24,7 +24,16 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   title,
   className = "",
 }) => {
-  const { currentContent, stages, setCurrentContent, canGoNext, setCanGoNext, remainingTime, setRemainingTime } = useCourseContext();
+  const {
+    currentContent,
+    stages,
+    setCurrentContent,
+    canGoNext,
+    setCanGoNext,
+    remainingTime,
+    setRemainingTime,
+  } = useCourseContext();
+
   const { recordAttempt } = useUserAttempt();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +45,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ----------------------------------------------------------
-  // Detect fullscreen mode
+  //  Detect fullscreen mode
   // ----------------------------------------------------------
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -55,27 +64,29 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener(
-        "webkitfullscreenchange",
-        handleFullscreenChange
-      );
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
       document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
       document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
     };
   }, []);
 
   // ----------------------------------------------------------
-  // Reset state when content changes
+  //  Reset state when content changes
   // ----------------------------------------------------------
+  const prevUrlRef = useRef(url);
+
   useEffect(() => {
-    setIsLoading(true);
-    setAttemptRecorded(false);
-    setShowNextOverlay(false);
-    setCountdown(5);
+    if (url !== prevUrlRef.current) {
+      setIsLoading(true);
+      setAttemptRecorded(false);
+      setShowNextOverlay(false);
+      setCountdown(5);
+      prevUrlRef.current = url;
+    }
   }, [url]);
 
   // ----------------------------------------------------------
-  // Handle video progress and mark attempt
+  //  Video progress (95% = attempt)
   // ----------------------------------------------------------
   const handleVideoProgress = async (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget;
@@ -90,7 +101,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             detail: { subconceptId: currentContent.subconceptId },
           })
         );
-        console.log("Attempt recorded for:", currentContent.subconceptId);
       } catch (err) {
         console.error("Error recording user attempt:", err);
       }
@@ -98,7 +108,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  // When video ends, show overlay
+  //  Show overlay when video ends
   // ----------------------------------------------------------
   const handleVideoEnded = () => {
     if (!showNextOverlay) {
@@ -108,20 +118,14 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  // Countdown logic - auto click next button when done
+  //  Countdown → auto NEXT click
   // ----------------------------------------------------------
   useEffect(() => {
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
       const nextBtn = document.querySelector("#next-subconcept-btn");
-      if (nextBtn) {
-        nextBtn.click();
-        console.log("Auto-clicked NextSubconceptButton after countdown.");
-      } else {
-        console.warn("NextSubconceptButton not found in DOM.");
-      }
-
+      nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);
       return;
@@ -132,7 +136,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   }, [showNextOverlay, countdown]);
 
   // ----------------------------------------------------------
-  // Overlay component shown after video ends
+  //  Overlay shown after video completes
   // ----------------------------------------------------------
   const NextOverlay = () =>
     showNextOverlay && (
@@ -145,12 +149,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           <div className="flex flex-col items-center gap-3">
             <VideoIcon size={isFullscreen ? 60 : 48} className="text-white" />
             <h2 className="text-lg md:text-2xl font-bold">
-              Next Topic starting in{" "}
-              <span className="text-yellow-200 ml-2">{countdown}</span> sec
+              Next Topic starting in <span className="text-yellow-200 ml-2">{countdown}</span> sec
             </h2>
-            <p className="text-sm text-gray-100 mt-1">
-              Click below to replay or go to the next topic.
-            </p>
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -194,7 +194,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     );
 
   // ----------------------------------------------------------
-  // Loading spinner
+  //  Loading spinner
   // ----------------------------------------------------------
   const renderLoading = () => (
     <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
@@ -202,14 +202,53 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     </div>
   );
 
+  // =====================================================================
+  // --- Logic for user-attempt on NextsubconceptButton Click for specific types ---
+  // =====================================================================
+
+  // Types that should record attempt *only when Next is clicked*
+  const recordOnNextTypes = ["image", "youtube", "pdf"];
+
+  // Checks if currentContent.type requires attempt on Next click
+  const shouldRecordOnNext = () => {
+    const t = currentContent.type?.toLowerCase();
+    return recordOnNextTypes.includes(t);
+  };
+
+  // Handles recording attempt for non-video types
+  const handleNextAttempt = async () => {
+    if (!shouldRecordOnNext()) return;
+
+    try {
+      await recordAttempt();
+      window.dispatchEvent(
+        new CustomEvent("updateSidebarCompletion", {
+          detail: { subconceptId: currentContent.subconceptId },
+        })
+      );
+    } catch (err) {
+      console.error("Error recording user attempt:", err);
+    }
+  };
+
+  // Listen for the Go To Next button click
+  useEffect(() => {
+    const nextBtn = document.getElementById("next-subconcept-btn");
+    if (!nextBtn) return;
+
+    const handler = () => handleNextAttempt();
+
+    nextBtn.addEventListener("click", handler);
+    return () => nextBtn.removeEventListener("click", handler);
+  }, [currentContent]);
+  // =====================================================================
+
   // ----------------------------------------------------------
-  // Type-based content rendering
+  //  Type-based content rendering
   // ----------------------------------------------------------
   if (!url) {
     return (
-      <div
-        className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
-      >
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
         <p>No content available</p>
       </div>
     );
@@ -242,16 +281,19 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       return (
         <div className={`relative w-full h-full bg-white ${className}`}>
           {isLoading && renderLoading()}
-          <PDFRenderer pdfUrl={url} title={title} />
+          <PDFRenderer 
+           pdfUrl={url} 
+          title={title}
+          onLoadSuccess={() => setIsLoading(false)}
+          onLoadError={() => setIsLoading(false)} 
+          />
         </div>
       );
 
     case "image":
     case "assignment_image":
       return (
-        <div
-          className={`relative w-full h-full flex items-center justify-center bg-white ${className}`}
-        >
+        <div className={`relative w-full h-full flex items-center justify-center bg-white ${className}`}>
           {isLoading && renderLoading()}
           <img
             src={url}
@@ -263,7 +305,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
-    case "googleform":
     case "medium":
     case "toastmasters":
     case "assessment":
@@ -290,9 +331,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             xmlUrl={url}
             key={url}
             subconceptMaxscore={10}
-            setSubmissionPayload={(payload) =>
-              console.log("Submission payload:", payload)
-            }
+            setSubmissionPayload={(payload) => console.log("Submission payload:", payload)}
           />
         </div>
       );
