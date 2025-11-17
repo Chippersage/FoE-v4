@@ -2,6 +2,8 @@ package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.*;
 import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Pageable;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -79,4 +81,29 @@ public interface UserSessionMappingRepository extends JpaRepository<UserSessionM
            "LIMIT 1")
     List<UserSessionMapping> findLatestSessionByUserIdAndCohortId(@Param("userId") String userId, 
                                                                  @Param("cohortId") String cohortId);
+    
+    // Find the latest 5 sessions for a specific user in a specific cohort Ordered by sessionEndTimestamp descending (most recent first)
+    @Query("SELECT usm FROM UserSessionMapping usm " +
+    	       "WHERE usm.user.userId = :userId " +
+    	       "AND usm.cohort.cohortId = :cohortId " +
+    	       "AND usm.sessionEndTimestamp IS NOT NULL " +
+    	       "ORDER BY usm.sessionEndTimestamp DESC")
+    	List<UserSessionMapping> findTop5SessionsByUserIdAndCohortId(@Param("userId") String userId, 
+    	                                                               @Param("cohortId") String cohortId,
+    	                                                               Pageable pageable);
+    // Find all users enrolled in a cohort with their latest session Returns one record per user (the most recent session)
+    @Query("SELECT usm FROM UserSessionMapping usm " +
+    	       "WHERE usm.cohort.cohortId = :cohortId " +
+    	       "AND usm.sessionEndTimestamp = (" +
+    	       "   SELECT MAX(usm2.sessionEndTimestamp) " +
+    	       "   FROM UserSessionMapping usm2 " +
+    	       "   WHERE usm2.user.userId = usm.user.userId " +
+    	       "   AND usm2.cohort.cohortId = :cohortId " +
+    	       "   AND usm2.sessionEndTimestamp IS NOT NULL" +
+    	       ")")
+    	List<UserSessionMapping> findLatestSessionPerUserInCohort(@Param("cohortId") String cohortId);
+ 
+    // Alternative approach: Get all users in cohort from UserCohortMapping This ensures we get ALL users, even those without any session history
+    @Query("SELECT ucm.user FROM UserCohortMapping ucm WHERE ucm.cohort.cohortId = :cohortId")
+    List<User> findAllUsersInCohort(@Param("cohortId") String cohortId);
 }

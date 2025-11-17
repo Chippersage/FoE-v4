@@ -40,7 +40,7 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
     int countActiveByCohortCohortId(@Param("cohortId") String cohortId);
 
     // Count deactivated users in a cohort
-    @Query("SELECT COUNT(u) FROM UserCohortMapping u WHERE u.cohort.cohortId = :cohortId AND u.status = 'DEACTIVATED'")
+    @Query("SELECT COUNT(u) FROM UserCohortMapping u WHERE u.cohort.cohortId = :cohortId AND u.status = 'DISABLED'")
     int countDeactivatedByCohortCohortId(@Param("cohortId") String cohortId);
  
     // Find all users in specific cohorts

@@ -1,11 +1,14 @@
 package com.FlowofEnglish.dto;
 
-import java.util.List;
 
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CohortSessionsResponseDTO {
-	private OrganizationDTO organization;
-    private ProgramCountDTO program;
-    private List<UserSessionDTO> userSessions;
+    private OrganizationDTO organization;
+    private CohortDetailsDTO cohort;
+    private List<UserSessionDetailsDTO> users;
     
    // Getters and setters
 	public OrganizationDTO getOrganization() {
@@ -14,18 +17,17 @@ public class CohortSessionsResponseDTO {
 	public void setOrganization(OrganizationDTO organization) {
 		this.organization = organization;
 	}
-	public ProgramCountDTO getProgram() {
-		return program;
+	public CohortDetailsDTO getCohort() {
+		return cohort;
 	}
-	public void setProgram(ProgramCountDTO program) {
-		this.program = program;
+	public void setCohort(CohortDetailsDTO cohort) {
+		this.cohort = cohort;
 	}
-	public List<UserSessionDTO> getUserSessions() {
-		return userSessions;
+	public List<UserSessionDetailsDTO> getUsers() {
+		return users;
 	}
-	public void setUserSessions(List<UserSessionDTO> userSessions) {
-		this.userSessions = userSessions;
+	public void setUsers(List<UserSessionDetailsDTO> users) {
+		this.users = users;
 	}
-	
    
 }

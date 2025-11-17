@@ -21,10 +21,11 @@ public interface UserSessionMappingService {
     List<UserSessionMapping> findActiveSessionsForCleanup();
     UserSessionMapping findOrCreateAutoSession(String userId, String cohortId);
     
-    List<UserSessionDTO> getLatestSessionsByCohortId(String cohortId);
-    UserSessionDTO getLatestSessionForUserInCohort(String mentorUserId, String targetUserId, String cohortId);
+    //Get latest 5 sessions for all users in a cohort with mentor validation
+    CohortSessionsResponseDTO getLatestSessionsForCohortStructured(String mentorUserId, String cohortId);
     
-    //  Get latest sessions for all users in a cohort with mentor validation
-    List<UserSessionDTO> getLatestSessionsForCohortWithMentorValidation(String mentorUserId, String cohortId);
+    // Get latest 5 sessions for a specific user in a cohort with mentor validation
+    CohortSessionsResponseDTO getLatestSessionsForUserStructured(String mentorUserId, String targetUserId, String cohortId);
+
 
 }

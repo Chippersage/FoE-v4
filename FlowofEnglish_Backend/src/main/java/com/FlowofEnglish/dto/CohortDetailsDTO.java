@@ -1,0 +1,52 @@
+package com.FlowofEnglish.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class CohortDetailsDTO {
+    private String cohortId;
+    private String cohortName;
+    private ProgramCountDTO program;
+    private int totalUsers;
+    private int activeUsers;
+    private int deactivatedUsers;
+    
+    // Getters and Setters
+	public String getCohortId() {
+		return cohortId;
+	}
+	public void setCohortId(String cohortId) {
+		this.cohortId = cohortId;
+	}
+	public String getCohortName() {
+		return cohortName;
+	}
+	public void setCohortName(String cohortName) {
+		this.cohortName = cohortName;
+	}
+	public ProgramCountDTO getProgram() {
+		return program;
+	}
+	public void setProgram(ProgramCountDTO program) {
+		this.program = program;
+	}
+	public int getTotalUsers() {
+		return totalUsers;
+	}
+	public void setTotalUsers(int totalUsers) {
+		this.totalUsers = totalUsers;
+	}
+	public int getActiveUsers() {
+		return activeUsers;
+	}
+	public void setActiveUsers(int activeUsers) {
+		this.activeUsers = activeUsers;
+	}
+	public int getDeactivatedUsers() {
+		return deactivatedUsers;
+	}
+	public void setDeactivatedUsers(int deactivatedUsers) {
+		this.deactivatedUsers = deactivatedUsers;
+	}
+    
+}

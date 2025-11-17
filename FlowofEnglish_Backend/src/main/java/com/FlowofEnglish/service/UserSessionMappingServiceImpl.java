@@ -5,9 +5,10 @@ import com.FlowofEnglish.repository.*;
 import com.FlowofEnglish.dto.*;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import org.springframework.data.domain.Pageable;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,6 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
     
     @Override
     public List<UserSessionMapping> findActiveSessionsForCleanup() {
-        // You'll need to add this method to your repository
         return userSessionMappingRepository.findBySessionEndTimestampIsNull();
     }
     
@@ -67,6 +67,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             userSessionMappingRepository.save(session);
         }
     }
+    
     @Override
     public void invalidateAllActiveSessions(String userId, String cohortId) {
         List<UserSessionMapping> activeSessions = findActiveSessionsByUserIdAndCohortId(userId, cohortId);
@@ -75,6 +76,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             userSessionMappingRepository.save(session);
         }
     }
+    
     @Override
     public UserSessionMapping createUserSessionMapping(UserSessionMapping userSessionMapping) {
         return userSessionMappingRepository.save(userSessionMapping);
@@ -159,19 +161,38 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         return userSessionMappingRepository.save(session);
     }
 
-    // new methods for the mentor screen
+    
+    
     @Override
-    public List<UserSessionDTO> getLatestSessionsByCohortId(String cohortId) {
-        List<UserSessionMapping> sessions = userSessionMappingRepository.findLatestSessionsByCohortId(cohortId);
+    public CohortSessionsResponseDTO getLatestSessionsForCohortStructured(String mentorUserId, String cohortId) {
+        // Validate mentor
+        validateMentorInCohort(mentorUserId, cohortId);
         
-        return sessions.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        // Get cohort details
+        Cohort cohort = cohortRepository.findByCohortId(cohortId)
+                .orElseThrow(() -> new RuntimeException("Cohort not found"));
+        
+        // Build response structure
+        CohortSessionsResponseDTO response = new CohortSessionsResponseDTO();
+        
+        // 1. Set organization details (once)
+        Organization org = cohort.getOrganization();
+        response.setOrganization(convertToOrganizationDTO(org));
+        
+        // 2. Set cohort details (once)
+        CohortDetailsDTO cohortDetails = buildCohortDetails(cohort, cohortId);
+        response.setCohort(cohortDetails);
+        
+        // 3. Get all users in cohort and their session history
+        List<UserSessionDetailsDTO> userDetailsList = buildUserSessionDetailsList(cohortId);
+        response.setUsers(userDetailsList);
+        
+        return response;
     }
 
     @Override
-    public UserSessionDTO getLatestSessionForUserInCohort(String mentorUserId, String targetUserId, String cohortId) {
-        // Validate mentor user type and cohort membership
+    public CohortSessionsResponseDTO getLatestSessionsForUserStructured(String mentorUserId, String targetUserId, String cohortId) {
+        // Validate mentor
         validateMentorInCohort(mentorUserId, cohortId);
         
         // Validate target user exists and is in cohort
@@ -183,138 +204,100 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             throw new RuntimeException("Target user is not enrolled in the specified cohort");
         }
         
-        // Get latest session for the target user in the cohort
-        List<UserSessionMapping> latestSessions = userSessionMappingRepository
-                .findLatestSessionByUserIdAndCohortId(targetUserId, cohortId);
-        
-        if (latestSessions.isEmpty()) {
-            // Return empty DTO with user info but no session data
-            return createUserSessionDTOWithUserInfo(targetUser, cohortId);
-        }
-        
-        UserSessionMapping latestSession = latestSessions.get(0);
-        UserSessionDTO dto = convertToDTO(latestSession);
-        
-        // Enhance with organization and program details
-        return enhanceSessionWithOrganizationAndProgram(dto, cohortId);
-    }
-    
-    private UserSessionDTO createUserSessionDTOWithUserInfo(User user, String cohortId) {
-        UserSessionDTO dto = new UserSessionDTO();
-        dto.setUserId(user.getUserId());
-        dto.setUserName(user.getUserName());
-        dto.setUserType(user.getUserType());
-        dto.setUserEmail(user.getUserEmail());
-        dto.setCreatedAt(user.getCreatedAt());
-        dto.setDeactivatedAt(user.getDeactivatedAt());
-        dto.setDeactivatedReason(user.getDeactivatedReason());
-        
-        // Get user status from UserCohortMapping
-        String userStatus = getUserStatusFromCohortMapping(user.getUserId(), cohortId);
-        dto.setStatus(userStatus);
-        
-        dto.setCohortId(cohortId);
-        
-        // Get cohort name
-        Cohort cohort = cohortRepository.findByCohortId(cohortId)
-                .orElseThrow(() -> new RuntimeException("Cohort not found"));
-        dto.setCohortName(cohort.getCohortName());
-        
-        return enhanceSessionWithOrganizationAndProgram(dto, cohortId);
-    }
-    
-    private UserSessionDTO enhanceSessionWithOrganizationAndProgram(UserSessionDTO dto, String cohortId) {
-        Cohort cohort = cohortRepository.findByCohortId(cohortId)
-                .orElseThrow(() -> new RuntimeException("Cohort not found"));
-        
-        // Set organization
-        Organization org = cohort.getOrganization();
-        OrganizationDTO organizationDTO = convertToOrganizationDTO(org);
-        dto.setOrganization(organizationDTO);
-        
-        // Set program
-        ProgramCountDTO programDTO = getProgramDetailsForCohort(cohortId);
-        dto.setProgram(programDTO);
-        
-        // Set user counts for the cohort
-        setUserCountsForCohort(dto, cohortId);
-        
-        return dto;
-    }
-    
-    private void setUserCountsForCohort(UserSessionDTO dto, String cohortId) {
-        int totalUsers = userCohortMappingRepository.countByCohortCohortId(cohortId);
-        int activeUsers = userCohortMappingRepository.countActiveByCohortCohortId(cohortId);
-        int deactivatedUsers = userCohortMappingRepository.countDeactivatedByCohortCohortId(cohortId);
-        
-        dto.setTotalUsers(totalUsers);
-        dto.setActiveUsers(activeUsers);
-        dto.setDeactivatedUsers(deactivatedUsers);
-    }
-
-    @Override
-    public List<UserSessionDTO> getLatestSessionsForCohortWithMentorValidation(String mentorUserId, String cohortId) {
-        // Validate mentor
-        validateMentorInCohort(mentorUserId, cohortId);
-        
-        // Get latest sessions for all users in the cohort
-        List<UserSessionMapping> sessions = userSessionMappingRepository.findLatestSessionsByCohortId(cohortId);
-        
-        // Convert to DTO and enhance with organization and program details
-        return enhanceSessionsWithOrganizationAndProgram(sessions, cohortId);
-    }
-    
-    private void validateMentorInCohort(String mentorUserId, String cohortId) {
-        User mentor = userRepository.findByUserId(mentorUserId)
-                .orElseThrow(() -> new RuntimeException("Mentor user not found"));
-        
-        if (!"Mentor".equalsIgnoreCase(mentor.getUserType())) {
-            throw new RuntimeException("User is not a mentor");
-        }
-        
-        // Validate that mentor belongs to the cohort
-        boolean isMentorInCohort = userCohortMappingRepository.existsByUser_UserIdAndCohort_CohortId(mentorUserId, cohortId);
-        if (!isMentorInCohort) {
-            throw new RuntimeException("Mentor is not enrolled in the specified cohort");
-        }
-    }
-    
-    private List<UserSessionDTO> enhanceSessionsWithOrganizationAndProgram(List<UserSessionMapping> sessions, String cohortId) {
-        if (sessions.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
         // Get cohort details
         Cohort cohort = cohortRepository.findByCohortId(cohortId)
                 .orElseThrow(() -> new RuntimeException("Cohort not found"));
         
-        // Get organization from cohort (same for all sessions)
+        // Build response structure
+        CohortSessionsResponseDTO response = new CohortSessionsResponseDTO();
+        
+        // 1. Set organization details
         Organization org = cohort.getOrganization();
-        OrganizationDTO organizationDTO = convertToOrganizationDTO(org);
+        response.setOrganization(convertToOrganizationDTO(org));
         
-        // Get program details for this cohort
+        // 2. Set cohort details
+        CohortDetailsDTO cohortDetails = buildCohortDetails(cohort, cohortId);
+        response.setCohort(cohortDetails);
+        
+        // 3. Get single user's session history
+        UserSessionDetailsDTO userDetails = buildUserSessionDetails(targetUser, cohortId);
+        response.setUsers(Collections.singletonList(userDetails));
+        
+        return response;
+    }
+
+    private CohortDetailsDTO buildCohortDetails(Cohort cohort, String cohortId) {
+        CohortDetailsDTO cohortDetails = new CohortDetailsDTO();
+        cohortDetails.setCohortId(cohort.getCohortId());
+        cohortDetails.setCohortName(cohort.getCohortName());
+        
+        // Set program details
         ProgramCountDTO programDTO = getProgramDetailsForCohort(cohortId);
+        cohortDetails.setProgram(programDTO);
         
-        // Calculate user counts once for the cohort
+        // Set user counts (once at cohort level)
         int totalUsers = userCohortMappingRepository.countByCohortCohortId(cohortId);
         int activeUsers = userCohortMappingRepository.countActiveByCohortCohortId(cohortId);
         int deactivatedUsers = userCohortMappingRepository.countDeactivatedByCohortCohortId(cohortId);
         
-        // Convert sessions to DTO and set common data
-        List<UserSessionDTO> sessionDTOs = sessions.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        cohortDetails.setTotalUsers(totalUsers);
+        cohortDetails.setActiveUsers(activeUsers);
+        cohortDetails.setDeactivatedUsers(deactivatedUsers);
         
-        // Set organization, program, and user counts for all sessions
-        for (UserSessionDTO session : sessionDTOs) {
-            session.setOrganization(organizationDTO);
-            session.setProgram(programDTO);
-            session.setTotalUsers(totalUsers);
-            session.setActiveUsers(activeUsers);
-            session.setDeactivatedUsers(deactivatedUsers);
+        return cohortDetails;
+    }
+
+    private List<UserSessionDetailsDTO> buildUserSessionDetailsList(String cohortId) {
+        // Get all users in the cohort
+        List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+        
+        List<UserSessionDetailsDTO> userDetailsList = new ArrayList<>();
+        
+        for (UserCohortMapping mapping : userCohortMappings) {
+            User user = mapping.getUser();
+            UserSessionDetailsDTO userDetails = buildUserSessionDetails(user, cohortId);
+            userDetails.setStatus(mapping.getStatus()); // Set status from mapping
+            userDetailsList.add(userDetails);
         }
         
-        return sessionDTOs;
+        return userDetailsList;
+    }
+
+    private UserSessionDetailsDTO buildUserSessionDetails(User user, String cohortId) {
+        UserSessionDetailsDTO userDetails = new UserSessionDetailsDTO();
+        userDetails.setUserId(user.getUserId());
+        userDetails.setUserName(user.getUserName());
+        userDetails.setUserType(user.getUserType());
+        userDetails.setUserEmail(user.getUserEmail());
+        userDetails.setCreatedAt(user.getCreatedAt());
+        userDetails.setDeactivatedAt(user.getDeactivatedAt());
+        userDetails.setDeactivatedReason(user.getDeactivatedReason());
+        
+        // Get status from UserCohortMapping
+        String userStatus = getUserStatusFromCohortMapping(user.getUserId(), cohortId);
+        userDetails.setStatus(userStatus);
+        
+        // Get latest 5 sessions for this user in this cohort
+        List<SessionTimestampDTO> recentSessions = getLatest5Sessions(user.getUserId(), cohortId);
+        userDetails.setRecentSessions(recentSessions);
+        
+        return userDetails;
+    }
+
+    private List<SessionTimestampDTO> getLatest5Sessions(String userId, String cohortId) {
+        // Use Pageable to limit to 5 results
+        Pageable limit5 = PageRequest.of(0, 5);
+        
+        List<UserSessionMapping> sessions = userSessionMappingRepository
+                .findTop5SessionsByUserIdAndCohortId(userId, cohortId, limit5);
+        
+        return sessions.stream()
+                .map(session -> new SessionTimestampDTO(
+                    session.getSessionId(),
+                    session.getSessionStartTimestamp(),
+                    session.getSessionEndTimestamp()
+                ))
+                .collect(Collectors.toList());
     }
     
     private ProgramCountDTO getProgramDetailsForCohort(String cohortId) {
@@ -327,35 +310,51 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             ProgramCountDTO programDTO = new ProgramCountDTO();
             programDTO.setProgramId(program.getProgramId());
             programDTO.setProgramName(program.getProgramName());
-            // Note: Remove user counts from ProgramCountDTO since they're now in UserSessionDTO
-            
+            programDTO.setTotalStages(program.getStages());
+            programDTO.setTotalUnits(program.getUnitCount());
+           
             return programDTO;
         }
         return null;
     }
     
-    private UserSessionDTO convertToDTO(UserSessionMapping session) {
-        UserSessionDTO dto = new UserSessionDTO();
-        dto.setUserId(session.getUser().getUserId());
-        dto.setUserName(session.getUser().getUserName());
-        dto.setUserType(session.getUser().getUserType());
-        dto.setUserEmail(session.getUser().getUserEmail());
-        dto.setCreatedAt(session.getUser().getCreatedAt());
-        dto.setDeactivatedAt(session.getUser().getDeactivatedAt());
-        dto.setDeactivatedReason(session.getUser().getDeactivatedReason());
-        
-        // Get user status from UserCohortMapping instead of User table
-        String userStatus = getUserStatusFromCohortMapping(session.getUser().getUserId(), session.getCohort().getCohortId());
-        dto.setStatus(userStatus);
-        
-        dto.setCohortId(session.getCohort().getCohortId());
-        dto.setCohortName(session.getCohort().getCohortName());
-        dto.setSessionStartTimestamp(session.getSessionStartTimestamp());
-        dto.setSessionEndTimestamp(session.getSessionEndTimestamp());
-        dto.setSessionId(session.getSessionId());
-        
-        return dto;
+    private void validateMentorInCohort(String mentorUserId, String cohortId) {
+        // 1. Check that user exists
+        User mentor = userRepository.findByUserId(mentorUserId)
+                .orElseThrow(() -> new RuntimeException("Mentor user not found"));
+
+        // 2. Check user type
+        if (!"Mentor".equalsIgnoreCase(mentor.getUserType())) {
+            throw new RuntimeException("User is not a mentor");
+        }
+
+        // 3. Check that mentor is mapped to this cohort
+        UserCohortMapping mapping = userCohortMappingRepository
+                .findByUser_UserIdAndCohort_CohortId(mentorUserId, cohortId)
+                .orElseThrow(() -> new RuntimeException("Mentor is not enrolled in the specified cohort"));
+
+        // 4. Check status in mapping (cohort-level)
+        if ("DISABLED".equalsIgnoreCase(mapping.getStatus())) {
+            String reason = mentor.getDeactivatedReason();
+            String msg = "Mentor has been deactivated in this cohort";
+            if (reason != null && !reason.isBlank()) {
+                msg += ": " + reason;
+            }
+            throw new RuntimeException(msg);
+        }
+
+        // 5. also check global user status
+        if (mentor.getStatus() != null && !"ACTIVE".equalsIgnoreCase(mentor.getStatus())) {
+            String reason = mentor.getDeactivatedReason();
+            String msg = "Mentor account is deactivated";
+            if (reason != null && !reason.isBlank()) {
+                msg += ": " + reason;
+            }
+            throw new RuntimeException(msg);
+        }
     }
+
+    
     
     private String getUserStatusFromCohortMapping(String userId, String cohortId) {
         Optional<UserCohortMapping> userCohortMapping = userCohortMappingRepository
