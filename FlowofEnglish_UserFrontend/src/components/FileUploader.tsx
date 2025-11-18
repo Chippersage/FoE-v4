@@ -41,27 +41,63 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
     // Allowed file types
     const allowedTypes = [
+      // documents
       "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+      // images
       "image/png",
       "image/jpeg",
       "image/jpg",
       "image/gif",
+
+      // audio
+      "audio/mpeg", // mp3
+      "audio/mp3",
+      "audio/wav",
+      "audio/x-wav",
+      "audio/webm",
+      "audio/m4a",
+
+      // video
+      "video/mp4",
+      "video/quicktime", // mov
+      "video/x-msvideo", // avi
+      "video/webm",
     ];
 
     if (!allowedTypes.includes(file.type)) {
       alert(
-        "Invalid file type! Only PDF, DOCX, and image files (PNG, JPG, GIF) are allowed."
+        "Invalid file type! Allowed: PDF, DOCX, images, audio (mp3, wav, m4a), video (mp4, mov, avi, webm)"
       );
-      event.target.value = ""; // Reset input
+      event.target.value = "";
       return;
     }
 
-    // File size limit
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-    if (file.size > maxSize) {
-      alert("File size limit exceeded! Please select a file less than 10MB.");
-      event.target.value = ""; // Reset input
+    // Size limits
+    const maxAudioSize = 10 * 1024 * 1024; // 10 MB
+    const maxVideoSize = 50 * 1024 * 1024; // 50 MB
+    const maxDefaultSize = 10 * 1024 * 1024; // 10 MB for others
+
+    if (file.type.startsWith("audio/") && file.size > maxAudioSize) {
+      alert("Audio limit is 10MB. Please upload a smaller audio file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.type.startsWith("video/") && file.size > maxVideoSize) {
+      alert("Video limit is 50MB. Please upload a smaller video file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (
+      !file.type.startsWith("audio/") &&
+      !file.type.startsWith("video/") &&
+      file.size > maxDefaultSize
+    ) {
+      alert("File size limit is 10MB. Please upload a smaller file.");
+      event.target.value = "";
       return;
     }
 
@@ -73,7 +109,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       ref={fileInputRef}
       type="file"
       className="hidden"
-      accept=".pdf, .docx, .png, .jpg, .jpeg, .gif"
+      accept="
+        .pdf, .docx,
+        .png, .jpg, .jpeg, .gif,
+        .mp3, .wav, .m4a,
+        .mp4, .mov, .avi, .webm
+      "
       onChange={handleFileChange}
     />
   );

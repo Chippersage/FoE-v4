@@ -9,6 +9,7 @@ public interface ProgramReportService {
     UnitReportDTO generateUnitReport(String userId, String unitId);
     List<AttemptDTO> getUserAttempts(String userId, String subconceptId);
     CohortProgressDTO getCohortProgress(String programId, String cohortId);
+    CohortProgressDTO getCohortProgressForMentor(String mentorId, String programId, String cohortId);
     
     byte[] generateCohortPdfReport(String programId, String cohortId);
     byte[] generateCohortCsvReport(String programId, String cohortId);

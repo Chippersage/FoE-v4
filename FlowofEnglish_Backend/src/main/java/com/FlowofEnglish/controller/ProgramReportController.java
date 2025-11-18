@@ -2,11 +2,7 @@ package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.service.*;
-
 import org.springframework.http.HttpHeaders;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +22,7 @@ public class ProgramReportController {
         @PathVariable String programId) {
     return programReportService.generateProgramReport(userId, programId);
   }
+  
   @GetMapping("/program/{programId}/cohort/{cohortId}/progress")
   public ResponseEntity<CohortProgressDTO> getCohortProgress(
       @PathVariable String programId, 
@@ -33,6 +30,19 @@ public class ProgramReportController {
       CohortProgressDTO progress = programReportService.getCohortProgress(programId, cohortId);
       return ResponseEntity.ok(progress);
   }
+  
+  @GetMapping("/mentor/{mentorId}/program/{programId}/cohort/{cohortId}/progress")
+  public ResponseEntity<CohortProgressDTO> getCohortProgressForMentor(
+          @PathVariable String mentorId,
+          @PathVariable String programId,
+          @PathVariable String cohortId) {
+
+      CohortProgressDTO progress = programReportService.getCohortProgressForMentor(mentorId, programId, cohortId);
+
+      return ResponseEntity.ok(progress);
+  }
+
+  
   @GetMapping("/program/{programId}/user/{userId}/progress")
   public ResponseEntity<UserProgressDTO> getUserProgress(
       @PathVariable String programId,
@@ -63,6 +73,7 @@ public class ProgramReportController {
             return ResponseEntity.badRequest().body("Invalid format");
         }
     }
+    
     @GetMapping("/cohort/{cohortId}/program/{programId}/download")
     public ResponseEntity<?> downloadCohortReport(
             @PathVariable String cohortId,
@@ -85,6 +96,8 @@ public class ProgramReportController {
         }
     }
 
+    
+    
     /**
      * Get concept summaries for a specific stage
      * @param userId User ID

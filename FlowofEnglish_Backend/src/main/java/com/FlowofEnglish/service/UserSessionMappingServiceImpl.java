@@ -257,6 +257,7 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
             User user = mapping.getUser();
             UserSessionDetailsDTO userDetails = buildUserSessionDetails(user, cohortId);
             userDetails.setStatus(mapping.getStatus()); // Set status from mapping
+            userDetails.setLeaderboardScore(mapping.getLeaderboardScore());
             userDetailsList.add(userDetails);
         }
         

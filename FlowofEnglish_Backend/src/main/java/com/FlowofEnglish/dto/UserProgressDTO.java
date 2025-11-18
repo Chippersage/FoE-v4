@@ -11,6 +11,7 @@ public class UserProgressDTO {
     private int totalSubconcepts;
     private int completedSubconcepts;
     private int leaderboardScore;
+    private String status;
     
     // Getters and Setters
 	public String getUserId() {
@@ -67,4 +68,11 @@ public class UserProgressDTO {
 	public void setLeaderboardScore(int leaderboardScore) {
 		this.leaderboardScore = leaderboardScore;
 	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
 }

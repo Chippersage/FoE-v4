@@ -1,21 +1,23 @@
 package com.FlowofEnglish.service;
 
-import java.io.PrintWriter;
+import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.exception.*;
+import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.repository.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.*;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.FlowofEnglish.dto.*;
-import com.FlowofEnglish.exception.*;
-import com.FlowofEnglish.model.*;
-import com.FlowofEnglish.repository.*;
 import org.springframework.cache.annotation.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import com.itextpdf.io.source.ByteArrayOutputStream;
-import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
@@ -48,6 +50,9 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     
     @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
+    
+    @Autowired
+    private CohortProgramRepository cohortProgramRepository;
     
     @Autowired
     private UserAttemptsRepository userAttemptsRepository;
@@ -626,6 +631,12 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             Cohort cohort = cohortRepository.findById(cohortId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cohort not found with ID: " + cohortId));
             
+         //  Validate mapping between cohort and program
+            cohortProgramRepository.findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Invalid Request:  Given CohortId '" + cohortId +
+                            "' is not Assigned under Program '" + programId + "'."));
+            
             logger.debug("Found program: {} and cohort: {}", program.getProgramName(), cohort.getCohortName());
             
             // Fetch all users in the cohort
@@ -645,7 +656,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                 UserProgressDTO userProgress = new UserProgressDTO();
                 userProgress.setUserId(user.getUserId());
                 userProgress.setUserName(user.getUserName());
-                
+               
                 String userType = user.getUserType();
                 
                 // Fetch stages for the program
@@ -725,6 +736,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     .filter(um -> um.getUser().getUserId().equals(user.getUserId()))
                     .findFirst()
                     .orElse(null);
+                userProgress.setStatus(mapping.getStatus());
                 userProgress.setLeaderboardScore(mapping != null ? mapping.getLeaderboardScore() : 0);
                 
                 logger.debug("User {} progress: {}/{} stages, {}/{} units, {}/{} visible subconcepts completed", 
@@ -759,6 +771,66 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         }
     }
     
+    @Override
+    public CohortProgressDTO getCohortProgressForMentor(String mentorId, String programId, String cohortId) {
+
+    	try {
+    		// Check if mentor exists in User table
+            User mentor = userRepository.findById(mentorId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Mentor not found with ID: " + mentorId));
+            
+            logger.debug("Found user with ID: {}, userType: {}, status: {}", 
+                    mentorId, mentor.getUserType(), mentor.getStatus());
+
+         // Validate userType is MENTOR (case-insensitive)
+            String userType = mentor.getUserType();
+            if (userType == null || !userType.equalsIgnoreCase("MENTOR")) {
+                throw new UnauthorizedException(
+                        "User " + mentorId + " is not a mentor. UserType: " + userType);
+            }
+
+         //  Check if mentor is enrolled in the cohort
+            UserCohortMapping mentorMapping = userCohortMappingRepository
+                    .findByUser_UserIdAndCohort_CohortId(mentorId, cohortId)
+                    .orElseThrow(() -> new UnauthorizedException(
+                            "Mentor " + mentorId + " is not enrolled in cohort: " + cohortId));
+            
+            logger.debug("Found mentor mapping with status: {}", mentorMapping.getStatus());
+            
+            // Validate mentor is not deactivated (status must be ACTIVE)
+            if (!"ACTIVE".equalsIgnoreCase(mentorMapping.getStatus())) {
+                throw new UnauthorizedException(
+                        "Mentor " + mentorId + " is deactivated in cohort: " + cohortId + 
+                        ". Status: " + mentorMapping.getStatus() + 
+                        (mentorMapping.getDeactivatedReason() != null ? 
+                                ". Reason: " + mentorMapping.getDeactivatedReason() : ""));
+            }
+            
+            // Additional validation: Check if mentor's User account is active
+            if (!"ACTIVE".equalsIgnoreCase(mentor.getStatus())) {
+                throw new UnauthorizedException(
+                        "Mentor account " + mentorId + " is not active. Status: " + mentor.getStatus());
+            }
+            
+            logger.info("Mentor {} successfully validated for cohort {}", mentorId, cohortId);
+            
+            CohortProgressDTO progress = getCohortProgress(programId, cohortId);
+            logger.info("Successfully returned cohort progress to mentor {} for programId: {} and cohortId: {}", 
+                    mentorId, programId, cohortId);
+            
+            return progress;
+            
+        } catch (ResourceNotFoundException | UnauthorizedException e) {
+            logger.error("Authorization failed for mentor {}: {}", mentorId, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error retrieving cohort progress for mentor {}, programId: {}, cohortId: {}", 
+                    mentorId, programId, cohortId, e);
+            throw new RuntimeException("Failed to retrieve cohort progress: " + e.getMessage(), e);
+        }
+    }
+
     
     @Override
     @Cacheable(value = "userProgress", key = "#programId + '_' + #userId + '_' + #root.target.getUserType(#userId)", unless = "#result == null")

@@ -12,6 +12,7 @@ public class UserSessionDetailsDTO {
     private String userType;
     private String userEmail;
     private String status;
+    private int leaderboardScore; 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime createdAt;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -73,6 +74,12 @@ public class UserSessionDetailsDTO {
 	}
 	public void setRecentSessions(List<SessionTimestampDTO> recentSessions) {
 		this.recentSessions = recentSessions;
+	}
+	public int getLeaderboardScore() {
+		return leaderboardScore;
+	}
+	public void setLeaderboardScore(int leaderboardScore) {
+		this.leaderboardScore = leaderboardScore;
 	}	
     
 }
