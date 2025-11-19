@@ -54,8 +54,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUpload, onClose }) => {
       "image/jpeg",
       "image/jpg",
       "image/gif",
-      "audio/mpeg",
-      "audio/ogg",
       "video/mp4",
       "video/webm",
       "video/quicktime",
@@ -88,7 +86,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUpload, onClose }) => {
       ref={fileInputRef}
       type="file"
       className="hidden"
-      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.mp3,.ogg,.mp4,.webm,.mov,.avi"
+      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.mp4,.webm,.mov,.avi"
       onChange={handleFileChange}
     />
   );
