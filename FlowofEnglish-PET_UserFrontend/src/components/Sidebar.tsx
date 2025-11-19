@@ -5,6 +5,8 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-react";
 import { useUserContext } from "../context/AuthContext";
+import HomeExitIcon from "./icons/HomeExitIcon";
+
 
 interface SidebarProps {
   programName: string;
@@ -183,8 +185,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-72 border-r border-gray-300 z-20 bg-white">
         <div className="h-16 w-full" />
-        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200">
-          {programName}
+        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200 flex items-center justify-between">
+            <div className="mr-4">
+              <HomeExitIcon size={22} className="cursor-pointer"/>
+            </div>
+          <span>{programName}</span>
         </div>
         <SidebarList />
       </div>

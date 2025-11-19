@@ -68,7 +68,7 @@ const AssignmentsPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-slate-800">Assignments</h1>
           <button
             onClick={() => navigate(-1)}
-            className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg shadow transition"
+            className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg shadow transition cursor-pointer"
           >
             Back
           </button>
@@ -137,7 +137,7 @@ const AssignmentsPage: React.FC = () => {
                     onClick={() =>
                       handleViewSubmissions(cohort.cohortId, cohort.cohortName)
                     }
-                    className="w-full bg-[#0EA5E9] hover:bg-[#0284C7] text-white py-2 rounded-lg font-medium transition"
+                    className="w-full bg-[#0EA5E9] hover:bg-[#0284C7] text-white py-2 rounded-lg font-medium transition cursor-pointer"
                   >
                     View Submissions
                   </button>
