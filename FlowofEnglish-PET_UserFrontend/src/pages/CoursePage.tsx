@@ -344,7 +344,7 @@ const CoursePage: React.FC = () => {
     if (!mobileActionsExist) return null;
 
     return (
-      <div className="md:hidden w-full bg-white border-t border-gray-200 px-4 py-3 flex flex-col gap-3">
+      <div className="md:hidden w-full bg-white  px-4 py-3 flex flex-col gap-3">
         {currentContent.type?.startsWith("assignment") ? (
           assignmentStatus ? (
             <button
@@ -445,7 +445,7 @@ const CoursePage: React.FC = () => {
         {/* MAIN CONTENT */}
         <div className="flex-1 flex flex-col md:ml-72">
           <div
-            className="bg-white border-b border-gray-200 flex justify-center items-center p-4"
+            className="bg-white flex justify-center items-center p-4"
             style={{
               height: window.innerWidth >= 768 ? "80vh" : "40vh",
               transition: "height 0.2s ease-in-out",

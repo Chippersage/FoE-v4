@@ -100,8 +100,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (currentGlobalIndex === -1) return true;
 
     const currentType = (sub.subconceptType || "").toLowerCase();
-    const isAssignment = currentType.startsWith("assignment");
-    if (isAssignment) return false;
+    if(currentType.startsWith("assignment"))
+    {
+      return (sub.completionStatus || "").toLowerCase() !== "yes";
+    }
+
 
     let lastCompletedIndex = -1;
     for (let i = 0; i < global.length; i++) {
@@ -254,19 +257,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                           unit.completionStatus
                         )
                       }
-                      className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
-                        currentActiveId === unit.unitId
+                      className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group
+                        ${currentActiveId === unit.unitId
                           ? "bg-[#E0F2FE] text-[#0EA5E9]"
                           : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
-                      } ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}`}
+                        }
+                        ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}
+                      `}
                     >
-                      <RoundCheckbox
-                        completed={unit.completionStatus?.toLowerCase() === "yes"}
-                        active={currentActiveId === unit.unitId}
-                      />
-                      <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
-                      <span className="text-sm flex-1">{unit.unitName}</span>
+                      {/* Removed checkbox */}
+                      <span className="text-sm flex-1 pl-1">{unit.unitName}</span>
                     </li>
+
 
                     {/* Subconcept Rows */}
                     {unit.subconcepts?.map((sub: any, subIndex: number) => {
