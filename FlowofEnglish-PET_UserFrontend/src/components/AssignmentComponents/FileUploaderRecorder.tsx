@@ -80,6 +80,8 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
       alert("File size must be less than 10MB.");
       return false;
     }
+
+    if (type && type.startsWith("audio/ogg")) return true;
     if (type && !allowedTypes.includes(type)) {
       alert("Invalid file type. Only PDF, DOC, Image, Audio, or Video allowed.");
       return false;

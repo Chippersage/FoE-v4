@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { formatDistanceToNowStrict, isBefore, parseISO } from "date-fns";
 
@@ -14,14 +14,28 @@ const CohortCard = ({ cohort, onResume }) => {
     programId,
   } = cohort;
 
+  const [isResuming, setIsResuming] = useState(false);
+
   const start = cohortStartDate ? parseISO(cohortStartDate) : null;
   const end = cohortEndDate ? parseISO(cohortEndDate) : null;
 
-  // Calculate remaining days or show 'Completed'
   const remainingDays =
     end && isBefore(new Date(), end)
       ? formatDistanceToNowStrict(end)
       : "Completed";
+
+  const handleResumeClick = async (e) => {
+    e.stopPropagation();
+    if (isResuming) return;
+
+    setIsResuming(true);
+
+    try {
+      if (onResume) await onResume();
+    } finally {
+      setIsResuming(false);
+    }
+  };
 
   return (
     <motion.div
@@ -35,7 +49,6 @@ const CohortCard = ({ cohort, onResume }) => {
         <p className="text-sm text-slate-500">{cohortName}</p>
       </div>
 
-      {/* Progress bar */}
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
           <span>Progress</span>
@@ -49,7 +62,6 @@ const CohortCard = ({ cohort, onResume }) => {
         </div>
       </div>
 
-      {/* Dates and status */}
       {cohortEndDate && (
         <div className="mt-4 flex flex-col text-sm text-slate-600">
           <p>Start: {new Date(cohortStartDate).toLocaleDateString()}</p>
@@ -62,17 +74,17 @@ const CohortCard = ({ cohort, onResume }) => {
         </div>
       )}
 
-      {/* Resume button */}
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (onResume) onResume();
-        }}
+        onClick={handleResumeClick}
+        disabled={isResuming}
         style={{ cursor: "pointer" }}
-        className="mt-5 py-2.5 w-full text-center font-medium text-white bg-[#0EA5E9] 
-                   hover:bg-[#0284C7] rounded-xl transition-all duration-200 cursor-pointer"
+        className={`mt-5 py-2.5 w-full text-center font-medium text-white rounded-xl transition-all duration-200
+          ${isResuming 
+            ? "bg-[#0EA5E9] opacity-70" 
+            : "bg-[#0EA5E9] hover:bg-[#0284C7]"
+          }`}
       >
-        Resume
+        {isResuming ? "Resuming..." : "Resume"}
       </button>
     </motion.div>
   );

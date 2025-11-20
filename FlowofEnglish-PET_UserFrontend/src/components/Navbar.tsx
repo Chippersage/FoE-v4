@@ -145,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           <img
             src="/icons/chipper-sage-logo.png"
             alt="Logo"
-            className="w-20 h-20 object-contain"
+            className="w-14 h-14 sm:w-20 sm:h-20 object-contain"
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">
             Professional English for Teachers

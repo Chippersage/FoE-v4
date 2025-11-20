@@ -5,6 +5,8 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-react";
 import { useUserContext } from "../context/AuthContext";
+import HomeExitIcon from "./icons/HomeExitIcon";
+
 
 interface SidebarProps {
   programName: string;
@@ -98,8 +100,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (currentGlobalIndex === -1) return true;
 
     const currentType = (sub.subconceptType || "").toLowerCase();
-    const isAssignment = currentType.startsWith("assignment");
-    if (isAssignment) return false;
+    if(currentType.startsWith("assignment"))
+    {
+      return (sub.completionStatus || "").toLowerCase() !== "yes";
+    }
+
 
     let lastCompletedIndex = -1;
     for (let i = 0; i < global.length; i++) {
@@ -183,8 +188,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-72 border-r border-gray-300 z-20 bg-white">
         <div className="h-16 w-full" />
-        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200">
-          {programName}
+        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200 flex items-center justify-between">
+            <div className="mr-4">
+              <HomeExitIcon size={22} className="cursor-pointer"/>
+            </div>
+          <span>{programName}</span>
         </div>
         <SidebarList />
       </div>
@@ -249,19 +257,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                           unit.completionStatus
                         )
                       }
-                      className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group ${
-                        currentActiveId === unit.unitId
+                      className={`flex items-center gap-3 cursor-pointer p-2 rounded transition-colors group
+                        ${currentActiveId === unit.unitId
                           ? "bg-[#E0F2FE] text-[#0EA5E9]"
                           : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700"
-                      } ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}`}
+                        }
+                        ${!unit.unitLink ? "opacity-50 cursor-not-allowed" : ""}
+                      `}
                     >
-                      <RoundCheckbox
-                        completed={unit.completionStatus?.toLowerCase() === "yes"}
-                        active={currentActiveId === unit.unitId}
-                      />
-                      <FileText size={14} className="text-gray-600 group-hover:text-[#0EA5E9]" />
-                      <span className="text-sm flex-1">{unit.unitName}</span>
+                      {/* Removed checkbox */}
+                      <span className="text-sm flex-1 pl-1">{unit.unitName}</span>
                     </li>
+
 
                     {/* Subconcept Rows */}
                     {unit.subconcepts?.map((sub: any, subIndex: number) => {

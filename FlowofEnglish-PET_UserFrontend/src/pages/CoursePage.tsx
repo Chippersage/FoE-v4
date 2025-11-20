@@ -12,17 +12,16 @@ import { useUserContext } from "../context/AuthContext";
 import { getInitialSubconcept } from "../utils/courseProgressUtils";
 import CourseContext from "../context/CourseContext";
 import GoogleFormControl from "../components/GoogleFormControl";
+import { ChevronRight } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 const CoursePage: React.FC = () => {
-  // Routing and context
   const location = useLocation();
   const navigate = useNavigate();
   const { programId } = useParams();
   const { user } = useUserContext();
 
-  // State
   const [stages, setStages] = useState<any[]>([]);
   const [programName, setProgramName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,7 +33,6 @@ const CoursePage: React.FC = () => {
   const [remainingTime, setRemainingTime] = useState(0);
 
   const submitBtnRef = useRef<HTMLButtonElement>(null);
-  const passedCohort = location.state?.selectedCohort || null;
 
   const [currentContent, setCurrentContent] = useState({
     url: "",
@@ -47,7 +45,6 @@ const CoursePage: React.FC = () => {
     completionStatus: "",
   });
 
-  // Context value
   const courseContextValue = useMemo(
     () => ({
       currentContent,
@@ -65,14 +62,12 @@ const CoursePage: React.FC = () => {
     [currentContent, stages, programName, user, programId, canGoNext, remainingTime]
   );
 
-  // Helper to detect Google Form type (includes "assessment")
   const isGoogleFormType = (type: string) => {
     if (!type) return false;
     const normalized = String(type).toLowerCase();
     return normalized === "googleform" || normalized === "assessment";
   };
 
-  // Helpers
   const shouldShowIframe = (contentType: string) => {
     const nonIframeTypes = [
       "video",
@@ -93,29 +88,22 @@ const CoursePage: React.FC = () => {
     return !nonIframeTypes.includes(contentType);
   };
 
-  // Effects ---------------------------------------------------------------------
-
-  // Disable right-click (single-purpose effect)
   useEffect(() => {
     const disableContext = (e) => e.preventDefault();
     document.addEventListener("contextmenu", disableContext);
     return () => document.removeEventListener("contextmenu", disableContext);
   }, []);
 
-  // Set iframe visibility on content change and reset submit visibility
   useEffect(() => {
     const shouldShow = shouldShowIframe(currentContent.type);
     setShowIframe(shouldShow);
     setShowSubmit(false);
   }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
 
-
   useEffect(() => {
-  console.log("CurrentContent:", currentContent);
-}, [currentContent]);
+    console.log("CurrentContent:", currentContent);
+  }, [currentContent]);
 
-
-  // Listen for postMessage events from iframe (controls Show Submit button)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data === "enableSubmit") setShowSubmit(true);
@@ -125,14 +113,15 @@ const CoursePage: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Fetch program stages + initial content
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+
         const res = await axios.get(
           `${API_BASE_URL}/programconceptsmappings/${user?.userId}/program/${programId}/complete`
         );
+
         const data = res.data;
         const stagesData = data.stages || [];
 
@@ -142,6 +131,7 @@ const CoursePage: React.FC = () => {
         const initialSubconcept = getInitialSubconcept(stagesData);
         if (initialSubconcept) {
           const { stage, unit, sub } = initialSubconcept;
+
           setCurrentContent({
             url: sub.subconceptLink,
             type: sub.subconceptType,
@@ -150,7 +140,7 @@ const CoursePage: React.FC = () => {
             unitId: unit.unitId,
             subconceptId: sub.subconceptId,
             subconceptMaxscore: Number(sub.subconceptMaxscore || 0),
-            completionStatus: sub.completionStatus
+            completionStatus: sub.completionStatus,
           });
         }
       } catch (err) {
@@ -163,14 +153,12 @@ const CoursePage: React.FC = () => {
     if (programId && user?.userId) fetchData();
   }, [programId, user?.userId]);
 
-  // Save last viewed subconcept
   useEffect(() => {
     if (currentContent?.subconceptId) {
       localStorage.setItem("lastViewedSubconcept", currentContent.subconceptId);
     }
   }, [currentContent?.subconceptId]);
 
-  // Fetch assignment status when subconcept changes
   useEffect(() => {
     const fetchAssignmentStatus = async () => {
       try {
@@ -195,8 +183,6 @@ const CoursePage: React.FC = () => {
     }
   }, [currentContent?.type, currentContent?.subconceptId, user?.userId]);
 
-  // Handlers --------------------------------------------------------------------
-
   const handleSubmit = () => {
     const iframe = document.getElementById("embeddedContent");
     if (iframe && iframe.tagName === "IFRAME") {
@@ -204,7 +190,6 @@ const CoursePage: React.FC = () => {
     }
   };
 
-  // Next subconcept handler
   const handleNextSubconcept = async (nextSub) => {
     setCurrentContent({
       url: nextSub.subconceptLink,
@@ -218,7 +203,6 @@ const CoursePage: React.FC = () => {
     });
   };
 
-  // Render helpers --------------------------------------------------------------
   const renderNextButton = (disabled = false) => (
     <NextSubconceptButton
       stages={stages}
@@ -335,7 +319,6 @@ const CoursePage: React.FC = () => {
     </>
   );
 
-  // Loader ----------------------------------------------------------------------
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
@@ -350,11 +333,86 @@ const CoursePage: React.FC = () => {
     );
   }
 
-  // Final Render ---------------------------------------------------------------
+  // -----------------------------------------------
+  // NEW: MOBILE CONTROL BAR ABOVE SIDEBAR
+  // -----------------------------------------------
+  const mobileActionsExist =
+    currentContent.type?.startsWith("assignment") ||
+    isGoogleFormType(currentContent.type);
+
+  const MobileActionBar = () => {
+    if (!mobileActionsExist) return null;
+
+    return (
+      <div className="md:hidden w-full bg-white  px-4 py-3 flex flex-col gap-3">
+        {currentContent.type?.startsWith("assignment") ? (
+          assignmentStatus ? (
+            <button
+              onClick={() => setShowAssignmentModal(true)}
+              className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white px-4 py-2 rounded-md text-sm font-medium shadow"
+            >
+              View Assignment Status
+            </button>
+          ) : (
+            <FileUploaderRecorder
+              assignmentStatus={assignmentStatus}
+              onSuccess={() =>
+                setStages((prevStages) =>
+                  prevStages.map((stage) => ({
+                    ...stage,
+                    units: stage.units.map((unit) => ({
+                      ...unit,
+                      subconcepts: unit.subconcepts.map((sub) =>
+                        sub.subconceptId === currentContent.subconceptId
+                          ? { ...sub, completionStatus: "yes" }
+                          : sub
+                      ),
+                    })),
+                  }))
+                )
+              }
+            />
+          )
+        ) : null}
+
+        {isGoogleFormType(currentContent.type) && (
+          <GoogleFormControl
+            onNext={handleNextSubconcept}
+            completionStatus={currentContent.completionStatus}
+            subconceptType={currentContent.type}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // -----------------------------------------------
+  // NEW FLOATING ROUND NEXT BUTTON (MOBILE)
+  // -----------------------------------------------
+  const FloatingNextButton = () => {
+    const nextExists = stages?.length > 0;
+
+    if (!nextExists) return null;
+
+    return (
+      <button
+        onClick={() => {
+          const nextBtn = document.getElementById("next-subconcept-btn");
+          nextBtn?.click();
+        }}
+        className="md:hidden fixed bottom-10 right-10 w-14 h-14 rounded-full bg-[#0EA5E9] shadow-lg flex items-center justify-center active:scale-95 transition"
+      >
+        <ChevronRight size={28} className="text-white" />
+      </button>
+    );
+  };
+
+  // -----------------------------------------------
+
   return (
     <CourseContext.Provider value={courseContextValue}>
       <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">
-        {/* Sidebar (Desktop fixed) */}
+        {/* Sidebar Desktop */}
         <div className="hidden md:block fixed left-0 top-0 h-screen w-72 z-30">
           <Sidebar
             programName={programName}
@@ -384,12 +442,12 @@ const CoursePage: React.FC = () => {
           />
         </div>
 
-        {/* Main Content */}
+        {/* MAIN CONTENT */}
         <div className="flex-1 flex flex-col md:ml-72">
           <div
-            className="bg-white border-b border-gray-200 flex justify-center items-center p-4"
+            className="bg-white flex justify-center items-center p-4"
             style={{
-              height: window.innerWidth >= 768 ? "80vh" : "45vh",
+              height: window.innerWidth >= 768 ? "80vh" : "40vh",
               transition: "height 0.2s ease-in-out",
             }}
           >
@@ -398,24 +456,13 @@ const CoursePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Floating Submit Button */}
-          {showIframe && showSubmit && (
-            <div className="fixed bottom-24 right-4 z-20">
-              <button
-                ref={submitBtnRef}
-                onClick={handleSubmit}
-                className="bg-[#5bc3cd] hover:bg-[#DB5788] text-white w-16 h-16 font-[700] text-xs rounded-full flex flex-col items-center justify-center gap-1 shadow-md"
-              >
-                <img src="/icons/User-icons/send.png" alt="Submit Icon" className="w-5 h-5" />
-                Submit
-              </button>
-            </div>
-          )}
+          {/* MOBILE ACTION BAR */}
+          <MobileActionBar />
 
-          {/* Mobile Sidebar */}
+          {/* MOBILE SIDEBAR */}
           <div
             className="md:hidden flex-shrink-0 bg-white overflow-y-auto border-t border-gray-300"
-            style={{ height: "45vh" }}
+            style={{ height: mobileActionsExist ? "48vh" : "55vh" }}
           >
             <Sidebar
               programName={programName}
@@ -445,12 +492,15 @@ const CoursePage: React.FC = () => {
             />
           </div>
 
-          {/* Control Buttons (Desktop) */}
+          {/* DESKTOP BUTTONS */}
           <div className="hidden md:flex justify-center mt-4">
             <ControlButtons />
           </div>
         </div>
       </div>
+
+      {/* FLOATING NEXT on MOBILE */}
+      <FloatingNextButton />
 
       {showAssignmentModal && (
         <AssignmentModal
