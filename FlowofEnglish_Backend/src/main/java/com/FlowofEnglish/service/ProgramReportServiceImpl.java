@@ -135,6 +135,22 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             // Get user type for filtering
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+            
+         // Validate: user is enrolled in this program
+            UserCohortMapping userProgramMapping = userCohortMappingRepository
+                    .findByUserUserIdAndProgramId(userId, programId)
+                    .orElseThrow(() -> new ForbiddenException(
+                            "Access denied: User '" + userId + "' is not enrolled in program '" + programId + "'"));
+
+         // Extract cohortId of user
+            String cohortId = userProgramMapping.getCohort().getCohortId();
+
+         // Validate: cohort is mapped to program
+            cohortProgramRepository
+                    .findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId)
+                    .orElseThrow(() -> new ForbiddenException(
+                            "Invalid mapping: Cohort '" + cohortId + "' is not assigned under program '" + programId + "'"));
+            
             String userType = user.getUserType();
 
             logger.debug("Found program: {} for programId: {} with userType: {}", program.getProgramName(), programId, userType);
@@ -442,6 +458,18 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     	try {
             List<UserAttempts> attempts = userAttemptsRepository
                 .findByUser_UserIdAndSubconcept_SubconceptId(userId, subconceptId);
+            
+         // ADDED: Log the actual count from database
+            logger.info("DATABASE RESULT: Found {} attempts for userId: {} and subconceptId: {}", 
+                       attempts.size(), userId, subconceptId);
+            
+            // ADDED: Log each attempt for debugging
+            for (UserAttempts attempt : attempts) {
+                logger.debug("Attempt ID: {}, Score: {}, Timestamp: {}", 
+                            attempt.getUserAttemptId(), 
+                            attempt.getUserAttemptScore(),
+                            attempt.getUserAttemptStartTimestamp());
+            }
             
             List<AttemptDTO> attemptDTOs = attempts.stream()
                 .map(this::mapToAttemptDTO)
