@@ -5,11 +5,10 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.*;
 import org.springframework.cache.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.slf4j.*;
 import java.time.*;
 import java.util.*;
 
@@ -101,7 +100,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     public UserAttempts saveUserAttempt(UserAttempts userAttempt) {
         try {
             logger.info("Saving user attempt for user ID: {}", 
-                       userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null");
+                    userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null");
             
             if (userAttempt == null) {
                 logger.error("User attempt object is null");
@@ -115,7 +114,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
             
             UserAttempts savedAttempt = userAttemptsRepository.save(userAttempt);
             logger.info("Successfully saved user attempt with ID: {} for user: {}", 
-                       savedAttempt.getUserAttemptId(), userAttempt.getUser().getUserId());
+                    savedAttempt.getUserAttemptId(), userAttempt.getUser().getUserId());
             
             return savedAttempt;
         } catch (IllegalArgumentException e) {
@@ -133,9 +132,9 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     @Transactional(timeout = 30) // 30 seconds timeout
     public UserAttempts createUserAttempt(UserAttempts userAttempt, String cohortId) {
         try {
-            logger.info("Creating user attempt for user ID: {} in cohort: {}", 
-                       userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null", 
-                       cohortId);
+            logger.info("Creating user attempt for user ID: {} in cohort: {}",
+                        userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null",
+                        cohortId);
             
             if (userAttempt == null) {
                 logger.error("User attempt object is null");
@@ -170,30 +169,42 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
         String unitId = savedAttempt.getUnit().getUnitId();
         String subconceptId = savedAttempt.getSubconcept().getSubconceptId();
         
-        // Evict all user completion caches (existing functionality)
-        cacheManagementService.evictUserCompletionCaches(userId, programId);
+        logger.info("Evicting caches for userId: {}, subconceptId: {}, programId: {}", 
+                userId, subconceptId, programId);
         
-        // ADDITIONAL: Evict specific unit-level report caches for more targeted cache management
+
+     // 1. FIRST: Evict the specific userAttempts cache (this should fix the immediate issue)
+        cacheManagementService.evictSpecificUserAttemptsCache(userId, subconceptId);
+
+        // 2. SECOND: Evict program report with proper user type key (CRITICAL FIX)
+        cacheManagementService.evictProgramReportWithUserType(userId, programId);
+
+        // 3. Evict unit-level caches
         cacheManagementService.evictUnitReportCaches(userId, unitId, stageId, programId);
+
+        // 4. Evict program and stage level caches
+        cacheManagementService.evictProgramAndStageCaches(userId, programId, stageId);
+
+        // 5. Evict user progress caches
+        cacheManagementService.evictUserProgressCaches(userId, programId);
+
+        // 6. NUCLEAR OPTION: If still having issues, evict all user caches
+        // cacheManagementService.evictAllUserCaches(userId);
         
-       // OPTIONAL: If you have the ProgramReportService available here, you can also call:
-        // programReportService.evictUserReportCaches(userId, programId, stageId, unitId, subconceptId);
-        
-     
         logger.info("Successfully created user attempt with ID: {} for user: {} in cohort: {} and evicted related caches", 
                 savedAttempt.getUserAttemptId(), userAttempt.getUser().getUserId(), cohortId);
-     
-     return savedAttempt;
- } catch (IllegalArgumentException e) {
-     logger.error("Invalid argument for createUserAttempt: {}", e.getMessage());
-     throw e;
- } catch (Exception e) {
-     logger.error("Error while creating user attempt for userId: {}, cohortId: {}, Error: {}",
-             userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null", 
-             cohortId, e.getMessage(), e);
-     throw new RuntimeException("Failed to create user attempt. Please try again later.", e);
- }
-}
+    
+    return savedAttempt;
+    } catch (IllegalArgumentException e) {
+        logger.error("Invalid argument for createUserAttempt: {}", e.getMessage());
+        throw e;
+    } catch (Exception e) {
+        logger.error("Error while creating user attempt for userId: {}, cohortId: {}, Error: {}",
+                userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null", 
+                cohortId, e.getMessage(), e);
+        throw new RuntimeException("Failed to create user attempt. Please try again later.", e);
+    }
+    }
     
     private void updateUserSubConceptCompletionStatus(UserAttempts userAttempt) { 
     	try {

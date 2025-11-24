@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.*;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 @Service
@@ -28,11 +29,13 @@ public class CacheManagementService {
     private StageRepository stageRepository;
     
     @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
     private UserCohortMappingRepository userCohortMappingRepository;
     
-    /**
-     * Evict all user-related caches when subconcept completion changes
-     */
+
+     // Evict all user-related caches when subconcept completion changes
     public void evictUserCompletionCaches(String userId, String programId) {
         try {
             logger.info("Evicting completion caches for userId: {}, programId: {}", userId, programId);
@@ -69,9 +72,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict all report-related caches for a user
-     */
+     // Evict all report-related caches for a user
     public void evictReportCaches(String userId, String programId, List<String> stageIds, List<String> unitIds) {
         try {
             logger.info("Evicting report caches for userId: {}, programId: {}", userId, programId);
@@ -106,9 +107,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict user progress caches for a user
-     */
+     // Evict user progress caches for a user
     public void evictUserProgressCaches(String userId, String programId) {
         try {
             logger.info("Evicting user progress caches for userId: {}, programId: {}", userId, programId);
@@ -127,9 +126,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict cohort progress caches that include this user
-     */
+     // Evict cohort progress caches that include this user
     private void evictCohortProgressCachesForUser(String userId, String programId) {
         try {
             // Find the cohort this user belongs to for this program
@@ -147,9 +144,8 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict report caches for a specific unit completion
-     */
+    
+     // Evict report caches for a specific unit completion
     public void evictUnitReportCaches(String userId, String unitId, String stageId, String programId) {
         try {
             logger.info("Evicting unit-specific report caches for userId: {}, unitId: {}", userId, unitId);
@@ -182,13 +178,56 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict caches when a user attempts a subconcept (called from UserAttempts service)
-     */
+        // Evict specific user attempts cache for immediate refresh
+        public void evictSpecificUserAttemptsCache(String userId, String subconceptId) {
+            try {
+                logger.info("Evicting SPECIFIC user attempts cache for userId: {}, subconceptId: {}", userId, subconceptId);
+                
+                // Direct eviction of the specific cache entry
+                evictFromCache("userAttempts", userId + "_" + subconceptId);
+                
+                // Also evict using pattern matching for Redis to ensure complete removal
+                String pattern = "userAttempts::" + userId + "_" + subconceptId;
+                evictByPattern(pattern);
+                
+                logger.info("Successfully evicted specific user attempts cache for key: {}", userId + "_" + subconceptId);
+                
+            } catch (Exception e) {
+                logger.error("Error evicting specific user attempts cache for userId: {}, subconceptId: {}", 
+                            userId, subconceptId, e);
+            }
+        }
+
+        
+        // Evict program and stage level caches
+        public void evictProgramAndStageCaches(String userId, String programId, String stageId) {
+            try {
+                logger.info("Evicting program and stage caches for userId: {}, programId: {}, stageId: {}", 
+                        userId, programId, stageId);
+                
+                // Evict program report cache
+                evictFromCache("programReports", userId + "_" + programId);
+                
+                // Evict stage report cache
+                evictFromCache("stageReports", userId + "_" + stageId);
+                
+                // Evict complete array program structure cache
+                evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
+                
+                logger.info("Successfully evicted program and stage caches");
+                
+            } catch (Exception e) {
+                logger.error("Error evicting program and stage caches for userId: {}, programId: {}", 
+                            userId, programId, e);
+            }
+        }
+
+        
+     //Evict caches when a user attempts a subconcept (called from UserAttempts service)
     public void evictCachesOnUserAttempt(String userId, String subconceptId, String unitId, String stageId, String programId) {
         try {
             logger.info("Evicting caches on user attempt for userId: {}, subconceptId: {}, programId: {}", 
-                       userId, subconceptId, programId);
+                    userId, subconceptId, programId);
             
             // Evict user attempts cache for this specific subconcept
             evictFromCache("userAttempts", userId + "_" + subconceptId);
@@ -197,7 +236,7 @@ public class CacheManagementService {
             evictFromCache("unitReports", userId + "_" + unitId);
             evictFromCache("stageReports", userId + "_" + stageId);
             evictFromCache("programReports", userId + "_" + programId);
-            
+            evictFromCache("userAttempts", userId + "_" + subconceptId);
             // Evict complete array program structure cache
             evictFromCache("completeArrayProgramStructure", userId + "_" + programId);
             
@@ -208,7 +247,7 @@ public class CacheManagementService {
             evictUserProgressCaches(userId, programId);
             
             logger.info("Successfully evicted caches on user attempt for userId: {}, subconceptId: {}", 
-                       userId, subconceptId);
+                    userId, subconceptId);
             
         } catch (Exception e) {
             logger.error("Error evicting caches on user attempt for userId: {}, subconceptId: {}", 
@@ -216,10 +255,53 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     *  Evict program structure cache for a specific program
-     * Useful when program structure itself changes (not just user progress)
-     */
+    // Pattern-based cache eviction for Redis
+    private void evictByPattern(String pattern) {
+    try {
+        Set<String> keys = redisTemplate.keys("*" + pattern + "*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            logger.debug("Evicted {} keys matching pattern: {}", keys.size(), pattern);
+        }
+    } catch (Exception e) {
+        logger.warn("Error in pattern-based eviction for pattern: {}", pattern, e);
+    }
+}
+    
+   
+     // Evict program report cache with user type consideration
+    public void evictProgramReportWithUserType(String userId, String programId) {
+        try {
+            logger.info("Evicting program report cache with user type for userId: {}, programId: {}", userId, programId);
+            
+            // Get user type to match the cache key pattern
+            String userType = getUserType(userId);
+            
+            // Evict with the exact same key pattern used in @Cacheable
+            String cacheKey = userId + "_" + programId + "_" + userType;
+            evictFromCache("programReports", cacheKey);
+            
+            logger.info("Successfully evicted program report cache for key: {}", cacheKey);
+            
+        } catch (Exception e) {
+            logger.error("Error evicting program report cache with user type for userId: {}, programId: {}", 
+                        userId, programId, e);
+        }
+    }
+
+     // Get user type for cache key construction
+    private String getUserType(String userId) {
+        try {
+            // You need to inject UserRepository to get user type
+            User user = userRepository.findById(userId).orElse(null);
+            return user != null ? user.getUserType() : "unknown";
+        } catch (Exception e) {
+            logger.warn("Error getting user type for userId: {}, using 'unknown'", userId, e);
+            return "unknown";
+        }
+    }
+    
+     //  Evict program structure cache for a specific program
     public void evictProgramStructureCache(String userId, String programId) {
         try {
             logger.info("Evicting program structure cache for userId: {}, programId: {}", userId, programId);
@@ -237,9 +319,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Get all unit IDs for a given program
-     */
+     // Get all unit IDs for a given program
     private List<String> getUnitIdsForProgram(String programId) {
         try {
             return programConceptsMappingRepository.findDistinctUnitIdsByProgramId(programId);
@@ -249,9 +329,8 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Get all stage IDs for a given program
-     */
+    
+     // Get all stage IDs for a given program
     private List<String> getStageIdsForProgram(String programId) {
         try {
             return stageRepository.findStageIdsByProgramId(programId);
@@ -261,9 +340,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Get all subconcept IDs for a given program
-     */
+     // Get all subconcept IDs for a given program
     private List<String> getSubconceptIdsForProgram(String programId) {
         try {
             return programConceptsMappingRepository.findDistinctSubconceptIdsByProgramId(programId);
@@ -273,9 +350,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Get all subconcept IDs for a given unit
-     */
+     //Get all subconcept IDs for a given unit
     private List<String> getSubconceptIdsForUnit(String unitId) {
         try {
             return programConceptsMappingRepository.findSubconceptIdsByUnitId(unitId);
@@ -285,9 +360,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict specific cache entry
-     */
+     // Evict specific cache entry
     private void evictFromCache(String cacheName, String key) {
         try {
             Cache cache = cacheManager.getCache(cacheName);
@@ -300,9 +373,7 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict session filter related caches
-     */
+     // Evict session filter related caches
     private void evictSessionFilterCaches(String userId) {
         try {
             // Pattern matching for session filter caches
@@ -319,9 +390,8 @@ public class CacheManagementService {
         }
     }
     
-    /**
-     * Evict all caches for a user (use sparingly)
-     */
+    
+     // Evict all caches for a user (use sparingly)
     public void evictAllUserCaches(String userId) {
         try {
             logger.info("Evicting ALL caches for userId: {}", userId);
