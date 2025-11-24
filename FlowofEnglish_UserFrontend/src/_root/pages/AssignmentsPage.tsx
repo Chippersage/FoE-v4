@@ -38,13 +38,6 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   // Define tour steps
   useEffect(() => {
     setSteps([
-      // {
-      //   target: "body",
-      //   content:
-      //     "Welcome to the Assignments Management interface! This tour will show you how to review and grade student assignments efficiently.",
-      //   placement: "center",
-      //   disableBeacon: true,
-      // },
       {
         target: '[data-tour-id="topic"]',
         content: "Read assignment description here.",
@@ -164,8 +157,6 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
           onAssignmentsLoaded={handleAssignmentsLoaded}
         />
       </main>
-      {/* Fixed Take Tour Button */}
-      {/* Fixed Take Tour Button with Enhanced Shadow Effect */}
       <button
         className="fixed bottom-6 right-6 z-[11000] px-4 py-2 bg-[#5BC3CD] text-black rounded-lg hover:bg-[#4AB3BD] font-semibold shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 border border-[#49B0BA] before:content-[''] before:absolute before:inset-0 before:bg-black before:opacity-10 before:rounded-lg before:z-[-1]"
         onClick={() => setRunTour(true)}

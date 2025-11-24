@@ -1,25 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  BookOpen,
-  Brain,
-  Sparkles,
-  ClipboardList,
-  ChevronDown,
-  ChevronUp,
-  ArrowRight,
-  Calendar,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-  Lock,
-  Bell,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, BookOpen, Brain, Sparkles, ClipboardList, ChevronDown, ChevronUp, ArrowRight, Calendar,
+  AlertCircle, Clock, CheckCircle, Lock, Bell, X,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -27,11 +10,7 @@ import { useUserContext } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "@/components/ui/tooltip";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip";
 import { ErrorModal } from "@/components/ErrorModal";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import toast from "react-hot-toast";
@@ -48,7 +27,6 @@ const courseColors = [
   "from-violet-500 to-purple-500",
   "from-cyan-500 to-blue-500",
   "from-amber-400 to-orange-500",
-  // "from-emerald-500 to-green-500",
   "from-red-500 to-pink-500",
 ];
 
@@ -137,12 +115,9 @@ const Dashboard: React.FC = () => {
   const { user, setSelectedCohortWithProgram } = useUserContext();
   const [progressData, setProgressData] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  // const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
-  const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
   const hasSeenProductTour = localStorage.getItem("hasSeenProductTour");
-  // const userType = localStorage.getItem("userType");
   const [showAssignments, setShowAssignments] = useState(false);
   const [showEndDateNotification, setShowEndDateNotification] = useState(true);
   const progressFetchedRef = useRef({});
@@ -156,21 +131,16 @@ const Dashboard: React.FC = () => {
 
   // For development debugging - add a log view
   const showDebugLogs = false; // Set to true to see logs in the UI
-  // const [expandedCohortId, setExpandedCohortId] = useState(null);
-  const [notificationsShown, setNotificationsShown] = useState(false);
   const [notificationExpanded, setNotificationExpanded] = useState(true);
-  // const { toast } = useToast(); // If you're using a toast system
 
   const MotionCard = motion(Card);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [expandedCohortId, setExpandedCohortId] = useState(null);
-  // const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [showErrorModalOpen, setShowErrorModalOpen] = useState(false);
   const [errorModalData, setErrorModalData] = useState(null);
   const [isResuming, setIsResuming] = useState(false);
   const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
   const [fetchedCohorts, setFetchedCohorts] = useState<any[]>([]);
-  // const [cohorts, setCohorts] = useState([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -344,33 +314,7 @@ const Dashboard: React.FC = () => {
     return () => {
       addLog("Effect cleanup - component unmounting or dependencies changed");
     };
-  }, [fetchedCohorts, API_BASE_URL, user?.userId]); // Dependencies
-
-  // Fetch cohorts from API
-  // useEffect(() => {
-  //   const fetchCohorts = async () => {
-  //     try {
-  //       setIsLoadingCohorts(true);
-  //       const response = await axios.get<Cohort[]>(
-  //         `${API_BASE_URL}/users/${user?.userId}/cohorts`
-  //       );
-  //       setCohorts(response.data);
-  //     } catch (error) {
-  //       console.error("Failed to fetch cohorts:", error);
-  //       toast.error("Failed to load cohorts");
-  //     } finally {
-  //       setIsLoadingCohorts(false);
-  //     }
-  //   };
-
-  //   if (user?.userId) {
-  //     fetchCohorts();
-  //   }
-  // }, [user?.userId, API_BASE_URL]);
-
-  // Sort cohorts
-  // const [isLoadingCohorts, setIsLoadingCohorts] = useState(true);
-  
+  }, [fetchedCohorts, API_BASE_URL, user?.userId]);
 
   // Fetch cohorts from API
   useEffect(() => {
@@ -457,27 +401,6 @@ const Dashboard: React.FC = () => {
     return a.cohortName.localeCompare(b.cohortName);
   });
 
-  // Skeleton loading card component
-  // const SkeletonCard = () => (
-  //   <Card className="flex flex-col min-w-[300px] max-w-[400px] p-6 space-y-4">
-  //     <div className="space-y-3">
-  //       <Skeleton className="h-6 w-3/4" />
-  //       <Skeleton className="h-4 w-1/2" />
-  //     </div>
-  //     <div className="space-y-2">
-  //       <Skeleton className="h-4 w-full" />
-  //       <Skeleton className="h-4 w-5/6" />
-  //     </div>
-  //     <div className="space-y-3">
-  //       <Skeleton className="h-2 w-full" />
-  //       <div className="flex justify-between items-center">
-  //         <Skeleton className="h-9 w-24" />
-  //         <Skeleton className="h-8 w-8 rounded-full" />
-  //       </div>
-  //     </div>
-  //   </Card>
-  // );
-
 const handleResume = async (cohortWithProgram) => {
   const daysRemaining = calculateDaysRemaining(
     cohortWithProgram.cohortEndDate
@@ -495,23 +418,20 @@ const handleResume = async (cohortWithProgram) => {
       userId: user?.userId,
       cohortId: cohortWithProgram?.cohortId,
     });
+    console.log(" Cohort Selection API Response:", response.data);
+    console.log(" enableAiEvaluation value from API:", response.data.enableAiEvaluation);
 
-    // ✅ ADD DEBUG LOGGING HERE
-    console.log("🎯 Cohort Selection API Response:", response.data);
-    console.log("🎯 enableAiEvaluation value from API:", response.data.enableAiEvaluation);
-
-    // ✅ ADD THIS: Store enableAiEvaluation in localStorage
+    // Store enableAiEvaluation in localStorage
     const existingUserData = JSON.parse(localStorage.getItem("userData") || "{}");
     const updatedUserData = {
       ...existingUserData,
-      enableAiEvaluation: response.data.enableAiEvaluation // Store the AI evaluation flag
+      enableAiEvaluation: response.data.enableAiEvaluation
     };
     localStorage.setItem("userData", JSON.stringify(updatedUserData));
     
-    // ✅ ADD DEBUG LOGGING AFTER STORAGE
-    console.log("🎯 Updated userData in localStorage:", updatedUserData);
-    console.log("🎯 enableAiEvaluation stored:", updatedUserData.enableAiEvaluation);
-    // ✅ END OF ADDED CODE
+    // DEBUG LOGGING AFTER STORAGE
+    console.log(" Updated userData in localStorage:", updatedUserData);
+    console.log(" enableAiEvaluation stored:", updatedUserData.enableAiEvaluation);
 
     setSelectedCohortWithProgram(cohortWithProgram);
     localStorage.setItem(
@@ -619,25 +539,6 @@ const handleResume = async (cohortWithProgram) => {
       return daysRemaining !== null && daysRemaining <= 0;
     }) || [];
 
-  // Play sound and show notification when component mounts
-  // useEffect(() => {
-  //   if (endingSoonCohorts.length > 0 && !notificationsShown) {
-  //     setTimeout(() => {
-  //       playNotificationSound();
-  //       setNotificationsShown(true);
-
-  //       // Optional: Show toast notification
-  //       toast({
-  //         title: "Cohort Access Alert",
-  //         description: `You have ${endingSoonCohorts.length} cohort${
-  //           endingSoonCohorts.length !== 1 ? "s" : ""
-  //         } ending soon.`,
-  //         variant: "warning",
-  //       });
-  //     }, 1000); // Delay the notification by 1 second after page load
-  //   }
-  // }, [endingSoonCohorts.length]);
-
   // Auto-rotate notifications every 2 seconds
   useEffect(() => {
     if (endingSoonCohorts.length > 0 && expandedCohortId === null) {
@@ -679,9 +580,6 @@ const handleResume = async (cohortWithProgram) => {
     setExpandedCohortId((prev) => (prev === cohortId ? null : cohortId));
   };
 
-  // const toggleAllNotifications = () => {
-  //   setShowAllNotifications((prev) => !prev);
-  // };
 
   return (
     <>
@@ -830,20 +728,6 @@ const handleResume = async (cohortWithProgram) => {
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>
-                        {/* <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          toggleCohortDetails(currentCohort?.cohortId)
-                        }
-                        className="text-gray-600 hover:bg-orange-50 h-7 w-7 p-0"
-                      >
-                        {expandedCohortId === currentCohort?.cohortId ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button> */}
                       </div>
                     )}
 
@@ -952,17 +836,6 @@ const handleResume = async (cohortWithProgram) => {
                                   ? "Start"
                                   : "Resume"}
                               </Button>
-
-                              {/* <Button
-                                variant="outline"
-                                size="sm"
-                                className={`text-xs ${textColor} ${borderColor}`}
-                                onClick={() => {
-                                  // Add action here - e.g., request extension
-                                }}
-                              >
-                                Request Extension
-                              </Button> */}
                             </div>
                           </div>
                         );
@@ -970,111 +843,6 @@ const handleResume = async (cohortWithProgram) => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Optional: Summary footer that can be toggled to show all alerts */}
-                {/* {endingSoonCohorts.length > 1 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center"
-                  >
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={toggleAllNotifications}
-                      className="text-orange-600 text-xs"
-                    >
-                      {showAllNotifications ? "Hide" : "View"} all{" "}
-                      {endingSoonCohorts.length} alerts
-                    </Button>
-                  </motion.div>
-                )} */}
-
-                {/* All notifications panel (optional) */}
-                {/* <AnimatePresence>
-                  {showAllNotifications && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="bg-white rounded-lg border border-orange-200 shadow-md overflow-hidden mt-2"
-                    >
-                      <div className="max-h-64 overflow-y-auto">
-                        {endingSoonCohorts
-                          .sort(
-                            (a, b) =>
-                              calculateDaysRemaining(a.cohortEndDate) -
-                              calculateDaysRemaining(b.cohortEndDate)
-                          )
-                          .map((cohort) => {
-                            const daysRemaining = calculateDaysRemaining(
-                              cohort.cohortEndDate
-                            );
-                            const isPriority = daysRemaining <= 7;
-
-                            return (
-                              <div
-                                key={cohort.cohortId}
-                                className={`p-2 flex items-center justify-between border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                                  currentCohort?.cohortId === cohort.cohortId
-                                    ? "bg-orange-50"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  setCurrentNotificationIndex(
-                                    endingSoonCohorts.indexOf(cohort)
-                                  )
-                                }
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                                      daysRemaining <= 3
-                                        ? "bg-red-100"
-                                        : daysRemaining <= 7
-                                        ? "bg-orange-100"
-                                        : daysRemaining <= 14
-                                        ? "bg-amber-100"
-                                        : "bg-green-100"
-                                    }`}
-                                  >
-                                    <Calendar
-                                      className={`h-3 w-3 ${
-                                        daysRemaining <= 3
-                                          ? "text-red-500"
-                                          : daysRemaining <= 7
-                                          ? "text-orange-500"
-                                          : daysRemaining <= 14
-                                          ? "text-amber-500"
-                                          : "text-green-500"
-                                      }`}
-                                    />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium truncate max-w-xs">
-                                      {cohort.cohortName}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {daysRemaining} day
-                                      {daysRemaining !== 1 ? "s" : ""} left
-                                    </p>
-                                  </div>
-                                </div>
-                                {isPriority && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-red-600 border-red-200 text-xs"
-                                  >
-                                    Urgent
-                                  </Badge>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence> */}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1269,7 +1037,7 @@ const handleResume = async (cohortWithProgram) => {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <h2 className="text-2xl font-bold text-emerald-700">
-                  Manage Cohort Assignments
+                  Manage Cohorts
                 </h2>
               </div>
 
@@ -1300,23 +1068,6 @@ const handleResume = async (cohortWithProgram) => {
                           <div
                             className={`h-2 w-full bg-gradient-to-r ${themeColor}`}
                           />
-
-                          {/* Show badge only if pendingCount > 0 */}
-                          {/* {pendingCount > 0 && (
-                            <div className="absolute top-3 right-3 z-10">
-                              <div className="relative">
-                                <span
-                                  className={`flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-r ${themeColor} text-xs font-bold text-white px-2 animate-bounce-subtle`}
-                                >
-                                  {pendingCount}
-                                </span>
-                                <span
-                                  className={`absolute -inset-1 rounded-full bg-gradient-to-r ${themeColor} opacity-30`}
-                                ></span>
-                              </div>
-                            </div>
-                          )} */}
-
                           <CardContent className="p-6">
                             <div className="mb-4 flex items-center gap-2">
                               {/* BookOpen Icon */}
@@ -1350,10 +1101,10 @@ const handleResume = async (cohortWithProgram) => {
                               className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0 view-assignments-button`}
                             >
                               <Link
-                                to={`/cohorts/${course.cohortId}/assignments`}
+                                to={`/mentor/${course.cohortId}/${course.program.programId}/dashboard`}
                                 className="flex items-center justify-center gap-2"
                               >
-                                View Assignments
+                                Manage Cohort
                                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                               </Link>
                             </Button>
@@ -1449,17 +1200,6 @@ const handleResume = async (cohortWithProgram) => {
                         "{wordOfDay.example}"
                       </p>
                     </div>
-
-                    {/* <div className="mt-4 flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Practice
-                  </Button>
-                </div> */}
                   </div>
                 </motion.div>
 
@@ -1533,17 +1273,6 @@ const handleResume = async (cohortWithProgram) => {
                         <p>{riddle.answer}</p>
                       </div>
                     </details>
-
-                    {/* <div className="mt-4 flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    New Riddle
-                  </Button>
-                </div> */}
                   </div>
                 </motion.div>
               </div>

@@ -3,7 +3,6 @@ import main_logo from "../assets/Img/FoE_logo.png";
 import "../Styles/Header.css";
 import chipper_sage_logo from "../assets/Img/chipper-sage-logo.png";
 import { Link } from "react-router-dom";
-// import Logout from "../Logout/Logout";
 
 const Header = () => {
   return (
@@ -14,9 +13,7 @@ const Header = () => {
         </Link>
 
         <img src={chipper_sage_logo} alt="" className="chipper-logo" />
-        {/* <div className="logout-button">
-        <Logout />
-      </div> */}
+        
       </div>
     </div>
   );

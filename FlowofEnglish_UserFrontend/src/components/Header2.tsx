@@ -39,13 +39,7 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
 
-  // const { resetSession } = useSession();
-
-  // Update current path when component mounts
-  // useEffect(() => {
-  //   setCurrentPath(window.location.pathname);
-  // }, []);
-
+  
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
