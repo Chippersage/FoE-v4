@@ -266,7 +266,7 @@ const ActionButton = ({ icon, isActive, onClick, activeAction, disabled }: any) 
         e.stopPropagation();
         onClick();
       }}
-      className={`rounded-full flex items-center justify-center transition-colors
+      className={`rounded-full flex items-center justify-center transition-colors cursor-pointer
       h-10 w-10 sm:h-9 sm:w-9 md:h-8 md:w-8
       p-2 sm:p-1.5
       ${isActive ? "bg-green-500 text-white" : "text-gray-500 hover:bg-gray-200"}

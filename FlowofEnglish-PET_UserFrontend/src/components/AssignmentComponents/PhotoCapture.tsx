@@ -101,7 +101,7 @@ export const PhotoCapture = ({ onCapture, onClose }) => {
           </motion.button>
         </div>
 
-        <button onClick={onClose} className="absolute top-4 right-4 text-white">
+        <button onClick={onClose} className="absolute top-4 right-4 text-white cursor-pointer">
           <X size={24} />
         </button>
       </div>

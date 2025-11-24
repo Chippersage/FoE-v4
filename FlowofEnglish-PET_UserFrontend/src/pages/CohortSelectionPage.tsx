@@ -28,6 +28,7 @@ const CohortSelectionPage = () => {
         }
 
         setUserRole(storedUser?.userType || "");
+        console.log(userRole);
 
         const response = await axios.get(
           `${API_BASE_URL}/users/${storedUser.userId}/cohorts`
@@ -77,7 +78,15 @@ const CohortSelectionPage = () => {
           }
         });
 
-        const cohortsWithProgress = await Promise.all(progressPromises);
+        let cohortsWithProgress = await Promise.all(progressPromises);
+
+        // Move completed 100% progress to bottom
+        cohortsWithProgress = cohortsWithProgress.sort((a, b) => {
+          if (a.progress === 100 && b.progress !== 100) return 1;
+          if (a.progress !== 100 && b.progress === 100) return -1;
+          return 0;
+        });
+
         setCohorts(cohortsWithProgress);
       } catch (error) {
         console.error("Error fetching cohorts:", error);
@@ -117,13 +126,14 @@ const CohortSelectionPage = () => {
     }
   };
 
-  const handleViewAssignments = () => {
-    if (!assignmentStatistics) {
-      alert("No assignment data available.");
-      return;
-    }
+  const handleViewLearners = (cohort) => {
+    navigate("/mentor/dashboard", { state: { cohort } });
+  };
 
-    navigate("/assignments", { state: { assignmentStatistics, cohorts } });
+  const handleViewAssignments = (cohort) => {
+    navigate("/view-submissions", {
+      state: { cohortId: cohort.cohortId, cohortName: cohort.cohortName },
+    });
   };
 
   if (loading) {
@@ -143,55 +153,40 @@ const CohortSelectionPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 pt-2 md:pt-4 px-4 md:px-12">
       <div className="max-w-6xl mx-auto">
-
-        {/* HEADER ROW — responsive, mobile spacing increased */}
         <div
           className="
-            flex flex-row justify-between items-center w-full mb-6
-            pt-2      
-            md:pt-0   
+            flex flex-row justify-between items-center w-full mb-8
+            pt-2 md:pt-0
           "
         >
           <h1
             className="
               font-bold text-slate-800 
-              text-xl 
-              sm:text-2xl 
-              md:text-3xl 
-              text-left
+              text-2xl sm:text-2xl md:text-3xl text-left
             "
           >
-            Continue Your Learning
+            {userRole?.toLowerCase() === "mentor"
+              ? "Mentor Dashboard"
+              : "Continue Your Learning"}
           </h1>
-
-          {userRole?.toLowerCase() === "mentor" && (
-            <button
-              onClick={handleViewAssignments}
-              className="
-                bg-[#0EA5E9] hover:bg-[#0284C7] text-white
-                px-3 sm:px-4 py-2
-                rounded-lg shadow-md transition cursor-pointer
-                text-sm sm:text-base
-                ml-3
-              "
-            >
-              View Assignments
-            </button>
-          )}
         </div>
 
-        {/* COHORT LIST */}
         {cohorts.length === 0 ? (
           <p className="text-center text-slate-600">
             No active cohorts available.
           </p>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-30">
+          <div className="grid grid-cols-1 gap-4 pb-6 md:pb-10">
             {cohorts.map((c) => (
               <CohortCard
                 key={c.cohortId}
                 cohort={c}
+                userRole={userRole}
+                assignmentStatistics={assignmentStatistics}
                 onResume={() => handleSelectCohort(c)}
+                onViewLearners={(cohort) => handleViewLearners(cohort)}
+                onViewAssessments={() => handleViewAssignments(c)}
+                onGenerateReport={() => console.log("Reports Coming Soon")}
               />
             ))}
           </div>

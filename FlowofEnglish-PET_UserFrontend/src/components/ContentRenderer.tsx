@@ -92,7 +92,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     const video = e.currentTarget;
     const progress = (video.currentTime / video.duration) * 100;
 
-    if (progress >= 95 && !attemptRecorded) {
+    if (progress >= 90 && !attemptRecorded) {
+      window.dispatchEvent(new Event("video90"));
       setAttemptRecorded(true);
       try {
         await recordAttempt();
@@ -124,7 +125,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
-      const nextBtn = document.querySelector("#next-subconcept-btn");
+      const nextBtn = document.querySelector("#btn-unlocked #next-subconcept-btn");
       nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);
@@ -164,17 +165,17 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
                 setShowNextOverlay(false);
                 setCountdown(5);
               }}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md text-sm font-medium transition-all"
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer"
             >
               <RotateCcw size={16} /> Replay
             </button>
 
             <button
               onClick={() => {
-                const btn = document.querySelector("#next-subconcept-btn");
+                const btn = document.querySelector("#btn-unlocked #next-subconcept-btn");
                 btn?.click();
               }}
-              className="flex items-center gap-2 bg-white text-[#0EA5E9] hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-white text-[#0EA5E9] hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer"
             >
               Go To Next <ChevronRight size={16} />
             </button>
@@ -184,7 +185,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
                 setShowNextOverlay(false);
                 setCountdown(5);
               }}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-all"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer"
             >
               <XCircle size={16} /> Cancel
             </button>

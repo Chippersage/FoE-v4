@@ -47,6 +47,39 @@ const Sidebar: React.FC<SidebarProps> = ({
     setLocalStages(stages);
   }, [stages]);
 
+    // Auto-open the stage that contains the currently active subconcept
+  useEffect(() => {
+    if (!currentActiveId || !localStages.length) return;
+
+    // Find the stage that contains the current active subconcept
+    const findStageForActiveSubconcept = () => {
+      for (const stage of localStages) {
+        for (const unit of stage.units || []) {
+          // Check if currentActiveId matches a unit ID
+          if (unit.unitId === currentActiveId) {
+            return stage.stageId;
+          }
+          
+          // Check if currentActiveId matches a subconcept ID
+          const hasSubconcept = (unit.subconcepts || []).some(
+            (sub: any) => sub.subconceptId === currentActiveId
+          );
+          
+          if (hasSubconcept) {
+            return stage.stageId;
+          }
+        }
+      }
+      return null;
+    };
+
+    const activeStageId = findStageForActiveSubconcept();
+    
+    if (activeStageId && !openStages.includes(activeStageId)) {
+      setOpenStages(prev => [...prev, activeStageId]);
+    }
+  }, [currentActiveId, localStages]);
+
   // Listen for video completion event to mark subconcept as completed
   useEffect(() => {
     const handleCompletionUpdate = (e: CustomEvent) => {

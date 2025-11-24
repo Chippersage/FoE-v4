@@ -4,31 +4,35 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useUserContext } from "./context/AuthContext";
 import Loader from "./components/Loader";
 
-// Lazy load all pages
+// Lazy load pages (performance optimization)
 const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
 const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
 const CoursePage = lazy(() => import("./pages/CoursePage"));
 const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
-const AssignmentsPage = lazy(() => import("./pages/AssignmentsPage"));
 const ViewSubmissions = lazy(() => import("./pages/ViewSubmissions"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RootLayout = lazy(() => import("./pages/RootLayout"));
 
+// Mentor pages
+const MentorDashboard = lazy(() => import("./mentor/pages/MentorDashboard"));
+const StudentProgress = lazy(() => import("./mentor/pages/StudentProgress"));
+
 const App: React.FC = () => {
   const { user } = useUserContext();
 
-  // Validate user role
+  // Validate allowed user roles
   const isValidUserType =
     user?.userType?.toLowerCase() === "learner" ||
     user?.userType?.toLowerCase() === "mentor";
 
-  // Authentication + role check
+  // Final condition for protected routes
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
 
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        {/* ---------------- AUTHENTICATION ---------------- */}
+
+        {/* ------------- LOGIN ROUTE ------------- */}
         <Route
           path="/sign-in"
           element={
@@ -40,82 +44,56 @@ const App: React.FC = () => {
           }
         />
 
-        {/* ---------------- PROTECTED LAYOUT ---------------- */}
+        {/* ------------ PROTECTED ROUTES WRAPPED IN LAYOUT ------------ */}
         <Route element={<RootLayout />}>
-          {/* Select cohort before proceeding */}
+          
+          {/* Accessible by mentor + learner */}
           <Route
             path="/select-cohort"
-            element={
-              isAuthenticatedAndValid ? (
-                <CohortSelectionPage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
+            element={isAuthenticatedAndValid ? <CohortSelectionPage /> : <Navigate to="/sign-in" />}
           />
 
-          {/* Course page (main learning area) */}
           <Route
             path="/course/:programId"
-            element={
-              isAuthenticatedAndValid ? (
-                <CoursePage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
+            element={isAuthenticatedAndValid ? <CoursePage /> : <Navigate to="/sign-in" />}
           />
 
-          {/* View Progress page */}
+          {/* USER PROGRESS PAGE (DIFFERENT FEATURE, KEEP IT) */}
           <Route
             path="/view-progress"
-            element={
-              isAuthenticatedAndValid ? (
-                <ViewProgressPage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
+            element={isAuthenticatedAndValid ? <ViewProgressPage /> : <Navigate to="/sign-in" />}
           />
 
-          {/* Assignments page */}
-          <Route
-            path="/assignments"
-            element={
-              isAuthenticatedAndValid ? (
-                <AssignmentsPage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          />
-
-          {/* Submissions page */}
+          {/* ------------ MENTOR ONLY ROUTES ------------ */}
           <Route
             path="/view-submissions"
-            element={
-              isAuthenticatedAndValid ? (
-                <ViewSubmissions />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
+            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
+              ? <ViewSubmissions />
+              : <Navigate to="/sign-in" />}
+          />
+
+          <Route
+            path="/mentor/dashboard"
+            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
+              ? <MentorDashboard />
+              : <Navigate to="/sign-in" />}
+          />
+
+          <Route
+            path="/mentor/student/:userId"
+            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
+              ? <StudentProgress />
+              : <Navigate to="/sign-in" />}
           />
         </Route>
 
-        {/* ---------------- DEFAULT ROOT REDIRECT ---------------- */}
+        {/* DEFAULT REDIRECT */}
         <Route
           path="/"
-          element={
-            isAuthenticatedAndValid ? (
-              <Navigate to="/select-cohort" />
-            ) : (
-              <Navigate to="/sign-in" />
-            )
-          }
+          element={<Navigate to={isAuthenticatedAndValid ? "/select-cohort" : "/sign-in"} />}
         />
 
-        {/* ---------------- 404 CATCH ---------------- */}
+        {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>

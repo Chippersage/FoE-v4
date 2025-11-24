@@ -114,6 +114,23 @@ const CoursePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const unlock = () => {
+      const locked = document.getElementById("btn-locked");
+      const unlocked = document.getElementById("btn-unlocked");
+
+      if (locked && unlocked) {
+        locked.style.display = "none";
+        unlocked.style.display = "block";
+      }
+    };
+
+    window.addEventListener("video90", unlock);
+
+    return () => window.removeEventListener("video90", unlock);
+  }, []);
+
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -313,7 +330,13 @@ const CoursePage: React.FC = () => {
         />
       ) : (
         <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
-          {renderNextButton()}
+            <div id="btn-locked">
+              {renderNextButton(true)}
+            </div>
+
+            <div id="btn-unlocked" style={{ display: "none" }}>
+              {renderNextButton(false)}
+            </div>
         </div>
       )}
     </>
