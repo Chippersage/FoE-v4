@@ -6,8 +6,6 @@ public class ProgramCountDTO {
 	    private int totalStages;
 	    private int totalUnits;
 	    private int totalSubconcepts;
-	  
-	    
 	 // Getters and Setters
 		public String getProgramId() {
 			return programId;

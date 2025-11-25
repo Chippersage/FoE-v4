@@ -5,10 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -91,6 +88,104 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         // Convert to DTO and return
         return convertToDTO(updatedMapping);
     }
+
+    @Override
+    @Cacheable(value = "mentorCohortUsers", key = "#mentorId + ':' + #cohortId")
+    public MentorCohortUsersResponseDTO getUsersByCohortForMentor(String mentorId, String cohortId) {
+
+        // 1. Validate mentor exists
+        User mentor = userRepository.findById(mentorId)
+                .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
+
+        // 2. Validate mentor userType
+        if (!mentor.getUserType().equalsIgnoreCase("MENTOR")) {
+            throw new IllegalArgumentException("User is not a Mentor");
+        }
+
+        // 3. Validate mentor enrolled in this cohort
+        UserCohortMapping mentorMapping = userCohortMappingRepository
+                .findByUser_UserIdAndCohort_CohortId(mentorId, cohortId)
+                .orElseThrow(() -> new IllegalArgumentException("Mentor not enrolled in this cohort"));
+
+        // 4. Mentor must be ACTIVE in cohort
+        if (!mentorMapping.getStatus().equalsIgnoreCase("ACTIVE")) {
+            throw new IllegalArgumentException("Mentor is not ACTIVE in this cohort");
+        }
+
+        // 5. Fetch cohort
+        Cohort cohort = cohortRepository.findById(cohortId)
+                .orElseThrow(() -> new IllegalArgumentException("Cohort not found"));
+
+        // 6. Fetch program
+        CohortProgram cp = cohortProgramRepository.findByCohortCohortId(cohortId)
+                .orElseThrow(() -> new IllegalArgumentException("Program not mapped to cohort"));
+
+        Program program = cp.getProgram();
+
+        // 7. Fetch all users in cohort
+        List<UserCohortMapping> mappings =
+                userCohortMappingRepository.findAllByCohortCohortId(cohortId);
+
+        // ---------- USERS LIST ----------
+        List<UserDTO> users = mappings.stream().map(m -> {
+            User u = m.getUser();
+            UserDTO dto = new UserDTO();
+
+            // From User table
+            dto.setUserId(u.getUserId());
+            dto.setUserName(u.getUserName());
+            dto.setUserEmail(u.getUserEmail());
+            dto.setUserPhoneNumber(u.getUserPhoneNumber());
+            dto.setUserAddress(u.getUserAddress());
+            dto.setUserType(u.getUserType());
+
+            // From UserCohortMapping table (cohort-level)
+            dto.setStatus(m.getStatus());
+            dto.setCreatedAt(m.getCreatedAt());
+            dto.setDeactivatedAt(m.getDeactivatedAt());
+            dto.setDeactivatedReason(m.getDeactivatedReason());
+
+            return dto;
+        }).toList();
+
+        // ---------- COHORT DETAILS ----------
+        CohortDetailsDTO cohortDetails = new CohortDetailsDTO();
+        cohortDetails.setCohortId(cohort.getCohortId());
+        cohortDetails.setCohortName(cohort.getCohortName());
+
+        // ProgramCountDTO manually
+        ProgramCountDTO pc = new ProgramCountDTO();
+        pc.setProgramId(program.getProgramId());
+        pc.setProgramName(program.getProgramName());
+        pc.setTotalStages(program.getStages());
+        pc.setTotalUnits(program.getUnitCount());
+        cohortDetails.setProgram(pc);
+
+        cohortDetails.setTotalUsers(mappings.size());
+        cohortDetails.setActiveUsers((int) mappings.stream()
+            .filter(m -> m.getStatus().equalsIgnoreCase("ACTIVE")).count());
+        cohortDetails.setDeactivatedUsers((int) mappings.stream()
+            .filter(m -> m.getStatus().equalsIgnoreCase("DISABLED")).count());
+
+        
+        OrganizationDTO finalOrg = new OrganizationDTO();
+        finalOrg.setOrganizationId(cohort.getOrganization().getOrganizationId());
+        finalOrg.setOrganizationName(cohort.getOrganization().getOrganizationName());
+        finalOrg.setOrganizationAdminName(cohort.getOrganization().getOrganizationAdminName());
+        finalOrg.setOrganizationAdminEmail(cohort.getOrganization().getOrganizationAdminEmail());
+        finalOrg.setOrganizationAdminPhone(cohort.getOrganization().getOrganizationAdminPhone());
+        finalOrg.setCreatedAt(cohort.getOrganization().getCreatedAt());
+        finalOrg.setUpdatedAt(cohort.getOrganization().getUpdatedAt());
+        finalOrg.setDeletedAt(cohort.getOrganization().getDeletedAt());
+
+        MentorCohortUsersResponseDTO response = new MentorCohortUsersResponseDTO();
+        response.setOrganization(finalOrg);
+        response.setCohort(cohortDetails);
+        response.setUsers(users);
+
+        return response;
+    }
+
 
     @Override
     @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId")

@@ -15,11 +15,9 @@ public class UserGetDTO {
     private OffsetDateTime createdAt;
     private OffsetDateTime deactivatedAt;
     private String deactivatedReason;
-
     private OrganizationDTO organization;
     private List<CohortDTO> allCohorts;
     private List<ProgramDTO> allPrograms;
-
     private CohortDTO cohort; 
     private ProgramDTO program;
 

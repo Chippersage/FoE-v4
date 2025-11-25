@@ -9,9 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @RestController
@@ -63,6 +61,27 @@ public class UserCohortMappingController {
     public List<UserCohortMappingDTO> getUserCohortMappingsByUserId(@PathVariable String userId) {
         return userCohortMappingService.getUserCohortMappingsByUserId(userId);
     }
+    
+    @GetMapping("/mentor/{mentorId}/cohort/{cohortId}/users")
+    public ResponseEntity<?> getUsersByCohortForMentor(
+            @PathVariable String mentorId,
+            @PathVariable String cohortId) {
+
+        try {
+            MentorCohortUsersResponseDTO response =
+                    userCohortMappingService.getUsersByCohortForMentor(mentorId, cohortId);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unexpected error occurred"));
+        }
+    }
+
 
     // POST (create) a new user-cohort mapping
     @PostMapping("/create")

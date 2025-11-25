@@ -4,7 +4,7 @@ import type {
   LearnerDetailedProgress,
 } from "@/types/mentor.types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 async function handleResponse<T>(resp: Response): Promise<T> {
   if (!resp.ok) {
@@ -19,7 +19,7 @@ export async function fetchLearnerSessionActivity(
   cohortId: string,
   mentorUserId: string
 ): Promise<LearnerSessionActivity[]> {
-  const url = `${API_BASE}/user-session-mappings/cohort/${encodeURIComponent(
+  const url = `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
     cohortId
   )}/mentor/${encodeURIComponent(mentorUserId)}`;
   const resp = await fetch(url, { credentials: "include" });
@@ -49,47 +49,55 @@ export async function fetchLearnerSessionActivity(
   return [];
 }
 
-// In mentor-api.ts
+
 export async function fetchMentorCohortProgress(
   mentorId: string,
   programId: string,
   cohortId: string
 ): Promise<MentorCohortProgressRow[]> {
-  if (!programId || programId.trim() === "") {
-    throw new Error("Program ID is required but was not provided");
+
+  if (!programId?.trim()) {
+    throw new Error("Program ID missing");
   }
 
-  const url = `${API_BASE}/reports/mentor/${encodeURIComponent(
+  const url = `${API_BASE_URL}/reports/mentor/${encodeURIComponent(
     mentorId
-  )}/program/${encodeURIComponent(programId)}/cohort/${encodeURIComponent(cohortId)}/progress`;
-  
-  console.log("🔍 API Request URL:", url);
-  
+  )}/program/${encodeURIComponent(programId)}/cohort/${encodeURIComponent(
+    cohortId
+  )}/progress`;
+
+  console.log("🔍 Mentor Progress API:", url);
+
   const resp = await fetch(url, { credentials: "include" });
   const data = await handleResponse<any>(resp);
-  
-  // TRANSFORM the API response to match expected structure
-  if (data && data.users) {
-    return data.users.map((user: any) => ({
-      userId: user.userId,
-      userName: user.userName,
-      email: user.userEmail || "",
-      overallProgress: user.totalSubconcepts > 0 
+
+  if (!data?.users) return [];
+
+  // RETURN ALL RAW VALUES CLEANLY
+  return data.users.map((user: any) => ({
+    userId: user.userId,
+    userName: user.userName,
+    status: user.status,
+    totalStages: user.totalStages ?? 0,
+    completedStages: user.completedStages ?? 0,
+    totalUnits: user.totalUnits ?? 0,
+    completedUnits: user.completedUnits ?? 0,
+    totalSubconcepts: user.totalSubconcepts ?? 0,
+    completedSubconcepts: user.completedSubconcepts ?? 0,
+    leaderboardScore: user.leaderboardScore ?? 0,
+    overallProgress:
+      user.totalSubconcepts > 0
         ? Math.round((user.completedSubconcepts / user.totalSubconcepts) * 100)
         : 0,
-      leaderboardScore: user.leaderboardScore || 0,
-      leaderboardRank: 0,
-      moduleProgress: []
-    }));
-  }
-  
-  return [];
+  }));
 }
+
+
 export async function fetchLearnerDetailedProgress(
   userId: string,
   programId: string
 ): Promise<LearnerDetailedProgress> {
-  const url = `${API_BASE}/reports/program/${encodeURIComponent(
+  const url = `${API_BASE_URL}/reports/program/${encodeURIComponent(
     userId
   )}/${encodeURIComponent(programId)}`;
   const resp = await fetch(url, { credentials: "include" });

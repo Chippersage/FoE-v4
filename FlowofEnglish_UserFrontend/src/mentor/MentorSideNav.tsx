@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List } from "lucide-react";
 import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
@@ -11,58 +11,53 @@ interface MentorSideNavProps {
 }
 
 const navItems = [
-  {
-    label: "Dashboard",
-    icon: BarChart3,
-    path: "dashboard",
-  },
-  {
-    label: "Learner Progress",
-    icon: Users,
-    path: "progress",
-  },
-  {
-    label: "Activity Monitor",
-    icon: Activity,
-    path: "activity",
-  },
-  {
-    label: "Assignments",
-    icon: FileText,
-    path: "assignments",
-  },
-  {
-    label: "Reports",
-    icon: BarChart,
-    path: "reports",
-  },
-  {
-    label: "Analytics",
-    icon: PieChart,
-    path: "analytics",
-  },
-  {
-    label: "Session Logs",
-    icon: ClipboardList,
-    path: "session-logs",
-  },
-  {
-    label: "Cohort Details",
-    icon: List,
-    path: "cohort-details",
-  },
-
+  { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true },
+  { label: "Learners Details", icon: Users, path: "Learners Details", needsProgram: false },
+  { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false },
+  { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false },
+  { label: "Reports", icon: BarChart, path: "reports", needsProgram: true },
+  { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false },
+  { label: "Session Logs", icon: ClipboardList, path: "session-logs", needsProgram: false },
+  { label: "Cohort Details", icon: List, path: "cohort-details", needsProgram: false },
 ];
 
-export default function MentorSideNav({ cohortId }: MentorSideNavProps) {
+export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearAuth } = useUserContext();
+  const params = useParams(); // may contain cohortId and programId depending on route
+  const cohortId = cohortIdProp ?? params.cohortId ?? "";
+  const urlProgramId = params.programId ?? "";
+
+  const { clearAuth, user, selectedCohortWithProgram } = useUserContext();
   const [isLoading, setIsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const basePath = `/mentor/${cohortId}`;
+  const programId = useMemo(() => {
+    if (urlProgramId) return urlProgramId;
+    if (user?.selectedProgramId) return user.selectedProgramId;
+    try {
+      const stored = localStorage.getItem("selectedCohortWithProgram");
+      if (stored) {
+        const obj = JSON.parse(stored);
+        if (obj?.program?.programId) return obj.program.programId;
+        if (obj?.selectedProgramId) return obj.selectedProgramId;
+      }
+    } catch (e) {
+      /* ignore parse errors */
+    }
+    return "";
+  }, [urlProgramId, user]);
+
+  // returns the correct path (includes programId if nav item needs it)
+  const makePath = (itemPath: string, needsProgram: boolean) => {
+    if (!cohortId) return `/mentor/${itemPath}`; // fallback
+    if (needsProgram) {
+      // prefer programId; if missing, we still build path without programId so navigation can fall back to redirect route
+      return programId ? `/mentor/${cohortId}/${programId}/${itemPath}` : `/mentor/${cohortId}/${itemPath}`;
+    }
+    return `/mentor/${cohortId}/${itemPath}`;
+  };
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -72,23 +67,16 @@ export default function MentorSideNav({ cohortId }: MentorSideNavProps) {
         {},
         {
           withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
-      
-      // Clear local storage and context
       clearAuth();
       localStorage.removeItem("selectedCohortWithProgram");
       localStorage.removeItem("sessionId");
       localStorage.removeItem("userData");
-      
-      // Redirect to login page
       navigate("/sign-in");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Even if API call fails, clear local state and redirect
       clearAuth();
       localStorage.removeItem("selectedCohortWithProgram");
       localStorage.removeItem("sessionId");
@@ -100,38 +88,22 @@ export default function MentorSideNav({ cohortId }: MentorSideNavProps) {
     }
   };
 
-  const confirmLogout = () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const cancelLogout = () => {
-    setShowLogoutConfirm(false);
-  };
+  const confirmLogout = () => setShowLogoutConfirm(true);
+  const cancelLogout = () => setShowLogoutConfirm(false);
 
   return (
     <>
       {isLoading && <LoadingOverlay />}
-      
-      {/* Logout Confirmation Modal */}
+
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-semibold mb-2">Confirm Logout</h3>
             <p className="text-gray-600 mb-4">Are you sure you want to logout?</p>
             <div className="flex gap-3 justify-end">
-              <button
-                onClick={cancelLogout}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                disabled={isLoading}
-              >
-                {isLoading ? "Logging out..." : "Logout"}
+              <button onClick={cancelLogout} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+              <button onClick={handleLogout} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                Logout
               </button>
             </div>
           </div>
@@ -147,16 +119,14 @@ export default function MentorSideNav({ cohortId }: MentorSideNavProps) {
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname.includes(item.path);
-
+            const target = makePath(item.path, !!item.needsProgram);
+            const isActive = location.pathname.startsWith(target) || location.pathname.includes(item.path);
             return (
               <button
                 key={item.path}
-                onClick={() => navigate(`${basePath}/${item.path}`)}
+                onClick={() => navigate(target)}
                 className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-blue-50 text-blue-600 font-semibold"
-                    : "text-gray-600 hover:bg-gray-50"
+                  isActive ? "bg-blue-50 text-blue-600 font-semibold" : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -166,11 +136,7 @@ export default function MentorSideNav({ cohortId }: MentorSideNavProps) {
           })}
         </nav>
 
-        <button
-          onClick={confirmLogout}
-          disabled={isLoading}
-          className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button onClick={confirmLogout} className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg w-full">
           <LogOut className="h-5 w-5" />
           <span>Logout</span>
         </button>

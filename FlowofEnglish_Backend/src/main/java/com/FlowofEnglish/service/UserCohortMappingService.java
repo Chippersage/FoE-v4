@@ -17,7 +17,8 @@ public interface UserCohortMappingService {
     
     LeaderboardResponseDTO getUserCohortMappingsWithLeaderboard(String cohortId);
     LeaderboardResponseDTO getUserCohortMappingsByCohortId(String cohortId);
-    
+    MentorCohortUsersResponseDTO getUsersByCohortForMentor(String mentorId, String cohortId);
+
     Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId);
     List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId);
     Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId);
