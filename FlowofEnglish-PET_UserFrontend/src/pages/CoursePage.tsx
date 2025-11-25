@@ -328,16 +328,17 @@ const CoursePage: React.FC = () => {
           completionStatus={currentContent.completionStatus}
           subconceptType={currentContent.type}
         />
-      ) : (
+      ) : currentContent.type?.toLowerCase() === "video" ? (
         <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
-            <div id="btn-locked">
-              {renderNextButton(true)}
-            </div>
-
-            <div id="btn-unlocked" style={{ display: "none" }}>
-              {renderNextButton(false)}
-            </div>
+          <div id="btn-locked">
+            {renderNextButton(true)}
+          </div>
+          <div id="btn-unlocked" style={{ display: "none" }}>
+            {renderNextButton(false)}
+          </div>
         </div>
+      ) : (
+        renderNextButton(false)
       )}
     </>
   );
