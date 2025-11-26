@@ -1,24 +1,82 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, TablePagination, Box, CircularProgress, Alert,} from "@mui/material";
+import {
+  Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, TablePagination, Box, CircularProgress, Alert, IconButton, Chip, Avatar,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack, Divider
+} from "@mui/material";
+import {
+  TrendingUp, Users, UserX, Clock, Search, FilterList, Sort,
+  RefreshCw, X, AlertTriangle, CheckCircle2, Calendar, Mail, Phone, MapPin
+} from "lucide-react";
 import axios from "axios";
 import { formatDistanceToNow, format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 
-/**
- * MentorDashboardClean
- * - Option A: shows only the latest session timestamp per user
- * - Uses Mentor Session Activity API:
- *    GET /api/v1/user-session-mappings/cohort/{cohortId}/mentor/{mentorUserId}
- *
- * Note: API base URL fetched from import.meta.env.VITE_API_BASE_URL (or fallback to /api)
- */
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+// Styled components for better UI
+const StatCard = ({ title, value, subtitle, icon, color = "primary" }: any) => (
+  <Card
+    sx={{
+      height: '100%',
+      background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
+      border: `1px solid ${color}.100`,
+      borderRadius: 3,
+      boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+      transition: 'all 0.3s ease-in-out',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 8px 24px 0 rgba(0,0,0,0.1)',
+      }
+    }}
+  >
+    <CardContent sx={{ p: 3 }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+        <Box>
+          <Typography variant="h3" fontWeight="bold" color={`${color}.dark`}>
+            {value}
+          </Typography>
+          <Typography variant="h6" color={`${color}.dark`} fontWeight="medium">
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="caption" color={`${color}.main`}>
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            bgcolor: `${color}.50`,
+            color: `${color}.main`,
+          }}
+        >
+          {icon}
+        </Box>
+      </Stack>
+    </CardContent>
+  </Card>
+);
+
+const StatusChip = ({ status }: { status: string }) => (
+  <Chip
+    label={status}
+    size="small"
+    color={status === "ACTIVE" ? "success" : "error"}
+    variant="filled"
+    sx={{
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      fontSize: '0.75rem'
+    }}
+  />
+);
+
 const formatLastActivity = (timestamp?: string | null) => {
-  if (!timestamp) return "Learner not logged in";
+  if (!timestamp) return "Never logged in";
   const date = new Date(timestamp);
   const relativeTime = formatDistanceToNow(date, { addSuffix: true });
   const formattedTime = format(date, "hh:mm a");
@@ -28,11 +86,9 @@ const formatLastActivity = (timestamp?: string | null) => {
 const getLatestSessionForUser = (sessions?: any[]) => {
   if (!sessions || sessions.length === 0) return null;
 
-  // Prefer sessionEndTimestamp if present; otherwise use sessionStartTimestamp
   const valid = sessions
     .map((s) => ({
       ...s,
-      // Normalize to Date object or null
       endTs: s.sessionEndTimestamp ? new Date(s.sessionEndTimestamp) : null,
       startTs: s.sessionStartTimestamp ? new Date(s.sessionStartTimestamp) : null,
     }))
@@ -40,7 +96,6 @@ const getLatestSessionForUser = (sessions?: any[]) => {
 
   if (valid.length === 0) return null;
 
-  // Compare by endTs if available, else startTs
   valid.sort((a, b) => {
     const aTime = a.endTs ? a.endTs.getTime() : a.startTs.getTime();
     const bTime = b.endTs ? b.endTs.getTime() : b.startTs.getTime();
@@ -54,76 +109,81 @@ export default function MentorDashboardClean() {
   const { cohortId } = useParams<{ cohortId: string }>();
   const { user } = useUserContext();
   const mentorId = user?.userId ?? "";
-
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [organization, setOrganization] = useState<any | null>(null);
   const [cohortMeta, setCohortMeta] = useState<any | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
 
   // Pagination
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!cohortId || !mentorId) {
       setError("Missing cohortId or mentorId. Please re-select your cohort.");
       return;
     }
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const resp = await axios.get(
-          `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
-            cohortId
-          )}/mentor/${encodeURIComponent(mentorId)}`,
-          { withCredentials: true }
-        );
-
-        // Expecting the uploaded JSON structure: { organization, cohort, users: [...] }
-        const data = resp.data ?? {};
-        setOrganization(data.organization ?? null);
-        setCohortMeta(data.cohort ?? null);
-
-        // Normalize users array
-        const fetchedUsers: any[] = Array.isArray(data.users) ? data.users : [];
-        // Map to include latestSession and latestTimestamp for easy sorting
-        const mapped = fetchedUsers.map((u) => {
-          const latest = getLatestSessionForUser(u.recentSessions);
-          const latestTs =
-            latest?.sessionEndTimestamp ?? latest?.sessionStartTimestamp ?? null;
-          return {
-            ...u,
-            latestSession: latest ?? null,
-            latestTimestamp: latestTs,
-          };
-        });
-
-        // Sort by latestTimestamp desc (nulls last)
-        mapped.sort((a, b) => {
-          if (!a.latestTimestamp && !b.latestTimestamp) return 0;
-          if (!a.latestTimestamp) return 1;
-          if (!b.latestTimestamp) return -1;
-          return new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime();
-        });
-
-        setUsers(mapped);
-      } catch (err: any) {
-        console.error("Mentor dashboard fetch error:", err);
-        setError(
-          err?.response?.data?.message ??
-            err?.message ??
-            "Failed to load mentor cohort data."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [cohortId, mentorId]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await axios.get(
+        `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
+          cohortId
+        )}/mentor/${encodeURIComponent(mentorId)}`,
+        { withCredentials: true }
+      );
+
+      const data = resp.data ?? {};
+      setOrganization(data.organization ?? null);
+      setCohortMeta(data.cohort ?? null);
+
+      const fetchedUsers: any[] = Array.isArray(data.users) ? data.users : [];
+      const mapped = fetchedUsers.map((u) => {
+        const latest = getLatestSessionForUser(u.recentSessions);
+        const latestTs =
+          latest?.sessionEndTimestamp ?? latest?.sessionStartTimestamp ?? null;
+        return {
+          ...u,
+          latestSession: latest ?? null,
+          latestTimestamp: latestTs,
+        };
+      });
+
+      mapped.sort((a, b) => {
+        if (!a.latestTimestamp && !b.latestTimestamp) return 0;
+        if (!a.latestTimestamp) return 1;
+        if (!b.latestTimestamp) return -1;
+        return new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime();
+      });
+
+      setUsers(mapped);
+    } catch (err: any) {
+      console.error("Mentor dashboard fetch error:", err);
+      setError(
+        err?.response?.data?.message ??
+          err?.message ??
+          "Failed to load mentor cohort data."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   // derived stats
   const totals = useMemo(() => {
@@ -133,19 +193,60 @@ export default function MentorDashboardClean() {
     return { total, active, deactivated };
   }, [users]);
 
+  // Filter and search users
+  const filteredUsers = useMemo(() => {
+    let filtered = users.filter(user =>
+      user.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.userId?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter(user => user.status === statusFilter);
+    }
+
+    return filtered;
+  }, [users, searchTerm, statusFilter]);
+
+  const paginated = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   const handleChangePage = (_: any, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const paginated = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const handleUserClick = (user: any) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Mentor Cohort Dashboard
-      </Typography>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+          <Box>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Cohort Dashboard
+            </Typography>
+            <Typography variant="h6" color="text.secondary">
+              {cohortMeta?.cohortName || "Loading..."} • {organization?.organizationName || ""}
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={handleRefresh}
+            disabled={refreshing}
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': { bgcolor: 'primary.dark' },
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
+          </IconButton>
+        </Stack>
+      </Box>
 
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
@@ -161,86 +262,202 @@ export default function MentorDashboardClean() {
 
       {!loading && !error && (
         <>
-          <Grid container spacing={3} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={4}>
-              <Card>
-                <CardContent>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Total Learners
-                  </Typography>
-                  <Typography variant="h4">{totals.total}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {cohortMeta?.cohortName ? `Cohort: ${cohortMeta.cohortName}` : ""}
-                  </Typography>
-                </CardContent>
-              </Card>
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Total Learners"
+                value={totals.total}
+                subtitle="All users in cohort"
+                icon={<Users size={24} />}
+                color="primary"
+              />
             </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Card>
-                <CardContent>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Active Learners
-                  </Typography>
-                  <Typography variant="h4">{totals.active}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Active users in this cohort
-                  </Typography>
-                </CardContent>
-              </Card>
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Active Learners"
+                value={totals.active}
+                subtitle="Currently active"
+                icon={<TrendingUp size={24} />}
+                color="success"
+              />
             </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Card>
-                <CardContent>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Deactivated Learners
-                  </Typography>
-                  <Typography variant="h4">{totals.deactivated}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Disabled / deactivated users
-                  </Typography>
-                </CardContent>
-              </Card>
+            <Grid item xs={12} sm={6} md={4}>
+              <StatCard
+                title="Deactivated"
+                value={totals.deactivated}
+                subtitle="Disabled users"
+                icon={<UserX size={24} />}
+                color="error"
+              />
             </Grid>
           </Grid>
 
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Latest Login Learners
-            </Typography>
+          {/* Search and Filters */}
+          <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box sx={{ position: 'relative', flex: 1 }}>
+                <Search
+                  size={20}
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#6B7280'
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Search learners by name or ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.3s ease',
+                    focus: {
+                      borderColor: '#3B82F6',
+                      boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                    }
+                  }}
+                />
+              </Box>
+              
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                style={{
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  minWidth: '140px'
+                }}
+              >
+                <option value="ALL">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="DISABLED">Disabled</option>
+              </select>
+            </Stack>
+          </Paper>
+
+          {/* Learners Table */}
+          <Paper 
+            sx={{ 
+              p: 3, 
+              borderRadius: 3,
+              boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+              <Typography variant="h6" fontWeight="bold">
+                Learners Activity
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Showing {paginated.length} of {filteredUsers.length} learners
+              </Typography>
+            </Stack>
 
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell><strong>User ID</strong></TableCell>
-                    <TableCell><strong>Learner Name</strong></TableCell>
+                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell><strong>Learner</strong></TableCell>
                     <TableCell><strong>Cohort</strong></TableCell>
                     <TableCell><strong>Status</strong></TableCell>
-                    <TableCell><strong>Latest Login</strong></TableCell>
+                    <TableCell><strong>Last Activity</strong></TableCell>
+                    <TableCell><strong>Details</strong></TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
                   {paginated.length > 0 ? (
                     paginated.map((u) => (
-                      <TableRow key={u.userId}>
-                        <TableCell>{u.userId}</TableCell>
-                        <TableCell>{u.userName ?? "—"}</TableCell>
-                        <TableCell>{cohortMeta?.cohortName ?? "—"}</TableCell>
-                        <TableCell>{u.status ?? "—"}</TableCell>
+                      <TableRow 
+                        key={u.userId}
+                        sx={{ 
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: 'primary.50',
+                            transform: 'scale(1.01)'
+                          }
+                        }}
+                        onClick={() => handleUserClick(u)}
+                      >
                         <TableCell>
-                          {u.latestTimestamp
-                            ? formatLastActivity(u.latestTimestamp)
-                            : "Learner not logged in"}
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Avatar
+                              sx={{
+                                bgcolor: u.status === "ACTIVE" ? 'success.main' : 'error.main',
+                                width: 40,
+                                height: 40
+                              }}
+                            >
+                              <Typography variant="body2" fontWeight="bold" color="white">
+                                {u.userName?.charAt(0)?.toUpperCase() || 'U'}
+                              </Typography>
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="medium">
+                                {u.userName || "—"}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {u.userId}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {cohortMeta?.cohortName || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={u.status || "UNKNOWN"} />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Clock size={16} color="#6B7280" />
+                            <Typography variant="body2">
+                              {u.latestTimestamp
+                                ? formatLastActivity(u.latestTimestamp)
+                                : "Never logged in"}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              fontWeight: 'medium'
+                            }}
+                          >
+                            View Details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        No learners available.
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Users size={48} color="#9CA3AF" />
+                        <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+                          No learners found
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Try adjusting your search or filters
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -251,15 +468,227 @@ export default function MentorDashboardClean() {
             <TablePagination
               rowsPerPageOptions={[5, 10, 20, 25]}
               component="div"
-              count={users.length}
+              count={filteredUsers.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                borderTop: '1px solid',
+                borderColor: 'grey.200',
+                mt: 2
+              }}
             />
           </Paper>
         </>
       )}
+
+      {/* User Details Modal */}
+      <Dialog
+        open={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        {selectedUser && (
+          <>
+            <DialogTitle
+              sx={{
+                background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+                color: 'white',
+                py: 3
+              }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Box>
+                  <Typography variant="h5" fontWeight="bold">
+                    Learner Details
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                    {selectedUser.userId}
+                  </Typography>
+                </Box>
+                <IconButton
+                  onClick={() => setShowUserModal(false)}
+                  sx={{ color: 'white' }}
+                >
+                  <X size={24} />
+                </IconButton>
+              </Stack>
+            </DialogTitle>
+
+            <DialogContent sx={{ p: 0 }}>
+              <Stack spacing={4} sx={{ p: 4 }}>
+                {/* Basic Information */}
+                <Box>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                    Basic Information
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar
+                          sx={{
+                            bgcolor: selectedUser.status === "ACTIVE" ? 'success.main' : 'error.main',
+                            width: 60,
+                            height: 60
+                          }}
+                        >
+                          <Typography variant="h6" fontWeight="bold" color="white">
+                            {selectedUser.userName?.charAt(0)?.toUpperCase() || 'U'}
+                          </Typography>
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight="bold">
+                            {selectedUser.userName || "—"}
+                          </Typography>
+                          <StatusChip status={selectedUser.status || "UNKNOWN"} />
+                        </Box>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Stack spacing={1}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Mail size={16} color="#6B7280" />
+                          <Typography variant="body2">
+                            {selectedUser.userEmail || "No email provided"}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Phone size={16} color="#6B7280" />
+                          <Typography variant="body2">
+                            {selectedUser.userPhoneNumber || "No phone provided"}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <MapPin size={16} color="#6B7280" />
+                          <Typography variant="body2">
+                            {selectedUser.userAddress || "No address provided"}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                <Divider />
+
+                {/* Activity Information */}
+                <Box>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                    Activity Information
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6}>
+                      <Stack spacing={2}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Last Activity
+                          </Typography>
+                          <Typography variant="body1" fontWeight="medium">
+                            {selectedUser.latestTimestamp
+                              ? formatLastActivity(selectedUser.latestTimestamp)
+                              : "Never logged in"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            User Type
+                          </Typography>
+                          <Typography variant="body1" fontWeight="medium">
+                            {selectedUser.userType || "Learner"}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Stack spacing={2}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Cohort
+                          </Typography>
+                          <Typography variant="body1" fontWeight="medium">
+                            {cohortMeta?.cohortName || "—"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Organization
+                          </Typography>
+                          <Typography variant="body1" fontWeight="medium">
+                            {organization?.organizationName || "—"}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Session Details */}
+                {selectedUser.latestSession && (
+                  <>
+                    <Divider />
+                    <Box>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        Latest Session
+                      </Typography>
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                        <Stack spacing={1}>
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" color="text.secondary">
+                              Session ID:
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium">
+                              {selectedUser.latestSession.sessionId}
+                            </Typography>
+                          </Stack>
+                          {selectedUser.latestSession.sessionStartTimestamp && (
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" color="text.secondary">
+                                Started:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="medium">
+                                {format(new Date(selectedUser.latestSession.sessionStartTimestamp), "PPpp")}
+                              </Typography>
+                            </Stack>
+                          )}
+                          {selectedUser.latestSession.sessionEndTimestamp && (
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" color="text.secondary">
+                                Ended:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="medium">
+                                {format(new Date(selectedUser.latestSession.sessionEndTimestamp), "PPpp")}
+                              </Typography>
+                            </Stack>
+                          )}
+                        </Stack>
+                      </Paper>
+                    </Box>
+                  </>
+                )}
+              </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 3, borderTop: 1, borderColor: 'grey.200' }}>
+              <Button
+                onClick={() => setShowUserModal(false)}
+                variant="outlined"
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Container>
   );
 }

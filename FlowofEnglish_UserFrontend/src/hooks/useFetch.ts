@@ -7,7 +7,7 @@ export type FetchState<T> = {
 };
 
 export function useFetch<T = unknown>(
-  fetcher: () => Promise<T> | null,
+  fetcher: (() => Promise<T>) | null,
   deps: unknown[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
@@ -23,44 +23,31 @@ export function useFetch<T = unknown>(
   }, []);
 
   const execute = useCallback(async () => {
-    const fn = fetcher();
-    if (!fn) {
+    if (!fetcher) {
       setData(null);
-      setIsLoading(false);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     setError(null);
+
     try {
-      const result = await fn;
+      const result = await fetcher();
       if (!mounted.current) return;
       setData(result);
     } catch (err) {
       if (!mounted.current) return;
       setError(err instanceof Error ? err : new Error(String(err)));
-      setData(null);
     } finally {
       if (mounted.current) setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {
     execute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [execute]);
 
-  return {
-    data,
-    isLoading,
-    error,
-    refresh: execute,
-  } as {
-    data: T | null;
-    isLoading: boolean;
-    error: Error | null;
-    refresh: () => Promise<void>;
-  };
+  return { data, isLoading, error, refresh: execute };
 }

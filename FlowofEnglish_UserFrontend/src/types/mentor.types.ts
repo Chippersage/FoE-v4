@@ -61,7 +61,6 @@ export interface ModuleProgress {
   unitProgress?: UnitProgress[];
 }
 
-// In mentor.types.ts
 export interface MentorCohortProgressRow {
   userId: string;
   userName: string;
@@ -77,4 +76,46 @@ export interface MentorCohortProgressRow {
   totalSubconcepts?: number;
   completedSubconcepts?: number;
   status?: string;
+}
+
+export interface MentorCohortUser {
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userPhoneNumber?: string;
+  userAddress?: string;
+  userType: string;
+  status: string;
+  createdAt: number;
+  deactivatedAt?: number;
+  deactivatedReason?: string;
+  leaderboardScore: number;
+}
+
+export interface MentorCohortMetadata {
+  organization: {
+    organizationId: string;
+    organizationName: string;
+    organizationAdminName: string;
+    organizationAdminEmail: string;
+    organizationAdminPhone: string;
+    createdAt: number;
+    updatedAt?: number;
+    deletedAt?: number;
+  };
+  cohort: {
+    cohortId: string;
+    cohortName: string;
+    program: {
+      programId: string;
+      programName: string;
+      totalStages: number;
+      totalUnits: number;
+      totalSubconcepts: number;
+    };
+    totalUsers: number;
+    activeUsers: number;
+    deactivatedUsers: number;
+  };
+  users: MentorCohortUser[];
 }

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List } from "lucide-react";
+import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User } from "lucide-react";
 import axios from "axios";
 import { useUserContext } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -12,7 +12,7 @@ interface MentorSideNavProps {
 
 const navItems = [
   { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true },
-  { label: "Learners Details", icon: Users, path: "Learners Details", needsProgram: false },
+  { label: "Learners Details", icon: Users, path: "learners", needsProgram: false },
   { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false },
   { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false },
   { label: "Reports", icon: BarChart, path: "reports", needsProgram: true },
@@ -48,6 +48,26 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
     }
     return "";
   }, [urlProgramId, user]);
+
+  // Get mentor name - fallback to user name or user ID
+  const mentorName = useMemo(() => {
+    // Try to get from user context first
+    if (user?.userName) return user.userName;
+    if (user?.userId) return user.userId;
+    
+    // Fallback to localStorage if available
+    try {
+      const storedUser = localStorage.getItem("userData");
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        return userData?.userName || userData?.userId || "Mentor";
+      }
+    } catch (e) {
+      console.error("Error parsing user data from localStorage:", e);
+    }
+    
+    return "Mentor"; // Final fallback
+  }, [user]);
 
   // returns the correct path (includes programId if nav item needs it)
   const makePath = (itemPath: string, needsProgram: boolean) => {
@@ -112,8 +132,26 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
 
       <aside className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">FoE Mentor</h1>
-          <p className="text-sm text-gray-500">Cohort Management</p>
+          {/* Mentor Profile Section */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+              {mentorName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-800 truncate max-w-[140px]">
+                {mentorName}
+              </h1>
+              <p className="text-sm text-gray-500">Mentor</p>
+            </div>
+          </div>
+          
+          {/* Cohort Info */}
+          {selectedCohortWithProgram?.cohortName && (
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+              <p className="text-sm font-medium text-blue-800">Current Cohort</p>
+              <p className="text-sm text-blue-600 truncate">{selectedCohortWithProgram.cohortName}</p>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -125,8 +163,10 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
               <button
                 key={item.path}
                 onClick={() => navigate(target)}
-                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                  isActive ? "bg-blue-50 text-blue-600 font-semibold" : "text-gray-600 hover:bg-gray-50"
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  isActive 
+                    ? "bg-blue-50 text-blue-600 font-semibold border border-blue-200 shadow-sm" 
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -136,7 +176,10 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
           })}
         </nav>
 
-        <button onClick={confirmLogout} className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg w-full">
+        <button
+          onClick={confirmLogout}
+          className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg w-full transition-all duration-200 mt-4"
+        >
           <LogOut className="h-5 w-5" />
           <span>Logout</span>
         </button>

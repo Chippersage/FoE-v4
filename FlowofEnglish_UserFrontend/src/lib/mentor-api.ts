@@ -1,7 +1,4 @@
-import type {
-  LearnerSessionActivity,
-  MentorCohortProgressRow,
-  LearnerDetailedProgress,
+import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser,
 } from "@/types/mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -14,6 +11,59 @@ async function handleResponse<T>(resp: Response): Promise<T> {
   }
   return resp.json();
 }
+
+export async function fetchMentorCohortUsers(
+  mentorId: string,
+  cohortId: string
+): Promise<MentorCohortMetadata> {
+
+  const url = `${API_BASE_URL}/user-cohort-mappings/mentor/${encodeURIComponent(
+    mentorId
+  )}/cohort/${encodeURIComponent(cohortId)}/users`;
+
+  console.log(" Fetch cohort users API:", url);
+
+  const resp = await fetch(url, { credentials: "include" });
+  return handleResponse<MentorCohortMetadata>(resp);
+}
+
+// Disable user from a cohort
+export async function disableUserInCohort(
+  userId: string,
+  cohortId: string,
+  reason: string
+) {
+  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(
+    userId
+  )}/cohort/${encodeURIComponent(cohortId)}/disable`;
+
+  const resp = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+  });
+
+  return handleResponse(resp);
+}
+
+// Reactivate a user in a cohort
+export async function reactivateUserInCohort(
+  userId: string,
+  cohortId: string
+) {
+  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(
+    userId
+  )}/cohort/${encodeURIComponent(cohortId)}/reactivate`;
+
+  const resp = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  return handleResponse(resp);
+}
+
 
 export async function fetchLearnerSessionActivity(
   cohortId: string,

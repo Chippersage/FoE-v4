@@ -3,7 +3,9 @@ package com.FlowofEnglish.dto;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProgramReportDTO {
     private String programId;
     private String programName;

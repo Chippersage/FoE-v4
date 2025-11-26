@@ -140,13 +140,14 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
             dto.setUserType(u.getUserType());
 
             // From UserCohortMapping table (cohort-level)
+            dto.setLeaderboardScore(m.getLeaderboardScore());
             dto.setStatus(m.getStatus());
             dto.setCreatedAt(m.getCreatedAt());
             dto.setDeactivatedAt(m.getDeactivatedAt());
             dto.setDeactivatedReason(m.getDeactivatedReason());
 
             return dto;
-        }).toList();
+        }).collect(Collectors.toList());
 
         // ---------- COHORT DETAILS ----------
         CohortDetailsDTO cohortDetails = new CohortDetailsDTO();
@@ -168,18 +169,19 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
             .filter(m -> m.getStatus().equalsIgnoreCase("DISABLED")).count());
 
         
-        OrganizationDTO finalOrg = new OrganizationDTO();
-        finalOrg.setOrganizationId(cohort.getOrganization().getOrganizationId());
-        finalOrg.setOrganizationName(cohort.getOrganization().getOrganizationName());
-        finalOrg.setOrganizationAdminName(cohort.getOrganization().getOrganizationAdminName());
-        finalOrg.setOrganizationAdminEmail(cohort.getOrganization().getOrganizationAdminEmail());
-        finalOrg.setOrganizationAdminPhone(cohort.getOrganization().getOrganizationAdminPhone());
-        finalOrg.setCreatedAt(cohort.getOrganization().getCreatedAt());
-        finalOrg.setUpdatedAt(cohort.getOrganization().getUpdatedAt());
-        finalOrg.setDeletedAt(cohort.getOrganization().getDeletedAt());
+        Organization org = cohort.getOrganization();
+        OrganizationDTO orgDto = new OrganizationDTO();
+        orgDto.setOrganizationId(org.getOrganizationId());
+        orgDto.setOrganizationName(org.getOrganizationName());
+        orgDto.setOrganizationAdminName(org.getOrganizationAdminName());
+        orgDto.setOrganizationAdminEmail(org.getOrganizationAdminEmail());
+        orgDto.setOrganizationAdminPhone(org.getOrganizationAdminPhone());
+        orgDto.setCreatedAt(org.getCreatedAt());
+        orgDto.setUpdatedAt(org.getUpdatedAt());
+        orgDto.setDeletedAt(org.getDeletedAt());
 
         MentorCohortUsersResponseDTO response = new MentorCohortUsersResponseDTO();
-        response.setOrganization(finalOrg);
+        response.setOrganization(orgDto);
         response.setCohort(cohortDetails);
         response.setUsers(users);
 
@@ -603,4 +605,172 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
 
         return dto;
     }
+    
+    @Override
+    @Caching(
+        put = @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId"),
+        evict = {
+            @CacheEvict(value = "cohortMappings", key = "#cohortId"),
+            @CacheEvict(value = "userMappings", key = "#userId"),
+            @CacheEvict(value = "cohortLeaderboards", key = "#cohortId"),
+            @CacheEvict(value = "mentorCohortUsers", allEntries = true)
+        }
+    )
+    public UserCohortMapping disableUserFromCohort(String userId, String cohortId, String reason) {
+        logger.info("Disabling user {} from cohort {}, reason: {}", userId, cohortId, reason);
+        
+        // Validate inputs
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        if (cohortId == null || cohortId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Cohort ID cannot be null or empty");
+        }
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Deactivation reason cannot be null or empty");
+        }
+        
+        // Find the existing mapping
+        Optional<UserCohortMapping> mappingOpt = findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+        if (mappingOpt.isEmpty()) {
+            logger.error("User-cohort mapping not found for userId: {} and cohortId: {}", userId, cohortId);
+            throw new IllegalArgumentException("User is not mapped to the specified cohort");
+        }
+        
+        UserCohortMapping mapping = mappingOpt.get();
+        
+        // Check if user is already disabled
+        if (!mapping.isActive()) {
+            logger.warn("User {} is already disabled in cohort {}", userId, cohortId);
+            throw new IllegalArgumentException("User is already disabled in this cohort");
+        }
+        
+        // Disable the user using the entity method
+        mapping.disable(reason.trim());
+        
+        // Save the updated mapping
+        UserCohortMapping updatedMapping = userCohortMappingRepository.save(mapping);
+        
+        logger.info("Successfully disabled user {} from cohort {}", userId, cohortId);
+        
+        // Send notification email if applicable
+     //   sendDeactivationNotification(updatedMapping);
+        
+        return updatedMapping;
+    }
+    
+    @Override
+    @Caching(
+        put = @CachePut(value = "userCohortMappings", key = "#userId + ':' + #cohortId"),
+        evict = {
+            @CacheEvict(value = "cohortMappings", key = "#cohortId"),
+            @CacheEvict(value = "userMappings", key = "#userId"),
+            @CacheEvict(value = "cohortLeaderboards", key = "#cohortId"),
+            @CacheEvict(value = "mentorCohortUsers", allEntries = true)
+        }
+    )
+    public UserCohortMapping reactivateUserInCohort(String userId, String cohortId) {
+        logger.info("Reactivating user {} in cohort {}", userId, cohortId);
+        
+        // Validate inputs
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        if (cohortId == null || cohortId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Cohort ID cannot be null or empty");
+        }
+        
+        // Find the existing mapping
+        Optional<UserCohortMapping> mappingOpt = findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+        if (mappingOpt.isEmpty()) {
+            logger.error("User-cohort mapping not found for userId: {} and cohortId: {}", userId, cohortId);
+            throw new IllegalArgumentException("User is not mapped to the specified cohort");
+        }
+        
+        UserCohortMapping mapping = mappingOpt.get();
+        
+        // Check if user is already active
+        if (mapping.isActive()) {
+            logger.warn("User {} is already active in cohort {}", userId, cohortId);
+            throw new IllegalArgumentException("User is already active in this cohort");
+        }
+        
+        // Reactivate the user
+        mapping.setStatus("ACTIVE");
+        mapping.setDeactivatedAt(null);
+        mapping.setDeactivatedReason(null);
+        
+        // Save the updated mapping
+        UserCohortMapping updatedMapping = userCohortMappingRepository.save(mapping);
+        
+        logger.info("Successfully reactivated user {} in cohort {}", userId, cohortId);
+        
+        // Send notification email if applicable
+      //  sendReactivationNotification(updatedMapping);
+        
+        return updatedMapping;
+    }
+    
+    @Override
+    public String getDeactivationDetails(String userId, String cohortId) {
+        logger.info("Getting deactivation details for user {} in cohort {}", userId, cohortId);
+        
+        // Validate inputs
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        if (cohortId == null || cohortId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Cohort ID cannot be null or empty");
+        }
+        
+        // Find the existing mapping
+        Optional<UserCohortMapping> mappingOpt = findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+        if (mappingOpt.isEmpty()) {
+            logger.error("User-cohort mapping not found for userId: {} and cohortId: {}", userId, cohortId);
+            throw new IllegalArgumentException("User is not mapped to the specified cohort");
+        }
+        
+        UserCohortMapping mapping = mappingOpt.get();
+        return mapping.getDeactivationDetails();
+    }
+    
+//    private void sendDeactivationNotification(UserCohortMapping mapping) {
+//        try {
+//            User user = mapping.getUser();
+//            Cohort cohort = mapping.getCohort();
+//            
+//            if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+//                emailService.sendUserDeactivationEmail(
+//                    user.getUserEmail(),
+//                    user.getUserName(),
+//                    cohort.getCohortName(),
+//                    mapping.getDeactivatedReason(),
+//                    mapping.getDeactivatedAt()
+//                );
+//                logger.info("Deactivation notification sent to {}", user.getUserEmail());
+//            }
+//        } catch (Exception e) {
+//            logger.error("Failed to send deactivation notification email: {}", e.getMessage(), e);
+//            // Don't throw exception as email failure shouldn't fail the main operation
+//        }
+//    }
+    
+//    private void sendReactivationNotification(UserCohortMapping mapping) {
+//        try {
+//            User user = mapping.getUser();
+//            Cohort cohort = mapping.getCohort();
+//            
+//            if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
+//                emailService.sendUserReactivationEmail(
+//                    user.getUserEmail(),
+//                    user.getUserName(),
+//                    cohort.getCohortName()
+//                );
+//                logger.info("Reactivation notification sent to {}", user.getUserEmail());
+//            }
+//        } catch (Exception e) {
+//            logger.error("Failed to send reactivation notification email: {}", e.getMessage(), e);
+//            // Don't throw exception as email failure shouldn't fail the main operation
+//        }
+//    }
 }

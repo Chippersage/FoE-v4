@@ -61,7 +61,7 @@ export default function NotFoundPage() {
           transition={{ delay: 1.8, duration: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Link to="/dashboard">
+          <Link to="/select-cohort">
             <Button className="gap-2">
               <Home className="h-4 w-4" />
               Back to Home

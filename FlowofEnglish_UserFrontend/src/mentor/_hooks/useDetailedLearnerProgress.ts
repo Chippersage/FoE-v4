@@ -8,17 +8,20 @@ export function useDetailedLearnerProgress(
   skip = false
 ) {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const url = skip
+
+  const fetcher = skip
     ? null
-    : `${API_BASE_URL}/reports/program/${userId}/${programId}`;
+    : () =>
+        fetch(`${API_BASE_URL}/reports/program/${userId}/${programId}`, {
+          credentials: "include",
+        }).then((r) => r.json());
 
-  const { data, isLoading, error } = useFetch<LearnerDetailedProgress>(url, {
-    skip,
-    dependencies: [userId, programId],
-  });
+  const { data, isLoading, error } = useFetch<LearnerDetailedProgress>(
+    fetcher,
+    [userId, programId, skip]
+  );
 
-  // Process data to filter attempts
-  const processedData = data ? processLearnerProgress(data) : null;
+  const processed = data ? processLearnerProgress(data) : null;
 
-  return { progress: processedData, isLoading, error };
+  return { progress: processed, isLoading, error };
 }

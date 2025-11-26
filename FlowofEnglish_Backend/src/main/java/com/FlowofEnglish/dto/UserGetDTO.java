@@ -2,8 +2,9 @@ package com.FlowofEnglish.dto;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserGetDTO {
     private String userId;
     private String userAddress;

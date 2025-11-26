@@ -18,6 +18,9 @@ public interface UserCohortMappingService {
     LeaderboardResponseDTO getUserCohortMappingsWithLeaderboard(String cohortId);
     LeaderboardResponseDTO getUserCohortMappingsByCohortId(String cohortId);
     MentorCohortUsersResponseDTO getUsersByCohortForMentor(String mentorId, String cohortId);
+    UserCohortMapping disableUserFromCohort(String userId, String cohortId, String reason);
+    UserCohortMapping reactivateUserInCohort(String userId, String cohortId);
+    String getDeactivationDetails(String userId, String cohortId);
 
     Optional<UserCohortMapping> getUserCohortMappingByUserId(String userId);
     List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId);

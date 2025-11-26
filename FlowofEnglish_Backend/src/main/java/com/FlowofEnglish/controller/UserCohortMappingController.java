@@ -18,6 +18,8 @@ public class UserCohortMappingController {
 
     @Autowired
     private UserCohortMappingService userCohortMappingService;
+    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCohortMappingController.class);
 
     // GET all mappings
     @GetMapping
@@ -159,4 +161,138 @@ public class UserCohortMappingController {
             return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred: " + ex.getMessage()));
         }
     }
+    
+     // Disable a user from a cohort
+    @PostMapping("/user/{userId}/cohort/{cohortId}/disable")
+    public ResponseEntity<?> disableUserFromCohort(
+            @PathVariable String userId,
+            @PathVariable String cohortId,
+            @RequestBody Map<String, String> request) {
+        
+        try {
+            String reason = request.get("reason");
+            if (reason == null || reason.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Deactivation reason is required"));
+            }
+            
+            UserCohortMapping updatedMapping = userCohortMappingService.disableUserFromCohort(userId, cohortId, reason);
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "User successfully disabled from cohort",
+                "userCohortMapping", updatedMapping,
+                "status", updatedMapping.getStatus(),
+                "deactivatedAt", updatedMapping.getDeactivatedAt(),
+                "deactivatedReason", updatedMapping.getDeactivatedReason()
+            ));
+            
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("Error disabling user from cohort: {}", ex.getMessage(), ex);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "An unexpected error occurred while disabling the user"));
+        }
+    }
+
+     // Reactivate a user in a cohort
+    @PostMapping("/user/{userId}/cohort/{cohortId}/reactivate")
+    public ResponseEntity<?> reactivateUserInCohort(
+            @PathVariable String userId,
+            @PathVariable String cohortId) {
+        
+        try {
+            UserCohortMapping updatedMapping = userCohortMappingService.reactivateUserInCohort(userId, cohortId);
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "User successfully reactivated in cohort",
+                "userCohortMapping", updatedMapping,
+                "status", updatedMapping.getStatus()
+            ));
+            
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("Error reactivating user in cohort: {}", ex.getMessage(), ex);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "An unexpected error occurred while reactivating the user"));
+        }
+    }
+
+    // Get deactivation details for a user in cohort
+    @GetMapping("/user/{userId}/cohort/{cohortId}/deactivation-details")
+    public ResponseEntity<?> getDeactivationDetails(
+            @PathVariable String userId,
+            @PathVariable String cohortId) {
+        
+        try {
+            String deactivationDetails = userCohortMappingService.getDeactivationDetails(userId, cohortId);
+            
+            return ResponseEntity.ok(Map.of(
+                "userId", userId,
+                "cohortId", cohortId,
+                "deactivationDetails", deactivationDetails
+            ));
+            
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("Error getting deactivation details: {}", ex.getMessage(), ex);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "An unexpected error occurred while fetching deactivation details"));
+        }
+    }
+
+    
+    // Bulk disable users from a cohort
+//    @PostMapping("/cohort/{cohortId}/bulk-disable")
+//    public ResponseEntity<?> bulkDisableUsersFromCohort(
+//            @PathVariable String cohortId,
+//            @RequestBody BulkUserCohortOperationRequest request) {
+//        
+//        try {
+//            List<String> userIds = request.getUserIds();
+//            String reason = request.getReason();
+//            
+//            if (userIds == null || userIds.isEmpty()) {
+//                return ResponseEntity.badRequest()
+//                    .body(Map.of("error", "User IDs list cannot be empty"));
+//            }
+//            if (reason == null || reason.trim().isEmpty()) {
+//                return ResponseEntity.badRequest()
+//                    .body(Map.of("error", "Deactivation reason is required"));
+//            }
+//            
+//            List<BulkOperationResult> results = new ArrayList<>();
+//            int successCount = 0;
+//            int failureCount = 0;
+//            
+//            for (String userId : userIds) {
+//                try {
+//                    UserCohortMapping updatedMapping = userCohortMappingService.disableUserFromCohort(userId, cohortId, reason);
+//                    results.add(new BulkOperationResult(userId, "SUCCESS", "User disabled successfully"));
+//                    successCount++;
+//                } catch (Exception e) {
+//                    results.add(new BulkOperationResult(userId, "FAILED", e.getMessage()));
+//                    failureCount++;
+//                }
+//            }
+//            
+//            return ResponseEntity.ok(Map.of(
+//                "message", String.format("Bulk disable operation completed. Success: %d, Failed: %d", successCount, failureCount),
+//                "totalProcessed", userIds.size(),
+//                "successCount", successCount,
+//                "failureCount", failureCount,
+//                "results", results
+//            ));
+//            
+//        } catch (Exception ex) {
+//            logger.error("Error in bulk disable operation: {}", ex.getMessage(), ex);
+//            return ResponseEntity.internalServerError()
+//                .body(Map.of("error", "An unexpected error occurred during bulk disable operation"));
+//        }
+//    }
 }
