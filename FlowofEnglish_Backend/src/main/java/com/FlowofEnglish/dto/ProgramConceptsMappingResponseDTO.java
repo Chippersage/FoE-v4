@@ -1,7 +1,9 @@
 package com.FlowofEnglish.dto;
 
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProgramConceptsMappingResponseDTO {
     private String programId;
     private String programName;

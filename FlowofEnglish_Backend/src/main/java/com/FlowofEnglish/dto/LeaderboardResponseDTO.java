@@ -1,7 +1,9 @@
 package com.FlowofEnglish.dto;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LeaderboardResponseDTO {
     private String leaderboardStatus;
     private String message;

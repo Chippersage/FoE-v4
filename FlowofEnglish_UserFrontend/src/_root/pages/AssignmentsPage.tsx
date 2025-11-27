@@ -38,13 +38,6 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   // Define tour steps
   useEffect(() => {
     setSteps([
-      // {
-      //   target: "body",
-      //   content:
-      //     "Welcome to the Assignments Management interface! This tour will show you how to review and grade student assignments efficiently.",
-      //   placement: "center",
-      //   disableBeacon: true,
-      // },
       {
         target: '[data-tour-id="topic"]',
         content: "Read assignment description here.",
@@ -109,18 +102,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   };
 
   return (
-    <div
-      className="min-h-screen bg-slate-100 font-sans p-4 relative"
-      style={{
-        backgroundImage: "url('/images/cohort-bg.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-      }}
-    >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/10 z-0" />
+    <div className="min-h-full w-full">
       <Joyride
         steps={steps}
         run={runTour}
@@ -133,7 +115,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
             zIndex: 10000,
           },
           overlay: {
-            backgroundColor: "rgba(0, 0, 0, 0.3)", // less dark
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
           },
           spotlight: {
             borderRadius: 4,
@@ -147,7 +129,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
         disableScrolling
       />
 
-      <main className="container mx-auto max-w-[100rem] relative z-10">
+      <div className="w-full">
         <header className="mb-6">
           {/* Add the BackButton component here */}
           <div className="flex items-center mb-4">
@@ -163,15 +145,17 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
           cohortId={cohortId || ""}
           onAssignmentsLoaded={handleAssignmentsLoaded}
         />
-      </main>
-      {/* Fixed Take Tour Button */}
-      {/* Fixed Take Tour Button with Enhanced Shadow Effect */}
-      <button
-        className="fixed bottom-6 right-6 z-[11000] px-4 py-2 bg-[#5BC3CD] text-black rounded-lg hover:bg-[#4AB3BD] font-semibold shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 border border-[#49B0BA] before:content-[''] before:absolute before:inset-0 before:bg-black before:opacity-10 before:rounded-lg before:z-[-1]"
-        onClick={() => setRunTour(true)}
-      >
-        Take Tour
-      </button>
+      </div>
+      
+     {/* Responsive Take Tour Button */}
+      <div className="fixed bottom-4 right-4 z-40 lg:bottom-6 lg:right-6">
+        <button
+          className="px-3 py-2 lg:px-4 lg:py-2 bg-[#5BC3CD] text-black rounded-lg hover:bg-[#4AB3BD] font-semibold shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 border border-[#49B0BA] text-sm lg:text-base"
+          onClick={() => setRunTour(true)}
+        >
+          Take Tour
+        </button>
+        </div>
     </div>
   );
 };
