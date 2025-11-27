@@ -57,17 +57,8 @@ export default function App() {
         <Routes>
           {/* Public routes (no headers) */}
           <Route element={<AuthLayout />}>
-            <Route
-              path="/sign-in"
-              element={
-                isAuthenticated ? (
-                  <Navigate
-                    to={
-                      selectedCohortWithProgram
-                        ? "/dashboard"
-                        : "/select-cohort"
-                    }
-                  />
+            <Route path="/sign-in" element={ isAuthenticated ? (
+                  <Navigate to={ selectedCohortWithProgram ? "/dashboard" : "/select-cohort" }  />
                 ) : (
                   <LoginForm />
                 )
@@ -122,6 +113,8 @@ export default function App() {
             <Route path=":cohortId/assignments" element={<AssignmentsPage />} />
             <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnerDetailPage />} />
             <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />}/>
+            {/* <Route path=":cohortId/analytics" element={...} /> */}
+            {/* <Route path=":cohortId/cohort-details" element={...} /> */}
 
           </Route>
 

@@ -401,10 +401,9 @@ const Dashboard: React.FC = () => {
     return a.cohortName.localeCompare(b.cohortName);
   });
 
-const handleResume = async (cohortWithProgram) => {
-  const daysRemaining = calculateDaysRemaining(
-    cohortWithProgram.cohortEndDate
-  );
+// Add this function in your Dashboard component
+const handleCohortSelection = async (cohortWithProgram, destination = 'learner') => {
+  const daysRemaining = calculateDaysRemaining(cohortWithProgram.cohortEndDate);
   const status = getCohortStatus(daysRemaining).status;
 
   if (status === "ended" || daysRemaining < 0) {
@@ -414,12 +413,14 @@ const handleResume = async (cohortWithProgram) => {
 
   setIsResuming(true);
   try {
+    // Call select-cohort API to create session for both mentor and learner
     const response = await axios.post(`${API_BASE_URL}/users/select-cohort`, {
       userId: user?.userId,
       cohortId: cohortWithProgram?.cohortId,
     });
-    console.log(" Cohort Selection API Response:", response.data);
-    console.log(" enableAiEvaluation value from API:", response.data.enableAiEvaluation);
+    
+    console.log("Cohort Selection API Response:", response.data);
+    console.log("enableAiEvaluation value from API:", response.data.enableAiEvaluation);
 
     // Store enableAiEvaluation in localStorage
     const existingUserData = JSON.parse(localStorage.getItem("userData") || "{}");
@@ -429,18 +430,26 @@ const handleResume = async (cohortWithProgram) => {
     };
     localStorage.setItem("userData", JSON.stringify(updatedUserData));
     
-    // DEBUG LOGGING AFTER STORAGE
-    console.log(" Updated userData in localStorage:", updatedUserData);
-    console.log(" enableAiEvaluation stored:", updatedUserData.enableAiEvaluation);
+    // Store cohort data
+    const selectedCohortData = {
+      ...cohortWithProgram,
+      sessionId: response.data.sessionId,
+      enableAiEvaluation: response.data.enableAiEvaluation
+    };
 
-    setSelectedCohortWithProgram(cohortWithProgram);
-    localStorage.setItem(
-      "selectedCohortWithProgram",
-      JSON.stringify(cohortWithProgram)
-    );
+    setSelectedCohortWithProgram(selectedCohortData);
+    localStorage.setItem("selectedCohortWithProgram", JSON.stringify(selectedCohortData));
     localStorage.setItem("sessionId", response.data.sessionId);
 
-    navigate("/dashboard");
+    // Navigate based on destination
+    if (destination === 'mentor') {
+      // Navigate to mentor dashboard
+      navigate(`/mentor/${cohortWithProgram.cohortId}/${cohortWithProgram.program.programId}/dashboard`);
+    } else {
+      // Navigate to learner dashboard (normal resume flow)
+      navigate("/dashboard");
+    }
+
   } catch (error) {
     if (axios.isAxiosError(error)) {
       // Server is down or not responding (network error)
@@ -588,7 +597,7 @@ const handleResume = async (cohortWithProgram) => {
       {/* Render tour only if the user hasn't seen it before */}
       {!hasSeenProductTour && (
         <CohortTour
-          onResumeClick={handleResume}
+          onResumeClick={handleCohortSelection}
           firstCohortProgress={
             progressData[fetchedCohorts?.userDetails?.allCohortsWithPrograms?.[0]?.program?.programId]
           }
@@ -820,22 +829,22 @@ const handleResume = async (cohortWithProgram) => {
                             </div>
 
                             <div className="flex justify-between items-center gap-2">
-                              <Button
-                                size="sm"
-                                className={`text-xs ${
-                                  daysRemaining <= 7
-                                    ? "bg-gradient-to-r from-orange-500 to-red-500"
-                                    : "bg-gradient-to-r from-emerald-500 to-green-500"
-                                } text-white hover:opacity-90`}
-                                onClick={() => handleResume(currentCohort)}
-                                disabled={isResuming}
-                              >
-                                {isResuming
-                                  ? "Resuming..."
-                                  : progress === 0
-                                  ? "Start"
-                                  : "Resume"}
-                              </Button>
+                                <Button
+                                  size="sm"
+                                  className={`text-xs ${
+                                    daysRemaining <= 7
+                                      ? "bg-gradient-to-r from-orange-500 to-red-500"
+                                      : "bg-gradient-to-r from-emerald-500 to-green-500"
+                                  } text-white hover:opacity-90`}
+                                  onClick={() => handleCohortSelection(currentCohort, 'learner')}
+                                  disabled={isResuming}
+                                >
+                                  {isResuming
+                                    ? "Resuming..."
+                                    : progress === 0
+                                    ? "Start"
+                                    : "Resume"}
+                                </Button>
                             </div>
                           </div>
                         );
@@ -1006,19 +1015,19 @@ const handleResume = async (cohortWithProgram) => {
                       </CardContent>
                       <CardFooter className="flex justify-end border-t bg-gray-50 p-2">
                         <Button
-                          size="sm"
-                          disabled={isDisabled}
-                          className={`w-[80px] bg-gradient-to-r 
+                        size="sm"
+                        disabled={isDisabled}
+                        className={`w-[80px] bg-gradient-to-r 
                           ${
                             isDisabled
                               ? "from-gray-400 to-gray-500 opacity-70 cursor-not-allowed"
                               : "from-emerald-500 to-green-500 hover:bg-emerald-600"
                           } 
                           rounded-[5px] ${index === 0 ? "resume-button" : ""}`}
-                          onClick={() => handleResume(cohortWithProgram)}
-                        >
-                          {progress === 0 ? "Start" : "Resume"}
-                        </Button>
+                        onClick={() => handleCohortSelection(cohortWithProgram, 'learner')}
+                      >
+                        {progress === 0 ? "Start" : "Resume"}
+                      </Button>
                       </CardFooter>
                     </MotionCard>
                   );
@@ -1096,18 +1105,19 @@ const handleResume = async (cohortWithProgram) => {
                           </CardContent>
 
                           <CardFooter className="p-6 pt-0">
-                            <Button
-                              asChild
-                              className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0 view-assignments-button`}
-                            >
-                              <Link
-                                to={`/mentor/${course.cohortId}/${course.program.programId}/dashboard`}
-                                className="flex items-center justify-center gap-2"
-                              >
-                                Manage Cohort
-                                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                              </Link>
-                            </Button>
+                            
+<Button
+  className={`w-full bg-gradient-to-r ${color} hover:opacity-90 transition-all duration-300 group-hover:translate-y-0 translate-y-0 border-0 view-assignments-button`}
+  onClick={async () => {
+    // Call the cohort selection API first to create session
+    await handleCohortSelection(course, 'mentor');
+  }}
+>
+  <div className="flex items-center justify-center gap-2">
+    Manage Cohort
+    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+  </div>
+</Button>
                           </CardFooter>
                         </Card>
                       );

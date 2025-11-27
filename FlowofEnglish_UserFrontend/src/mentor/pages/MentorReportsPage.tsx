@@ -65,7 +65,7 @@ export default function MentorReportsPage() {
     loadData();
   }, [mentorId, programId, cohortId]);
 
-  return (
+   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 6 }}>
       {/* --------------------- FILTER CARD --------------------- */}
       <Card sx={{ p: 3, mb: 3 }}>
@@ -76,24 +76,54 @@ export default function MentorReportsPage() {
         <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
           {/* Program */}
           <FormControl fullWidth>
-            <InputLabel>Program (From URL)</InputLabel>
-            <Select disabled value={programId || ""}>
-              <MenuItem value={programId}>{programId}</MenuItem>
+            <InputLabel id="program-label">Program</InputLabel>
+            <Select
+              labelId="program-label"
+              id="program-select"
+              label="Program"
+              value={programId ?? ""}
+              displayEmpty
+              // disabled remains; label will float because we provide label prop and displayEmpty
+              disabled
+              renderValue={(selected) =>
+                selected ? selected : "Not set"
+              }
+            >
+              <MenuItem value="">
+                <em>Not set</em>
+              </MenuItem>
+              {programId && <MenuItem value={programId}>{programId}</MenuItem>}
             </Select>
           </FormControl>
 
           {/* Cohort */}
           <FormControl fullWidth>
-            <InputLabel>Cohort (From URL)</InputLabel>
-            <Select disabled value={cohortId || ""}>
-              <MenuItem value={cohortId}>{cohortId}</MenuItem>
+            <InputLabel id="cohort-label">Cohort</InputLabel>
+            <Select
+              labelId="cohort-label"
+              id="cohort-select"
+              label="Cohort"
+              value={cohortId ?? ""}
+              displayEmpty
+              disabled
+              renderValue={(selected) =>
+                selected ? selected : "Not set"
+              }
+            >
+              <MenuItem value="">
+                <em>Not set</em>
+              </MenuItem>
+              {cohortId && <MenuItem value={cohortId}>{cohortId}</MenuItem>}
             </Select>
           </FormControl>
 
           {/* Visualization */}
           <FormControl fullWidth>
-            <InputLabel>Select Visualization</InputLabel>
+            <InputLabel id="vis-label">Select Visualization</InputLabel>
             <Select
+              labelId="vis-label"
+              id="vis-select"
+              label="Select Visualization"
               value={visType}
               onChange={(e) => setVisType(e.target.value)}
             >
@@ -105,8 +135,11 @@ export default function MentorReportsPage() {
 
           {/* Learner Select */}
           <FormControl fullWidth>
-            <InputLabel>Select Learner</InputLabel>
+            <InputLabel id="learner-label">Select Learner</InputLabel>
             <Select
+              labelId="learner-label"
+              id="learner-select"
+              label="Select Learner"
               value={selectedLearnerId}
               onChange={(e) => setSelectedLearnerId(e.target.value)}
             >
@@ -139,9 +172,7 @@ export default function MentorReportsPage() {
             />
           )}
 
-          {visType === "linechart" && (
-            <LineProgressChart data={apiData} />
-          )}
+          {visType === "linechart" && <LineProgressChart data={apiData} />}
 
           {visType === "table" && <ProgressDataTable data={apiData} />}
         </Card>

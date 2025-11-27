@@ -185,10 +185,10 @@ const AssignmentsTable = ({ cohortId }) => {
       const initialEdits = {};
       fetchedAssignments.forEach((assignment) => {
         initialEdits[assignment.assignmentId] = {
-          score: assignment.score || '',
-          remarks: assignment.remarks || '',
-          file: null,
-        };
+        score: assignment.score !== null && assignment.score !== undefined ? assignment.score : "",
+        remarks: assignment.remarks || "",
+        file: null,
+      };
       });
       setEditedAssignments(initialEdits);
     } catch (error) {

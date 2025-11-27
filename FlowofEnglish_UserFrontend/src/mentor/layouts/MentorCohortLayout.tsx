@@ -7,8 +7,8 @@ export default function MentorCohortLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
       <MentorSideNav cohortId={cohortId!} />
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
+      <main className="flex-1 overflow-auto lg:ml-0">
+        <div className="p-4 lg:p-6 w-full max-w-full">
           <Outlet />
         </div>
       </main>
