@@ -27,6 +27,8 @@ const ViewSubmissions: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cohortId, cohortName } = (location.state as any) || {};
+  console.log("Cohort ID:", cohortId);
+  console.log("Cohort Name:", cohortName);
 
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);

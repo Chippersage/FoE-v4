@@ -113,8 +113,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toggleStage = (stageId: string) => {
     setOpenStages((prev) =>
       prev.includes(stageId)
-        ? prev.filter((id) => id !== stageId)
-        : [...prev, stageId]
+        ? []
+      : [stageId]
     );
   };
 
@@ -347,7 +347,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                           )}
 
                           <span className="text-sm flex-1">
-                            {`${unitIndex + 1}.${subIndex + 1} ${sub.subconceptDesc}`}
+                            {`${stageIndex + 1}.${(() => {
+                              let count = 1;
+                              for (let u of stage.units) {
+                                if (u.unitId === unit.unitId) break;
+                                count += u.subconcepts?.length || 0;
+                              }
+                              return count + subIndex;
+                            })()} ${sub.subconceptDesc}`}
                           </span>
 
                           {!isMentor && isLocked && (

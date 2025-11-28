@@ -125,7 +125,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
-      const nextBtn = document.querySelector("#btn-unlocked #next-subconcept-btn");
+      const nextBtn = document.getElementById("next-subconcept-btn-unlocked");
       nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);

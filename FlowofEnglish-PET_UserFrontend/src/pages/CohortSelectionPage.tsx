@@ -22,13 +22,9 @@ const CohortSelectionPage = () => {
     const fetchCohorts = async () => {
       try {
         const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (!storedUser?.userId) {
-          console.error("No userId found in localStorage");
-          return;
-        }
+        if (!storedUser?.userId) return;
 
         setUserRole(storedUser?.userType || "");
-        console.log(userRole);
 
         const response = await axios.get(
           `${API_BASE_URL}/users/${storedUser.userId}/cohorts`
@@ -65,14 +61,10 @@ const CohortSelectionPage = () => {
               `${API_BASE_URL}/reports/program/${cohort.programId}/user/${storedUser.userId}/progress`
             );
 
-            const progressData = progressRes.data;
-            const total = progressData?.totalSubconcepts || 0;
-            const completed = progressData?.completedSubconcepts || 0;
+            const total = progressRes.data?.totalSubconcepts || 0;
+            const completed = progressRes.data?.completedSubconcepts || 0;
 
-            const percentage =
-              total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            return { ...cohort, progress: percentage };
+            return { ...cohort, progress: total > 0 ? Math.round((completed / total) * 100) : 0 };
           } catch {
             return { ...cohort, progress: 0 };
           }
@@ -80,12 +72,10 @@ const CohortSelectionPage = () => {
 
         let cohortsWithProgress = await Promise.all(progressPromises);
 
-        // Move completed 100% progress to bottom
-        cohortsWithProgress = cohortsWithProgress.sort((a, b) => {
-          if (a.progress === 100 && b.progress !== 100) return 1;
-          if (a.progress !== 100 && b.progress === 100) return -1;
-          return 0;
-        });
+        cohortsWithProgress = cohortsWithProgress.sort((a, b) =>
+          a.progress === 100 && b.progress !== 100 ? 1 :
+          a.progress !== 100 && b.progress === 100 ? -1 : 0
+        );
 
         setCohorts(cohortsWithProgress);
       } catch (error) {
@@ -99,8 +89,6 @@ const CohortSelectionPage = () => {
   }, []);
 
   const handleSelectCohort = async (cohort) => {
-    if (!cohort) return;
-
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
       if (!storedUser?.userId) return;
@@ -121,7 +109,6 @@ const CohortSelectionPage = () => {
         state: { selectedCohort: cohort },
       });
     } catch (error) {
-      console.error("Error selecting cohort:", error);
       alert("Something went wrong while selecting the cohort!");
     }
   };
@@ -139,55 +126,57 @@ const CohortSelectionPage = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <div className="relative w-14 h-14">
-          <div className="absolute inset-0 rounded-full border-4 border-[#0EA5E9] opacity-25" />
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-4 border-[#0EA5E9] opacity-20" />
           <div className="absolute inset-0 rounded-full border-4 border-t-[#0EA5E9] border-transparent animate-spin" />
         </div>
-        <p className="mt-4 text-[#0EA5E9] font-medium text-base animate-pulse tracking-wide">
+        <p className="mt-3 text-[#0EA5E9] font-medium text-xs animate-pulse">
           Loading Cohorts...
         </p>
       </div>
     );
   }
 
+  const groupedByProgram = cohorts.reduce((acc, cohort) => {
+    (acc[cohort.programName] ||= []).push(cohort);
+    return acc;
+  }, {});
+
   return (
-    <div className="min-h-screen bg-slate-50 pt-2 md:pt-4 px-4 md:px-12">
+    <div className="min-h-screen bg-slate-50 px-4 md:px-10 pt-3">
       <div className="max-w-6xl mx-auto">
-        <div
-          className="
-            flex flex-row justify-between items-center w-full mb-8
-            pt-2 md:pt-0
-          "
-        >
-          <h1
-            className="
-              font-bold text-slate-800 
-              text-2xl sm:text-2xl md:text-3xl text-left
-            "
-          >
-            {userRole?.toLowerCase() === "mentor"
-              ? "Mentor Dashboard"
-              : "Continue Your Learning"}
-          </h1>
-        </div>
+
+        <h1 className="font-semibold text-slate-800 text-lg sm:text-xl md:text-2xl mb-6">
+          {userRole?.toLowerCase() === "mentor"
+            ? "Mentor Dashboard"
+            : "Continue Learning"}
+        </h1>
 
         {cohorts.length === 0 ? (
-          <p className="text-center text-slate-600">
+          <p className="text-center text-xs text-slate-600">
             No active cohorts available.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 pb-6 md:pb-10">
-            {cohorts.map((c) => (
-              <CohortCard
-                key={c.cohortId}
-                cohort={c}
-                userRole={userRole}
-                assignmentStatistics={assignmentStatistics}
-                onResume={() => handleSelectCohort(c)}
-                onViewLearners={(cohort) => handleViewLearners(cohort)}
-                onViewAssessments={() => handleViewAssignments(c)}
-                onGenerateReport={() => console.log("Reports Coming Soon")}
-              />
+          <div className="grid gap-6 pb-10">
+            {Object.entries(groupedByProgram).map(([programName, programCohorts]) => (
+              <div key={programName} className="space-y-2">
+                <h2 className="text-sm md:text-base font-semibold text-slate-700">
+                  {programName}
+                </h2>
+
+                {programCohorts.map((c) => (
+                  <CohortCard
+                    key={c.cohortId}
+                    cohort={c}
+                    userRole={userRole}
+                    assignmentStatistics={assignmentStatistics}
+                    onResume={() => handleSelectCohort(c)}
+                    onViewLearners={handleViewLearners}
+                    onViewAssessments={handleViewAssignments}
+                    onGenerateReport={() => console.log("Coming Soon")}
+                  />
+                ))}
+              </div>
             ))}
           </div>
         )}

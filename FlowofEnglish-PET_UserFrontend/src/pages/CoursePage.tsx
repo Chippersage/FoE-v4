@@ -122,12 +122,48 @@ const CoursePage: React.FC = () => {
         locked.style.display = "none";
         unlocked.style.display = "block";
       }
+
+      const mobileBtn = document.getElementById("mobile-next-btn");
+      if (mobileBtn) {
+        mobileBtn.style.opacity = "1";
+        mobileBtn.style.pointerEvents = "auto";
+        mobileBtn.style.backgroundColor = "#0EA5E9";
+      }
     };
 
     window.addEventListener("video90", unlock);
 
     return () => window.removeEventListener("video90", unlock);
   }, []);
+
+  useEffect(() => {
+    const shouldShow = shouldShowIframe(currentContent.type);
+    setShowIframe(shouldShow);
+    setShowSubmit(false);
+  }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
+
+  // Reset mobile button when new content loads
+  useEffect(() => {
+    const mobileBtn = document.getElementById("mobile-next-btn");
+
+    if (!mobileBtn) return;
+
+    const type = String(currentContent.type).toLowerCase();
+
+    if (type === "video") {
+      // disable again because new video started
+      mobileBtn.style.opacity = "0.5";
+      mobileBtn.style.pointerEvents = "none";
+      mobileBtn.style.backgroundColor = "#bfbfbf";
+    } else {
+      // non-video → always enabled
+      mobileBtn.style.opacity = "1";
+      mobileBtn.style.pointerEvents = "auto";
+      mobileBtn.style.backgroundColor = "#0EA5E9";
+    }
+  }, [currentContent.id]);
+
+
 
 
   useEffect(() => {
@@ -417,17 +453,51 @@ const CoursePage: React.FC = () => {
     const nextExists = stages?.length > 0;
 
     if (!nextExists) return null;
-
     return (
-      <button
-        onClick={() => {
-          const nextBtn = document.getElementById("next-subconcept-btn");
-          nextBtn?.click();
-        }}
-        className="md:hidden fixed bottom-10 right-10 w-14 h-14 rounded-full bg-[#0EA5E9] shadow-lg flex items-center justify-center active:scale-95 transition"
-      >
-        <ChevronRight size={28} className="text-white" />
-      </button>
+            <button
+              id="mobile-next-btn"
+              className="md:hidden fixed bottom-10 right-10 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition active:scale-95 cursor-pointer"
+              style={{
+                backgroundColor: "#bfbfbf",
+                opacity: 0.5,
+                pointerEvents: "none"
+              }}
+              onClick={() => {
+                // Try unlocked button with both possible IDs
+                let unlockedBtn =
+                  document.getElementById("next-subconcept-btn-unlocked") ||
+                  document.querySelector("#btn-unlocked #next-subconcept-btn");
+
+                if (unlockedBtn) {
+                  unlockedBtn.click();
+                  return;
+                }
+
+                // Fallback: click the locked button
+                let lockedBtn =
+                  document.getElementById("next-subconcept-btn") ||
+                  document.querySelector("#btn-locked #next-subconcept-btn");
+
+                if (lockedBtn) {
+                  lockedBtn.click();
+
+                  // Try again after DOM updates
+                  setTimeout(() => {
+                    unlockedBtn =
+                      document.getElementById("next-subconcept-btn-unlocked") ||
+                      document.querySelector("#btn-unlocked #next-subconcept-btn");
+
+                    if (unlockedBtn) unlockedBtn.click();
+                  }, 500);
+
+                  return;
+                }
+
+                console.warn("Next button not found yet");
+              }}
+            >
+              <ChevronRight size={28} className="text-white" />
+            </button>
     );
   };
 

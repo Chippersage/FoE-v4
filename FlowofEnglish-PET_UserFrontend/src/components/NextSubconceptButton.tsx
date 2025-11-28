@@ -115,7 +115,7 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
   // Handle disabled state for Google Form / assessment or similar cases
   return (
     <button
-      id="next-subconcept-btn"
+      id={`next-subconcept-btn-${disabled ? "locked" : "unlocked"}`}
       onClick={
         !disabled
           ? () =>
