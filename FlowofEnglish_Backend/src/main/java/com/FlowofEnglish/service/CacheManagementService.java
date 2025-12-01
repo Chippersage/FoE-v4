@@ -67,7 +67,7 @@ public class CacheManagementService {
             logger.info("Successfully evicted all completion caches for userId: {}", userId);
             
         } catch (Exception e) {
-            logger.error("Error evicting user completion caches for userId: {}, programId: {}", 
+            logger.error("Error evicting user completion caches for userId: {}, programId: {}",
                         userId, programId, e);
         }
     }

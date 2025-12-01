@@ -11,6 +11,8 @@ public class UserSessionDetailsDTO {
     private String userName;
     private String userType;
     private String userEmail;
+    private String userAddress;
+    private String userPhoneNumber;
     private String status;
     private int leaderboardScore; 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -44,6 +46,18 @@ public class UserSessionDetailsDTO {
 	}
 	public void setUserEmail(String userEmail) {
 		this.userEmail = userEmail;
+	}
+	public String getUserAddress() {
+		return userAddress;
+	}
+	public void setUserAddress(String userAddress) {
+		this.userAddress = userAddress;
+	}
+	public String getUserPhoneNumber() {
+		return userPhoneNumber;
+	}
+	public void setUserPhoneNumber(String userPhoneNumber) {
+		this.userPhoneNumber = userPhoneNumber;
 	}
 	public String getStatus() {
 		return status;

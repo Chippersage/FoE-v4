@@ -1,13 +1,13 @@
 package com.FlowofEnglish.dto;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProgramCountDTO {
 	    private String programId;
 	    private String programName;
 	    private int totalStages;
 	    private int totalUnits;
 	    private int totalSubconcepts;
-	  
-	    
 	 // Getters and Setters
 		public String getProgramId() {
 			return programId;

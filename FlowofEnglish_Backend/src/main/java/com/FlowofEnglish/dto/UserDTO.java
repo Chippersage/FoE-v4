@@ -1,7 +1,9 @@
 package com.FlowofEnglish.dto;
 
 import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDTO {
 
     private String userId;
@@ -14,6 +16,7 @@ public class UserDTO {
     private OffsetDateTime createdAt;
     private OffsetDateTime deactivatedAt;
     private String deactivatedReason;
+    private int leaderboardScore;
     private OrganizationDTO organization;
     private CohortDTO cohort;
     private ProgramDTO program;
@@ -101,6 +104,15 @@ public class UserDTO {
 	public void setDeactivatedReason(String deactivatedReason) {
 		this.deactivatedReason = deactivatedReason;
 	}
+	
+	public int getLeaderboardScore() {
+	    return leaderboardScore;
+	}
+
+	public void setLeaderboardScore(int leaderboardScore) {
+	    this.leaderboardScore = leaderboardScore;
+	}
+
 
 	public OrganizationDTO getOrganization() {
         return organization;

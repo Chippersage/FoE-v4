@@ -1,7 +1,9 @@
 package com.FlowofEnglish.dto;
 
 import java.util.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CompleteStageDTO {
     private String stageId;
     private String stageName;

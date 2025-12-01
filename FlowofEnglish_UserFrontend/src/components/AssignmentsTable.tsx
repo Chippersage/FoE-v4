@@ -1,37 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  Typography,
-  Box,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  CircularProgress,
-  Snackbar,
-  Alert,
-  IconButton,
-  Card,
-  Chip,
-  Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Divider,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  TablePagination,
-  InputAdornment,
-  TableSortLabel,
-  Menu,
-  MenuItem,
-} from "@mui/material";
+import { Typography, Box, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress,
+  Snackbar, Alert, IconButton, Card, Chip, Tooltip, Accordion, AccordionSummary, AccordionDetails, Divider, Dialog, DialogContent, DialogTitle,
+  DialogActions, TablePagination, InputAdornment, TableSortLabel, Menu, MenuItem, useMediaQuery, useTheme} from "@mui/material";
 import axios from "axios";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -42,7 +12,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SortIcon from "@mui/icons-material/Sort";
 import { format } from "date-fns";
-import { debounce } from "lodash"; // Add lodash for debouncing
+import { debounce } from "lodash";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -58,12 +28,19 @@ const AssignmentRow = React.memo(
     onSubmitCorrection,
     formatDateTime,
     handleOpenContent,
-    updating,
+    savingAssignmentId, // New prop to track which assignment is being saved
     fieldErrors,
+    isMobile,
   }) => {
     const LIGHT_TEAL = "#e6f5f5";
     const DEPENDENCY_CHIP_COLOR = "#f0e6ff";
     const HOVER_COLOR = "#f5f5f5";
+
+    // Check if current assignment is being saved
+    const isSaving = savingAssignmentId === assignment.assignmentId;
+    
+    // Check if all assignments are disabled (when any assignment is being saved)
+    const isDisabled = savingAssignmentId !== null;
 
     // Debounced handlers to reduce state updates
     const debouncedScoreChange = useCallback(
@@ -82,7 +59,10 @@ const AssignmentRow = React.memo(
 
     // Local state for input values to make UI responsive
     const [localScore, setLocalScore] = useState(
-      editedAssignments[assignment.assignmentId]?.score || ""
+      editedAssignments[assignment.assignmentId]?.score !== null && 
+      editedAssignments[assignment.assignmentId]?.score !== undefined 
+        ? editedAssignments[assignment.assignmentId].score 
+        : ""
     );
     const [localRemarks, setLocalRemarks] = useState(
       editedAssignments[assignment.assignmentId]?.remarks || ""
@@ -108,6 +88,9 @@ const AssignmentRow = React.memo(
           backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
           color: assignment.correctedDate ? "black" : "inherit",
           transition: "background-color 0.2s ease",
+          '&:hover': {
+            backgroundColor: HOVER_COLOR,
+          },
         }}
       >
         <TableCell>
@@ -115,89 +98,110 @@ const AssignmentRow = React.memo(
             <span>{assignment.user.userId}</span>
           </Tooltip>
         </TableCell>
-        <TableCell sx={{ width: "25%" }}>
-          <Tooltip
-            title={assignment.subconcept.subconceptDesc}
-            placement="top-start"
-            arrow
-            enterDelay={500}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: "text.primary",
-                lineHeight: 1.3,
-                maxHeight: "2.6em", // Approximately two lines
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2, // Limit to two lines
-                WebkitBoxOrient: "vertical",
-                wordBreak: "break-word",
-              }}
-              data-tour-id="topic"
+        
+        {!isMobile && (
+          <TableCell sx={{ width: "25%" }}>
+            <Tooltip
+              title={assignment.subconcept.subconceptDesc}
+              placement="top-start"
+              arrow
+              enterDelay={500}
             >
-              {assignment.subconcept.subconceptDesc}
-            </Typography>
-          </Tooltip>
-        </TableCell>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  color: "text.primary",
+                  lineHeight: 1.3,
+                  maxHeight: "2.6em",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  wordBreak: "break-word",
+                }}
+                data-tour-id="topic"
+              >
+                {assignment.subconcept.subconceptDesc}
+              </Typography>
+            </Tooltip>
+          </TableCell>
+        )}
+
+        {!isMobile && (
+          <TableCell>
+            {assignment.subconcept.dependencies &&
+            assignment.subconcept.dependencies.length > 0 ? (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {assignment.subconcept.dependencies.map((dep, index) => (
+                  <Chip
+                    key={index}
+                    label={dep.subconceptId}
+                    size="small"
+                    sx={{
+                      bgcolor: DEPENDENCY_CHIP_COLOR,
+                      cursor: "pointer",
+                      "&:hover": { opacity: 0.8 },
+                    }}
+                    onClick={() =>
+                      handleOpenContent(
+                        dep.subconceptId,
+                        dep.subconceptDesc,
+                        dep.subconceptLink,
+                        dep.subconceptType
+                      )
+                    }
+                    data-tour-id="reference"
+                  />
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                None
+              </Typography>
+            )}
+          </TableCell>
+        )}
+
+        {!isMobile && (
+          <TableCell align="center">
+            <Chip
+              label={assignment.subconcept.subconceptMaxscore}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          </TableCell>
+        )}
+
         <TableCell>
-          {assignment.subconcept.dependencies &&
-          assignment.subconcept.dependencies.length > 0 ? (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {assignment.subconcept.dependencies.map((dep, index) => (
-                <Chip
-                  key={index}
-                  label={dep.subconceptId}
-                  size="small"
-                  sx={{
-                    bgcolor: DEPENDENCY_CHIP_COLOR,
-                    cursor: "pointer",
-                    "&:hover": { opacity: 0.8 },
-                  }}
-                  onClick={() =>
-                    handleOpenContent(
-                      dep.subconceptId,
-                      dep.subconceptDesc,
-                      dep.subconceptLink,
-                      dep.subconceptType
-                    )
-                  }
-                  data-tour-id="reference"
-                />
-              ))}
-            </Box>
-          ) : (
-            <Typography variant="caption" color="text.secondary">
-              None
+          {isMobile ? (
+            <Typography variant="caption">
+              {formatDateTime(assignment.submittedDate).split(' ')[0]}
             </Typography>
+          ) : (
+            formatDateTime(assignment.submittedDate)
           )}
         </TableCell>
-        <TableCell align="center">
-          <Chip
-            label={assignment.subconcept.subconceptMaxscore}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        </TableCell>
-        <TableCell>{formatDateTime(assignment.submittedDate)}</TableCell>
+
         <TableCell>
           {assignment.submittedFile && (
             <Button
               variant="outlined"
               size="small"
               data-tour-id="view-submitted-assignment-button"
-              startIcon={<CloudUploadIcon />}
+              startIcon={!isMobile && <CloudUploadIcon />}
               href={assignment.submittedFile.downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
+              disabled={isDisabled}
             >
-              View
+              {isMobile ? "View" : "View File"}
             </Button>
           )}
         </TableCell>
+
         <TableCell>
           <TextField
             type="number"
@@ -206,10 +210,11 @@ const AssignmentRow = React.memo(
             onChange={handleLocalScoreChange}
             error={fieldErrors?.score === true}
             helperText={fieldErrors?.score ? "Score is required" : ""}
+            disabled={isDisabled}
             inputProps={{
               min: 0,
               max: assignment.subconcept.subconceptMaxscore,
-              style: { width: "60px" },
+              style: { width: isMobile ? "50px" : "60px" },
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
@@ -223,6 +228,7 @@ const AssignmentRow = React.memo(
             }}
           />
         </TableCell>
+
         <TableCell>
           <Box sx={{ position: "relative" }}>
             <TextField
@@ -233,9 +239,10 @@ const AssignmentRow = React.memo(
               onChange={handleLocalRemarksChange}
               error={fieldErrors?.remarks === true}
               helperText={fieldErrors?.remarks ? "Remark is required" : ""}
+              disabled={isDisabled}
               inputProps={{
-                style: { width: "150px" },
-                maxLength: 150, // HTML attribute for max length
+                style: { width: isMobile ? "120px" : "150px" },
+                maxLength: 150,
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -265,6 +272,7 @@ const AssignmentRow = React.memo(
             </Typography>
           </Box>
         </TableCell>
+
         <TableCell>
           <Box display="flex" alignItems="center">
             <label htmlFor={`correction-file-${assignment.assignmentId}`}>
@@ -276,9 +284,15 @@ const AssignmentRow = React.memo(
                 onChange={(e) =>
                   onFileChange(assignment.assignmentId, e.target.files[0])
                 }
+                disabled={isDisabled}
               />
               <Tooltip title="Upload correction file">
-                <IconButton component="span" color="primary" size="small">
+                <IconButton 
+                  component="span" 
+                  color="primary" 
+                  size="small"
+                  disabled={isDisabled}
+                >
                   <CloudUploadIcon />
                 </IconButton>
               </Tooltip>
@@ -287,7 +301,7 @@ const AssignmentRow = React.memo(
               <Typography
                 variant="caption"
                 noWrap
-                sx={{ ml: 1, maxWidth: 100 }}
+                sx={{ ml: 1, maxWidth: isMobile ? 60 : 100 }}
               >
                 {editedAssignments[assignment.assignmentId].file.name}
               </Typography>
@@ -300,51 +314,61 @@ const AssignmentRow = React.memo(
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{ ml: 1, textTransform: "none" }}
+                  disabled={isDisabled}
                 >
-                  View File
+                  {isMobile ? "View" : "View File"}
                 </Button>
               )
             )}
           </Box>
         </TableCell>
-        <TableCell>
-          {assignment.correctedDate ? (
-            formatDateTime(assignment.correctedDate)
-          ) : (
-            <TextField
-              type="date"
-              size="small"
-              value={
-                editedAssignments[assignment.assignmentId]?.correctedDate || ""
-              }
-              onChange={(e) =>
-                onCorrectedDateChange(assignment.assignmentId, e.target.value)
-              }
-              sx={{ width: 130 }}
-            />
-          )}
-        </TableCell>
+
+        {!isMobile && (
+          <TableCell>
+            {assignment.correctedDate ? (
+              formatDateTime(assignment.correctedDate)
+            ) : (
+              <TextField
+                type="date"
+                size="small"
+                value={
+                  editedAssignments[assignment.assignmentId]?.correctedDate || ""
+                }
+                onChange={(e) =>
+                  onCorrectedDateChange(assignment.assignmentId, e.target.value)
+                }
+                disabled={isDisabled}
+                sx={{ width: 130 }}
+              />
+            )}
+          </TableCell>
+        )}
+
         <TableCell>
           <Button
             variant="contained"
             color="primary"
             size="small"
             onClick={() => onSubmitCorrection(assignment.assignmentId)}
-            disabled={updating || assignment.correctedDate}
+            disabled={isDisabled || assignment.correctedDate}
             sx={{
               textTransform: "none",
               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               "&:hover": {
                 boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
               },
+              minWidth: isMobile ? "60px" : "auto",
             }}
             data-tour-id="save"
           >
-            {updating
-              ? "Saving..."
-              : assignment.correctedDate
-              ? "Corrected"
-              : "Save"}
+            {isSaving ? (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <CircularProgress size={16} sx={{ mr: 1 }} />
+                {isMobile ? "" : "Saving..."}
+              </Box>
+            ) : assignment.correctedDate ? (
+              isMobile ? "Done" : "Corrected"
+            ) : isMobile ? "Save" : "Save"}
           </Button>
         </TableCell>
       </TableRow>
@@ -353,11 +377,14 @@ const AssignmentRow = React.memo(
 );
 
 const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(isMobile ? 10 : 20);
 
   // Sorting states
   const [order, setOrder] = useState("asc");
@@ -371,7 +398,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     cohortUserCount: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
+  const [savingAssignmentId, setSavingAssignmentId] = useState(null); // Track which assignment is being saved
   const [alert, setAlert] = useState({
     open: false,
     message: "",
@@ -385,9 +412,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     link: "",
     type: "",
   });
-  const [zoomLevel, setZoomLevel] = useState(1); // Default zoom level (1 = 100%)
   const [fieldErrors, setFieldErrors] = useState({});
-
 
   // Theme colors
   const LIGHT_TEAL = "#e6f5f5";
@@ -417,7 +442,9 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       label: "Submitted Date",
       path: (a) => a.submittedDate,
     },
-    { id: "score", label: "Score", path: (a) => a.score || 0 },
+    { id: "score", label: "Score",
+      path: (a) => a.score !== null && a.score !== undefined ? a.score : -1,
+    },
     {
       id: "correctedDate",
       label: "Date of Correction",
@@ -433,6 +460,12 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   useEffect(() => {
     fetchAssignments();
   }, [cohortId]);
+
+  // Adjust rows per page on mobile
+  useEffect(() => {
+    setRowsPerPage(isMobile ? 10 : 20);
+    setPage(0);
+  }, [isMobile]);
 
   // Filter assignments based on search query
   useEffect(() => {
@@ -450,7 +483,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       });
       setFilteredAssignments(filtered);
       sortData(filtered, orderBy, order);
-      setPage(0); // Reset to first page when search changes
+      setPage(0);
     }
   }, [searchQuery, assignments]);
 
@@ -460,10 +493,8 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       const response = await axios.get(
         `${API_BASE_URL}/assignments/cohort/${cohortId}`
       );
-      // Handle the new response format with assignments and statistics
       const { assignments: fetchedAssignments, statistics: fetchedStatistics } =
         response.data;
-      // Sort assignments with pending first
       const sortedAssignments = fetchedAssignments.sort((a, b) =>
         a.correctedDate ? 1 : -1
       );
@@ -471,17 +502,16 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       setFilteredAssignments(sortedAssignments);
       setStatistics(fetchedStatistics);
 
-      // Initialize editedAssignments with current values
       const initialEdits = {};
       fetchedAssignments.forEach((assignment) => {
         initialEdits[assignment.assignmentId] = {
-          score: assignment.score || "",
-          remarks: assignment.remarks || "",
-          file: null,
-        };
+        score: assignment.score !== null && assignment.score !== undefined ? assignment.score : "",
+        remarks: assignment.remarks || "",
+        file: null,
+      };
       });
       setEditedAssignments(initialEdits);
-      // Notify parent that assignments are loaded
+      
       if (onAssignmentsLoaded && fetchedAssignments.length > 0) {
         onAssignmentsLoaded();
       }
@@ -509,24 +539,21 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   // Sorting function that handles nested properties
   const sortData = (data, property, sortOrder) => {
     const column = sortableColumns.find((col) => col.id === property);
-    if (!column) return [...data]; // Return copy if no valid column found
+    if (!column) return [...data];
 
     const sortedData = [...data].sort((a, b) => {
       const valueA = column.path(a);
       const valueB = column.path(b);
 
-      // Handle nulls/undefined
       if (valueA === null || valueA === undefined)
         return sortOrder === "asc" ? -1 : 1;
       if (valueB === null || valueB === undefined)
         return sortOrder === "asc" ? 1 : -1;
 
-      // Sort numbers
       if (typeof valueA === "number" && typeof valueB === "number") {
         return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
       }
 
-      // Default string comparison
       return sortOrder === "asc"
         ? String(valueA).localeCompare(String(valueB))
         : String(valueB).localeCompare(String(valueA));
@@ -614,7 +641,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     const assignment = assignments.find((a) => a.assignmentId === assignmentId);
   
     const errors = {
-      score: !editedData.score || editedData.score.toString().trim() === "",
+      score: editedData.score === null || editedData.score === undefined || editedData.score.toString().trim() === "",
       remarks: !editedData.remarks || editedData.remarks.trim() === "",
     };
   
@@ -642,7 +669,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       return;
     }
   
-    // Validate file or score (optional but already in your code)
+    // Validate file or score
     if (!editedData.score && !editedData.file) {
       setAlert({
         open: true,
@@ -683,8 +710,9 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       }
     }
   
-    // Continue with submission
-    setUpdating(true);
+    // Set saving state for this specific assignment
+    setSavingAssignmentId(assignmentId);
+    
     const formData = new FormData();
   
     if (editedData.file) {
@@ -746,14 +774,13 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         severity: "error",
       });
     } finally {
-      setUpdating(false);
+      // Clear saving state
+      setSavingAssignmentId(null);
     }
   };
-  
 
   const formatDateTime = (timestamp) => {
     if (!timestamp) return "-";
-    // Convert timestamp to Date object
     const date = new Date(timestamp * 1000);
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
@@ -825,40 +852,69 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
     return column ? column.label : "";
   };
 
+  // Responsive table headers
+  const tableHeaders = [
+    { id: "user.userId", label: "User ID", mobile: true },
+    { id: "subconcept.subconceptDesc", label: "Topic", mobile: false },
+    { id: "references", label: "References", mobile: false },
+    { id: "subconcept.subconceptMaxscore", label: "Max Score", mobile: false, align: "center" },
+    { id: "submittedDate", label: "Submitted Date", mobile: true },
+    { id: "submittedFile", label: "Submitted File", mobile: true },
+    { id: "score", label: "Score", mobile: true },
+    { id: "remarks", label: "Remarks", mobile: true },
+    { id: "correctionFile", label: "Correction File", mobile: true },
+    { id: "correctedDate", label: "Date of Correction", mobile: false },
+    { id: "action", label: "Action", mobile: true },
+  ];
+
   return (
-    <Card sx={{ p: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+    <Card sx={{  p: { xs: 1, sm: 2, md: 3 }, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", width: '100%',maxWidth: '100%',overflow: 'hidden' }}>
       <Box
         display="flex"
+        flexDirection={{ xs: "column", md: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "flex-start", md: "center" }}
+        gap={2}
         mb={3}
       >
         <Box display="flex" alignItems="center">
           <AssignmentIcon sx={{ mr: 1, color: "#1976d2" }} />
-          <Typography variant="h5" component="div">
+          <Typography variant="h5" component="div" sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
             Assignments for {assignments[0]?.program?.programName}
           </Typography>
         </Box>
-        <Box display="flex" gap={2}>
+        <Box 
+          display="flex" 
+          gap={1} 
+          flexWrap="wrap"
+          sx={{ 
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            maxWidth: { xs: '100%', md: 'auto' }
+          }}
+        >
           <Chip
             label={`Total: ${statistics.totalAssignments}`}
             color="default"
             variant="outlined"
+            size={isMobile ? "small" : "medium"}
           />
           <Chip
             label={`Pending: ${statistics.pendingAssignments}`}
             color="warning"
             variant="outlined"
+            size={isMobile ? "small" : "medium"}
           />
           <Chip
             label={`Corrected: ${statistics.correctedAssignments}`}
             color="success"
             variant="outlined"
+            size={isMobile ? "small" : "medium"}
           />
           <Chip
             label={`Users: ${statistics.cohortUserCount}`}
             color="info"
             variant="outlined"
+            size={isMobile ? "small" : "medium"}
           />
         </Box>
       </Box>
@@ -866,8 +922,10 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       {/* Search and Sort Controls */}
       <Box
         display="flex"
+        flexDirection={{ xs: "column", md: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "stretch", md: "center" }}
+        gap={2}
         mb={3}
       >
         <TextField
@@ -884,28 +942,29 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             ),
           }}
           sx={{
-            width: "50%",
-            minWidth: "300px",
+            width: { xs: "100%", md: "50%" },
+            minWidth: "auto",
             "& .MuiOutlinedInput-root": {
               borderRadius: "8px",
             },
           }}
         />
 
-        <Box>
+        <Box sx={{ width: { xs: "100%", md: "auto" } }}>
           <Button
             variant="outlined"
             startIcon={<SortIcon />}
             onClick={handleOpenSortMenu}
             size="medium"
+            fullWidth={isMobile}
             sx={{
               textTransform: "none",
-              mr: 1,
+              mr: { md: 1 },
               borderRadius: "8px",
             }}
           >
             Sort by: {getCurrentSortColumnName()} (
-            {order === "asc" ? "Ascending" : "Descending"})
+            {order === "asc" ? "Asc" : "Desc"})
           </Button>
           <Menu
             anchorEl={sortMenuAnchorEl}
@@ -940,10 +999,10 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             <Divider />
             <MenuItem
               onClick={() => {
-                handleRequestSort(orderBy); // Toggle current sort direction
+                handleRequestSort(orderBy);
               }}
             >
-              Toggle Order ({order === "asc" ? "Descending" : "Ascending"})
+              Toggle Order ({order === "asc" ? "Desc" : "Asc"})
             </MenuItem>
           </Menu>
         </Box>
@@ -981,81 +1040,34 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "user.userId"}
-                      direction={orderBy === "user.userId" ? order : "asc"}
-                      onClick={() => handleRequestSort("user.userId")}
-                    >
-                      User ID
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ width: "25%" }}>
-                    <TableSortLabel
-                      active={orderBy === "subconcept.subconceptDesc"}
-                      direction={
-                        orderBy === "subconcept.subconceptDesc" ? order : "asc"
-                      }
-                      onClick={() =>
-                        handleRequestSort("subconcept.subconceptDesc")
-                      }
-                    >
-                      Topic
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>References</TableCell>
-                  <TableCell align="center">
-                    <TableSortLabel
-                      active={orderBy === "subconcept.subconceptMaxscore"}
-                      direction={
-                        orderBy === "subconcept.subconceptMaxscore"
-                          ? order
-                          : "asc"
-                      }
-                      onClick={() =>
-                        handleRequestSort("subconcept.subconceptMaxscore")
-                      }
-                    >
-                      Max Score
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "submittedDate"}
-                      direction={orderBy === "submittedDate" ? order : "asc"}
-                      onClick={() => handleRequestSort("submittedDate")}
-                    >
-                      Submitted Date
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>Submitted File</TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "score"}
-                      direction={orderBy === "score" ? order : "asc"}
-                      onClick={() => handleRequestSort("score")}
-                    >
-                      <span>
-                        Score <span style={{ color: "red" }}>*</span>
-                      </span>
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <span>
-                      Remarks <span style={{ color: "red" }}>*</span>
-                    </span>
-                  </TableCell>
-                  <TableCell>Correction File</TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === "correctedDate"}
-                      direction={orderBy === "correctedDate" ? order : "asc"}
-                      onClick={() => handleRequestSort("correctedDate")}
-                    >
-                      Date of Correction
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>Action</TableCell>
+                  {tableHeaders.map((header) => 
+                    (!isMobile || header.mobile) && (
+                      <TableCell 
+                        key={header.id}
+                        align={header.align || "left"}
+                      >
+                        {header.id.includes('.') ? (
+                          <TableSortLabel
+                            active={orderBy === header.id}
+                            direction={orderBy === header.id ? order : "asc"}
+                            onClick={() => handleRequestSort(header.id)}
+                          >
+                            {header.label}
+                            {header.id === "score" || header.id === "remarks" ? (
+                              <span style={{ color: "red" }}> *</span>
+                            ) : null}
+                          </TableSortLabel>
+                        ) : (
+                          <>
+                            {header.label}
+                            {header.id === "remarks" ? (
+                              <span style={{ color: "red" }}> *</span>
+                            ) : null}
+                          </>
+                        )}
+                      </TableCell>
+                    )
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1071,8 +1083,9 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
                     onSubmitCorrection={memoizedHandleSubmitCorrection}
                     formatDateTime={memoizedFormatDateTime}
                     handleOpenContent={memoizedHandleOpenContent}
-                    updating={updating}
+                    savingAssignmentId={savingAssignmentId}
                     fieldErrors={fieldErrors[assignment.assignmentId] || {}}
+                    isMobile={isMobile}
                   />
                 ))}
               </TableBody>
@@ -1080,7 +1093,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
           </TableContainer>
 
           <TablePagination
-            rowsPerPageOptions={[10, 20, 50, 100]}
+            rowsPerPageOptions={[5, 10, 20, 50]}
             component="div"
             count={filteredAssignments.length}
             rowsPerPage={rowsPerPage}
@@ -1088,11 +1101,15 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             sx={{
-              "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
-                {
-                  m: 0,
-                },
-            }}
+    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+      m: 0,
+    },
+    position: "relative",
+    zIndex: 30, // Lower than Take Tour button but high enough to be clickable
+    backgroundColor: "white", // Ensure background covers any overlap
+    borderTop: "1px solid #f0f0f0",
+    mt: 2,
+  }}
           />
         </>
       )}
@@ -1103,6 +1120,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         onClose={handleCloseContent}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           <Box

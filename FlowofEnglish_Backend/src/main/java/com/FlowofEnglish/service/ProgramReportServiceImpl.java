@@ -800,6 +800,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
     }
     
     @Override
+    @Cacheable(value = "cohortProgressForMentor", key = "#mentorId + '_' + #programId + '_' + #cohortId", unless = "#result == null") 
     public CohortProgressDTO getCohortProgressForMentor(String mentorId, String programId, String cohortId) {
 
     	try {

@@ -270,6 +270,8 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         userDetails.setUserName(user.getUserName());
         userDetails.setUserType(user.getUserType());
         userDetails.setUserEmail(user.getUserEmail());
+        userDetails.setUserAddress(user.getUserAddress());
+        userDetails.setUserPhoneNumber(user.getUserPhoneNumber());
         userDetails.setCreatedAt(user.getCreatedAt());
         userDetails.setDeactivatedAt(user.getDeactivatedAt());
         userDetails.setDeactivatedReason(user.getDeactivatedReason());

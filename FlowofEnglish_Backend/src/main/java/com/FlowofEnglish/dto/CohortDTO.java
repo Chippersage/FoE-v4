@@ -1,7 +1,9 @@
 package com.FlowofEnglish.dto;
 
 import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CohortDTO {
 
     private String cohortId;
