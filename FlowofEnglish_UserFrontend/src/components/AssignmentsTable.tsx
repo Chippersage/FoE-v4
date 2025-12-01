@@ -1105,7 +1105,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       m: 0,
     },
     position: "relative",
-    zIndex: 30, // Lower than Take Tour button but high enough to be clickable
+    zIndex: 30,
     backgroundColor: "white", // Ensure background covers any overlap
     borderTop: "1px solid #f0f0f0",
     mt: 2,
