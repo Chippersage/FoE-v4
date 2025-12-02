@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -62,6 +62,9 @@ const CoursePage: React.FC = () => {
     [currentContent, stages, programName, user, programId, canGoNext, remainingTime]
   );
 
+  // ---------------------------
+  // Helper functions
+  // ---------------------------
   const isGoogleFormType = (type: string) => {
     if (!type) return false;
     const normalized = String(type).toLowerCase();
@@ -88,21 +91,96 @@ const CoursePage: React.FC = () => {
     return !nonIframeTypes.includes(contentType);
   };
 
+  // ---------------------------
+  // Assignment status handling
+  // ---------------------------
+  const fetchAssignmentStatus = useCallback(async () => {
+    try {
+      if (!user?.userId || !currentContent?.subconceptId) return;
+
+      const res = await axios.get(`${API_BASE_URL}/assignments/user-assignment`, {
+        params: { userId: user.userId, subconceptId: currentContent.subconceptId },
+      });
+
+      if (res.data?.status === "not_found") {
+        setAssignmentStatus(null);
+      } else {
+        setAssignmentStatus(res.data);
+      }
+    } catch (err) {
+      console.error("Error fetching assignment status:", err);
+      setAssignmentStatus(null);
+    }
+  }, [user?.userId, currentContent?.subconceptId]);
+
+  const handleAssignmentSubmissionSuccess = useCallback(() => {
+    // Update completion status in local state
+    setStages((prevStages) =>
+      prevStages.map((stage) => ({
+        ...stage,
+        units: stage.units.map((unit) => ({
+          ...unit,
+          subconcepts: unit.subconcepts.map((sub) =>
+            sub.subconceptId === currentContent.subconceptId
+              ? { ...sub, completionStatus: "yes" }
+              : sub
+          ),
+        })),
+      }))
+    );
+    
+    // Update current content completion status
+    setCurrentContent(prev => ({
+      ...prev,
+      completionStatus: "yes"
+    }));
+    
+    // Fetch the latest assignment status after a short delay
+    setTimeout(() => {
+      fetchAssignmentStatus();
+    }, 1500);
+  }, [currentContent.subconceptId, fetchAssignmentStatus]);
+
+  // ---------------------------
+  // Event handlers
+  // ---------------------------
+  const handleSubmit = () => {
+    const iframe = document.getElementById("embeddedContent");
+    if (iframe && iframe.tagName === "IFRAME") {
+      (iframe as HTMLIFrameElement).contentWindow?.postMessage("submitClicked", "*");
+    }
+  };
+
+  const handleNextSubconcept = async (nextSub) => {
+    setCurrentContent({
+      url: nextSub.subconceptLink,
+      type: nextSub.subconceptType,
+      id: nextSub.subconceptId,
+      stageId: nextSub.stageId,
+      unitId: nextSub.unitId,
+      subconceptId: nextSub.subconceptId,
+      completionStatus: nextSub.completionStatus,
+      subconceptMaxscore: Number(nextSub.subconceptMaxscore || 0),
+    });
+  };
+
+  const renderNextButton = (disabled = false) => (
+    <NextSubconceptButton
+      stages={stages}
+      currentContentId={currentContent.id}
+      onNext={handleNextSubconcept}
+      disabled={disabled}
+    />
+  );
+
+  // ---------------------------
+  // useEffect for event listeners
+  // ---------------------------
   useEffect(() => {
     const disableContext = (e) => e.preventDefault();
     document.addEventListener("contextmenu", disableContext);
     return () => document.removeEventListener("contextmenu", disableContext);
   }, []);
-
-  useEffect(() => {
-    const shouldShow = shouldShowIframe(currentContent.type);
-    setShowIframe(shouldShow);
-    setShowSubmit(false);
-  }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
-
-  useEffect(() => {
-    console.log("CurrentContent:", currentContent);
-  }, [currentContent]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -132,15 +210,21 @@ const CoursePage: React.FC = () => {
     };
 
     window.addEventListener("video90", unlock);
-
     return () => window.removeEventListener("video90", unlock);
   }, []);
 
+  // ---------------------------
+  // useEffect for content and UI state
+  // ---------------------------
   useEffect(() => {
     const shouldShow = shouldShowIframe(currentContent.type);
     setShowIframe(shouldShow);
     setShowSubmit(false);
   }, [currentContent.type, currentContent.url, currentContent.subconceptId]);
+
+  useEffect(() => {
+    console.log("CurrentContent:", currentContent);
+  }, [currentContent]);
 
   // Reset mobile button when new content loads
   useEffect(() => {
@@ -151,21 +235,19 @@ const CoursePage: React.FC = () => {
     const type = String(currentContent.type).toLowerCase();
 
     if (type === "video") {
-      // disable again because new video started
       mobileBtn.style.opacity = "0.5";
       mobileBtn.style.pointerEvents = "none";
       mobileBtn.style.backgroundColor = "#bfbfbf";
     } else {
-      // non-video → always enabled
       mobileBtn.style.opacity = "1";
       mobileBtn.style.pointerEvents = "auto";
       mobileBtn.style.backgroundColor = "#0EA5E9";
     }
   }, [currentContent.id]);
 
-
-
-
+  // ---------------------------
+  // useEffect for data fetching
+  // ---------------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -212,59 +294,18 @@ const CoursePage: React.FC = () => {
     }
   }, [currentContent?.subconceptId]);
 
+  // Fetch assignment status when assignment content is loaded
   useEffect(() => {
-    const fetchAssignmentStatus = async () => {
-      try {
-        if (!user?.userId || !currentContent?.subconceptId) return;
-
-        const res = await axios.get(`${API_BASE_URL}/assignments/user-assignment`, {
-          params: { userId: user.userId, subconceptId: currentContent.subconceptId },
-        });
-
-        if (res.data?.status === "not_found") setAssignmentStatus(null);
-        else setAssignmentStatus(res.data);
-      } catch (err) {
-        console.error("Error fetching assignment status:", err);
-        setAssignmentStatus(null);
-      }
-    };
-
     if (currentContent?.type?.toLowerCase().startsWith("assignment")) {
       fetchAssignmentStatus();
     } else {
       setAssignmentStatus(null);
     }
-  }, [currentContent?.type, currentContent?.subconceptId, user?.userId]);
+  }, [currentContent?.type, currentContent?.subconceptId, user?.userId, fetchAssignmentStatus]);
 
-  const handleSubmit = () => {
-    const iframe = document.getElementById("embeddedContent");
-    if (iframe && iframe.tagName === "IFRAME") {
-      (iframe as HTMLIFrameElement).contentWindow?.postMessage("submitClicked", "*");
-    }
-  };
-
-  const handleNextSubconcept = async (nextSub) => {
-    setCurrentContent({
-      url: nextSub.subconceptLink,
-      type: nextSub.subconceptType,
-      id: nextSub.subconceptId,
-      stageId: nextSub.stageId,
-      unitId: nextSub.unitId,
-      subconceptId: nextSub.subconceptId,
-      completionStatus: nextSub.completionStatus,
-      subconceptMaxscore: Number(nextSub.subconceptMaxscore || 0),
-    });
-  };
-
-  const renderNextButton = (disabled = false) => (
-    <NextSubconceptButton
-      stages={stages}
-      currentContentId={currentContent.id}
-      onNext={handleNextSubconcept}
-      disabled={disabled}
-    />
-  );
-
+  // ---------------------------
+  // Component rendering functions
+  // ---------------------------
   const ContentArea = () => {
     const isAssessment = String(currentContent.type).toLowerCase() === "assessment";
     const isCompleted = String(currentContent.completionStatus).toLowerCase() === "yes";
@@ -339,21 +380,7 @@ const CoursePage: React.FC = () => {
           <div className="mt-6 flex flex-row items-center justify-center gap-3 flex-wrap">
             <FileUploaderRecorder
               assignmentStatus={assignmentStatus}
-              onSuccess={() =>
-                setStages((prevStages) =>
-                  prevStages.map((stage) => ({
-                    ...stage,
-                    units: stage.units.map((unit) => ({
-                      ...unit,
-                      subconcepts: unit.subconcepts.map((sub) =>
-                        sub.subconceptId === currentContent.subconceptId
-                          ? { ...sub, completionStatus: "yes" }
-                          : sub
-                      ),
-                    })),
-                  }))
-                )
-              }
+              onUploadSuccess={handleAssignmentSubmissionSuccess}
             />
             {renderNextButton()}
           </div>
@@ -379,23 +406,9 @@ const CoursePage: React.FC = () => {
     </>
   );
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <div className="relative w-14 h-14">
-          <div className="absolute inset-0 rounded-full border-4 border-[#0EA5E9] opacity-25" />
-          <div className="absolute inset-0 rounded-full border-4 border-t-[#0EA5E9] border-transparent animate-spin" />
-        </div>
-        <p className="mt-4 text-[#0EA5E9] font-medium text-base animate-pulse tracking-wide">
-          Loading your course...
-        </p>
-      </div>
-    );
-  }
-
-  // -----------------------------------------------
-  // NEW: MOBILE CONTROL BAR ABOVE SIDEBAR
-  // -----------------------------------------------
+  // ---------------------------
+  // Mobile components
+  // ---------------------------
   const mobileActionsExist =
     currentContent.type?.startsWith("assignment") ||
     isGoogleFormType(currentContent.type);
@@ -404,7 +417,7 @@ const CoursePage: React.FC = () => {
     if (!mobileActionsExist) return null;
 
     return (
-      <div className="md:hidden w-full bg-white  px-4 py-3 flex flex-col gap-3">
+      <div className="md:hidden w-full bg-white px-4 py-3 flex flex-col gap-3">
         {currentContent.type?.startsWith("assignment") ? (
           assignmentStatus ? (
             <button
@@ -416,21 +429,7 @@ const CoursePage: React.FC = () => {
           ) : (
             <FileUploaderRecorder
               assignmentStatus={assignmentStatus}
-              onSuccess={() =>
-                setStages((prevStages) =>
-                  prevStages.map((stage) => ({
-                    ...stage,
-                    units: stage.units.map((unit) => ({
-                      ...unit,
-                      subconcepts: unit.subconcepts.map((sub) =>
-                        sub.subconceptId === currentContent.subconceptId
-                          ? { ...sub, completionStatus: "yes" }
-                          : sub
-                      ),
-                    })),
-                  }))
-                )
-              }
+              onUploadSuccess={handleAssignmentSubmissionSuccess}
             />
           )
         ) : null}
@@ -446,63 +445,75 @@ const CoursePage: React.FC = () => {
     );
   };
 
-  // -----------------------------------------------
-  // NEW FLOATING ROUND NEXT BUTTON (MOBILE)
-  // -----------------------------------------------
   const FloatingNextButton = () => {
     const nextExists = stages?.length > 0;
 
     if (!nextExists) return null;
     return (
-            <button
-              id="mobile-next-btn"
-              className="md:hidden fixed bottom-10 right-10 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: "#bfbfbf",
-                opacity: 0.5,
-                pointerEvents: "none"
-              }}
-              onClick={() => {
-                // Try unlocked button with both possible IDs
-                let unlockedBtn =
-                  document.getElementById("next-subconcept-btn-unlocked") ||
-                  document.querySelector("#btn-unlocked #next-subconcept-btn");
+      <button
+        id="mobile-next-btn"
+        className="md:hidden fixed bottom-10 right-10 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition active:scale-95 cursor-pointer"
+        style={{
+          backgroundColor: "#bfbfbf",
+          opacity: 0.5,
+          pointerEvents: "none"
+        }}
+        onClick={() => {
+          let unlockedBtn =
+            document.getElementById("next-subconcept-btn-unlocked") ||
+            document.querySelector("#btn-unlocked #next-subconcept-btn");
 
-                if (unlockedBtn) {
-                  unlockedBtn.click();
-                  return;
-                }
+          if (unlockedBtn) {
+            unlockedBtn.click();
+            return;
+          }
 
-                // Fallback: click the locked button
-                let lockedBtn =
-                  document.getElementById("next-subconcept-btn") ||
-                  document.querySelector("#btn-locked #next-subconcept-btn");
+          let lockedBtn =
+            document.getElementById("next-subconcept-btn") ||
+            document.querySelector("#btn-locked #next-subconcept-btn");
 
-                if (lockedBtn) {
-                  lockedBtn.click();
+          if (lockedBtn) {
+            lockedBtn.click();
 
-                  // Try again after DOM updates
-                  setTimeout(() => {
-                    unlockedBtn =
-                      document.getElementById("next-subconcept-btn-unlocked") ||
-                      document.querySelector("#btn-unlocked #next-subconcept-btn");
+            setTimeout(() => {
+              unlockedBtn =
+                document.getElementById("next-subconcept-btn-unlocked") ||
+                document.querySelector("#btn-unlocked #next-subconcept-btn");
 
-                    if (unlockedBtn) unlockedBtn.click();
-                  }, 500);
+              if (unlockedBtn) unlockedBtn.click();
+            }, 500);
 
-                  return;
-                }
+            return;
+          }
 
-                console.warn("Next button not found yet");
-              }}
-            >
-              <ChevronRight size={28} className="text-white" />
-            </button>
+          console.warn("Next button not found yet");
+        }}
+      >
+        <ChevronRight size={28} className="text-white" />
+      </button>
     );
   };
 
-  // -----------------------------------------------
+  // ---------------------------
+  // Loading state
+  // ---------------------------
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-full border-4 border-[#0EA5E9] opacity-25" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-[#0EA5E9] border-transparent animate-spin" />
+        </div>
+        <p className="mt-4 text-[#0EA5E9] font-medium text-base animate-pulse tracking-wide">
+          Loading your course...
+        </p>
+      </div>
+    );
+  }
 
+  // ---------------------------
+  // Main render
+  // ---------------------------
   return (
     <CourseContext.Provider value={courseContextValue}>
       <div className="flex flex-col md:flex-row h-screen bg-white overflow-hidden">

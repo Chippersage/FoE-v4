@@ -18,7 +18,6 @@ interface FileUploaderRecorderProps {
 type RecordingState = "recording" | "paused" | "stopped";
 type ActiveAction = "upload" | "audio" | "video" | "photo" | null;
 
-// File type and size validation constants
 const allowedTypes = [
   "application/pdf",
   "application/msword",
@@ -32,7 +31,7 @@ const allowedTypes = [
   "video/mp4",
   "video/webm",
 ];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 10 * 1024 * 1024;
 
 export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
   onUploadSuccess,
@@ -50,8 +49,8 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     type: "audio" | "video" | "photo";
     blob: Blob;
   } | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // Determine if the assignment has already been submitted
   const isDisabled =
     assignmentStatus &&
     (assignmentStatus?.status === "waiting_for_feedback" ||
@@ -59,7 +58,6 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
       assignmentStatus === "waiting_for_feedback" ||
       assignmentStatus === "approved");
 
-  // Start a timer for recording duration
   const startRecordingTimer = (): void => {
     if (recordingInterval.current) clearInterval(recordingInterval.current);
     recordingInterval.current = setInterval(() => {
@@ -74,7 +72,6 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     }
   };
 
-  // File validation helper
   const validateFile = (file: File | Blob, type: string) => {
     if ((file as File).size > MAX_SIZE) {
       alert("File size must be less than 10MB.");
@@ -158,49 +155,58 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     setActiveAction(null);
   };
 
-  const handleSuccess = () => {
-    handleCloseModal();
+  const handleUploadSuccess = () => {
+    setUploadSuccess(true);
     onUploadSuccess();
   };
 
+  // Reset upload success when assignment status changes
+  useEffect(() => {
+    if (assignmentStatus) {
+      setUploadSuccess(false);
+    }
+  }, [assignmentStatus]);
+
   return (
     <>
-      {/* Action buttons */}
-      <div
-        className="flex justify-center h-10 sm:h-11 md:h-12 items-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex space-x-1.5 sm:space-x-2 bg-white rounded-full shadow-md p-1.5 sm:p-2">
-          <ActionButton
-            icon={<Upload />}
-            onClick={() => setActiveAction("upload")}
-            isActive={activeAction === "upload"}
-            activeAction={activeAction}
-            disabled={isDisabled}
-          />
-          <ActionButton
-            icon={<Mic />}
-            onClick={() => setActiveAction("audio")}
-            isActive={activeAction === "audio"}
-            activeAction={activeAction}
-            disabled={isDisabled}
-          />
-          <ActionButton
-            icon={<Video />}
-            onClick={() => setActiveAction("video")}
-            isActive={activeAction === "video"}
-            activeAction={activeAction}
-            disabled={isDisabled}
-          />
-          <ActionButton
-            icon={<Camera />}
-            onClick={() => setActiveAction("photo")}
-            isActive={activeAction === "photo"}
-            activeAction={activeAction}
-            disabled={isDisabled}
-          />
+      {/* Action buttons - hide if assignment is already submitted */}
+      {!assignmentStatus && (
+        <div
+          className="flex justify-center h-10 sm:h-11 md:h-12 items-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex space-x-1.5 sm:space-x-2 bg-white rounded-full shadow-md p-1.5 sm:p-2">
+            <ActionButton
+              icon={<Upload />}
+              onClick={() => setActiveAction("upload")}
+              isActive={activeAction === "upload"}
+              activeAction={activeAction}
+              disabled={isDisabled}
+            />
+            <ActionButton
+              icon={<Mic />}
+              onClick={() => setActiveAction("audio")}
+              isActive={activeAction === "audio"}
+              activeAction={activeAction}
+              disabled={isDisabled}
+            />
+            <ActionButton
+              icon={<Video />}
+              onClick={() => setActiveAction("video")}
+              isActive={activeAction === "video"}
+              activeAction={activeAction}
+              disabled={isDisabled}
+            />
+            <ActionButton
+              icon={<Camera />}
+              onClick={() => setActiveAction("photo")}
+              isActive={activeAction === "photo"}
+              activeAction={activeAction}
+              disabled={isDisabled}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Conditional components */}
       {activeAction === "upload" && !isDisabled && (
@@ -244,7 +250,7 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
         file={uploadedFile}
         recordedMedia={recordedMedia}
         onClose={handleCloseModal}
-        onUploadSuccess={handleSuccess}
+        onUploadSuccess={handleUploadSuccess}
       />
 
       {/* Submission state note */}
