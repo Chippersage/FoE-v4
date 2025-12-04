@@ -4,6 +4,9 @@ import Joyride, { STATUS, Step } from "react-joyride";
 import AssignmentsTable from "@/components/AssignmentsTable";
 import CohortCustomTooltip from "@/components/tours/CohortCustomTooltip";
 import BackButton from "@/components/BackButton";
+import { IconButton, Tooltip, Box, useMediaQuery, useTheme } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 interface AssignmentsPageProps {}
 
@@ -13,6 +16,10 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
   const [steps, setSteps] = useState<Step[]>([]);
   const [firstRun, setFirstRun] = useState(true);
   const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
+  const [showTourButton, setShowTourButton] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
   // Check if this is user's first visit to show tour automatically
   useEffect(() => {
@@ -29,8 +36,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
           console.warn("Tour targets not found in DOM, delaying tour start");
           // Could implement a retry mechanism here if needed
         }
-      }, 500); // 500ms delay
-
+      }, 500);
       return () => clearTimeout(tourTimer);
     }
   }, [firstRun, assignmentsLoaded]);
@@ -94,6 +100,7 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       setRunTour(false);
       localStorage.setItem("assignmentsTourCompleted", "true");
+      setShowTourButton(false);
     }
   };
 
@@ -101,8 +108,17 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
     setAssignmentsLoaded(true);
   };
 
+  const handleStartTour = () => {
+    setShowTourButton(true);
+    setRunTour(true);
+  };
+
+  const handleCloseTourButton = () => {
+    setShowTourButton(false);
+  };
+
   return (
-    <div className="min-h-full w-full">
+    <div className="min-h-full w-full relative">
       <Joyride
         steps={steps}
         run={runTour}
@@ -132,9 +148,9 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
       <div className="w-full">
         <header className="mb-6">
           {/* Add the BackButton component here */}
-          <div className="flex items-center mb-4">
+          {/* <div className="flex items-center mb-4">
             <BackButton />
-          </div>
+          </div> */}
           <h1 className="text-3xl font-bold text-emerald-700">
             Review Assignments
           </h1>
@@ -148,14 +164,85 @@ const AssignmentsPageWithTour: React.FC<AssignmentsPageProps> = () => {
       </div>
       
      {/* Responsive Take Tour Button */}
-      <div className="fixed bottom-4 right-4 z-40 lg:bottom-6 lg:right-6">
-        <button
-          className="px-3 py-2 lg:px-4 lg:py-2 bg-[#5BC3CD] text-black rounded-lg hover:bg-[#4AB3BD] font-semibold shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 border border-[#49B0BA] text-sm lg:text-base"
-          onClick={() => setRunTour(true)}
+      {showTourButton && (
+        <Box
+          sx={{
+            position: 'fixed',
+            right: { xs: 16, sm: 24, md: 32 },
+            bottom: { xs: 80, sm: 100, md: 120 }, // Moved higher to avoid pagination overlap
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 1
+          }}
         >
-          Take Tour
-        </button>
-        </div>
+          {/* Close button */}
+          <Tooltip title="Close tour button">
+            <IconButton
+              onClick={handleCloseTourButton}
+              sx={{
+                backgroundColor: 'white',
+                boxShadow: 3,
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                },
+                width: 36,
+                height: 36,
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          {/* Main tour button */}
+          <Tooltip title="Take a guided tour of this page">
+      <button
+              onClick={handleStartTour}
+              className={`
+                px-3 py-2 bg-[#5BC3CD] text-black rounded-lg 
+                hover:bg-[#4AB3BD] font-semibold shadow-xl 
+                transition-all duration-300 hover:shadow-2xl 
+                hover:scale-105 border border-[#49B0BA]
+                flex items-center gap-2
+                ${isMobile ? 'text-sm' : 'text-base'}
+              `}
+            >
+              <HelpOutlineIcon fontSize={isMobile ? "small" : "medium"} />
+              <span className="whitespace-nowrap">
+                {isMobile ? 'Tour' : 'Take Tour'}
+              </span>
+      </button>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* Floating Tour Button (only shows when main button is hidden) */}
+      {!showTourButton && (
+        <Tooltip title="Show tour button">
+          <IconButton
+            onClick={() => setShowTourButton(true)}
+            sx={{
+              position: 'fixed',
+              right: { xs: 16, sm: 24, md: 32 },
+              bottom: { xs: 80, sm: 100, md: 120 },
+              zIndex: 1000,
+              backgroundColor: '#5BC3CD',
+              color: 'black',
+              boxShadow: 3,
+              '&:hover': {
+                backgroundColor: '#4AB3BD',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.3s ease',
+              width: { xs: 40, sm: 44 },
+              height: { xs: 40, sm: 44 },
+            }}
+          >
+            <HelpOutlineIcon fontSize={isMobile ? "small" : "medium"} />
+          </IconButton>
+        </Tooltip>
+      )}
     </div>
   );
 };
