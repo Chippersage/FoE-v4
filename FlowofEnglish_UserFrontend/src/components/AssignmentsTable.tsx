@@ -72,289 +72,7 @@ const AssignmentRow = React.memo(
       debouncedRemarksChange(input);
     };
 
-//     return (
-//       <TableRow
-//         sx={{
-//           backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
-//           color: assignment.correctedDate ? "black" : "inherit",
-//           transition: "background-color 0.2s ease",
-//           '&:hover': {
-//             backgroundColor: HOVER_COLOR,
-//           },
-//         }}
-//       >
-//         <TableCell 
-//       //  sx={{ minWidth: 90 }}
-//         >
-//           <Tooltip title={`User name: ${assignment.user.userName}`}>
-//             <span>{assignment.user.userId}</span>
-//           </Tooltip>
-//         </TableCell>
-        
-//         {/* {!isMobile && ( */}
-//           <TableCell 
-//          // sx={{ width: "25%", minWidth: 230  }}
-//           >
-//             <Tooltip
-//               title={assignment.subconcept.subconceptDesc}
-//               placement="top-start"
-//               arrow
-//               enterDelay={500}
-//             >
-//               <Typography
-//                 variant="body2"
-//                 sx={{
-//                   fontWeight: 600,
-//                   color: "text.primary",
-//                   lineHeight: 1.3,
-//                   maxHeight: "2.6em",
-//                   overflow: "hidden",
-//                   textOverflow: "ellipsis",
-//                   display: "-webkit-box",
-//                   WebkitLineClamp: 2,
-//                   WebkitBoxOrient: "vertical",
-//                   wordBreak: "break-word",
-//                 }}
-//                 data-tour-id="topic"
-//               >
-//                 {assignment.subconcept.subconceptDesc}
-//               </Typography>
-//             </Tooltip>
-//           </TableCell>
-//         {/* )} */}
-
-//         {/* {!isMobile && ( */}
-//           <TableCell 
-//          // sx={{ minWidth: 100 }}
-//           >
-//             {assignment.subconcept.dependencies &&
-//             assignment.subconcept.dependencies.length > 0 ? (
-//               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-//                 {assignment.subconcept.dependencies.map((dep, index) => (
-//                   <Chip
-//                     key={index}
-//                     label={dep.subconceptId}
-//                     size="small"
-//                     sx={{
-//                       bgcolor: DEPENDENCY_CHIP_COLOR,
-//                       cursor: "pointer",
-//                       "&:hover": { opacity: 0.8 },
-//                     }}
-//                     onClick={() =>
-//                       handleOpenContent(
-//                         dep.subconceptId,
-//                         dep.subconceptDesc,
-//                         dep.subconceptLink,
-//                         dep.subconceptType
-//                       )
-//                     }
-//                     data-tour-id="reference"
-//                   />
-//                 ))}
-//               </Box>
-//             ) : (
-//               <Typography variant="caption" color="text.secondary">
-//                 None
-//               </Typography>
-//             )}
-//           </TableCell>
-//         {/* )} */}
-
-//         {/* {!isMobile && ( */}
-//           <TableCell align="center" 
-//          // sx={{ minWidth: 50 }}
-//           >
-//             <Chip
-//               label={assignment.subconcept.subconceptMaxscore}
-//               size="small"
-//               color="primary"
-//               variant="outlined"
-//             />
-//           </TableCell>
-//         {/* )} */}
-
-//         <TableCell 
-//       //  sx={{ minWidth: 150 }}
-//         >
-//           {isMobile ? (
-//             <Typography variant="caption">
-//               {formatDateTime(assignment.submittedDate).split(' ')[0]}
-//             </Typography>
-//           ) : (
-//             formatDateTime(assignment.submittedDate)
-//           )}
-//         </TableCell>
-
-//         <TableCell 
-//       //  sx={{ minWidth: 80 }}
-//         >
-//           {assignment.submittedFile && (
-//             <Button
-//               variant="outlined"
-//               size="small"
-//               data-tour-id="view-submitted-assignment-button"
-//               startIcon={!isMobile && <CloudUploadIcon />}
-//               href={assignment.submittedFile.downloadUrl}
-//               target="_blank"
-//               rel="noopener noreferrer"
-//               disabled={isDisabled}
-//             >
-//               {isMobile ? "View" : "View File"}
-//             </Button>
-//           )}
-//         </TableCell>
-
-//         <TableCell 
-//        // sx={{ minWidth: 80 }}
-//         >
-//           <TextField type="number" size="small" value={localScore} onChange={handleLocalScoreChange}
-//             error={fieldErrors?.score === true}
-//             helperText={fieldErrors?.score ? "Score is required" : ""}
-//             disabled={isDisabled}
-//             inputProps={{ min: 0, max: assignment.subconcept.subconceptMaxscore, style: { width: isMobile ? "60px" : "70px" }, }}
-//             sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", },
-//                 "&:hover fieldset": { borderColor: "primary.main", }, }, }} />
-//         </TableCell>
-
-//         <TableCell 
-//        // sx={{ minWidth: 200 }}
-//         >
-//             <TextField size="small" multiline maxRows={3} value={localRemarks} onChange={handleLocalRemarksChange}
-//               error={fieldErrors?.remarks === true}
-//               helperText={fieldErrors?.remarks ? "Remark is required" : ""}
-//               disabled={isDisabled}
-//               inputProps={{ style: { width: isMobile ? "120px" : "150px", paddingBottom: "18px", }, maxLength: 150, }}
-//               InputProps={{
-//       endAdornment: (
-//         <InputAdornment position="end"
-//           sx={{ alignSelf: "flex-end", pb: "2px", pr: "2px", opacity: 0.6, fontSize: "0.7rem", }} >
-//           {localRemarks.length}/150
-//         </InputAdornment>
-//       ),
-//     }}
-//     sx={{
-//       "& .MuiOutlinedInput-root": {
-//         "& fieldset": {
-//           borderColor: "rgba(0, 0, 0, 0.2)",
-//         },
-//         "&:hover fieldset": {
-//           borderColor: "primary.main",
-//         },
-//       },
-//     }}
-//   />
-// </TableCell>
-
-//         <TableCell 
-//         //sx={{ minWidth: 100 }}
-//         >
-//           <Box display="flex" alignItems="center">
-//             <label htmlFor={`correction-file-${assignment.assignmentId}`}>
-//               <input
-//                 accept="*/*"
-//                 id={`correction-file-${assignment.assignmentId}`}
-//                 type="file"
-//                 style={{ display: "none" }}
-//                 onChange={(e) =>
-//                   onFileChange(assignment.assignmentId, e.target.files[0])
-//                 }
-//                 disabled={isDisabled}
-//               />
-//               <Tooltip title="Upload correction file">
-//                 <IconButton
-//                   component="span"
-//                   color="primary"
-//                   size="small"
-//                   disabled={isDisabled}
-//                 >
-//                   <CloudUploadIcon />
-//                 </IconButton>
-//               </Tooltip>
-//             </label>
-//             {editedAssignments[assignment.assignmentId]?.file?.name ? (
-//               <Typography
-//                 variant="caption"
-//                 noWrap
-//                 sx={{ ml: 1, maxWidth: isMobile ? 60 : 100 }}
-//               >
-//                 {editedAssignments[assignment.assignmentId].file.name}
-//               </Typography>
-//             ) : (
-//               assignment.correctedFile && (
-//                 <Button
-//                   variant="text"
-//                   size="small"
-//                   href={assignment.correctedFile.downloadUrl}
-//                   target="_blank"
-//                   rel="noopener noreferrer"
-//                   sx={{ ml: 1, textTransform: "none" }}
-//                   disabled={isDisabled}
-//                 >
-//                   {isMobile ? "View" : "View File"}
-//                 </Button>
-//               )
-//             )}
-//           </Box>
-//         </TableCell>
-
-//         {/* {!isMobile && ( */}
-//           <TableCell 
-//           //sx={{ minWidth: 150 }}
-//           >
-//             {assignment.correctedDate ? (
-//               formatDateTime(assignment.correctedDate)
-//             ) : (
-//               <TextField
-//                 type="date"
-//                 size="small"
-//                 value={
-//                   editedAssignments[assignment.assignmentId]?.correctedDate || ""
-//                 }
-//                 onChange={(e) =>
-//                   onCorrectedDateChange(assignment.assignmentId, e.target.value)
-//                 }
-//                 disabled={isDisabled}
-//                 sx={{ width: 140 }}
-//               />
-//             )}
-//           </TableCell>
-//         {/* )} */}
-
-//         <TableCell 
-//       //  sx={{ minWidth: 100 }}
-//         >
-//           <Button
-//             variant="contained"
-//             color="primary"
-//             size="small"
-//             onClick={() => onSubmitCorrection(assignment.assignmentId)}
-//             disabled={isDisabled || assignment.correctedDate}
-//             sx={{
-//               textTransform: "none",
-//               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-//               "&:hover": {
-//                 boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-//               },
-//               minWidth: isMobile ? "70px" : "90px",
-//             }}
-//             data-tour-id="save"
-//           >
-//             {isSaving ? (
-//               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-//                 <CircularProgress size={16} sx={{ mr: 1 }} />
-//                 {isMobile ? "" : "Saving..."}
-//               </Box>
-//             ) : assignment.correctedDate ? (
-//               isMobile ? "Done" : "Corrected"
-//             ) : isMobile ? "Save" : "Save"}
-//           </Button>
-//         </TableCell>
-//       </TableRow>
-//     );
-//   }
-// );
-
-return (
+    return (
       <TableRow
         sx={{
           backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
@@ -365,84 +83,89 @@ return (
           },
         }}
       >
-        {/* Apply width to each TableCell matching tableHeaders */}
-        <TableCell sx={{ width: '8%', minWidth: '8%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <TableCell sx={{ minWidth: 90 }} >
           <Tooltip title={`User name: ${assignment.user.userName}`}>
             <span>{assignment.user.userId}</span>
           </Tooltip>
         </TableCell>
         
-        <TableCell sx={{ width: '15%', minWidth: '15%', overflow: 'hidden' }}>
-          <Tooltip
-            title={assignment.subconcept.subconceptDesc}
-            placement="top-start"
-            arrow
-            enterDelay={500}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: "text.primary",
-                lineHeight: 1.3,
-                maxHeight: "2.6em",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                wordBreak: "break-word",
-              }}
-              data-tour-id="topic"
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ width: "25%", minWidth: 230  }} >
+            <Tooltip
+              title={assignment.subconcept.subconceptDesc}
+              placement="top-start"
+              arrow
+              enterDelay={500}
             >
-              {assignment.subconcept.subconceptDesc}
-            </Typography>
-          </Tooltip>
-        </TableCell>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  color: "text.primary",
+                  lineHeight: 1.3,
+                  maxHeight: "2.6em",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  wordBreak: "break-word",
+                }}
+                data-tour-id="topic"
+              >
+                {assignment.subconcept.subconceptDesc}
+              </Typography>
+            </Tooltip>
+          </TableCell>
+        {/* )} */}
 
-        <TableCell sx={{ width: '10%', minWidth: '10%' }}>
-          {assignment.subconcept.dependencies &&
-          assignment.subconcept.dependencies.length > 0 ? (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {assignment.subconcept.dependencies.map((dep, index) => (
-                <Chip
-                  key={index}
-                  label={dep.subconceptId}
-                  size="small"
-                  sx={{
-                    bgcolor: DEPENDENCY_CHIP_COLOR,
-                    cursor: "pointer",
-                    "&:hover": { opacity: 0.8 },
-                  }}
-                  onClick={() =>
-                    handleOpenContent(
-                      dep.subconceptId,
-                      dep.subconceptDesc,
-                      dep.subconceptLink,
-                      dep.subconceptType
-                    )
-                  }
-                  data-tour-id="reference"
-                />
-              ))}
-            </Box>
-          ) : (
-            <Typography variant="caption" color="text.secondary">
-              None
-            </Typography>
-          )}
-        </TableCell>
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ minWidth: 100 }} >
+            {assignment.subconcept.dependencies &&
+            assignment.subconcept.dependencies.length > 0 ? (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {assignment.subconcept.dependencies.map((dep, index) => (
+                  <Chip
+                    key={index}
+                    label={dep.subconceptId}
+                    size="small"
+                    sx={{
+                      bgcolor: DEPENDENCY_CHIP_COLOR,
+                      cursor: "pointer",
+                      "&:hover": { opacity: 0.8 },
+                    }}
+                    onClick={() =>
+                      handleOpenContent(
+                        dep.subconceptId,
+                        dep.subconceptDesc,
+                        dep.subconceptLink,
+                        dep.subconceptType
+                      )
+                    }
+                    data-tour-id="reference"
+                  />
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                None
+              </Typography>
+            )}
+          </TableCell>
+        {/* )} */}
 
-        <TableCell align="center" sx={{ width: '7%', minWidth: '7%' }}>
-          <Chip
-            label={assignment.subconcept.subconceptMaxscore}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        </TableCell>
+        {/* {!isMobile && ( */}
+          <TableCell align="center" sx={{ minWidth: 50 }}>
+            <Chip
+              label={assignment.subconcept.subconceptMaxscore}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          </TableCell>
+        {/* )} */}
 
-        <TableCell sx={{ width: '10%', minWidth: '10%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <TableCell sx={{ minWidth: 150 }} >
           {isMobile ? (
             <Typography variant="caption">
               {formatDateTime(assignment.submittedDate).split(' ')[0]}
@@ -452,7 +175,7 @@ return (
           )}
         </TableCell>
 
-        <TableCell sx={{ width: '8%', minWidth: '8%' }}>
+        <TableCell  sx={{ minWidth: 80 }} >
           {assignment.submittedFile && (
             <Button
               variant="outlined"
@@ -469,56 +192,44 @@ return (
           )}
         </TableCell>
 
-        <TableCell sx={{ width: '7%', minWidth: '7%' }}>
-          <TextField 
-            type="number" 
-            size="small" 
-            value={localScore} 
-            onChange={handleLocalScoreChange}
+        <TableCell sx={{ minWidth: 80 }} >
+          <TextField type="number" size="small" value={localScore} onChange={handleLocalScoreChange}
             error={fieldErrors?.score === true}
             helperText={fieldErrors?.score ? "Score is required" : ""}
             disabled={isDisabled}
-            inputProps={{ 
-              min: 0, 
-              max: assignment.subconcept.subconceptMaxscore, 
-              style: { width: isMobile ? "60px" : "70px" }, 
-            }}
-            sx={{ 
-              width: '100%',
-              "& .MuiOutlinedInput-root": { 
-                "& fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", },
-                "&:hover fieldset": { borderColor: "primary.main", }, 
-              }, 
-            }} 
-          />
+            inputProps={{ min: 0, max: assignment.subconcept.subconceptMaxscore, style: { width: isMobile ? "60px" : "70px" }, }}
+            sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", },
+                "&:hover fieldset": { borderColor: "primary.main", }, }, }} />
         </TableCell>
 
-        <TableCell sx={{ width: '15%', minWidth: '15%' }}>
-          <TextField 
-            size="small" 
-            multiline 
-            maxRows={3} 
-            value={localRemarks} 
-            onChange={handleLocalRemarksChange}
-            error={fieldErrors?.remarks === true}
-            helperText={fieldErrors?.remarks ? "Remark is required" : ""}
-            disabled={isDisabled}
-            fullWidth
-            sx={{
-              width: '100%',
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "primary.main",
-                },
-              },
-            }}
-          />
-        </TableCell>
+        <TableCell sx={{ minWidth: 200 }} >
+            <TextField size="small" multiline maxRows={3} value={localRemarks} onChange={handleLocalRemarksChange}
+              error={fieldErrors?.remarks === true}
+              helperText={fieldErrors?.remarks ? "Remark is required" : ""}
+              disabled={isDisabled}
+              inputProps={{ style: { width: isMobile ? "120px" : "150px", paddingBottom: "18px", }, maxLength: 150, }}
+              InputProps={{
+      endAdornment: (
+        <InputAdornment position="end"
+          sx={{ alignSelf: "flex-end", pb: "2px", pr: "2px", opacity: 0.6, fontSize: "0.7rem", }} >
+          {localRemarks.length}/150
+        </InputAdornment>
+      ),
+    }}
+    sx={{
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "rgba(0, 0, 0, 0.2)",
+        },
+        "&:hover fieldset": {
+          borderColor: "primary.main",
+        },
+      },
+    }}
+  />
+</TableCell>
 
-        <TableCell sx={{ width: '10%', minWidth: '10%' }}>
+        <TableCell sx={{ minWidth: 100 }} >
           <Box display="flex" alignItems="center">
             <label htmlFor={`correction-file-${assignment.assignmentId}`}>
               <input
@@ -546,7 +257,7 @@ return (
               <Typography
                 variant="caption"
                 noWrap
-                sx={{ ml: 1, maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                sx={{ ml: 1, maxWidth: isMobile ? 60 : 100 }}
               >
                 {editedAssignments[assignment.assignmentId].file.name}
               </Typography>
@@ -558,7 +269,7 @@ return (
                   href={assignment.correctedFile.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  sx={{ ml: 1, textTransform: "none", maxWidth: '80px', overflow: 'hidden' }}
+                  sx={{ ml: 1, textTransform: "none" }}
                   disabled={isDisabled}
                 >
                   {isMobile ? "View" : "View File"}
@@ -568,26 +279,28 @@ return (
           </Box>
         </TableCell>
 
-        <TableCell sx={{ width: '10%', minWidth: '10%' }}>
-          {assignment.correctedDate ? (
-            formatDateTime(assignment.correctedDate)
-          ) : (
-            <TextField
-              type="date"
-              size="small"
-              value={
-                editedAssignments[assignment.assignmentId]?.correctedDate || ""
-              }
-              onChange={(e) =>
-                onCorrectedDateChange(assignment.assignmentId, e.target.value)
-              }
-              disabled={isDisabled}
-              sx={{ width: '100%' }}
-            />
-          )}
-        </TableCell>
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ minWidth: 150 }} >
+            {assignment.correctedDate ? (
+              formatDateTime(assignment.correctedDate)
+            ) : (
+              <TextField
+                type="date"
+                size="small"
+                value={
+                  editedAssignments[assignment.assignmentId]?.correctedDate || ""
+                }
+                onChange={(e) =>
+                  onCorrectedDateChange(assignment.assignmentId, e.target.value)
+                }
+                disabled={isDisabled}
+                sx={{ width: 140 }}
+              />
+            )}
+          </TableCell>
+        {/* )} */}
 
-        <TableCell sx={{ width: '8%', minWidth: '8%' }}>
+        <TableCell sx={{ minWidth: 100 }} >
           <Button
             variant="contained"
             color="primary"
@@ -601,7 +314,6 @@ return (
                 boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
               },
               minWidth: isMobile ? "70px" : "90px",
-              width: '100%',
             }}
             data-tour-id="save"
           >
@@ -619,6 +331,283 @@ return (
     );
   }
 );
+
+
+
+
+
+
+
+
+
+
+
+
+// return (
+//       <TableRow
+//         sx={{
+//           backgroundColor: assignment.correctedDate ? LIGHT_TEAL : "inherit",
+//           color: assignment.correctedDate ? "black" : "inherit",
+//           transition: "background-color 0.2s ease",
+//           '&:hover': {
+//             backgroundColor: HOVER_COLOR,
+//           },
+//         }}
+//       >
+//         {/* Apply width to each TableCell matching tableHeaders */}
+//         <TableCell sx={{ width: '8%', minWidth: '8%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+//           <Tooltip title={`User name: ${assignment.user.userName}`}>
+//             <span>{assignment.user.userId}</span>
+//           </Tooltip>
+//         </TableCell>
+        
+//         <TableCell sx={{ width: '15%', minWidth: '15%', overflow: 'hidden' }}>
+//           <Tooltip
+//             title={assignment.subconcept.subconceptDesc}
+//             placement="top-start"
+//             arrow
+//             enterDelay={500}
+//           >
+//             <Typography
+//               variant="body2"
+//               sx={{
+//                 fontWeight: 600,
+//                 color: "text.primary",
+//                 lineHeight: 1.3,
+//                 maxHeight: "2.6em",
+//                 overflow: "hidden",
+//                 textOverflow: "ellipsis",
+//                 display: "-webkit-box",
+//                 WebkitLineClamp: 2,
+//                 WebkitBoxOrient: "vertical",
+//                 wordBreak: "break-word",
+//               }}
+//               data-tour-id="topic"
+//             >
+//               {assignment.subconcept.subconceptDesc}
+//             </Typography>
+//           </Tooltip>
+//         </TableCell>
+
+//         <TableCell sx={{ width: '10%', minWidth: '10%' }}>
+//           {assignment.subconcept.dependencies &&
+//           assignment.subconcept.dependencies.length > 0 ? (
+//             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+//               {assignment.subconcept.dependencies.map((dep, index) => (
+//                 <Chip
+//                   key={index}
+//                   label={dep.subconceptId}
+//                   size="small"
+//                   sx={{
+//                     bgcolor: DEPENDENCY_CHIP_COLOR,
+//                     cursor: "pointer",
+//                     "&:hover": { opacity: 0.8 },
+//                   }}
+//                   onClick={() =>
+//                     handleOpenContent(
+//                       dep.subconceptId,
+//                       dep.subconceptDesc,
+//                       dep.subconceptLink,
+//                       dep.subconceptType
+//                     )
+//                   }
+//                   data-tour-id="reference"
+//                 />
+//               ))}
+//             </Box>
+//           ) : (
+//             <Typography variant="caption" color="text.secondary">
+//               None
+//             </Typography>
+//           )}
+//         </TableCell>
+
+//         <TableCell align="center" sx={{ width: '7%', minWidth: '7%' }}>
+//           <Chip
+//             label={assignment.subconcept.subconceptMaxscore}
+//             size="small"
+//             color="primary"
+//             variant="outlined"
+//           />
+//         </TableCell>
+
+//         <TableCell sx={{ width: '10%', minWidth: '10%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+//           {isMobile ? (
+//             <Typography variant="caption">
+//               {formatDateTime(assignment.submittedDate).split(' ')[0]}
+//             </Typography>
+//           ) : (
+//             formatDateTime(assignment.submittedDate)
+//           )}
+//         </TableCell>
+
+//         <TableCell sx={{ width: '8%', minWidth: '8%' }}>
+//           {assignment.submittedFile && (
+//             <Button
+//               variant="outlined"
+//               size="small"
+//               data-tour-id="view-submitted-assignment-button"
+//               startIcon={!isMobile && <CloudUploadIcon />}
+//               href={assignment.submittedFile.downloadUrl}
+//               target="_blank"
+//               rel="noopener noreferrer"
+//               disabled={isDisabled}
+//             >
+//               {isMobile ? "View" : "View File"}
+//             </Button>
+//           )}
+//         </TableCell>
+
+//         <TableCell sx={{ width: '7%', minWidth: '7%' }}>
+//           <TextField 
+//             type="number" 
+//             size="small" 
+//             value={localScore} 
+//             onChange={handleLocalScoreChange}
+//             error={fieldErrors?.score === true}
+//             helperText={fieldErrors?.score ? "Score is required" : ""}
+//             disabled={isDisabled}
+//             inputProps={{ 
+//               min: 0, 
+//               max: assignment.subconcept.subconceptMaxscore, 
+//               style: { width: isMobile ? "60px" : "70px" }, 
+//             }}
+//             sx={{ 
+//               width: '100%',
+//               "& .MuiOutlinedInput-root": { 
+//                 "& fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", },
+//                 "&:hover fieldset": { borderColor: "primary.main", }, 
+//               }, 
+//             }} 
+//           />
+//         </TableCell>
+
+//         <TableCell sx={{ width: '15%', minWidth: '15%' }}>
+//           <TextField 
+//             size="small" 
+//             multiline 
+//             maxRows={3} 
+//             value={localRemarks} 
+//             onChange={handleLocalRemarksChange}
+//             error={fieldErrors?.remarks === true}
+//             helperText={fieldErrors?.remarks ? "Remark is required" : ""}
+//             disabled={isDisabled}
+//             fullWidth
+//             sx={{
+//               width: '100%',
+//               "& .MuiOutlinedInput-root": {
+//                 "& fieldset": {
+//                   borderColor: "rgba(0, 0, 0, 0.2)",
+//                 },
+//                 "&:hover fieldset": {
+//                   borderColor: "primary.main",
+//                 },
+//               },
+//             }}
+//           />
+//         </TableCell>
+
+//         <TableCell sx={{ width: '10%', minWidth: '10%' }}>
+//           <Box display="flex" alignItems="center">
+//             <label htmlFor={`correction-file-${assignment.assignmentId}`}>
+//               <input
+//                 accept="*/*"
+//                 id={`correction-file-${assignment.assignmentId}`}
+//                 type="file"
+//                 style={{ display: "none" }}
+//                 onChange={(e) =>
+//                   onFileChange(assignment.assignmentId, e.target.files[0])
+//                 }
+//                 disabled={isDisabled}
+//               />
+//               <Tooltip title="Upload correction file">
+//                 <IconButton
+//                   component="span"
+//                   color="primary"
+//                   size="small"
+//                   disabled={isDisabled}
+//                 >
+//                   <CloudUploadIcon />
+//                 </IconButton>
+//               </Tooltip>
+//             </label>
+//             {editedAssignments[assignment.assignmentId]?.file?.name ? (
+//               <Typography
+//                 variant="caption"
+//                 noWrap
+//                 sx={{ ml: 1, maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+//               >
+//                 {editedAssignments[assignment.assignmentId].file.name}
+//               </Typography>
+//             ) : (
+//               assignment.correctedFile && (
+//                 <Button
+//                   variant="text"
+//                   size="small"
+//                   href={assignment.correctedFile.downloadUrl}
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   sx={{ ml: 1, textTransform: "none", maxWidth: '80px', overflow: 'hidden' }}
+//                   disabled={isDisabled}
+//                 >
+//                   {isMobile ? "View" : "View File"}
+//                 </Button>
+//               )
+//             )}
+//           </Box>
+//         </TableCell>
+
+//         <TableCell sx={{ width: '10%', minWidth: '10%' }}>
+//           {assignment.correctedDate ? (
+//             formatDateTime(assignment.correctedDate)
+//           ) : (
+//             <TextField
+//               type="date"
+//               size="small"
+//               value={
+//                 editedAssignments[assignment.assignmentId]?.correctedDate || ""
+//               }
+//               onChange={(e) =>
+//                 onCorrectedDateChange(assignment.assignmentId, e.target.value)
+//               }
+//               disabled={isDisabled}
+//               sx={{ width: '100%' }}
+//             />
+//           )}
+//         </TableCell>
+
+//         <TableCell sx={{ width: '8%', minWidth: '8%' }}>
+//           <Button
+//             variant="contained"
+//             color="primary"
+//             size="small"
+//             onClick={() => onSubmitCorrection(assignment.assignmentId)}
+//             disabled={isDisabled || assignment.correctedDate}
+//             sx={{
+//               textTransform: "none",
+//               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+//               "&:hover": {
+//                 boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+//               },
+//               minWidth: isMobile ? "70px" : "90px",
+//               width: '100%',
+//             }}
+//             data-tour-id="save"
+//           >
+//             {isSaving ? (
+//               <Box sx={{ display: 'flex', alignItems: 'center' }}>
+//                 <CircularProgress size={16} sx={{ mr: 1 }} />
+//                 {isMobile ? "" : "Saving..."}
+//               </Box>
+//             ) : assignment.correctedDate ? (
+//               isMobile ? "Done" : "Corrected"
+//             ) : isMobile ? "Save" : "Save"}
+//           </Button>
+//         </TableCell>
+//       </TableRow>
+//     );
+//   }
+// );
 
 const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const theme = useTheme();
@@ -1110,32 +1099,32 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   };
 
   // Responsive table headers
-//   const tableHeaders = [
-//   { id: "user.userId", label: "User ID", mobile: true, width: '70px' },
-//   { id: "subconcept.subconceptDesc", label: "Topic", mobile: true, width: { xs: '100px', md: '100px' } },
-//   { id: "references", label: "References", mobile: true, width: '100px' },
-//   { id: "subconcept.subconceptMaxscore", label: "Max\nScore", mobile: true, align: "center", width: '60px' },
-//   { id: "submittedDate", label: "Submitted\nDate", mobile: true, width: { xs: '90px', md: '120px' } },
-//   { id: "submittedFile", label: "Submitted\nFile", mobile: true, width: '80px' },
-//   { id: "score", label: "Score", mobile: true, width: '80px' },
-//   { id: "remarks", label: "Remarks", mobile: true, width: { xs: '120px', md: '180px' } },
-//   { id: "correctionFile", label: "Correction\nFile", mobile: true, width: '100px' },
-//   { id: "correctedDate", label: "Date of\nCorrection", mobile: true, width: { xs: '100px', md: '120px' } },
-//   { id: "action", label: "Action", mobile: true, width: '80px' },
-// ];
-const tableHeaders = [
-  { id: "user.userId", label: "User ID", mobile: true, width: '8%' },
-  { id: "subconcept.subconceptDesc", label: "Topic", mobile: true, width: '15%' },
-  { id: "references", label: "References", mobile: true, width: '10%' },
-  { id: "subconcept.subconceptMaxscore", label: "Max\nScore", mobile: true, align: "center", width: '7%' },
-  { id: "submittedDate", label: "Submitted\nDate", mobile: true, width: '10%' },
-  { id: "submittedFile", label: "Submitted\nFile", mobile: true, width: '8%' },
-  { id: "score", label: "Score", mobile: true, width: '7%' },
-  { id: "remarks", label: "Remarks", mobile: true, width: '15%' },
-  { id: "correctionFile", label: "Correction\nFile", mobile: true, width: '10%' },
-  { id: "correctedDate", label: "Date of\nCorrection", mobile: true, width: '10%' },
-  { id: "action", label: "Action", mobile: true, width: '8%' },
+  const tableHeaders = [
+  { id: "user.userId", label: "User ID", mobile: true, width: '70px' },
+  { id: "subconcept.subconceptDesc", label: "Topic", mobile: true, width: { xs: '100px', md: '100px' } },
+  { id: "references", label: "References", mobile: true, width: '100px' },
+  { id: "subconcept.subconceptMaxscore", label: "Max\nScore", mobile: true, align: "center", width: '60px' },
+  { id: "submittedDate", label: "Submitted\nDate", mobile: true, width: { xs: '90px', md: '120px' } },
+  { id: "submittedFile", label: "Submitted\nFile", mobile: true, width: '80px' },
+  { id: "score", label: "Score", mobile: true, width: '80px' },
+  { id: "remarks", label: "Remarks", mobile: true, width: { xs: '120px', md: '180px' } },
+  { id: "correctionFile", label: "Correction\nFile", mobile: true, width: '100px' },
+  { id: "correctedDate", label: "Date of\nCorrection", mobile: true, width: { xs: '100px', md: '120px' } },
+  { id: "action", label: "Action", mobile: true, width: '80px' },
 ];
+// const tableHeaders = [
+//   { id: "user.userId", label: "User ID", mobile: true, width: '8%' },
+//   { id: "subconcept.subconceptDesc", label: "Topic", mobile: true, width: '15%' },
+//   { id: "references", label: "References", mobile: true, width: '10%' },
+//   { id: "subconcept.subconceptMaxscore", label: "Max\nScore", mobile: true, align: "center", width: '7%' },
+//   { id: "submittedDate", label: "Submitted\nDate", mobile: true, width: '10%' },
+//   { id: "submittedFile", label: "Submitted\nFile", mobile: true, width: '8%' },
+//   { id: "score", label: "Score", mobile: true, width: '7%' },
+//   { id: "remarks", label: "Remarks", mobile: true, width: '15%' },
+//   { id: "correctionFile", label: "Correction\nFile", mobile: true, width: '10%' },
+//   { id: "correctedDate", label: "Date of\nCorrection", mobile: true, width: '10%' },
+//   { id: "action", label: "Action", mobile: true, width: '8%' },
+// ];
 
   return (
   <Card sx={{ overflowX: "auto", overflowY: "visible", }}>
@@ -1297,71 +1286,43 @@ const tableHeaders = [
             overflowY: "hidden", WebkitOverflowScrolling: "touch", boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
             "&::-webkit-scrollbar": { height: "8px", },
             "&::-webkit-scrollbar-thumb": { background: "#bdbdbd", borderRadius: "4px", },
-            "&::-webkit-scrollbar-thumb:hover": { background: "#9e9e9e", }, }} 
+            "&::-webkit-scrollbar-thumb:hover": { background: "#9e9e9e", }, }}
+          > */}
+<TableContainer component={Paper} sx={{ mt: 2, width: "100%", overflowX: "auto", overflowY: "hidden", 
+    WebkitOverflowScrolling: "touch", boxShadow: "0 2px 8px rgba(0,0,0,0.05)",}} >
+  <Table size="small"sx={{ width: "auto", minWidth: "100%", tableLayout: "fixed" }}>
+  <TableHead>
+    <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
+      {tableHeaders.map((header) =>
+        (!isMobile || header.mobile) && (
+          <TableCell key={header.id} align={header.align || "left"}
+      sx={{ whiteSpace: "nowrap", width: header.width, minWidth: header.width, py: 1, fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.2 }} >
+      {/* sx={{ whiteSpace: "nowrap", width: header.width, minWidth: header.width,py: 1, fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.2,overflow: 'hidden',textOverflow: 'ellipsis'}} > */}
+      {header.id.includes('.') ? (
+          <TableSortLabel
+            active={orderBy === header.id}
+            direction={orderBy === header.id ? order : "asc"}
+            onClick={() => handleRequestSort(header.id)}
           >
-
-        <Table size="small"sx={{ width: "max-content", minWidth: "100%", tableLayout: "fixed" }}> */}
-        <TableContainer
-  component={Paper}
-  sx={{
-    mt: 2,
-    width: "100%",
-    overflowX: "auto",
-    overflowY: "hidden",
-    WebkitOverflowScrolling: "touch",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  }}
->
-  <Table 
-    size="small"
-    sx={{ 
-      width: "100%",
-      minWidth: "100%", // Ensure it takes full width
-      tableLayout: "fixed"
-    }}
-  >
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
-              {tableHeaders.map((header) =>
-                (!isMobile || header.mobile) && (
-                  <TableCell key={header.id} align={header.align || "left"}
-                  //sx={{ whiteSpace: "nowrap", width: header.width, minWidth: header.width, py: 1, fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.2 }} >
-                  sx={{ 
-    whiteSpace: "nowrap", 
-    width: header.width, 
-    minWidth: header.width,
-    py: 1, 
-    fontSize: '0.75rem', 
-    fontWeight: 600, 
-    lineHeight: 1.2,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  }} > 
-                  {header.id.includes('.') ? (
-                      <TableSortLabel
-                        active={orderBy === header.id}
-                        direction={orderBy === header.id ? order : "asc"}
-                        onClick={() => handleRequestSort(header.id)}
-                      >
-                            {header.label}
-                            {header.id === "score" || header.id === "remarks" && (
-                              <span style={{ color: "red" }}> *</span>
-                            )}
-                          </TableSortLabel>
-                        ) : (
-                          <>
-                            {header.label}
-                            {(header.id === "score" ||
-                                header.id === "remarks") && (
-                                <span style={{ color: "red" }}> *</span>
-                              )}
-                          </>
-                        )}
-                      </TableCell>
-                    )
+                {header.label}
+                {header.id === "score" || header.id === "remarks" && (
+                  <span style={{ color: "red" }}> *</span>
+                )}
+              </TableSortLabel>
+            ) : (
+              <>
+                {header.label}
+                {(header.id === "score" ||
+                    header.id === "remarks") && (
+                    <span style={{ color: "red" }}> *</span>
                   )}
-                </TableRow>
-              </TableHead>
+              </>
+            )}
+          </TableCell>
+            )
+          )}
+    </TableRow>
+  </TableHead>
               <TableBody>
                 {currentAssignments.map((assignment) => (
                   <AssignmentRow
