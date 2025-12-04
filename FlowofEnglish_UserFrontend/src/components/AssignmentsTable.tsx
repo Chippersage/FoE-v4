@@ -18,19 +18,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Memoized Assignment Row Component
 const AssignmentRow = React.memo(
-  ({
-    assignment,
-    editedAssignments,
-    onScoreChange,
-    onRemarksChange,
-    onFileChange,
-    onCorrectedDateChange,
-    onSubmitCorrection,
-    formatDateTime,
-    handleOpenContent,
-    savingAssignmentId, // New prop to track which assignment is being saved
-    fieldErrors,
-    isMobile,
+  ({ assignment, editedAssignments, onScoreChange, onRemarksChange, onFileChange, onCorrectedDateChange, onSubmitCorrection, formatDateTime,
+    handleOpenContent, savingAssignmentId, fieldErrors, isMobile,
   }) => {
     const LIGHT_TEAL = "#e6f5f5";
     const DEPENDENCY_CHIP_COLOR = "#f0e6ff";
@@ -40,7 +29,8 @@ const AssignmentRow = React.memo(
     const isSaving = savingAssignmentId === assignment.assignmentId;
     
     // Check if all assignments are disabled (when any assignment is being saved)
-    const isDisabled = savingAssignmentId !== null;
+    // const isDisabled = savingAssignmentId !== null;
+    const isDisabled = Boolean(savingAssignmentId);
 
     // Debounced handlers to reduce state updates
     const debouncedScoreChange = useCallback(
@@ -93,14 +83,14 @@ const AssignmentRow = React.memo(
           },
         }}
       >
-        <TableCell>
+        <TableCell sx={{ minWidth: 90 }}>
           <Tooltip title={`User name: ${assignment.user.userName}`}>
             <span>{assignment.user.userId}</span>
           </Tooltip>
         </TableCell>
         
-        {!isMobile && (
-          <TableCell sx={{ width: "25%" }}>
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ width: "25%", minWidth: 230  }}>
             <Tooltip
               title={assignment.subconcept.subconceptDesc}
               placement="top-start"
@@ -127,10 +117,10 @@ const AssignmentRow = React.memo(
               </Typography>
             </Tooltip>
           </TableCell>
-        )}
+        {/* )} */}
 
-        {!isMobile && (
-          <TableCell>
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ minWidth: 100 }}>
             {assignment.subconcept.dependencies &&
             assignment.subconcept.dependencies.length > 0 ? (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -162,10 +152,10 @@ const AssignmentRow = React.memo(
               </Typography>
             )}
           </TableCell>
-        )}
+        {/* )} */}
 
-        {!isMobile && (
-          <TableCell align="center">
+        {/* {!isMobile && ( */}
+          <TableCell align="center" sx={{ minWidth: 50 }}>
             <Chip
               label={assignment.subconcept.subconceptMaxscore}
               size="small"
@@ -173,9 +163,9 @@ const AssignmentRow = React.memo(
               variant="outlined"
             />
           </TableCell>
-        )}
+        {/* )} */}
 
-        <TableCell>
+        <TableCell sx={{ minWidth: 150 }}>
           {isMobile ? (
             <Typography variant="caption">
               {formatDateTime(assignment.submittedDate).split(' ')[0]}
@@ -185,7 +175,7 @@ const AssignmentRow = React.memo(
           )}
         </TableCell>
 
-        <TableCell>
+        <TableCell sx={{ minWidth: 80 }}>
           {assignment.submittedFile && (
             <Button
               variant="outlined"
@@ -202,78 +192,44 @@ const AssignmentRow = React.memo(
           )}
         </TableCell>
 
-        <TableCell>
-          <TextField
-            type="number"
-            size="small"
-            value={localScore}
-            onChange={handleLocalScoreChange}
+        <TableCell sx={{ minWidth: 80 }}>
+          <TextField type="number" size="small" value={localScore} onChange={handleLocalScoreChange}
             error={fieldErrors?.score === true}
             helperText={fieldErrors?.score ? "Score is required" : ""}
             disabled={isDisabled}
-            inputProps={{
-              min: 0,
-              max: assignment.subconcept.subconceptMaxscore,
-              style: { width: isMobile ? "50px" : "60px" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "primary.main",
-                },
-              },
-            }}
-          />
+            inputProps={{ min: 0, max: assignment.subconcept.subconceptMaxscore, style: { width: isMobile ? "60px" : "70px" }, }}
+            sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", },
+                "&:hover fieldset": { borderColor: "primary.main", }, }, }} />
         </TableCell>
 
-        <TableCell>
-          <Box sx={{ position: "relative" }}>
-            <TextField
-              size="small"
-              multiline
-              maxRows={3}
-              value={localRemarks}
-              onChange={handleLocalRemarksChange}
+        <TableCell sx={{ minWidth: 200 }}>
+            <TextField size="small" multiline maxRows={3} value={localRemarks} onChange={handleLocalRemarksChange}
               error={fieldErrors?.remarks === true}
               helperText={fieldErrors?.remarks ? "Remark is required" : ""}
               disabled={isDisabled}
-              inputProps={{
-                style: { width: isMobile ? "120px" : "150px" },
-                maxLength: 150,
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "rgba(0, 0, 0, 0.2)",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "primary.main",
-                  },
-                },
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                position: "absolute",
-                bottom: "2px",
-                right: "8px",
-                fontSize: "0.7rem",
-                color: "text.secondary",
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
-                padding: "0 2px",
-                borderRadius: "2px",
-              }}
-            >
-              {localRemarks.length}/150
-            </Typography>
-          </Box>
-        </TableCell>
+              inputProps={{ style: { width: isMobile ? "120px" : "150px", paddingBottom: "18px", }, maxLength: 150, }}
+              InputProps={{
+      endAdornment: (
+        <InputAdornment position="end"
+          sx={{ alignSelf: "flex-end", pb: "2px", pr: "2px", opacity: 0.6, fontSize: "0.7rem", }} >
+          {localRemarks.length}/150
+        </InputAdornment>
+      ),
+    }}
+    sx={{
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "rgba(0, 0, 0, 0.2)",
+        },
+        "&:hover fieldset": {
+          borderColor: "primary.main",
+        },
+      },
+    }}
+  />
+</TableCell>
 
-        <TableCell>
+        <TableCell sx={{ minWidth: 100 }}>
           <Box display="flex" alignItems="center">
             <label htmlFor={`correction-file-${assignment.assignmentId}`}>
               <input
@@ -287,9 +243,9 @@ const AssignmentRow = React.memo(
                 disabled={isDisabled}
               />
               <Tooltip title="Upload correction file">
-                <IconButton 
-                  component="span" 
-                  color="primary" 
+                <IconButton
+                  component="span"
+                  color="primary"
                   size="small"
                   disabled={isDisabled}
                 >
@@ -323,8 +279,8 @@ const AssignmentRow = React.memo(
           </Box>
         </TableCell>
 
-        {!isMobile && (
-          <TableCell>
+        {/* {!isMobile && ( */}
+          <TableCell sx={{ minWidth: 150 }}>
             {assignment.correctedDate ? (
               formatDateTime(assignment.correctedDate)
             ) : (
@@ -338,13 +294,13 @@ const AssignmentRow = React.memo(
                   onCorrectedDateChange(assignment.assignmentId, e.target.value)
                 }
                 disabled={isDisabled}
-                sx={{ width: 130 }}
+                sx={{ width: 140 }}
               />
             )}
           </TableCell>
-        )}
+        {/* )} */}
 
-        <TableCell>
+        <TableCell sx={{ minWidth: 100 }}>
           <Button
             variant="contained"
             color="primary"
@@ -357,7 +313,7 @@ const AssignmentRow = React.memo(
               "&:hover": {
                 boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
               },
-              minWidth: isMobile ? "60px" : "auto",
+              minWidth: isMobile ? "70px" : "90px",
             }}
             data-tour-id="save"
           >
@@ -383,8 +339,23 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(isMobile ? 10 : 20);
+  // Get stored page from localStorage, default to 0
+  const storedPage = localStorage.getItem(`assignments_page_${cohortId}`);
+  const [page, setPage] = useState(storedPage ? parseInt(storedPage) : 0);
+  const storedRowsPerPage = localStorage.getItem('assignments_rows_per_page');
+  const [rowsPerPage, setRowsPerPage] = useState(
+    storedRowsPerPage ? parseInt(storedRowsPerPage) : (isMobile ? 10 : 20)
+  );
+
+  // Store page in localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(`assignments_page_${cohortId}`, page.toString());
+  }, [page, cohortId]);
+
+  // Store rowsPerPage in localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('assignments_rows_per_page', rowsPerPage.toString());
+  }, [rowsPerPage]);
 
   // Sorting states
   const [order, setOrder] = useState("asc");
@@ -463,9 +434,9 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
 
   // Adjust rows per page on mobile
   useEffect(() => {
-    setRowsPerPage(isMobile ? 10 : 20);
-    setPage(0);
-  }, [isMobile]);
+  setRowsPerPage(isMobile ? 10 : 20);
+}, [isMobile]);
+
 
   // Filter assignments based on search query
   useEffect(() => {
@@ -475,15 +446,12 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         return (
           assignment.user.userId.toLowerCase().includes(searchText) ||
           assignment.user.userName.toLowerCase().includes(searchText) ||
-          assignment.subconcept.subconceptDesc
-            .toLowerCase()
-            .includes(searchText) ||
+          assignment.subconcept.subconceptDesc.toLowerCase().includes(searchText) ||
           assignment.subconcept.subconceptId.toLowerCase().includes(searchText)
         );
       });
       setFilteredAssignments(filtered);
       sortData(filtered, orderBy, order);
-      setPage(0);
     }
   }, [searchQuery, assignments]);
 
@@ -587,7 +555,8 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
   };
 
@@ -854,21 +823,21 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
 
   // Responsive table headers
   const tableHeaders = [
-    { id: "user.userId", label: "User ID", mobile: true },
-    { id: "subconcept.subconceptDesc", label: "Topic", mobile: false },
-    { id: "references", label: "References", mobile: false },
-    { id: "subconcept.subconceptMaxscore", label: "Max Score", mobile: false, align: "center" },
-    { id: "submittedDate", label: "Submitted Date", mobile: true },
-    { id: "submittedFile", label: "Submitted File", mobile: true },
-    { id: "score", label: "Score", mobile: true },
-    { id: "remarks", label: "Remarks", mobile: true },
-    { id: "correctionFile", label: "Correction File", mobile: true },
-    { id: "correctedDate", label: "Date of Correction", mobile: false },
-    { id: "action", label: "Action", mobile: true },
-  ];
+  { id: "user.userId", label: "User ID", mobile: true, width: '70px' },
+  { id: "subconcept.subconceptDesc", label: "Topic", mobile: true, width: { xs: '100px', md: '100px' } },
+  { id: "references", label: "References", mobile: true, width: '100px' },
+  { id: "subconcept.subconceptMaxscore", label: "Max\nScore", mobile: true, align: "center", width: '60px' },
+  { id: "submittedDate", label: "Submitted\nDate", mobile: true, width: { xs: '90px', md: '120px' } },
+  { id: "submittedFile", label: "Submitted\nFile", mobile: true, width: '80px' },
+  { id: "score", label: "Score", mobile: true, width: '80px' },
+  { id: "remarks", label: "Remarks", mobile: true, width: { xs: '120px', md: '180px' } },
+  { id: "correctionFile", label: "Correction\nFile", mobile: true, width: '100px' },
+  { id: "correctedDate", label: "Date of\nCorrection", mobile: true, width: { xs: '100px', md: '120px' } },
+  { id: "action", label: "Action", mobile: true, width: '80px' },
+];
 
   return (
-    <Card sx={{  p: { xs: 1, sm: 2, md: 3 }, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", width: '100%',maxWidth: '100%',overflow: 'hidden' }}>
+  <Card sx={{ overflowX: "auto", overflowY: "visible", }}>
       <Box
         display="flex"
         flexDirection={{ xs: "column", md: "row" }}
@@ -883,15 +852,9 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             Assignments for {assignments[0]?.program?.programName}
           </Typography>
         </Box>
-        <Box 
-          display="flex" 
-          gap={1} 
-          flexWrap="wrap"
-          sx={{ 
-            justifyContent: { xs: 'flex-start', md: 'flex-end' },
-            maxWidth: { xs: '100%', md: 'auto' }
-          }}
-        >
+        <Box display="flex" gap={1} flexWrap="wrap"
+          sx={{ justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            maxWidth: { xs: '100%', md: 'auto' } }} >
           <Chip
             label={`Total: ${statistics.totalAssignments}`}
             color="default"
@@ -1028,41 +991,39 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
         <>
           <TableContainer
             component={Paper}
-            sx={{
-              mt: 2,
-              overflow: "auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-              "& .MuiTableRow-root:hover": {
-                backgroundColor: HOVER_COLOR,
-              },
-            }}
+            sx={{ mt: 2, width: "100%",
+            overflowX: "scroll",     // ✅ horizontal scroll always works
+            overflowY: "hidden", WebkitOverflowScrolling: "touch", boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            "&::-webkit-scrollbar": { height: "8px", },
+            "&::-webkit-scrollbar-thumb": { background: "#bdbdbd", borderRadius: "4px", },
+            "&::-webkit-scrollbar-thumb:hover": { background: "#9e9e9e", }, }} 
           >
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
-                  {tableHeaders.map((header) => 
-                    (!isMobile || header.mobile) && (
-                      <TableCell 
-                        key={header.id}
-                        align={header.align || "left"}
+
+        <Table size="small"sx={{ width: "max-content", minWidth: "100%", tableLayout: "fixed" }}>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: "#f0f8ff" }}>
+              {tableHeaders.map((header) =>
+                (!isMobile || header.mobile) && (
+                  <TableCell key={header.id} align={header.align || "left"}
+                  sx={{ whiteSpace: "nowrap", width: header.width, minWidth: header.width, py: 1, fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.2 }} >
+                    {header.id.includes('.') ? (
+                      <TableSortLabel
+                        active={orderBy === header.id}
+                        direction={orderBy === header.id ? order : "asc"}
+                        onClick={() => handleRequestSort(header.id)}
                       >
-                        {header.id.includes('.') ? (
-                          <TableSortLabel
-                            active={orderBy === header.id}
-                            direction={orderBy === header.id ? order : "asc"}
-                            onClick={() => handleRequestSort(header.id)}
-                          >
                             {header.label}
-                            {header.id === "score" || header.id === "remarks" ? (
+                            {header.id === "score" || header.id === "remarks" && (
                               <span style={{ color: "red" }}> *</span>
-                            ) : null}
+                            )}
                           </TableSortLabel>
                         ) : (
                           <>
                             {header.label}
-                            {header.id === "remarks" ? (
-                              <span style={{ color: "red" }}> *</span>
-                            ) : null}
+                            {(header.id === "score" ||
+                                header.id === "remarks") && (
+                                <span style={{ color: "red" }}> *</span>
+                              )}
                           </>
                         )}
                       </TableCell>
@@ -1092,25 +1053,46 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
             </Table>
           </TableContainer>
 
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 20, 50]}
-            component="div"
-            count={filteredAssignments.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+          {/* PAGINATION – aligned to the RIGHT */}
+          <Box
             sx={{
-    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-      m: 0,
-    },
-    position: "relative",
-    zIndex: 30,
-    backgroundColor: "white", // Ensure background covers any overlap
-    borderTop: "1px solid #f0f0f0",
-    mt: 2,
-  }}
-          />
+              mt: 2,
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              component="div"
+              count={filteredAssignments.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+                  {
+                    m: 0,
+                  },
+                backgroundColor: "white",
+                borderTop: "1px solid #f0f0f0",
+                px: { xs: 1, sm: 2 },
+                "& .MuiTablePagination-toolbar": {
+                  minHeight: { xs: "52px", sm: "64px" },
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  gap: { xs: 1, sm: 0 },
+                  justifyContent: "flex-end", // keep controls to the right
+                },
+                "& .MuiTablePagination-spacer": {
+                  flex: "0 0 auto",
+                },
+                "& .MuiTablePagination-actions": {
+                  marginLeft: { xs: 0, sm: "20px" },
+                },
+              }}
+            />
+          </Box>
         </>
       )}
 
@@ -1164,7 +1146,7 @@ const AssignmentsTable = ({ cohortId, onAssignmentsLoaded }) => {
       {/* Snackbar Alert */}
       <Snackbar
         open={alert.open}
-        autoHideDuration={6000}
+        autoHideDuration= {6000}
         onClose={() => setAlert({ ...alert, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
