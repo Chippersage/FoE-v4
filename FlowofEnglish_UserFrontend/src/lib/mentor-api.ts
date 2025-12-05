@@ -153,3 +153,73 @@ export async function fetchLearnerDetailedProgress(
   const resp = await fetch(url, { credentials: "include" });
   return handleResponse<LearnerDetailedProgress>(resp);
 }
+
+export async function fetchProgramReport(
+  userId: string,
+  programId: string
+): Promise<LearnerDetailedProgress> {
+  const url = `${API_BASE_URL}/reports/program/${encodeURIComponent(userId)}/${encodeURIComponent(programId)}`;
+  
+  console.log("📊 Fetching program report from:", url);
+  
+  const resp = await fetch(url, { 
+    credentials: "include",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch program report: ${resp.status} ${resp.statusText}`);
+  }
+  
+  return handleResponse<LearnerDetailedProgress>(resp);
+}
+
+ // Export data in various formats
+export const exportAPI = {
+  exportAsPDF: (data: any, filename: string) => {
+    // PDF export implementation
+    console.log("Exporting as PDF:", filename);
+  },
+  
+  exportAsExcel: (data: any, filename: string) => {
+    // Excel export implementation
+    console.log("Exporting as Excel:", filename);
+  },
+  
+  exportAsCSV: (data: any, filename: string) => {
+    // CSV export implementation
+    console.log("Exporting as CSV:", filename);
+  }
+};
+
+
+ // Test API connection
+export async function testAPIConnection(): Promise<boolean> {
+  try {
+    const testUrl = `${API_BASE_URL}/health`;
+    const response = await fetch(testUrl, { 
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("API Connection Test Failed:", error);
+    return false;
+  }
+}
+
+
+ // Helper function to format API URL
+export function getAPIUrl(endpoint: string, params?: Record<string, string>): string {
+  let url = `${API_BASE_URL}/${endpoint}`;
+  
+  if (params) {
+    const queryParams = new URLSearchParams(params);
+    url += `?${queryParams.toString()}`;
+  }
+  
+  return url;
+}

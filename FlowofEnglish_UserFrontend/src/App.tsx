@@ -107,14 +107,15 @@ export default function App() {
             }
           >
             <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
-            <Route path=":cohortId/progress" element={<LearnersProgressDashboard />} />
+            <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnersProgressDashboard />} />
             <Route path=":cohortId/activity" element={<LearnersActivityMonitor />} />
             <Route path=":cohortId/learners" element={<LearnersDetailsPage />} />
             <Route path=":cohortId/assignments" element={<AssignmentsPage />} />
             <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnerDetailPage />} />
             <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />}/>
-            {/* <Route path=":cohortId/analytics" element={...} /> */}
-            {/* <Route path=":cohortId/cohort-details" element={...} /> */}
+            <Route path=":cohortId/analytics" element={< LearnersProgressDashboard /> } />
+            {/* <Route path=":cohortId/cohort-details" element={...} />
+            http://localhost:5173/mentor/COMM-SVCE-1/learner/Harikrishna05/CC-3 */}
 
           </Route>
 
