@@ -1,4 +1,4 @@
-import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser,
+import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser, MentorCohortsResponse,
 } from "@/types/mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -17,9 +17,7 @@ export async function fetchMentorCohortUsers(
   cohortId: string
 ): Promise<MentorCohortMetadata> {
 
-  const url = `${API_BASE_URL}/user-cohort-mappings/mentor/${encodeURIComponent(
-    mentorId
-  )}/cohort/${encodeURIComponent(cohortId)}/users`;
+  const url = `${API_BASE_URL}/user-cohort-mappings/mentor/${encodeURIComponent(mentorId)}/cohort/${encodeURIComponent(cohortId)}/users`;
 
   console.log(" Fetch cohort users API:", url);
 
@@ -33,9 +31,7 @@ export async function disableUserInCohort(
   cohortId: string,
   reason: string
 ) {
-  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(
-    userId
-  )}/cohort/${encodeURIComponent(cohortId)}/disable`;
+  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(userId)}/cohort/${encodeURIComponent(cohortId)}/disable`;
 
   const resp = await fetch(url, {
     method: "POST",
@@ -52,9 +48,7 @@ export async function reactivateUserInCohort(
   userId: string,
   cohortId: string
 ) {
-  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(
-    userId
-  )}/cohort/${encodeURIComponent(cohortId)}/reactivate`;
+  const url = `${API_BASE_URL}/user-cohort-mappings/user/${encodeURIComponent(userId)}/cohort/${encodeURIComponent(cohortId)}/reactivate`;
 
   const resp = await fetch(url, {
     method: "POST",
@@ -69,9 +63,7 @@ export async function fetchLearnerSessionActivity(
   cohortId: string,
   mentorUserId: string
 ): Promise<LearnerSessionActivity[]> {
-  const url = `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
-    cohortId
-  )}/mentor/${encodeURIComponent(mentorUserId)}`;
+  const url = `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent( cohortId)}/mentor/${encodeURIComponent(mentorUserId)}`;
   const resp = await fetch(url, { credentials: "include" });
   const data = await handleResponse<any>(resp);
   
@@ -110,11 +102,7 @@ export async function fetchMentorCohortProgress(
     throw new Error("Program ID missing");
   }
 
-  const url = `${API_BASE_URL}/reports/mentor/${encodeURIComponent(
-    mentorId
-  )}/program/${encodeURIComponent(programId)}/cohort/${encodeURIComponent(
-    cohortId
-  )}/progress`;
+  const url = `${API_BASE_URL}/reports/mentor/${encodeURIComponent(mentorId)}/program/${encodeURIComponent(programId)}/cohort/${encodeURIComponent(cohortId)}/progress`;
 
   console.log("🔍 Mentor Progress API:", url);
 
@@ -147,17 +135,12 @@ export async function fetchLearnerDetailedProgress(
   userId: string,
   programId: string
 ): Promise<LearnerDetailedProgress> {
-  const url = `${API_BASE_URL}/reports/program/${encodeURIComponent(
-    userId
-  )}/${encodeURIComponent(programId)}`;
+  const url = `${API_BASE_URL}/reports/program/${encodeURIComponent(userId)}/${encodeURIComponent(programId)}`;
   const resp = await fetch(url, { credentials: "include" });
   return handleResponse<LearnerDetailedProgress>(resp);
 }
 
-export async function fetchProgramReport(
-  userId: string,
-  programId: string
-): Promise<LearnerDetailedProgress> {
+export async function fetchProgramReport(userId: string, programId: string): Promise<LearnerDetailedProgress> {
   const url = `${API_BASE_URL}/reports/program/${encodeURIComponent(userId)}/${encodeURIComponent(programId)}`;
   
   console.log("📊 Fetching program report from:", url);
@@ -177,6 +160,15 @@ export async function fetchProgramReport(
   return handleResponse<LearnerDetailedProgress>(resp);
 }
 
+//Fetching all assigned mentor cohorts
+export async function fetchMentorCohorts(mentorId: string): Promise<MentorCohortsResponse> {
+  const url = `${API_BASE_URL}/users/${encodeURIComponent(mentorId)}/cohorts`;
+  console.log("🔍 Fetching mentor cohorts:", url);
+  
+  const resp = await fetch(url, { credentials: "include" });
+  return handleResponse<MentorCohortsResponse>(resp);
+}
+
  // Export data in various formats
 export const exportAPI = {
   exportAsPDF: (data: any, filename: string) => {
@@ -194,7 +186,6 @@ export const exportAPI = {
     console.log("Exporting as CSV:", filename);
   }
 };
-
 
  // Test API connection
 export async function testAPIConnection(): Promise<boolean> {

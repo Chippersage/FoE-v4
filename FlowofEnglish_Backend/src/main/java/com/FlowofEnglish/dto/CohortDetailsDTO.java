@@ -1,14 +1,18 @@
 package com.FlowofEnglish.dto;
 
+import java.time.OffsetDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CohortDetailsDTO {
     private String cohortId;
     private String cohortName;
+    private OffsetDateTime cohortStartDate;
+    private OffsetDateTime cohortEndDate;
     private ProgramCountDTO program;
     private int totalUsers;
-    private int activeUsers;
+	private int activeUsers;
     private int deactivatedUsers;
     
     // Getters and Setters
@@ -23,6 +27,18 @@ public class CohortDetailsDTO {
 	}
 	public void setCohortName(String cohortName) {
 		this.cohortName = cohortName;
+	}
+	public OffsetDateTime getCohortStartDate() {
+		return cohortStartDate;
+	}
+	public void setCohortStartDate(OffsetDateTime cohortStartDate) {
+		this.cohortStartDate = cohortStartDate;
+	}
+	public OffsetDateTime getCohortEndDate() {
+		return cohortEndDate;
+	}
+	public void setCohortEndDate(OffsetDateTime cohortEndDate) {
+		this.cohortEndDate = cohortEndDate;
 	}
 	public ProgramCountDTO getProgram() {
 		return program;

@@ -37,16 +37,6 @@ export interface SubconceptAttempt {
   latestAttemptDate?: string;
 }
 
-// export interface LearnerDetailedProgress {
-//   userId: string;
-//   userName?: string;
-//   programId: string;
-//   programName?: string;
-//   completedStages?: number;
-//   totalStages?: number;
-//   overallScore?: number;
-//   subconcepts: SubconceptAttempt[];
-// }
 
 export interface UnitProgress {
   unitId: string;
@@ -119,7 +109,7 @@ export interface MentorCohortMetadata {
   };
   users: MentorCohortUser[];
 }
-// src/types/mentor.types.ts
+
 export interface Attempt {
   attemptId: number;
   startTimestamp: number;
@@ -210,4 +200,58 @@ export interface LearnerDetailedProgress {
   scoreDistribution: ScoreDistribution;
   userId?: string;
   userName?: string;
+}
+
+// NEW: Fetch mentor's cohorts with assignment statistics
+export interface CohortWithProgram {
+  cohortId: string;
+  cohortName: string;
+  cohortStartDate: number;
+  cohortEndDate: number;
+  showLeaderboard: boolean;
+  delayedStageUnlock: boolean;
+  delayInDays: number;
+  enableAiEvaluation: boolean;
+  program: {
+    programId: string;
+    programName: string;
+    programDesc: string;
+    stagesCount: number;
+    unitCount: number;
+  };
+}
+
+export interface MentorCohortsResponse {
+  userDetails: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userPhoneNumber: string;
+    userAddress: string;
+    userType: string;
+    status: string;
+    createdAt: number;
+    organization: {
+      organizationId: string;
+      organizationName: string;
+      organizationAdminName: string;
+      organizationAdminEmail: string;
+      organizationAdminPhone: string;
+    };
+    allCohortsWithPrograms: CohortWithProgram[];
+  };
+  assignmentStatistics: {
+    correctedAssignments: number;
+    totalAssignments: number;
+    pendingAssignments: number;
+    totalCohortUserCount: number;
+    cohortDetails: {
+      [cohortId: string]: {
+        correctedAssignments: number;
+        totalAssignments: number;
+        pendingAssignments: number;
+        cohortUserCount: number;
+      };
+    };
+  };
 }
