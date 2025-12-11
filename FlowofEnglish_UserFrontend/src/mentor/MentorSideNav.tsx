@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User, Menu, X, ChevronDown } from "lucide-react";
 import axios from "axios";
+import { CircularProgress } from "@mui/material";
 import { useUserContext } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { fetchMentorCohorts, type CohortWithProgram } from "@/lib/mentor-api";
@@ -29,13 +30,14 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
   const cohortId = cohortIdProp ?? params.cohortId ?? "";
   const urlProgramId = params.programId ?? "";
 
-  const { clearAuth, user, selectedCohortWithProgram, setSelectedCohortWithProgram } = useUserContext();
+  const { clearAuth, user, selectedCohortWithProgram, setSelectedCohortWithProgram, setIsChangingCohort } = useUserContext();
   const [isLoading, setIsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCohortDropdown, setShowCohortDropdown] = useState(false);
   const [allCohorts, setAllCohorts] = useState<CohortWithProgram[]>([]);
   const [loadingCohorts, setLoadingCohorts] = useState(false);
+  const [isChanging, setIsChanging] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   
@@ -96,20 +98,33 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
     }
   };
 
-  const handleCohortChange = (newCohort: CohortWithProgram) => {
-    // Update context and localStorage
-    if (setSelectedCohortWithProgram) {
-      setSelectedCohortWithProgram(newCohort);
-    }
-    localStorage.setItem("selectedCohortWithProgram", JSON.stringify(newCohort));
-    
-    // Navigate to the dashboard of the new cohort
-    const newPath = `/mentor/${newCohort.cohortId}/${newCohort.program.programId}/dashboard`;
-    navigate(newPath);
-    setShowCohortDropdown(false);
-    setIsMobileMenuOpen(false);
-  };
+  const handleCohortChange = async (newCohort: CohortWithProgram) => {
+  if (isChanging) return;
+  
+  setIsChanging(true);
+  setIsChangingCohort(true);
+  
+  // Update context and localStorage
+  if (setSelectedCohortWithProgram) {
+    setSelectedCohortWithProgram(newCohort);
+  }
 
+  localStorage.setItem("selectedCohortWithProgram", JSON.stringify(newCohort));
+  
+  // Wait a bit to ensure state updates propagate
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Navigate to the dashboard of the new cohort
+  const newPath = `/mentor/${newCohort.cohortId}/${newCohort.program.programId}/dashboard`;
+  navigate(newPath);
+  setShowCohortDropdown(false);
+  setIsMobileMenuOpen(false);
+  
+  setTimeout(() => {
+    setIsChangingCohort(false);
+    setIsChanging(false);
+  }, 500);
+};
   // returns the correct path
   const makePath = (itemPath: string, needsProgram: boolean) => {
     if (!cohortId) return `/mentor/${itemPath}`;
@@ -249,7 +264,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
                   allCohorts.map((cohort) => (
                     <button
                       key={cohort.cohortId}
-                      onClick={() => handleCohortChange(cohort)}
+                      onClick={() => { handleCohortChange(cohort).catch(console.error) }}
                       className={`w-full p-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
                         cohort.cohortId === cohortId ? 'bg-blue-50' : ''
                       }`}

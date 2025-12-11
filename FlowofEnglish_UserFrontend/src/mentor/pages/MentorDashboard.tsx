@@ -55,18 +55,11 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
           )}
           {progress !== undefined && (
             <Box sx={{ mt: 2 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={progress} 
-                sx={{ 
-                  height: 8, 
-                  borderRadius: 4,
+              <LinearProgress variant="determinate" value={progress} 
+                sx={{ height: 8, borderRadius: 4,
                   backgroundColor: `${color}.50`,
                   '& .MuiLinearProgress-bar': {
-                    backgroundColor: `${color}.main`,
-                    borderRadius: 4
-                  }
-                }} 
+                    backgroundColor: `${color}.main`, borderRadius: 4 }}}
               />
               <Typography variant="caption" color={`${color}.main`} sx={{ mt: 0.5, display: 'block' }}>
                 {progress.toFixed(0)}% progress
@@ -75,8 +68,7 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
           )}
         </Box>
         <Box
-          sx={{
-            p: 2,
+          sx={{ p: 2,
             borderRadius: 3,
             bgcolor: `${color}.50`,
             color: `${color}.main`,
@@ -163,7 +155,7 @@ const getLatestSessionForUser = (sessions?: any[]) => {
 
 export default function MentorDashboardClean() {
   const { cohortId } = useParams<{ cohortId: string }>();
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram, isChangingCohort } = useUserContext();
   const mentorId = user?.userId ?? "";
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -222,19 +214,27 @@ export default function MentorDashboardClean() {
     }
   }, [cohortMeta]);
 
+
   useEffect(() => {
+    if (isChangingCohort) {
+      return;
+    }
     if (!cohortId || !mentorId) {
       setError("Missing cohortId or mentorId. Please re-select your cohort.");
       return;
     }
     fetchData();
-  }, [cohortId, mentorId]);
+  }, [cohortId, mentorId, isChangingCohort]);
 
   useEffect(() => {
+    if (isChangingCohort) {
+      return;
+    }
+    
     if (programId && cohortId && mentorId) {
       fetchCohortProgress();
     }
-  }, [programId, cohortId, mentorId]);
+  }, [programId, cohortId, mentorId, isChangingCohort]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -384,42 +384,59 @@ export default function MentorDashboardClean() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Cohort Dashboard
-            </Typography>
-            <Typography variant="h6" color="text.secondary">
-              {cohortMeta?.cohortName || "Loading..."} • {formatDate(cohortMeta?.cohortStartDate)} - {formatDate(cohortMeta?.cohortEndDate)}
-            </Typography>
-          </Box>
-          
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="subtitle1" color="text.primary">
-              {organization?.organizationName || "Organization"}
+      {/* Show loading overlay when cohort is changing */}
+      {isChangingCohort && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
+          <div className="text-center p-8 bg-white rounded-lg shadow-xl">
+            <CircularProgress className="mb-4" />
+            <Typography variant="h6" className="mb-2">
+              Switching to {selectedCohortWithProgram?.cohortName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Program: {cohortMeta?.program?.programName || programId || "Loading..."}
+              Loading cohort data...
             </Typography>
-          </Box>
-          
-          <IconButton
-            onClick={handleRefresh}
-            disabled={refreshing || loadingProgress}
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <RefreshCw className={refreshing || loadingProgress ? "animate-spin" : ""} size={20} />
-          </IconButton>
-        </Stack>
-      </Box>
+          </div>
+        </div>
+      )}
 
+      {/* Wrap ALL content in blur div when changing cohort */}
+      <div className={isChangingCohort ? "opacity-50 pointer-events-none blur-sm" : ""}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                Cohort Dashboard
+              </Typography>
+              <Typography variant="h6" color="text.secondary">
+                {cohortMeta?.cohortName || "Loading..."} • {formatDate(cohortMeta?.cohortStartDate)} - {formatDate(cohortMeta?.cohortEndDate)}
+              </Typography>
+            </Box>
+            
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="subtitle1" color="text.primary">
+                {organization?.organizationName || "Organization"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Program: {cohortMeta?.program?.programName || programId || "Loading..."}
+              </Typography>
+            </Box>
+            
+            <IconButton
+              onClick={handleRefresh}
+              disabled={refreshing || loadingProgress || isChangingCohort}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <RefreshCw className={refreshing || loadingProgress ? "animate-spin" : ""} size={20} />
+            </IconButton>
+          </Stack>
+        </Box>
+      
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
           <CircularProgress />
@@ -432,7 +449,7 @@ export default function MentorDashboardClean() {
         </Alert>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && !isChangingCohort && (
         <>
           {/* Stats Cards - FIXED GRID */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -494,6 +511,7 @@ export default function MentorDashboardClean() {
                   placeholder="Search learners by name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={isChangingCohort}
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
@@ -508,6 +526,7 @@ export default function MentorDashboardClean() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
+                disabled={isChangingCohort}
                 style={{
                   padding: '12px 16px',
                   border: '1px solid #E5E7EB',
@@ -525,9 +544,7 @@ export default function MentorDashboardClean() {
           </Paper>
 
           {/* Learners Table */}
-          <Paper sx={{ 
-              p: 3, 
-              borderRadius: 3,
+          <Paper sx={{ p: 3, borderRadius: 3,
               boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)'
             }}
           >
@@ -665,9 +682,14 @@ export default function MentorDashboardClean() {
           </Paper>
         </>
       )}
+      </div>
     </Container>
   );
 }
+
+
+
+
 
 // import React, { useEffect, useMemo, useState } from "react";
 // import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
