@@ -3,36 +3,39 @@ import React, { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useUserContext } from "./context/AuthContext";
 import Loader from "./components/Loader";
+import MentorLayout from "./mentor/layout/MentorLayout";
 
-// Lazy load pages (performance optimization)
 const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
 const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
 const CoursePage = lazy(() => import("./pages/CoursePage"));
 const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
-const ViewSubmissions = lazy(() => import("./pages/ViewSubmissions"));
+const ViewSubmissions = lazy(() => import("./mentor/pages/ViewSubmissions"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RootLayout = lazy(() => import("./pages/RootLayout"));
 
-// Mentor pages
 const MentorDashboard = lazy(() => import("./mentor/pages/MentorDashboard"));
-const StudentProgress = lazy(() => import("./mentor/pages/StudentProgress"));
+const StudentOverviewPage = lazy(() =>
+  import("./mentor/pages/StudentOverviewPage")
+);
+
+// New page
+const ViewLearnersPage = lazy(() =>
+  import("./mentor/pages/ViewLearnersPage")
+);
 
 const App: React.FC = () => {
   const { user } = useUserContext();
 
-  // Validate allowed user roles
   const isValidUserType =
     user?.userType?.toLowerCase() === "learner" ||
     user?.userType?.toLowerCase() === "mentor";
 
-  // Final condition for protected routes
   const isAuthenticatedAndValid = user?.userId && isValidUserType;
 
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-
-        {/* ------------- LOGIN ROUTE ------------- */}
+        {/* Login */}
         <Route
           path="/sign-in"
           element={
@@ -44,53 +47,104 @@ const App: React.FC = () => {
           }
         />
 
-        {/* ------------ PROTECTED ROUTES WRAPPED IN LAYOUT ------------ */}
+        {/* Root layout */}
         <Route element={<RootLayout />}>
-          
-          {/* Accessible by mentor + learner */}
           <Route
             path="/select-cohort"
-            element={isAuthenticatedAndValid ? <CohortSelectionPage /> : <Navigate to="/sign-in" />}
+            element={
+              isAuthenticatedAndValid ? (
+                <CohortSelectionPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
           />
 
           <Route
             path="/course/:programId"
-            element={isAuthenticatedAndValid ? <CoursePage /> : <Navigate to="/sign-in" />}
+            element={
+              isAuthenticatedAndValid ? (
+                <CoursePage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
           />
 
-          {/* USER PROGRESS PAGE (DIFFERENT FEATURE, KEEP IT) */}
           <Route
             path="/view-progress"
-            element={isAuthenticatedAndValid ? <ViewProgressPage /> : <Navigate to="/sign-in" />}
+            element={
+              isAuthenticatedAndValid ? (
+                <ViewProgressPage />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
           />
 
-          {/* ------------ MENTOR ONLY ROUTES ------------ */}
+          {/* Old submissions viewer */}
           <Route
             path="/view-submissions"
-            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
-              ? <ViewSubmissions />
-              : <Navigate to="/sign-in" />}
+            element={
+              isAuthenticatedAndValid &&
+              user?.userType?.toLowerCase() === "mentor" ? (
+                <ViewSubmissions />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
           />
 
+          {/* -----------------------
+               Mentor Routes
+             ----------------------- */}
           <Route
-            path="/mentor/dashboard"
-            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
-              ? <MentorDashboard />
-              : <Navigate to="/sign-in" />}
-          />
+            element={
+              isAuthenticatedAndValid &&
+              user?.userType?.toLowerCase() === "mentor" ? (
+                <MentorLayout />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          >
+            {/* Static dashboard (fallback) */}
+            <Route path="/mentor/dashboard" element={<MentorDashboard />} />
 
-          <Route
-            path="/mentor/student/:userId"
-            element={isAuthenticatedAndValid && user?.userType?.toLowerCase() === "mentor"
-              ? <StudentProgress />
-              : <Navigate to="/sign-in" />}
-          />
+            {/* Dynamic dashboard */}
+            <Route
+              path="/mentor/:cohortId/:programId/dashboard"
+              element={<MentorDashboard />}
+            />
+
+            {/* View Learners Page */}
+            <Route
+              path="/mentor/:cohortId/:programId/learners"
+              element={<ViewLearnersPage />}
+            />
+
+            {/* New learner overview page */}
+            <Route
+              path="/mentor/:cohortId/:programId/learner/:userId"
+              element={<StudentOverviewPage />}
+            />
+
+            {/* Assignments for specific cohort and program */}
+            <Route
+              path="/mentor/:cohortId/:programId/assignments"
+              element={<ViewSubmissions />}
+            />
+          </Route>
         </Route>
 
-        {/* DEFAULT REDIRECT */}
+        {/* Default redirect */}
         <Route
           path="/"
-          element={<Navigate to={isAuthenticatedAndValid ? "/select-cohort" : "/sign-in"} />}
+          element={
+            <Navigate
+              to={isAuthenticatedAndValid ? "/select-cohort" : "/sign-in"}
+            />
+          }
         />
 
         {/* 404 */}
