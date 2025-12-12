@@ -9,20 +9,19 @@ import {
   DocumentArrowDownIcon,
   ArrowTopRightOnSquareIcon,
   ArrowUpTrayIcon,
+  EyeIcon,
+  ChevronDownIcon,
+  CheckCircleIcon,
+  ChevronUpIcon,
 } from "@heroicons/react/24/outline";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 /*
   ViewSubmissions.tsx
-  - Uses localStorage key `selectedCohort` to read cohortId/cohortName
-  - Provides search, sort, pagination (page size select: 10/25/50/100)
-  - Avoids hook-order violations by keeping hooks at top-level
-  - Stores per-assignment editable values in `edits` state (no direct mutation of assignments)
-  - Collapses less-important fields into a per-row "More" dropdown (Option A chosen):
-      Visible columns: User ID, Topic, File, Score, Save
-      Hidden inside "More": References, Max Score, Submitted Date, Remarks, Corrected On, Corrected File
-  - Prevents horizontal overflow by truncating long text and hiding optional fields in dropdown
-  - Responsive and constrained to a max width so it doesn't go under sidebar
+  - Dropdown slides down below row when clicked
+  - Numbered pagination (1, 2, 3, ... 8, 9, Next)
+  - Reduced top gap
+  - Clean design matching image
 */
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -35,6 +34,191 @@ const ALLOWED_FILE_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
+
+// Dropdown content that slides down
+const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileChange }) => {
+  const formatDate = (ts) => {
+    if (!ts) return "—";
+    const n = Number(ts);
+    const when = n > 1e12 ? n : n * 1000;
+    return new Date(when).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="bg-blue-50 border-t border-blue-100 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Reference */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Reference</label>
+          {assignment.referenceLink ? (
+            <a
+              href={assignment.referenceLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+            >
+              {assignment.reference || "View Reference"}
+              <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+            </a>
+          ) : (
+            <div className="text-sm text-gray-600">{assignment.reference || "—"}</div>
+          )}
+        </div>
+
+        {/* Submitted Date */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Submitted Date</label>
+          <div className="text-sm">{formatDate(assignment.submittedDate)}</div>
+        </div>
+
+        {/* Corrected Date */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Corrected On</label>
+          <div className="text-sm">{assignment.correctedDate ? formatDate(assignment.correctedDate) : "—"}</div>
+        </div>
+
+        {/* Max Score */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Max Score</label>
+          <div className="text-sm font-medium">{assignment.maxScore || 5}</div>
+        </div>
+
+        {/* Remarks */}
+        <div className="space-y-1 md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Remarks</label>
+          <textarea
+            value={edit.remarks ?? ""}
+            onChange={(e) => onEditChange(assignment.id, { remarks: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            rows={2}
+            placeholder="Add remarks..."
+            disabled={isCorrected}
+          />
+        </div>
+
+        {/* Corrected File Upload */}
+        <div className="space-y-2 md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Corrected File</label>
+          {assignment.correctedDate ? (
+            <div className="inline-flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+              <CheckCircleIcon className="w-4 h-4" />
+              File uploaded
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <ArrowUpTrayIcon className="w-4 h-4 text-gray-600" />
+                <span className="text-sm">Upload File</span>
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.mp4,.pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    onFileChange(assignment.id, file);
+                  }}
+                  disabled={isCorrected}
+                />
+              </label>
+              {edit?.file && (
+                <div className="text-sm text-green-700 truncate">
+                  ✓ {edit.file.name}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Pagination component with numbered pages
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pages = [];
+  
+  // Always show first page
+  pages.push(1);
+  
+  // Calculate page range to show
+  let startPage = Math.max(2, currentPage - 1);
+  let endPage = Math.min(totalPages - 1, currentPage + 1);
+  
+  // Adjust if near start
+  if (currentPage <= 3) {
+    endPage = Math.min(5, totalPages - 1);
+  }
+  
+  // Adjust if near end
+  if (currentPage >= totalPages - 2) {
+    startPage = Math.max(2, totalPages - 4);
+  }
+  
+  // Add ellipsis after first page if needed
+  if (startPage > 2) {
+    pages.push("...");
+  }
+  
+  // Add middle pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  
+  // Add ellipsis before last page if needed
+  if (endPage < totalPages - 1) {
+    pages.push("...");
+  }
+  
+  // Always show last page if there is more than one page
+  if (totalPages > 1) {
+    pages.push(totalPages);
+  }
+  
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage <= 1}
+        className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        Previous
+      </button>
+      
+      <div className="flex items-center gap-1">
+        {pages.map((pageNum, idx) => (
+          <button
+            key={idx}
+            onClick={() => typeof pageNum === 'number' && onPageChange(pageNum)}
+            disabled={pageNum === "..."}
+            className={`min-w-[36px] h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
+              currentPage === pageNum
+                ? 'bg-blue-600 text-white border border-blue-600'
+                : pageNum === "..."
+                ? 'text-gray-400 cursor-default'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+      </div>
+      
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage >= totalPages}
+        className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
 
 const ViewSubmissions: React.FC = () => {
   const navigate = useNavigate();
@@ -70,8 +254,8 @@ const ViewSubmissions: React.FC = () => {
   // Per-row edits (stored by assignment id)
   const [edits, setEdits] = useState<{ [id: string]: { score?: number; remarks?: string; file?: File | null } }>({});
 
-  // Which row's "more" panel is open
-  const [openMoreRow, setOpenMoreRow] = useState<string | null>(null);
+  // Which row's dropdown is open
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Fetch assignments once cohortId is known
   useEffect(() => {
@@ -94,7 +278,7 @@ const ViewSubmissions: React.FC = () => {
           topic: a.subconcept?.subconceptDesc || "",
           reference: a.subconcept?.subconceptId || "",
           referenceLink: a.subconcept?.subconceptLink || "",
-          maxScore: a.subconcept?.subconceptMaxscore ?? null,
+          maxScore: a.subconcept?.subconceptMaxscore ?? 5,
           score: a.score ?? null,
           remarks: a.remarks ?? "",
           fileUrl: a.submittedFile?.downloadUrl ?? null,
@@ -225,12 +409,11 @@ const ViewSubmissions: React.FC = () => {
       });
 
       if (res.status === 200) {
-        // optimistic update: mark correctedDate and update assignment fields
         setAssignments((prev) =>
           prev.map((a) => (a.id === assignmentId ? { ...a, correctedDate: Math.floor(Date.now() / 1000), score: Number(score), remarks } : a))
         );
-        // clear upload file for that row
         setEdits((prev) => ({ ...prev, [assignmentId]: { ...(prev[assignmentId] || {}), file: null } }));
+        setOpenDropdown(null);
       } else {
         alert("Failed to save. Try again.");
       }
@@ -238,15 +421,6 @@ const ViewSubmissions: React.FC = () => {
       console.error("Error saving:", err);
       alert("Failed to save. See console.");
     }
-  };
-
-  // Small helper formatting
-  const formatDate = (ts) => {
-    if (!ts) return "—";
-    const n = Number(ts);
-    // if it's likely seconds -> multiply
-    const when = n > 1e12 ? n : n * 1000;
-    return new Date(when).toLocaleString();
   };
 
   // UI: loading
@@ -275,245 +449,206 @@ const ViewSubmissions: React.FC = () => {
   return (
     <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
       <div className="max-w-[1200px] mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
-            <div>
-              <h1 className="flex items-center gap-3 text-2xl md:text-3xl font-bold text-slate-800">
-                <DocumentArrowDownIcon className="w-7 h-7 text-[#0EA5E9]" />
-                Review Assignments
-              </h1>
-              <p className="text-sm text-slate-600 mt-1">{cohortName}</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate(-1)} className="px-3 py-2 bg-slate-700 text-white rounded-md text-sm hover:bg-slate-800">
-                Back
-              </button>
-            </div>
+        {/* Compact Header - Reduced top spacing */}
+        <div className="mb-3">
+          <h1 className="text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Review Assignments</h1>
+          
+          {/* Cohort info and stats - compact like image */}
+          <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
+            <span className="text-gray-600">
+              Cohort: <span className="font-medium">{cohortName}</span>
+            </span>
+            <span className="text-gray-300">•</span>
+            <span className="text-gray-600">Total: {stats?.totalAssignments ?? assignments.length}</span>
+            <span className="text-gray-300">•</span>
+            <span className="text-orange-600 font-medium">Pending: {stats?.pendingAssignments ?? "-"}</span>
+            <span className="text-gray-300">•</span>
+            <span className="text-green-600 font-medium">Corrected: {stats?.correctedAssignments ?? "-"}</span>
+            <span className="text-gray-300">•</span>
+            <span className="text-blue-600 font-medium">Users: {stats?.cohortUserCount ?? "-"}</span>
           </div>
 
-          {/* Controls: search / stats / sort */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <div className="relative w-full md:w-1/2">
-              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          {/* Search and Controls - Compact */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search user or topic"
+                placeholder="Search by user ID, name, or topic..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[#0EA5E9] outline-none"
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               />
             </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex gap-2 text-sm">
-                <span className="bg-gray-100 px-3 py-1 rounded-full">Total: {stats?.totalAssignments ?? assignments.length}</span>
-                <span className="bg-orange-100 px-3 py-1 rounded-full text-orange-700">Pending: {stats?.pendingAssignments ?? "-"}</span>
-                <span className="bg-green-100 px-3 py-1 rounded-full text-green-700">Corrected: {stats?.correctedAssignments ?? "-"}</span>
-                <span className="bg-blue-100 px-3 py-1 rounded-full text-blue-700">Users: {stats?.cohortUserCount ?? "-"}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => toggleSort("User ID")}
-                  className="flex items-center gap-2 text-sm border px-3 py-1 rounded-lg hover:bg-gray-50"
-                >
-                  <ChevronUpDownIcon className="w-4 h-4" />
-                  Sort ({sortOrderAsc ? "asc" : "desc"})
-                </button>
-
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="border px-2 py-1 rounded text-sm"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => toggleSort("User ID")}
+                className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+              >
+                <ChevronUpDownIcon className="w-4 h-4" />
+                Sort {sortOrderAsc ? "↑" : "↓"}
+              </button>
+              
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
             </div>
           </div>
+        </div>
 
+        {/* Main Content */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {/* Table */}
-          <div className="overflow-hidden rounded-lg border border-gray-100">
-            <table className="w-full table-fixed text-sm text-left text-slate-700">
-              <thead className="bg-gray-50 text-xs uppercase font-semibold text-slate-500">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-gray-700">
+              <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b">
                 <tr>
-                  <th className="py-3 px-4 w-[150px]">User ID</th>
-                  <th className="py-3 px-4">Topic</th>
-                  <th className="py-3 px-4 w-[90px] text-center">File</th>
-                  <th className="py-3 px-4 w-[110px] text-center">Score</th>
-                  <th className="py-3 px-4 w-[90px] text-center">Save</th>
-                  <th className="py-3 px-4 w-[80px] text-center">More</th>
+                  <th className="py-3 px-4 w-[140px]">USER ID</th>
+                  <th className="py-3 px-4">TOPIC</th>
+                  <th className="py-3 px-4 w-[80px] text-center">FILE</th>
+                  <th className="py-3 px-4 w-[120px] text-center">SCORE</th>
+                  <th className="py-3 px-4 w-[100px] text-center">STATUS</th>
+                  <th className="py-3 px-4 w-[100px] text-center">ACTIONS</th>
                 </tr>
               </thead>
 
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 px-4 text-center text-sm text-gray-600">
-                      No assignments found.
+                    <td colSpan={6} className="py-8 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <DocumentArrowDownIcon className="w-10 h-10 text-gray-300 mb-2" />
+                        <p className="text-gray-500">No assignments found</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  paginated.map((a, idx) => {
+                  paginated.map((a) => {
                     const edit = edits[a.id] || { score: "", remarks: "", file: null };
                     const isCorrected = Boolean(a.correctedDate);
+                    const isDropdownOpen = openDropdown === a.id;
+                    const currentScore = edit.score !== "" && edit.score !== null ? Number(edit.score) : a.score;
+                    
                     return (
-                      <motion.tr
-                        key={a.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.02 }}
-                        className="border-b last:border-b-0 hover:bg-gray-50"
-                      >
-                        {/* USER ID */}
-                        <td className="py-3 px-4 align-top font-medium max-w-[150px] truncate">{a.userId}</td>
+                      <React.Fragment key={a.id}>
+                        <tr className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
+                          {/* USER ID */}
+                          <td className="py-3 px-4 align-middle">
+                            <div className="font-medium text-gray-900">{a.userId}</div>
+                            <div className="text-xs text-gray-500 truncate max-w-[140px]">{a.userName}</div>
+                          </td>
 
-                        {/* TOPIC */}
-                        <td className="py-3 px-4 align-top max-w-[540px]">
-                          <div className="truncate text-sm">{a.topic}</div>
-                        </td>
+                          {/* TOPIC */}
+                          <td className="py-3 px-4 align-middle">
+                            <div className="text-sm line-clamp-2 max-w-[400px]">{a.topic}</div>
+                          </td>
 
-                        {/* FILE */}
-                        <td className="py-3 px-4 align-top text-center">
-                          {a.fileUrl ? (
-                            <a href={a.fileUrl} target="_blank" rel="noreferrer" className="text-[#0EA5E9] font-medium">
-                              View
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-
-                        {/* SCORE (editable) */}
-                        <td className="py-3 px-4 align-top text-center">
-                          <input
-                            type="number"
-                            value={edit.score ?? ""}
-                            onChange={(e) => handleEditChange(a.id, { score: e.target.value === "" ? "" : Number(e.target.value) })}
-                            className="w-20 text-center border rounded px-2 py-1 text-sm"
-                            disabled={isCorrected}
-                          />
-                        </td>
-
-                        {/* SAVE */}
-                        <td className="py-3 px-4 align-top text-center">
-                          {isCorrected ? (
-                            <button className="bg-gray-200 px-3 py-1 rounded text-sm text-gray-600" disabled>
-                              Done
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleSave(a.id)}
-                              className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-3 py-1 rounded text-sm"
-                            >
-                              Save
-                            </button>
-                          )}
-                        </td>
-
-                        {/* MORE (dropdown) */}
-                        <td className="py-3 px-4 align-top text-center">
-                          <div className="relative inline-block text-left">
-                            <button
-                              onClick={() => setOpenMoreRow((cur) => (cur === a.id ? null : a.id))}
-                              className="px-2 py-1 border rounded text-sm bg-white hover:bg-gray-50"
-                              aria-expanded={openMoreRow === a.id}
-                            >
-                              ...
-                            </button>
-
-                            {openMoreRow === a.id && (
-                              <div
-                                className="absolute right-0 mt-2 w-[320px] bg-white border rounded shadow-lg z-40 text-sm"
-                                onMouseLeave={() => setOpenMoreRow(null)}
+                          {/* FILE */}
+                          <td className="py-3 px-4 align-middle text-center">
+                            {a.fileUrl ? (
+                              <a
+                                href={a.fileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 mx-auto"
+                                title="View submitted file"
                               >
-                                <div className="p-3 border-b text-xs font-semibold text-slate-600">Details</div>
-
-                                <div className="p-3 space-y-2">
-                                  <div>
-                                    <div className="text-xs text-gray-500">Reference</div>
-                                    <div className="truncate">
-                                      {a.referenceLink ? (
-                                        <a href={a.referenceLink} target="_blank" rel="noreferrer" className="text-[#0EA5E9] font-medium">
-                                          {a.reference} <ArrowTopRightOnSquareIcon className="inline w-3 h-3 ml-1" />
-                                        </a>
-                                      ) : (
-                                        a.reference || "—"
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <div className="text-xs text-gray-500">Max Score</div>
-                                    <div>{a.maxScore ?? "—"}</div>
-                                  </div>
-
-                                  <div>
-                                    <div className="text-xs text-gray-500">Submitted Date</div>
-                                    <div>{formatDate(a.submittedDate)}</div>
-                                  </div>
-
-                                  <div>
-                                    <div className="text-xs text-gray-500">Remarks</div>
-                                    <textarea
-                                      value={edit.remarks ?? ""}
-                                      onChange={(e) => handleEditChange(a.id, { remarks: e.target.value })}
-                                      className="w-full border rounded px-2 py-1 text-sm"
-                                      rows={2}
-                                      placeholder="Add remarks..."
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <div className="text-xs text-gray-500">Corrected On</div>
-                                    <div>{a.correctedDate ? formatDate(a.correctedDate) : "—"}</div>
-                                  </div>
-
-                                  <div>
-                                    <div className="text-xs text-gray-500">Corrected File</div>
-                                    <div>
-                                      {a.correctedDate ? (
-                                        <span className="text-gray-600">Uploaded</span>
-                                      ) : (
-                                        <label className="inline-flex items-center gap-2 cursor-pointer text-[#0EA5E9]">
-                                          <ArrowUpTrayIcon className="w-4 h-4" />
-                                          <span className="underline">Upload</span>
-                                          <input
-                                            type="file"
-                                            accept=".png,.jpg,.jpeg,.mp4,.pdf,.doc,.docx"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                              const file = e.target.files?.[0] ?? null;
-                                              handleFileChange(a.id, file);
-                                            }}
-                                          />
-                                        </label>
-                                      )}
-                                      {edits[a.id]?.file && (
-                                        <div className="mt-1 text-xs text-green-700 truncate">{edits[a.id].file.name}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="p-3 border-t flex justify-end gap-2">
-                                  <button onClick={() => setOpenMoreRow(null)} className="px-3 py-1 rounded border text-sm">
-                                    Close
-                                  </button>
-                                </div>
-                              </div>
+                                <EyeIcon className="w-4 h-4" />
+                                <span>View</span>
+                              </a>
+                            ) : (
+                              <span className="text-gray-400 text-sm">—</span>
                             )}
-                          </div>
-                        </td>
-                      </motion.tr>
+                          </td>
+
+                          {/* SCORE */}
+                          <td className="py-3 px-4 align-middle">
+                            <div className="flex items-center justify-center gap-2">
+                              {!isCorrected ? (
+                                <input
+                                  type="number"
+                                  value={edit.score ?? ""}
+                                  onChange={(e) => handleEditChange(a.id, { score: e.target.value === "" ? "" : Number(e.target.value) })}
+                                  className="w-16 text-center border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                  min="0"
+                                  max={a.maxScore || 5}
+                                  placeholder="Score"
+                                />
+                              ) : (
+                                <span className="font-medium text-gray-900">{currentScore ?? "—"}</span>
+                              )}
+                              <span className="text-gray-500">/</span>
+                              <span className="text-gray-500">{a.maxScore || 5}</span>
+                            </div>
+                          </td>
+
+                          {/* STATUS */}
+                          <td className="py-3 px-4 align-middle text-center">
+                            {isCorrected ? (
+                              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                <CheckCircleIcon className="w-3 h-3" />
+                                Corrected
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleSave(a.id)}
+                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                disabled={!edit.score || edit.score === ""}
+                              >
+                                Evaluate
+                              </button>
+                            )}
+                          </td>
+
+                          {/* ACTIONS DROPDOWN */}
+                          <td className="py-3 px-4 align-middle text-center">
+                            <button
+                              onClick={() => setOpenDropdown(isDropdownOpen ? null : a.id)}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-all text-sm ${
+                                isDropdownOpen 
+                                  ? 'bg-blue-50 border-blue-300 text-blue-600' 
+                                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {isDropdownOpen ? "Close" : "Actions"}
+                              <ChevronDownIcon className={`w-3 h-3 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                          </td>
+                        </tr>
+
+                        {/* DROPDOWN CONTENT - Slides down below row */}
+                        <AnimatePresence>
+                          {isDropdownOpen && (
+                            <motion.tr
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <td colSpan={6} className="p-0">
+                                <DropdownContent
+                                  assignment={a}
+                                  edit={edit}
+                                  isCorrected={isCorrected}
+                                  onEditChange={handleEditChange}
+                                  onFileChange={handleFileChange}
+                                />
+                              </td>
+                            </motion.tr>
+                          )}
+                        </AnimatePresence>
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -521,34 +656,20 @@ const ViewSubmissions: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination controls */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4">
-            <div className="text-sm text-slate-600">
-              Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, filteredSorted.length)} of {filteredSorted.length}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1 border rounded disabled:opacity-40"
-              >
-                Prev
-              </button>
-
-              <div className="px-3 py-1 border rounded text-sm">
-                Page {page} / {totalPages}
+          {/* Pagination controls with numbered pages */}
+          {paginated.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-gray-200 bg-gray-50">
+              <div className="text-sm text-gray-600">
+                Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredSorted.length)} of {filteredSorted.length} entries
               </div>
 
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-40"
-              >
-                Next
-              </button>
+              <Pagination 
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

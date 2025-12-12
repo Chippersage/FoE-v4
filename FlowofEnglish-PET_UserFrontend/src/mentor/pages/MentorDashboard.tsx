@@ -115,7 +115,7 @@ function computeDuration(startIso?: string, endIso?: string) {
 
 /* -------- Component -------- */
 
-export default function MentorDashboard(): JSX.Element {
+export default function MentorDashboard() {
   const navigate = useNavigate();
 
   // Option A: read mentorId and cohort from localStorage
@@ -325,7 +325,8 @@ export default function MentorDashboard(): JSX.Element {
 
         <div className="text-sm text-right">
           <div className="font-medium text-slate-700">{organization?.organizationName ?? "-"}</div>
-          <div className="text-slate-500">{organization?.organizationAdminEmail ?? ""}</div>
+          <div className="text-slate-500 text-xs mt-1">Org. Admin Name: {organization?.organizationAdminName ?? ""}</div>
+          <div className="text-slate-500 text-xs mt-1">Org. Admin Email: {organization?.organizationAdminEmail ?? ""}</div>
           <div className="text-slate-400 text-xs mt-1">Mentor: {storedUser?.userName ?? storedUser?.userId ?? "-"}</div>
         </div>
       </header>
@@ -450,7 +451,7 @@ export default function MentorDashboard(): JSX.Element {
                     </td>
 
                     <td className="p-3 align-top text-sm text-slate-700">
-                      {last ? new Date(last).toLocaleString() : "Never logged in"}
+                      {last ? new Date(last).toLocaleString() : "Not Available"}
                     </td>
 
                     <td className="p-3 align-top text-sm text-slate-700">{duration ?? "—"}</td>

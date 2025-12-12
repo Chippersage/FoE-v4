@@ -18,9 +18,13 @@ const StudentOverviewPage = lazy(() =>
   import("./mentor/pages/StudentOverviewPage")
 );
 
-// New page
+// New pages
 const ViewLearnersPage = lazy(() =>
   import("./mentor/pages/ViewLearnersPage")
+);
+
+const CohortReports = lazy(() => 
+  import("./mentor/pages/CohortReports")  // Import the new reports page
 );
 
 const App: React.FC = () => {
@@ -121,6 +125,12 @@ const App: React.FC = () => {
             <Route
               path="/mentor/:cohortId/:programId/learners"
               element={<ViewLearnersPage />}
+            />
+
+            {/* New Cohort Reports Page */}
+            <Route
+              path="/mentor/:cohortId/:programId/reports"
+              element={<CohortReports />}
             />
 
             {/* New learner overview page */}

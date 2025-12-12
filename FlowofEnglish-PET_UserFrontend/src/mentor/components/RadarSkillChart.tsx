@@ -1,103 +1,99 @@
-// @ts-nocheck
-import React from "react";
 import {
   ResponsiveContainer,
   RadarChart,
-  Radar,
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Tooltip
+  Radar,
+  Tooltip as ReTooltip,
 } from "recharts";
+import { SKILL_COLORS } from "../utils/skillMapper";
 
-// Color palette for different skills
-const skillColors = {
-  Grammar: "#FF6B6B",
-  Reading: "#4ECDC4",
-  Writing: "#45B7D1",
-  Speaking: "#4CAF50",
-  "Critical Thinking": "#FF1493",
-  "Active listening": "#D2B48C",
-  Other: "#FF69B4"
+interface RadarData {
+  skill: string;
+  value: number;
+}
+
+interface RadarSkillChartProps {
+  data?: RadarData[];
+}
+
+interface CustomTickProps {
+  payload?: {
+    value: string;
+    coordinate: number;
+    index: number;
+    offset: number;
+  };
+  x?: number;
+  y?: number;
+  textAnchor?: "start" | "middle" | "end";
+  stroke?: string;
+  radius?: number;
+}
+
+const CustomTick = ({ payload, x, y, textAnchor }: CustomTickProps) => {
+  if (!payload || x === undefined || y === undefined) return null;
+  
+  const color = SKILL_COLORS[payload.value] || "#374151";
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      textAnchor={textAnchor || "middle"} 
+      fill={color} 
+      fontWeight="600" 
+      fontSize={12}
+    >
+      {payload.value}
+    </text>
+  );
 };
 
-// Fallback for unknown skill names
-const getSkillColor = (name) => skillColors[name] || skillColors.Other;
-
-// Radar tooltip
-const CustomSkillTooltip = ({ active, payload }) => {
-  if (!active || !payload?.length) return null;
-
-  const d = payload[0].payload;
-
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0];
   return (
-    <div className="bg-white p-3 rounded-lg shadow border text-sm">
-      <p className="font-semibold text-gray-900">{d.name}</p>
-      <p className="text-blue-600">Score: {d.score}%</p>
-      <p className="text-gray-600">Concepts: {d.conceptCount}</p>
+    <div className="bg-white p-2 rounded shadow text-sm border">
+      <div className="font-semibold">{p.payload.skill}</div>
+      <div>Score: {p.value}%</div>
     </div>
   );
 };
 
-// Converts your API concepts data into radar-friendly format
-const processSkillData = (concepts) => {
-  if (!concepts) return [];
-
-  const groups = {};
-
-  concepts.forEach((c) => {
-    const skill = c["conceptSkill-1"] || "Other";
-    if (!groups[skill]) {
-      groups[skill] = { name: skill, total: 0, score: 0, count: 0 };
-    }
-
-    groups[skill].total += c.totalMaxScore;
-    groups[skill].score += c.userTotalScore;
-    groups[skill].count += 1;
+export default function RadarSkillChart({ data = [] }: RadarSkillChartProps) {
+  const order = [
+    "Speaking",
+    "Grammar",
+    "Skill Development",
+    "Vocabulary",
+    "Reading",
+    "Writing",
+    "Listening",
+    "Critical Thinking",
+  ];
+  
+  const displayData = order.map((s) => {
+    const found = data.find((d) => d.skill === s);
+    return { skill: s, value: found ? Number(found.value || 0) : 0 };
   });
 
-  return Object.values(groups).map((g) => ({
-    name: g.name,
-    score: Math.round((g.score / g.total) * 100) || 0,
-    conceptCount: g.count
-  }));
-};
-
-export default function RadarSkillChart({ data }) {
-  const processed = processSkillData(data);
-
   return (
-    <div className="w-full h-[350px] md:h-[400px]">
+    <div style={{ width: "100%", height: 340 }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={processed}>
+        <RadarChart data={displayData}>
           <PolarGrid />
-
-          <PolarAngleAxis
-            dataKey="name"
-            tick={({ payload, x, y, textAnchor, stroke, radius }) => (
-              <g>
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor={textAnchor}
-                  fill={getSkillColor(payload.value)}
-                  fontWeight="600"
-                  fontSize="12"
-                >
-                  {payload.value}
-                </text>
-              </g>
-            )}
+          <PolarAngleAxis 
+            dataKey="skill" 
+            tick={(props: any) => <CustomTick {...props} />} 
           />
-
-          <PolarRadiusAxis domain={[0, 100]} />
-          <Tooltip content={<CustomSkillTooltip />} />
-
+          <PolarRadiusAxis angle={30} domain={[0, 100]} />
+          <ReTooltip content={<CustomTooltip />} />
           <Radar
-            name="Skill Score"
-            dataKey="score"
-            stroke="#8884d8"
-            fill="#8884d8"
+            name="Score"
+            dataKey="value"
+            stroke="#374151"
+            fill="#374151"
             fillOpacity={0.6}
           />
         </RadarChart>

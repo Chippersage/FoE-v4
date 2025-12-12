@@ -1,4 +1,3 @@
-// src/mentor/components/charts/LearnersProgressChart.tsx
 // @ts-nocheck
 import React, { useRef } from "react";
 import {
@@ -10,6 +9,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from "recharts";
 import ExportButtons from "./ExportButtons";
 
@@ -24,26 +24,32 @@ const LearnersProgressChart: React.FC<LearnersProgressChartProps> = ({
 }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Process data for stacked bar chart showing multiple completion metrics
   const processedData = users.map((u) => ({
     userId: u.userId,
-    name: u.userName,
-    score: u.leaderboardScore ?? 0,
-    lastLogin: u.lastLogin ?? "--",
+    name: u.userName.length > 10 ? u.userName.substring(0, 10) + "..." : u.userName,
+    completedStages: u.completedStages || 0,
+    completedUnits: u.completedUnits || 0,
+    completedSubconcepts: u.completedSubconcepts || 0,
+    status: u.status || "ACTIVE",
   }));
 
-  const maxScore =
-    processedData.length > 0
-      ? Math.max(...processedData.map((u) => u.score || 0))
-      : 0;
+  const maxValue = Math.max(
+    ...processedData.map(u => 
+      Math.max(u.completedStages, u.completedUnits, u.completedSubconcepts)
+    )
+  );
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload?.length) {
       const p = payload[0].payload;
       return (
-        <div className="bg-white p-3 rounded-md shadow border text-sm">
-          <p className="font-semibold">{label}</p>
-          <p>Score: {p.score}</p>
-          <p className="text-xs text-gray-500">Last login: {p.lastLogin}</p>
+        <div className="bg-white p-3 rounded-md shadow border text-xs">
+          <p className="font-semibold text-sm mb-1">{p.userId}</p>
+          <p className="mb-1"><span className="text-blue-500">●</span> Stages: {p.completedStages}</p>
+          <p className="mb-1"><span className="text-green-500">●</span> Units: {p.completedUnits}</p>
+          <p className="mb-1"><span className="text-purple-500">●</span> Subconcepts: {p.completedSubconcepts}</p>
+          <p className="text-gray-500 mt-1 pt-1 border-t">Status: {p.status}</p>
         </div>
       );
     }
@@ -52,52 +58,64 @@ const LearnersProgressChart: React.FC<LearnersProgressChartProps> = ({
 
   return (
     <div
-      className="bg-white p-4 rounded-xl shadow space-y-4"
+      className="bg-white p-4 rounded-2xl shadow-sm space-y-4 border border-[#0EA5E9]"
       ref={chartContainerRef}
     >
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Learners Score Overview</h2>
+        <h2 className="text-lg font-semibold text-[#0EA5E9]">Activities Completed Overview</h2>
         <ExportButtons
           componentRef={chartContainerRef}
-          filename="learners_score_overview"
+          filename="activities_completed_overview"
           exportType="chart"
         />
       </div>
 
-      {/* FIX: forced height container */}
       <div className="w-full min-h-[320px]" style={{ height: "320px" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={processedData}
-            margin={{ top: 20, right: 20, left: 10, bottom: 60 }}
+            margin={{ top: 20, right: 20, left: 10, bottom: 80 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis
               dataKey="name"
               angle={-45}
               textAnchor="end"
-              height={70}
+              height={80}
               tick={{ fontSize: 11 }}
+              stroke="#666"
             />
             <YAxis
-              domain={[0, maxScore || "auto"]}
+              domain={[0, maxValue + 10]}
               tick={{ fontSize: 11 }}
+              stroke="#666"
               label={{
-                value: "Score",
+                value: "Count",
                 angle: -90,
                 position: "insideLeft",
-                style: { fontSize: 11 },
+                style: { fontSize: 11, fill: '#666' },
               }}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="score" radius={[6, 6, 0, 0]}>
-              {processedData.map((entry, index) => (
-                <Cell
-                  key={entry.userId}
-                  fill={`hsl(${(index * 360) / processedData.length}, 70%, 50%)`}
-                />
-              ))}
-            </Bar>
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+            <Bar 
+              dataKey="completedStages" 
+              name="Completed Stages" 
+              radius={[6, 6, 0, 0]}
+              fill="#0EA5E9"
+            />
+            <Bar 
+              dataKey="completedUnits" 
+              name="Completed Units" 
+              radius={[6, 6, 0, 0]}
+              fill="#10b981"
+            />
+            <Bar 
+              dataKey="completedSubconcepts" 
+              name="Completed Subconcepts" 
+              radius={[6, 6, 0, 0]}
+              fill="#8b5cf6"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

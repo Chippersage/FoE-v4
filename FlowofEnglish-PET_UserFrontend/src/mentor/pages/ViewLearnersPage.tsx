@@ -89,28 +89,6 @@ export default function ViewLearnersPage() {
         </p>
       </div>
 
-      {/* Badges */}
-      <div className="flex gap-3 flex-wrap">
-        <Badge
-          icon={<Users size={16} />}
-          label="Total"
-          value={total}
-          color="bg-[#0EA5E9]"
-        />
-        <Badge
-          icon={<UserCheck size={16} />}
-          label="Active"
-          value={activeCount}
-          color="bg-blue-500"
-        />
-        <Badge
-          icon={<UserX size={16} />}
-          label="Inactive"
-          value={disabledCount}
-          color="bg-gray-400"
-        />
-      </div>
-
       {/* Filters section */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         {/* Search bar */}

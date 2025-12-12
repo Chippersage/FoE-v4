@@ -105,7 +105,7 @@ export default function MentorSideNav({ onNavigate = () => {} }) {
             <div className="flex items-center justify-between">
               <div className="leading-tight">
                 <p className="font-medium text-blue-800 text-[13px]">Current Cohort</p>
-                <p className="text-blue-600 text-[12px] truncate">
+                <p className="text-blue-600 text-[10px] truncate">
                   {selectedCohort.cohortName}
                 </p>
               </div>
