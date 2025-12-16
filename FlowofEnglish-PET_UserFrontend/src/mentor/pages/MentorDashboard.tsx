@@ -368,7 +368,7 @@ export default function MentorDashboard() {
       </section>
 
       <section className="mb-4">
-        <div className="bg-white p-4 rounded-lg border flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="bg-white rounded-lg flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <input
             type="text"
             placeholder="Search learners by name, id or email"
@@ -403,14 +403,13 @@ export default function MentorDashboard() {
                 <th className="p-3 text-sm font-medium">Status</th>
                 <th className="p-3 text-sm font-medium">Last Activity</th>
                 <th className="p-3 text-sm font-medium">Duration</th>
-                <th className="p-3 text-sm font-medium">Score</th>
               </tr>
             </thead>
 
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td className="p-6 text-center text-slate-500" colSpan={5}>
+                  <td className="p-6 text-center text-slate-500" colSpan={4}>
                     No learners found. Try changing your filters.
                   </td>
                 </tr>
@@ -455,8 +454,6 @@ export default function MentorDashboard() {
                     </td>
 
                     <td className="p-3 align-top text-sm text-slate-700">{duration ?? "—"}</td>
-
-                    <td className="p-3 align-top text-sm font-semibold text-sky-700">{l.leaderboardScore ?? 0}</td>
                   </tr>
                 );
               })}

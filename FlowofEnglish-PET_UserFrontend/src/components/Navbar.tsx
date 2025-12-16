@@ -7,41 +7,30 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUserContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { XCircle } from "lucide-react";
+import { XCircle, Menu } from "lucide-react";
 
-// ---------------------------------------------------------
-// Component
-// ---------------------------------------------------------
 type NavbarProps = {
   toggleSidebar?: () => void;
 };
 
-const Navbar: React.FC<NavbarProps> = () => {
+const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
-  // ---------------------------------------------------------
-  // State variables
-  // ---------------------------------------------------------
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
 
-  // ---------------------------------------------------------
-  // Routing and context
-  // ---------------------------------------------------------
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setIsAuthenticated, setUser } = useUserContext();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // ---------------------------------------------------------
-  // Derived values used in UI
-  // ---------------------------------------------------------
   const userName = user?.userName || "User";
   const isSelectCohortPage = location.pathname === "/select-cohort";
 
-  // ---------------------------------------------------------
-  // Menu list
-  // ---------------------------------------------------------
+  const isMentor = user?.userType === "Mentor";
+  const isMentorRoute = location.pathname.startsWith("/mentor");
+  const showMentorHamburger = isMentor && isMentorRoute;
+
   const menuItems = [
     { title: "Profile", path: "/profile" },
     { title: "View Progress", path: "/view-progress" },
@@ -50,9 +39,6 @@ const Navbar: React.FC<NavbarProps> = () => {
     { title: "Terms of Use", path: "/terms" },
   ];
 
-  // ---------------------------------------------------------
-  // Full logout handler (clears all localStorage)
-  // ---------------------------------------------------------
   const handleLogout = async () => {
     setIsLoading(true);
     try {
@@ -84,9 +70,6 @@ const Navbar: React.FC<NavbarProps> = () => {
     }
   };
 
-  // ---------------------------------------------------------
-  // Partial logout: remove only sessionId + selectedCohort
-  // ---------------------------------------------------------
   const handleendCohortSession = async () => {
     try {
       await axios.post(
@@ -105,9 +88,6 @@ const Navbar: React.FC<NavbarProps> = () => {
     localStorage.removeItem("selectedCohort");
   };
 
-  // ---------------------------------------------------------
-  // Menu item click handler
-  // ---------------------------------------------------------
   const handleMenuClick = (item) => {
     if (item.title === "View Progress") {
       navigate(item.path);
@@ -118,9 +98,6 @@ const Navbar: React.FC<NavbarProps> = () => {
     toast("Coming soon...");
   };
 
-  // ---------------------------------------------------------
-  // JSX Render
-  // ---------------------------------------------------------
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm"
@@ -130,7 +107,6 @@ const Navbar: React.FC<NavbarProps> = () => {
     >
       <div className="flex items-center justify-between px-4 py-2 h-14">
 
-        {/* Branding section */}
         <div
           className={`flex items-center gap-2 select-none ${
             isSelectCohortPage
@@ -142,20 +118,31 @@ const Navbar: React.FC<NavbarProps> = () => {
             if (!isSelectCohortPage) navigate("/select-cohort");
           }}
         >
+          {showMentorHamburger && (
+            <button
+              className="lg:hidden mr-2 p-2 rounded-md hover:bg-gray-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSidebar && toggleSidebar();
+              }}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
+
           <img
             src="/icons/chipper-sage-logo.png"
             alt="Logo"
-            className="w-14 h-14 sm:w-20 sm:h-20 object-contain"
+            className={`w-14 h-14 sm:w-20 sm:h-20 object-contain ${
+              showMentorHamburger ? "hidden lg:block" : ""
+            }`}
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">
             Professional English for Teachers
           </h1>
         </div>
 
-        {/* Right section: welcome text + avatar + menu */}
         <div className="flex items-center gap-3 relative">
-          
-          {/* Welcome message */}
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-sm text-gray-500">Welcome back,</span>
             <span className="text-sm font-medium text-[#0EA5E9] break-words max-w-[160px] text-right leading-tight">
@@ -163,7 +150,6 @@ const Navbar: React.FC<NavbarProps> = () => {
             </span>
           </div>
 
-          {/* Avatar */}
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0EA5E9] flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
             onMouseEnter={() => setMenuOpen(true)}
@@ -172,7 +158,6 @@ const Navbar: React.FC<NavbarProps> = () => {
             {userName?.trim().charAt(0).toUpperCase()}
           </div>
 
-          {/* Dropdown */}
           <AnimatePresence>
             {menuOpen && (
               <motion.div
@@ -203,7 +188,6 @@ const Navbar: React.FC<NavbarProps> = () => {
                     >
                       <span>{item.title}</span>
 
-                      {/* Disabled hover indicator */}
                       {isDisabled && isHovered && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -220,7 +204,6 @@ const Navbar: React.FC<NavbarProps> = () => {
 
                 <div className="border-t border-gray-200 my-1" />
 
-                {/* Logout button */}
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}

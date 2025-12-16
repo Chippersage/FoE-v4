@@ -96,25 +96,6 @@ const CohortCard = ({
             >
               Mentor Dashboard
             </button>
-
-            <button
-              onClick={() => onViewAssessments(cohort)}
-              className="relative px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
-            >
-              Assessments
-              {pendingCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] min-w-[16px] h-[16px] flex items-center justify-center rounded-full">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={onGenerateReport}
-              className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700"
-            >
-              Reports
-            </button>
           </>
         )}
 

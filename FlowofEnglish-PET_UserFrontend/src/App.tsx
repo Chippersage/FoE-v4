@@ -5,26 +5,30 @@ import { useUserContext } from "./context/AuthContext";
 import Loader from "./components/Loader";
 import MentorLayout from "./mentor/layout/MentorLayout";
 
+/* -------------------- Auth & Core Pages -------------------- */
 const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
 const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
 const CoursePage = lazy(() => import("./pages/CoursePage"));
 const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
-const ViewSubmissions = lazy(() => import("./mentor/pages/ViewSubmissions"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RootLayout = lazy(() => import("./pages/RootLayout"));
 
+/* -------------------- Mentor Pages -------------------- */
 const MentorDashboard = lazy(() => import("./mentor/pages/MentorDashboard"));
 const StudentOverviewPage = lazy(() =>
   import("./mentor/pages/StudentOverviewPage")
 );
-
-// New pages
 const ViewLearnersPage = lazy(() =>
   import("./mentor/pages/ViewLearnersPage")
 );
-
-const CohortReports = lazy(() => 
-  import("./mentor/pages/CohortReports")  // Import the new reports page
+const ViewSubmissions = lazy(() =>
+  import("./mentor/pages/ViewSubmissions")
+);
+const CohortReports = lazy(() =>
+  import("./mentor/pages/CohortReports")
+);
+const CohortDetails = lazy(() =>
+  import("./mentor/pages/CohortDetails")
 );
 
 const App: React.FC = () => {
@@ -34,12 +38,12 @@ const App: React.FC = () => {
     user?.userType?.toLowerCase() === "learner" ||
     user?.userType?.toLowerCase() === "mentor";
 
-  const isAuthenticatedAndValid = user?.userId && isValidUserType;
+  const isAuthenticatedAndValid = Boolean(user?.userId && isValidUserType);
 
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        {/* Login */}
+        {/* ===================== Login ===================== */}
         <Route
           path="/sign-in"
           element={
@@ -51,8 +55,9 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Root layout */}
+        {/* ===================== Root Layout ===================== */}
         <Route element={<RootLayout />}>
+          {/* -------- Cohort Selection -------- */}
           <Route
             path="/select-cohort"
             element={
@@ -64,6 +69,7 @@ const App: React.FC = () => {
             }
           />
 
+          {/* ===================== Course Page ===================== */}
           <Route
             path="/course/:programId"
             element={
@@ -75,6 +81,7 @@ const App: React.FC = () => {
             }
           />
 
+          {/* -------- Learner Progress -------- */}
           <Route
             path="/view-progress"
             element={
@@ -86,7 +93,7 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Old submissions viewer */}
+          {/* -------- Mentor Submissions (standalone) -------- */}
           <Route
             path="/view-submissions"
             element={
@@ -99,9 +106,7 @@ const App: React.FC = () => {
             }
           />
 
-          {/* -----------------------
-               Mentor Routes
-             ----------------------- */}
+          {/* ===================== Mentor Routes ===================== */}
           <Route
             element={
               isAuthenticatedAndValid &&
@@ -112,42 +117,47 @@ const App: React.FC = () => {
               )
             }
           >
-            {/* Static dashboard (fallback) */}
+            {/* Dashboard */}
             <Route path="/mentor/dashboard" element={<MentorDashboard />} />
 
-            {/* Dynamic dashboard */}
             <Route
               path="/mentor/:cohortId/:programId/dashboard"
               element={<MentorDashboard />}
             />
 
-            {/* View Learners Page */}
+            {/* Learners */}
             <Route
               path="/mentor/:cohortId/:programId/learners"
               element={<ViewLearnersPage />}
             />
 
-            {/* New Cohort Reports Page */}
+            {/* Reports */}
             <Route
               path="/mentor/:cohortId/:programId/reports"
               element={<CohortReports />}
             />
 
-            {/* New learner overview page */}
+            {/* Assignments */}
+            <Route
+              path="/mentor/:cohortId/:programId/assignments"
+              element={<ViewSubmissions />}
+            />
+
+            {/* Learner Overview */}
             <Route
               path="/mentor/:cohortId/:programId/learner/:userId"
               element={<StudentOverviewPage />}
             />
 
-            {/* Assignments for specific cohort and program */}
+            {/* Cohort Details */}
             <Route
-              path="/mentor/:cohortId/:programId/assignments"
-              element={<ViewSubmissions />}
+              path="/mentor/:cohortId/:programId/cohort-details"
+              element={<CohortDetails />}
             />
           </Route>
         </Route>
 
-        {/* Default redirect */}
+        {/* ===================== Default Redirect ===================== */}
         <Route
           path="/"
           element={
@@ -157,7 +167,7 @@ const App: React.FC = () => {
           }
         />
 
-        {/* 404 */}
+        {/* ===================== 404 ===================== */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
