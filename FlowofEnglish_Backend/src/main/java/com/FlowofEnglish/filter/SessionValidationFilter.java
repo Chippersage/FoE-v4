@@ -87,7 +87,9 @@ public class SessionValidationFilter implements Filter {
             "/api/v1/users/logout",
             "/api/v1/organizations/login",
             "/api/v1/user-attempts/auto-complete/",
+            "/api/v1/user-attempts/user/",
             "/api/v1/users/create");
+    
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

@@ -129,10 +129,7 @@ public class UserAttemptsController {
     }
     
     @DeleteMapping("/user/{userId}/program/{programId}")
-    public ResponseEntity<?> deleteUserProgressByProgram(
-            @PathVariable String userId,
-            @PathVariable String programId) {
-
+    public ResponseEntity<?> deleteUserProgressByProgram(@PathVariable String userId, @PathVariable String programId) {
         try {
             userAttemptsService.deleteUserProgressByUserAndProgram(userId, programId);
             return ResponseEntity.noContent().build();

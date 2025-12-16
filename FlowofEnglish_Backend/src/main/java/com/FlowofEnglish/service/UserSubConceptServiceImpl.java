@@ -164,21 +164,10 @@ public class UserSubConceptServiceImpl implements UserSubConceptService {
     
     @Override
     @Transactional
-    @CacheEvict(
-        value = {
-            "userSubConcepts",
-            "userSubConceptsByUser",
-            "completedSubconcepts",
-            "stageCompletionDates"
-        },
-        allEntries = true
-    )
+    @CacheEvict( value = { "userSubConcepts",  "userSubConceptsByUser", "completedSubconcepts", "stageCompletionDates"}, allEntries = true )
     public void deleteUserSubConceptsByUserAndProgram(String userId, String programId) {
-
         logger.warn("Deleting UserSubConcept completions for userId={} programId={}", userId, programId);
-
-        userSubConceptRepository
-                .deleteByUser_UserIdAndProgram_ProgramId(userId, programId);
+        userSubConceptRepository.deleteByUser_UserIdAndProgram_ProgramId(userId, programId);
     }
 
 }
