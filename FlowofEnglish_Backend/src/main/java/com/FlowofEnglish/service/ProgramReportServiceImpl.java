@@ -22,8 +22,6 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 
-
-
 @Service
 public class ProgramReportServiceImpl implements ProgramReportService {
 	
@@ -171,6 +169,8 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             int completedUnits = 0;
             int totalSubconcepts = 0;
             int completedSubconcepts = 0;
+            int totalAssignments = 0;
+            int completedAssignments = 0;
             double totalScore = 0;
             int scoreCount = 0;
             
@@ -216,6 +216,16 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     totalSubconcepts += unitReport.getTotalSubconcepts();
                     completedSubconcepts += unitReport.getCompletedSubconcepts();
                     
+                    //  Calculate assignments from unit's subconcepts
+                    for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                        // Check if subconceptType contains "assignment"
+                        if (isAssignmentSubconcept(subconceptReport.getSubconceptType())) {
+                            totalAssignments++;
+                            if (subconceptReport.isCompleted()) {
+                                completedAssignments++;
+                            }
+                        }
+                    }
                     // Accumulate scores
                     if (unitReport.getAverageScore() > 0) {
                         totalScore += unitReport.getAverageScore();
@@ -233,11 +243,14 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             report.setCompletedUnits(completedUnits);
             report.setTotalSubconcepts(totalSubconcepts);
             report.setCompletedSubconcepts(completedSubconcepts);
+            report.setTotalAssignments(totalAssignments);
+            report.setCompletedAssignments(completedAssignments);
             
             // Calculate percentages
             report.setStageCompletionPercentage(calculatePercentage(report.getCompletedStages(), report.getTotalStages()));
             report.setUnitCompletionPercentage(calculatePercentage(completedUnits, totalUnits));
             report.setSubconceptCompletionPercentage(calculatePercentage(completedSubconcepts, totalSubconcepts));
+            report.setAssignmentCompletionPercentage(calculatePercentage(completedAssignments, totalAssignments));
             
             // Calculate average score
             report.setAverageScore(scoreCount > 0 ? totalScore / scoreCount : 0);
@@ -253,7 +266,8 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     userId, programId, (endTime - startTime),
                     report.getCompletedStages(), report.getTotalStages(),
                     completedUnits, totalUnits,
-                    completedSubconcepts, totalSubconcepts);
+                    completedSubconcepts, totalSubconcepts,
+                    completedAssignments, totalAssignments);
             
             return report;
         } catch (Exception e) {
@@ -262,6 +276,20 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         }
     }
 
+ // Helper method to check if subconcept is an assignment with specific types
+    private boolean isAssignmentSubconcept(String subconceptType) {
+        if (subconceptType == null) {
+            return false;
+        }
+        
+        String type = subconceptType.toLowerCase();
+        return type.contains("assignment") || 
+               type.equals("assignment_image") || 
+               type.equals("assignment_pdf") || 
+               type.equals("assignment_video") ||
+               type.startsWith("assignment%");
+    }
+    
     // Helper method to get user type (for cache key)
     public String getUserType(String userId) {
         try {
@@ -375,7 +403,11 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                 SubconceptReportDTO subconceptReport = new SubconceptReportDTO();
                 subconceptReport.setSubconceptId(mapping.getSubconcept().getSubconceptId());
                 subconceptReport.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
-                
+                subconceptReport.setSubconceptDesc2(mapping.getSubconcept().getSubconceptDesc2());
+                subconceptReport.setShowTo(mapping.getSubconcept().getShowTo());
+                subconceptReport.setNumQuestions(mapping.getSubconcept().getNumQuestions());
+                subconceptReport.setSubconceptType(mapping.getSubconcept().getSubconceptType());
+                subconceptReport.setSubconceptMaxscore(mapping.getSubconcept().getSubconceptMaxscore());
                 // Check completion status (only for visible subconcepts)
                 boolean isCompleted = completedSubconcepts.stream()
                     .anyMatch(cs -> cs.getSubconcept().getSubconceptId()

@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { CircularProgress } from "@mui/material";
 import LoginForm from "./_auth/forms/LoginForm";
 import { HomePage } from "./_root/pages/HomePage";
 import SubConceptsPage from "./_root/pages/SubConceptsPage";
@@ -23,7 +24,7 @@ import MentorReportsPage from "./mentor/pages/MentorReportsPage";
 import LearnersDetailsPage from "./mentor/pages/LearnersDetailsPage";
 
 export default function App() {
-  const { user, isLoading } = useUserContext();
+  const { user, isLoading, isChangingCohort } = useUserContext();
   const selectedCohortWithProgram = localStorage.getItem("selectedCohortWithProgram");
 
   // Normalize userType → supports ANY camelCase
@@ -53,6 +54,17 @@ export default function App() {
     <SessionProvider>
       <main className="flex h-screen flex-col">
         <Toaster position="bottom-center" reverseOrder={false} />
+
+         {/* NEW: Global loading overlay during cohort change */}
+        {isChangingCohort && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
+            <div className="text-center">
+              <CircularProgress className="mb-4" />
+              <p className="text-lg font-medium text-gray-700">Switching cohort...</p>
+              <p className="text-sm text-gray-500">Loading new cohort data</p>
+            </div>
+          </div>
+        )}
 
         <Routes>
           {/* Public routes (no headers) */}
@@ -107,14 +119,15 @@ export default function App() {
             }
           >
             <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
-            <Route path=":cohortId/progress" element={<LearnersProgressDashboard />} />
+            <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnersProgressDashboard />} />
             <Route path=":cohortId/activity" element={<LearnersActivityMonitor />} />
             <Route path=":cohortId/learners" element={<LearnersDetailsPage />} />
             <Route path=":cohortId/assignments" element={<AssignmentsPage />} />
             <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnerDetailPage />} />
             <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />}/>
-            {/* <Route path=":cohortId/analytics" element={...} /> */}
-            {/* <Route path=":cohortId/cohort-details" element={...} /> */}
+            <Route path=":cohortId/analytics" element={< LearnersProgressDashboard /> } />
+            {/* <Route path=":cohortId/cohort-details" element={...} />
+            http://localhost:5173/mentor/COMM-SVCE-1/learner/Harikrishna05/CC-3 */}
 
           </Route>
 

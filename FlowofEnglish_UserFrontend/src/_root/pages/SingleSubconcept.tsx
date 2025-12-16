@@ -206,22 +206,30 @@ const SingleSubconcept = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      const userData = {
-        userAttemptStartTimestamp: new Date().toISOString(),
-        unitId: currentUnitId,
-        programId: selectedCohortWithProgram?.program?.programId,
-        stageId: stageId,
-        userId: user.userId,
-        sessionId: sessionId,
-        subconceptId: subconcept?.subconceptId,
-        subconceptMaxscore: subconcept?.subconceptMaxscore,
-        API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-        cohortId: selectedCohortWithProgram?.cohortId,
-      };
-      localStorage.setItem("userData", JSON.stringify(userData));
-    }
-  }, [user]);
+  if (!user || !subconcept || !currentUnitId) return;
+
+  const userData = {
+    userAttemptStartTimestamp: new Date().toISOString(),
+    unitId: currentUnitId,
+    programId: selectedCohortWithProgram?.program?.programId,
+    stageId,
+    userId: user.userId,
+    sessionId,
+    subconceptId: subconcept.subconceptId,
+    subconceptMaxscore: subconcept.subconceptMaxscore,
+    API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+    cohortId: selectedCohortWithProgram?.cohortId,
+  };
+
+  localStorage.setItem("userData", JSON.stringify(userData));
+}, [
+  user?.userId,
+  subconcept?.subconceptId,
+  currentUnitId,
+  stageId,
+  selectedCohortWithProgram?.cohortId
+]);
+
 
   useEffect(() => {
     // Listen for postMessage events from the iframe
@@ -513,6 +521,11 @@ const SingleSubconcept = () => {
                 <MediaContent
                   subconceptData={subconcept}
                   currentUnitId={currentUnitId}
+                  stageId={stageId}
+                  userId={user.userId}
+                  programId={selectedCohortWithProgram?.program?.programId}
+                  cohortId={selectedCohortWithProgram?.cohortId}
+                  sessionId={sessionId}
                 />
               );
             }

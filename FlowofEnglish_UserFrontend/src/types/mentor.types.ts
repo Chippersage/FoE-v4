@@ -37,16 +37,6 @@ export interface SubconceptAttempt {
   latestAttemptDate?: string;
 }
 
-export interface LearnerDetailedProgress {
-  userId: string;
-  userName?: string;
-  programId: string;
-  programName?: string;
-  completedStages?: number;
-  totalStages?: number;
-  overallScore?: number;
-  subconcepts: SubconceptAttempt[];
-}
 
 export interface UnitProgress {
   unitId: string;
@@ -118,4 +108,150 @@ export interface MentorCohortMetadata {
     deactivatedUsers: number;
   };
   users: MentorCohortUser[];
+}
+
+export interface Attempt {
+  attemptId: number;
+  startTimestamp: number;
+  endTimestamp: number;
+  score: number;
+  successful: boolean;
+}
+
+export interface Content {
+  contentId: number;
+  contentName: string;
+  contentDesc: string;
+  contentOrigin: string;
+  contentTopic: string;
+}
+
+export interface Concept {
+  conceptId: string;
+  conceptName: string;
+  conceptDesc: string;
+  conceptSkill1: string;
+  conceptSkill2: string;
+  content: Content;
+}
+
+export interface Subconcept {
+  subconceptId: string;
+  subconceptDesc: string;
+  highestScore: number;
+  attemptCount: number;
+  lastAttemptDate: number;
+  attempts: Attempt[];
+  concept: Concept;
+  completed: boolean;
+}
+
+export interface Unit {
+  unitId: string;
+  unitName: string;
+  unitDesc: string;
+  totalSubconcepts: number;
+  completedSubconcepts: number;
+  completionPercentage: number;
+  averageScore: number;
+  subconcepts: Subconcept[];
+  completionStatus: string;
+  enabled: boolean;
+}
+
+export interface Stage {
+  stageId: string;
+  stageName: string;
+  stageDesc: string;
+  totalUnits: number;
+  completedUnits: number;
+  completionPercentage: number;
+  averageScore: number;
+  units: Unit[];
+  completionStatus: string;
+  enabled: boolean;
+}
+
+export interface ScoreDistribution {
+  "0-20": number;
+  "21-40": number;
+  "41-60": number;
+  "61-80": number;
+  "81-100": number;
+}
+
+export interface LearnerDetailedProgress {
+  programId: string;
+  programName: string;
+  programDesc: string;
+  totalStages: number;
+  completedStages: number;
+  totalUnits: number;
+  completedUnits: number;
+  totalSubconcepts: number;
+  completedSubconcepts: number;
+  stageCompletionPercentage: number;
+  unitCompletionPercentage: number;
+  subconceptCompletionPercentage: number;
+  averageScore: number;
+  firstAttemptDate: number;
+  lastAttemptDate: number;
+  stages: Stage[];
+  scoreDistribution: ScoreDistribution;
+  userId?: string;
+  userName?: string;
+}
+
+// NEW: Fetch mentor's cohorts with assignment statistics
+export interface CohortWithProgram {
+  cohortId: string;
+  cohortName: string;
+  cohortStartDate: number;
+  cohortEndDate: number;
+  showLeaderboard: boolean;
+  delayedStageUnlock: boolean;
+  delayInDays: number;
+  enableAiEvaluation: boolean;
+  program: {
+    programId: string;
+    programName: string;
+    programDesc: string;
+    stagesCount: number;
+    unitCount: number;
+  };
+}
+
+export interface MentorCohortsResponse {
+  userDetails: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userPhoneNumber: string;
+    userAddress: string;
+    userType: string;
+    status: string;
+    createdAt: number;
+    organization: {
+      organizationId: string;
+      organizationName: string;
+      organizationAdminName: string;
+      organizationAdminEmail: string;
+      organizationAdminPhone: string;
+    };
+    allCohortsWithPrograms: CohortWithProgram[];
+  };
+  assignmentStatistics: {
+    correctedAssignments: number;
+    totalAssignments: number;
+    pendingAssignments: number;
+    totalCohortUserCount: number;
+    cohortDetails: {
+      [cohortId: string]: {
+        correctedAssignments: number;
+        totalAssignments: number;
+        pendingAssignments: number;
+        cohortUserCount: number;
+      };
+    };
+  };
 }

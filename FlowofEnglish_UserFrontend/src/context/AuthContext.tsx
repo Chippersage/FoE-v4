@@ -273,6 +273,8 @@ interface AuthContextType {
   selectedCohortWithProgram: any;
   setSelectedCohortWithProgram: React.Dispatch<React.SetStateAction<any>>;
   clearAuth: () => void;
+  isChangingCohort: boolean;
+  setIsChangingCohort: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const INITIAL_STATE: AuthContextType = {
@@ -285,6 +287,8 @@ export const INITIAL_STATE: AuthContextType = {
   selectedCohortWithProgram: null,
   setSelectedCohortWithProgram: () => {},
   clearAuth: () => {},
+  isChangingCohort: false,
+  setIsChangingCohort: () => {},
 };
 
 const AuthContext = createContext<AuthContextType>(INITIAL_STATE);
@@ -305,6 +309,7 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
+  const [isChangingCohort, setIsChangingCohort] = useState(false);
    // clearAuth function
   const clearAuth = () => {
     setUser(INITIAL_USER_STATE);
@@ -321,6 +326,22 @@ export const AuthProvider = ({ children }) => {
     console.log("Auth cleared successfully");
   };
 
+  const wrappedSetSelectedCohort = (cohortData: any) => {
+    localStorage.setItem("selectedCohortWithProgram", JSON.stringify(cohortData));
+    setSelectedCohortWithProgram(cohortData);
+    
+    // Also update user context if it exists
+    const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        selectedCohortWithProgram: cohortData
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  };
+
   const checkAuthUser = async () => {
     setIsLoading(true);
     try {
@@ -335,7 +356,7 @@ export const AuthProvider = ({ children }) => {
           userPhoneNumber: currentUser.userPhoneNumber,
           organization: currentUser.organization,
           program: currentUser.program,
-          selectedCohortWithProgram: currentUser.selectedCohortWithProgram || null,
+          selectedCohortWithProgram: currentUser.selectedCohortWithProgram || selectedCohortWithProgram || null,
           userType: currentUser.userType,
           selectedProgramId: currentUser.selectedProgramId,
         };
@@ -378,8 +399,10 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated,
     checkAuthUser,
     selectedCohortWithProgram,
-    setSelectedCohortWithProgram,
+    setSelectedCohortWithProgram: wrappedSetSelectedCohort,
     clearAuth,
+    isChangingCohort,
+    setIsChangingCohort,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,24 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, TablePagination, Box, CircularProgress, Alert, IconButton, Chip, Avatar, Stack
-} from "@mui/material";
-import {
-  TrendingUp, Users, UserX, Clock, Search,
-  RefreshCw, Play, Square
-} from "lucide-react";
-import axios from "axios";
+import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, 
+  Box, CircularProgress, Alert, IconButton, Chip, Avatar, Stack, LinearProgress} from "@mui/material";
+import { TrendingUp, Users, UserX, Clock, Search, RefreshCw, Play, Square, FileText, BarChart} from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
+import { fetchMentorCohortProgress, fetchLearnerSessionActivity, fetchMentorCohorts } from '@/lib/mentor-api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Styled components for better UI
-const StatCard = ({ title, value, subtitle, icon, color = "primary" }: any) => (
+// Styled components for better UI - FIXED WIDTH
+const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }: any) => (
   <Card
     sx={{
       height: '100%',
+      minHeight: '180px', // Fixed minimum height
       background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
       border: `1px solid ${color}.100`,
       borderRadius: 3,
@@ -30,27 +26,53 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary" }: any) => (
       }
     }}
   >
-    <CardContent sx={{ p: 3 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-        <Box>
-          <Typography variant="h3" fontWeight="bold" color={`${color}.dark`}>
+    <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="h3" fontWeight="bold" color={`${color}.dark`} sx={{ mb: 1 }}>
             {value}
           </Typography>
-          <Typography variant="h6" color={`${color}.dark`} fontWeight="medium">
+          <Typography 
+            variant="h6" 
+            color={`${color}.dark`} 
+            fontWeight="medium"
+            sx={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: 1.3,
+              minHeight: '2.6em' // Reserve space for 2 lines
+            }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="caption" color={`${color}.main`}>
+            <Typography variant="caption" color={`${color}.main`} sx={{ display: 'block', mt: 0.5 }}>
               {subtitle}
             </Typography>
           )}
+          {progress !== undefined && (
+            <Box sx={{ mt: 2 }}>
+              <LinearProgress variant="determinate" value={progress} 
+                sx={{ height: 8, borderRadius: 4,
+                  backgroundColor: `${color}.50`,
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: `${color}.main`, borderRadius: 4 }}}
+              />
+              <Typography variant="caption" color={`${color}.main`} sx={{ mt: 0.5, display: 'block' }}>
+                {progress.toFixed(0)}% progress
+              </Typography>
+            </Box>
+          )}
         </Box>
         <Box
-          sx={{
-            p: 2,
+          sx={{ p: 2,
             borderRadius: 3,
             bgcolor: `${color}.50`,
             color: `${color}.main`,
+            flexShrink: 0
           }}
         >
           {icon}
@@ -133,7 +155,7 @@ const getLatestSessionForUser = (sessions?: any[]) => {
 
 export default function MentorDashboardClean() {
   const { cohortId } = useParams<{ cohortId: string }>();
-  const { user } = useUserContext();
+  const { user, selectedCohortWithProgram, isChangingCohort } = useUserContext();
   const mentorId = user?.userId ?? "";
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -143,33 +165,101 @@ export default function MentorDashboardClean() {
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
+  
+  // New state for cohort progress and assignments
+  const [cohortProgress, setCohortProgress] = useState<any[]>([]);
+  const [assignmentsCount, setAssignmentsCount] = useState<number>(0);
+  const [overallCohortProgress, setOverallCohortProgress] = useState<number>(0);
+  const [loadingProgress, setLoadingProgress] = useState(false);
+  const [programId, setProgramId] = useState<string>("");
 
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Get programId from localStorage on component mount
   useEffect(() => {
+    const getProgramIdFromStorage = () => {
+      try {
+        const selectedCohortStr = localStorage.getItem("selectedCohortWithProgram");
+        if (selectedCohortStr) {
+          const selectedCohort = JSON.parse(selectedCohortStr);
+          if (selectedCohort?.program?.programId) {
+            return selectedCohort.program.programId;
+          }
+        }
+        
+        if (cohortMeta?.program?.programId) {
+          return cohortMeta.program.programId;
+        }
+        
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          if (userData?.selectedProgramId) {
+            return userData.selectedProgramId;
+          }
+        }
+        
+        return "";
+      } catch (error) {
+        console.error("Error getting programId from storage:", error);
+        return "";
+      }
+    };
+
+    const programIdFromStorage = getProgramIdFromStorage();
+    if (programIdFromStorage) {
+      setProgramId(programIdFromStorage);
+    }
+  }, [cohortMeta]);
+
+
+  useEffect(() => {
+    if (isChangingCohort) {
+      return;
+    }
     if (!cohortId || !mentorId) {
       setError("Missing cohortId or mentorId. Please re-select your cohort.");
       return;
     }
     fetchData();
-  }, [cohortId, mentorId]);
+  }, [cohortId, mentorId, isChangingCohort]);
+
+  useEffect(() => {
+    if (isChangingCohort) {
+      return;
+    }
+    
+    if (programId && cohortId && mentorId) {
+      fetchCohortProgress();
+    }
+  }, [programId, cohortId, mentorId, isChangingCohort]);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get(
-        `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
-          cohortId
-        )}/mentor/${encodeURIComponent(mentorId)}`,
-        { withCredentials: true }
+      // Use the existing API function from mentor-api.ts
+      const sessionData = await fetchLearnerSessionActivity(cohortId!, mentorId);
+      
+      // Also fetch cohort metadata
+      const resp = await fetch(
+        `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(cohortId!)}/mentor/${encodeURIComponent(mentorId)}`,
+        { credentials: "include" }
       );
 
-      const data = resp.data ?? {};
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      }
+
+      const data = await resp.json();
       setOrganization(data.organization ?? null);
       setCohortMeta(data.cohort ?? null);
+
+      if (data.cohort?.program?.programId && !programId) {
+        setProgramId(data.cohort.program.programId);
+      }
 
       const fetchedUsers: any[] = Array.isArray(data.users) ? data.users : [];
       const mapped = fetchedUsers.map((u) => {
@@ -183,7 +273,16 @@ export default function MentorDashboardClean() {
         };
       });
 
+      // FIXED SORTING: Latest activity first, DISABLED users at bottom with light grey
       mapped.sort((a, b) => {
+        const aStatus = (a.status ?? "").toUpperCase();
+        const bStatus = (b.status ?? "").toUpperCase();
+        
+        // DISABLED users go to bottom
+        if (aStatus === "DISABLED" && bStatus !== "DISABLED") return 1;
+        if (bStatus === "DISABLED" && aStatus !== "DISABLED") return -1;
+        
+        // Within same status group, sort by latest activity
         if (!a.latestTimestamp && !b.latestTimestamp) return 0;
         if (!a.latestTimestamp) return 1;
         if (!b.latestTimestamp) return -1;
@@ -193,20 +292,53 @@ export default function MentorDashboardClean() {
       setUsers(mapped);
     } catch (err: any) {
       console.error("Mentor dashboard fetch error:", err);
-      setError(
-        err?.response?.data?.message ??
-          err?.message ??
-          "Failed to load mentor cohort data."
-      );
+      setError(err?.message ?? "Failed to load mentor cohort data.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  const fetchCohortProgress = async () => {
+    if (!cohortId || !mentorId || !programId) {
+      console.log("Missing required parameters for progress fetch:", { cohortId, mentorId, programId });
+      return;
+    }
+    
+    setLoadingProgress(true);
+    try {
+      // Use the existing API function from mentor-api.ts
+      const progressData = await fetchMentorCohortProgress(mentorId, programId, cohortId!);
+      setCohortProgress(progressData);
+      
+      // Calculate overall cohort progress
+      if (progressData && progressData.length > 0) {
+        const totalSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.totalSubconcepts || 0), 0);
+        const completedSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.completedSubconcepts || 0), 0);
+        
+        const overallProgress = totalSubconcepts > 0 ? (completedSubconcepts / totalSubconcepts) * 100 : 0;
+        
+        setOverallCohortProgress(parseFloat(overallProgress.toFixed(1)));
+      }
+      
+      // Fetch assignments count using the new API function
+      const cohortsData = await fetchMentorCohorts(mentorId);
+      if (cohortsData.assignmentStatistics?.cohortDetails?.[cohortId!]) {
+        const pendingAssignments = cohortsData.assignmentStatistics.cohortDetails[cohortId!].pendingAssignments || 0;
+        setAssignmentsCount(pendingAssignments);
+      }
+      
+    } catch (err: any) {
+      console.error("Error fetching cohort progress:", err);
+    } finally {
+      setLoadingProgress(false);
+    }
+  };
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchData();
+    fetchCohortProgress();
   };
 
   // derived stats
@@ -239,34 +371,72 @@ export default function MentorDashboardClean() {
     setPage(0);
   };
 
+  // Format date function
+  const formatDate = (timestamp: number) => {
+    if (!timestamp) return "N/A";
+    try {
+      const date = new Date(timestamp * 1000);
+      return format(date, "MMM d, yyyy");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Cohort Dashboard
+      {/* Show loading overlay when cohort is changing */}
+      {isChangingCohort && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
+          <div className="text-center p-8 bg-white rounded-lg shadow-xl">
+            <CircularProgress className="mb-4" />
+            <Typography variant="h6" className="mb-2">
+              Switching to {selectedCohortWithProgram?.cohortName}
             </Typography>
-            <Typography variant="h6" color="text.secondary">
-              {cohortMeta?.cohortName || "Loading..."} • {organization?.organizationName || ""}
+            <Typography variant="body2" color="text.secondary">
+              Loading cohort data...
             </Typography>
-          </Box>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={refreshing}
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
-          </IconButton>
-        </Stack>
-      </Box>
+          </div>
+        </div>
+      )}
 
+      {/* Wrap ALL content in blur div when changing cohort */}
+      <div className={isChangingCohort ? "opacity-50 pointer-events-none blur-sm" : ""}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                Cohort Dashboard
+              </Typography>
+              <Typography variant="h6" color="text.secondary">
+                {cohortMeta?.cohortName || "Loading..."} • {formatDate(cohortMeta?.cohortStartDate)} - {formatDate(cohortMeta?.cohortEndDate)}
+              </Typography>
+            </Box>
+            
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="subtitle1" color="text.primary">
+                {organization?.organizationName || "Organization"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Program: {cohortMeta?.program?.programName || programId || "Loading..."}
+              </Typography>
+            </Box>
+            
+            <IconButton
+              onClick={handleRefresh}
+              disabled={refreshing || loadingProgress || isChangingCohort}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <RefreshCw className={refreshing || loadingProgress ? "animate-spin" : ""} size={20} />
+            </IconButton>
+          </Stack>
+        </Box>
+      
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
           <CircularProgress />
@@ -279,11 +449,11 @@ export default function MentorDashboardClean() {
         </Alert>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && !isChangingCohort && (
         <>
-          {/* Stats Cards */}
+          {/* Stats Cards - FIXED GRID */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Total Learners"
                 value={totals.total}
@@ -292,7 +462,7 @@ export default function MentorDashboardClean() {
                 color="primary"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Active Learners"
                 value={totals.active}
@@ -301,13 +471,23 @@ export default function MentorDashboardClean() {
                 color="success"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                title="Deactivated"
-                value={totals.deactivated}
-                subtitle="Disabled users"
-                icon={<UserX size={24} />}
-                color="error"
+                title="Assignments for Review"
+                value={assignmentsCount}
+                subtitle="Pending assignments"
+                icon={<FileText size={24} />}
+                color="warning"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Cohort Progress"
+                value={`${overallCohortProgress}%`}
+                subtitle="Overall completion"
+                icon={<BarChart size={24} />}
+                color="info"
+                progress={overallCohortProgress}
               />
             </Grid>
           </Grid>
@@ -331,18 +511,14 @@ export default function MentorDashboardClean() {
                   placeholder="Search learners by name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={isChangingCohort}
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
                     border: '1px solid #E5E7EB',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.3s ease',
-                    ':focus': {
-                      borderColor: '#3B82F6',
-                      boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                    }
+                    outline: 'none'
                   }}
                 />
               </Box>
@@ -350,6 +526,7 @@ export default function MentorDashboardClean() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
+                disabled={isChangingCohort}
                 style={{
                   padding: '12px 16px',
                   border: '1px solid #E5E7EB',
@@ -367,12 +544,8 @@ export default function MentorDashboardClean() {
           </Paper>
 
           {/* Learners Table */}
-          <Paper 
-            sx={{ 
-              p: 3, 
-              borderRadius: 3,
-              boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
-              transition: 'all 0.3s ease'
+          <Paper sx={{ p: 3, borderRadius: 3,
+              boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)'
             }}
           >
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
@@ -399,17 +572,20 @@ export default function MentorDashboardClean() {
                   {paginated.length > 0 ? (
                     paginated.map((u) => {
                       const latestSession = u.latestSession;
-                      const duration = latestSession ? 
+                      const duration = latestSession ?
                         calculateDuration(latestSession.sessionStartTimestamp, latestSession.sessionEndTimestamp) 
                         : "—";
+                      
+                      const isDisabled = (u.status ?? "").toUpperCase() === "DISABLED";
                       
                       return (
                         <TableRow 
                           key={u.userId}
                           sx={{ 
                             transition: 'all 0.2s ease',
+                            opacity: isDisabled ? 0.5 : 1, // Light grey for DISABLED
                             '&:hover': {
-                              backgroundColor: 'grey.50',
+                              backgroundColor: isDisabled ? 'grey.50' : 'grey.100',
                             }
                           }}
                         >
@@ -419,7 +595,8 @@ export default function MentorDashboardClean() {
                                 sx={{
                                   bgcolor: u.status === "ACTIVE" ? 'success.main' : 'error.main',
                                   width: 40,
-                                  height: 40
+                                  height: 40,
+                                  opacity: isDisabled ? 0.6 : 1
                                 }}
                               >
                                 <Typography variant="body2" fontWeight="bold" color="white">
@@ -505,9 +682,521 @@ export default function MentorDashboardClean() {
           </Paper>
         </>
       )}
+      </div>
     </Container>
   );
 }
+
+
+
+
+
+// import React, { useEffect, useMemo, useState } from "react";
+// import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+//   Paper, TablePagination, Box, CircularProgress, Alert, IconButton, Chip, Avatar, Stack
+// } from "@mui/material";
+// import { TrendingUp, Users, UserX, Clock, Search, RefreshCw, Play, Square} from "lucide-react";
+// import axios from "axios";
+// import { formatDistanceToNow, format } from "date-fns";
+// import { useParams } from "react-router-dom";
+// import { useUserContext } from "../../context/AuthContext";
+
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
+// // Styled components for better UI
+// const StatCard = ({ title, value, subtitle, icon, color = "primary" }: any) => (
+//   <Card
+//     sx={{
+//       height: '100%',
+//       background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
+//       border: `1px solid ${color}.100`,
+//       borderRadius: 3,
+//       boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+//       transition: 'all 0.3s ease-in-out',
+//       '&:hover': {
+//         transform: 'translateY(-4px)',
+//         boxShadow: '0 8px 24px 0 rgba(0,0,0,0.1)',
+//       }
+//     }}
+//   >
+//     <CardContent sx={{ p: 3 }}>
+//       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+//         <Box>
+//           <Typography variant="h3" fontWeight="bold" color={`${color}.dark`}>
+//             {value}
+//           </Typography>
+//           <Typography variant="h6" color={`${color}.dark`} fontWeight="medium">
+//             {title}
+//           </Typography>
+//           {subtitle && (
+//             <Typography variant="caption" color={`${color}.main`}>
+//               {subtitle}
+//             </Typography>
+//           )}
+//         </Box>
+//         <Box
+//           sx={{
+//             p: 2,
+//             borderRadius: 3,
+//             bgcolor: `${color}.50`,
+//             color: `${color}.main`,
+//           }}
+//         >
+//           {icon}
+//         </Box>
+//       </Stack>
+//     </CardContent>
+//   </Card>
+// );
+
+// const StatusChip = ({ status }: { status: string }) => (
+//   <Chip
+//     label={status}
+//     size="small"
+//     color={status === "ACTIVE" ? "success" : "error"}
+//     variant="filled"
+//     sx={{
+//       fontWeight: 'bold',
+//       textTransform: 'uppercase',
+//       fontSize: '0.75rem'
+//     }}
+//   />
+// );
+
+// const formatLastActivity = (timestamp?: string | null) => {
+//   if (!timestamp) return "Never logged in";
+//   const date = new Date(timestamp);
+//   const relativeTime = formatDistanceToNow(date, { addSuffix: true });
+//   const formattedTime = format(date, "hh:mm a");
+//   return `${relativeTime} at ${formattedTime}`;
+// };
+
+// // Calculate duration between start and end time
+// const calculateDuration = (startTime?: string, endTime?: string) => {
+//   if (!startTime || !endTime) return "—";
+  
+//   try {
+//     const start = new Date(startTime);
+//     const end = new Date(endTime);
+//     const durationMs = end.getTime() - start.getTime();
+    
+//     if (durationMs < 0) return "Invalid";
+    
+//     const hours = Math.floor(durationMs / (1000 * 60 * 60));
+//     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+//     const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+    
+//     if (hours > 0) {
+//       return `${hours}h ${minutes}m ${seconds}s`;
+//     } else if (minutes > 0) {
+//       return `${minutes}m ${seconds}s`;
+//     } else {
+//       return `${seconds}s`;
+//     }
+//   } catch (error) {
+//     return "—";
+//   }
+// };
+
+// const getLatestSessionForUser = (sessions?: any[]) => {
+//   if (!sessions || sessions.length === 0) return null;
+
+//   const valid = sessions
+//     .map((s) => ({
+//       ...s,
+//       endTs: s.sessionEndTimestamp ? new Date(s.sessionEndTimestamp) : null,
+//       startTs: s.sessionStartTimestamp ? new Date(s.sessionStartTimestamp) : null,
+//     }))
+//     .filter((s) => s.endTs || s.startTs);
+
+//   if (valid.length === 0) return null;
+
+//   valid.sort((a, b) => {
+//     const aTime = a.endTs ? a.endTs.getTime() : a.startTs.getTime();
+//     const bTime = b.endTs ? b.endTs.getTime() : b.startTs.getTime();
+//     return bTime - aTime;
+//   });
+
+//   return valid[0];
+// };
+
+// export default function MentorDashboardClean() {
+//   const { cohortId } = useParams<{ cohortId: string }>();
+//   const { user } = useUserContext();
+//   const mentorId = user?.userId ?? "";
+//   const [loading, setLoading] = useState(false);
+//   const [refreshing, setRefreshing] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [organization, setOrganization] = useState<any | null>(null);
+//   const [cohortMeta, setCohortMeta] = useState<any | null>(null);
+//   const [users, setUsers] = useState<any[]>([]);
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
+
+//   // Pagination
+//   const [page, setPage] = useState(0);
+//   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+//   useEffect(() => {
+//     if (!cohortId || !mentorId) {
+//       setError("Missing cohortId or mentorId. Please re-select your cohort.");
+//       return;
+//     }
+//     fetchData();
+//   }, [cohortId, mentorId]);
+
+//   const fetchData = async () => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const resp = await axios.get(
+//         `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(
+//           cohortId
+//         )}/mentor/${encodeURIComponent(mentorId)}`,
+//         { withCredentials: true }
+//       );
+
+//       const data = resp.data ?? {};
+//       setOrganization(data.organization ?? null);
+//       setCohortMeta(data.cohort ?? null);
+
+//       const fetchedUsers: any[] = Array.isArray(data.users) ? data.users : [];
+//       const mapped = fetchedUsers.map((u) => {
+//         const latest = getLatestSessionForUser(u.recentSessions);
+//         const latestTs =
+//           latest?.sessionEndTimestamp ?? latest?.sessionStartTimestamp ?? null;
+//         return {
+//           ...u,
+//           latestSession: latest ?? null,
+//           latestTimestamp: latestTs,
+//         };
+//       });
+
+//       mapped.sort((a, b) => {
+//         if (!a.latestTimestamp && !b.latestTimestamp) return 0;
+//         if (!a.latestTimestamp) return 1;
+//         if (!b.latestTimestamp) return -1;
+//         return new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime();
+//       });
+
+//       setUsers(mapped);
+//     } catch (err: any) {
+//       console.error("Mentor dashboard fetch error:", err);
+//       setError(
+//         err?.response?.data?.message ??
+//           err?.message ??
+//           "Failed to load mentor cohort data."
+//       );
+//     } finally {
+//       setLoading(false);
+//       setRefreshing(false);
+//     }
+//   };
+
+//   const handleRefresh = () => {
+//     setRefreshing(true);
+//     fetchData();
+//   };
+
+//   // derived stats
+//   const totals = useMemo(() => {
+//     const total = users.length;
+//     const active = users.filter((u) => (u.status ?? "").toUpperCase() === "ACTIVE").length;
+//     const deactivated = total - active;
+//     return { total, active, deactivated };
+//   }, [users]);
+
+//   // Filter and search users
+//   const filteredUsers = useMemo(() => {
+//     let filtered = users.filter(user =>
+//       user.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//       user.userId?.toLowerCase().includes(searchTerm.toLowerCase())
+//     );
+
+//     if (statusFilter !== "ALL") {
+//       filtered = filtered.filter(user => user.status === statusFilter);
+//     }
+
+//     return filtered;
+//   }, [users, searchTerm, statusFilter]);
+
+//   const paginated = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+//   const handleChangePage = (_: any, newPage: number) => setPage(newPage);
+//   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+//     setRowsPerPage(parseInt(event.target.value, 10));
+//     setPage(0);
+//   };
+
+//   return (
+//     <Container maxWidth="xl" sx={{ py: 4 }}>
+//       {/* Header */}
+//       <Box sx={{ mb: 4 }}>
+//         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+//           <Box>
+//             <Typography variant="h4" fontWeight="bold" gutterBottom>
+//               Cohort Dashboard
+//             </Typography>
+//             <Typography variant="h6" color="text.secondary">
+//               {cohortMeta?.cohortName || "Loading..."} • {organization?.organizationName || ""}
+//             </Typography>
+//           </Box>
+//           <IconButton
+//             onClick={handleRefresh}
+//             disabled={refreshing}
+//             sx={{
+//               bgcolor: 'primary.main',
+//               color: 'white',
+//               '&:hover': { bgcolor: 'primary.dark' },
+//               transition: 'all 0.3s ease'
+//             }}
+//           >
+//             <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
+//           </IconButton>
+//         </Stack>
+//       </Box>
+
+//       {loading && (
+//         <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
+//           <CircularProgress />
+//         </Box>
+//       )}
+
+//       {error && (
+//         <Alert severity="error" sx={{ mb: 3 }}>
+//           {error}
+//         </Alert>
+//       )}
+
+//       {!loading && !error && (
+//         <>
+//           {/* Stats Cards */}
+//           <Grid container spacing={3} sx={{ mb: 4 }}>
+//             <Grid item xs={12} sm={6} md={4}>
+//               <StatCard
+//                 title="Total Learners"
+//                 value={totals.total}
+//                 subtitle="All users in cohort"
+//                 icon={<Users size={24} />}
+//                 color="primary"
+//               />
+//             </Grid>
+//             <Grid item xs={12} sm={6} md={4}>
+//               <StatCard
+//                 title="Active Learners"
+//                 value={totals.active}
+//                 subtitle="Currently active"
+//                 icon={<TrendingUp size={24} />}
+//                 color="success"
+//               />
+//             </Grid>
+//             <Grid item xs={12} sm={6} md={4}>
+//               <StatCard
+//                 title="Deactivated"
+//                 value={totals.deactivated}
+//                 subtitle="Disabled users"
+//                 icon={<UserX size={24} />}
+//                 color="error"
+//               />
+//             </Grid>
+//           </Grid>
+
+//           {/* Search and Filters */}
+//           <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+//             <Stack direction="row" spacing={2} alignItems="center">
+//               <Box sx={{ position: 'relative', flex: 1 }}>
+//                 <Search
+//                   size={20}
+//                   style={{
+//                     position: 'absolute',
+//                     left: 12,
+//                     top: '50%',
+//                     transform: 'translateY(-50%)',
+//                     color: '#6B7280'
+//                   }}
+//                 />
+//                 <input
+//                   type="text"
+//                   placeholder="Search learners by name or ID..."
+//                   value={searchTerm}
+//                   onChange={(e) => setSearchTerm(e.target.value)}
+//                   style={{
+//                     width: '100%',
+//                     padding: '12px 12px 12px 40px',
+//                     border: '1px solid #E5E7EB',
+//                     borderRadius: '8px',
+//                     fontSize: '14px',
+//                     outline: 'none',
+//                     transition: 'all 0.3s ease',
+//                     ':focus': {
+//                       borderColor: '#3B82F6',
+//                       boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+//                     }
+//                   }}
+//                 />
+//               </Box>
+              
+//               <select
+//                 value={statusFilter}
+//                 onChange={(e) => setStatusFilter(e.target.value as any)}
+//                 style={{
+//                   padding: '12px 16px',
+//                   border: '1px solid #E5E7EB',
+//                   borderRadius: '8px',
+//                   fontSize: '14px',
+//                   outline: 'none',
+//                   minWidth: '140px'
+//                 }}
+//               >
+//                 <option value="ALL">All Status</option>
+//                 <option value="ACTIVE">Active</option>
+//                 <option value="DISABLED">Disabled</option>
+//               </select>
+//             </Stack>
+//           </Paper>
+
+//           {/* Learners Table */}
+//           <Paper 
+//             sx={{ 
+//               p: 3, 
+//               borderRadius: 3,
+//               boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+//               transition: 'all 0.3s ease'
+//             }}
+//           >
+//             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+//               <Typography variant="h6" fontWeight="bold">
+//                 Learners Activity
+//               </Typography>
+//               <Typography variant="body2" color="text.secondary">
+//                 Showing {paginated.length} of {filteredUsers.length} learners
+//               </Typography>
+//             </Stack>
+
+//             <TableContainer>
+//               <Table>
+//                 <TableHead>
+//                   <TableRow sx={{ backgroundColor: 'grey.50' }}>
+//                     <TableCell><strong>Learner</strong></TableCell>
+//                     <TableCell><strong>Status</strong></TableCell>
+//                     <TableCell><strong>Last Activity</strong></TableCell>
+//                     <TableCell><strong>Duration</strong></TableCell>
+//                   </TableRow>
+//                 </TableHead>
+
+//                 <TableBody>
+//                   {paginated.length > 0 ? (
+//                     paginated.map((u) => {
+//                       const latestSession = u.latestSession;
+//                       const duration = latestSession ?
+//                         calculateDuration(latestSession.sessionStartTimestamp, latestSession.sessionEndTimestamp) 
+//                         : "—";
+                      
+//                       return (
+//                         <TableRow 
+//                           key={u.userId}
+//                           sx={{ 
+//                             transition: 'all 0.2s ease',
+//                             '&:hover': {
+//                               backgroundColor: 'grey.50',
+//                             }
+//                           }}
+//                         >
+//                           <TableCell>
+//                             <Stack direction="row" alignItems="center" spacing={2}>
+//                               <Avatar
+//                                 sx={{
+//                                   bgcolor: u.status === "ACTIVE" ? 'success.main' : 'error.main',
+//                                   width: 40,
+//                                   height: 40
+//                                 }}
+//                               >
+//                                 <Typography variant="body2" fontWeight="bold" color="white">
+//                                   {u.userName?.charAt(0)?.toUpperCase() || 'U'}
+//                                 </Typography>
+//                               </Avatar>
+//                               <Box>
+//                                 <Typography variant="subtitle1" fontWeight="medium">
+//                                   {u.userName || "—"}
+//                                 </Typography>
+//                                 <Typography variant="body2" color="text.secondary">
+//                                   {u.userId}
+//                                 </Typography>
+//                               </Box>
+//                             </Stack>
+//                           </TableCell>
+//                           <TableCell>
+//                             <StatusChip status={u.status || "UNKNOWN"} />
+//                           </TableCell>
+//                           <TableCell>
+//                             <Stack direction="row" alignItems="center" spacing={1}>
+//                               <Clock size={16} color="#6B7280" />
+//                               <Typography variant="body2">
+//                                 {u.latestTimestamp
+//                                   ? formatLastActivity(u.latestTimestamp)
+//                                   : "Never logged in"}
+//                               </Typography>
+//                             </Stack>
+//                           </TableCell>
+//                           <TableCell>
+//                             <Stack direction="row" alignItems="center" spacing={1}>
+//                               {duration !== "—" ? (
+//                                 <>
+//                                   <Play size={16} color="#10B981" />
+//                                   <Typography variant="body2" color="text.primary" fontWeight="medium">
+//                                     {duration}
+//                                   </Typography>
+//                                 </>
+//                               ) : (
+//                                 <>
+//                                   <Square size={16} color="#6B7280" />
+//                                   <Typography variant="body2" color="text.secondary">
+//                                     {duration}
+//                                   </Typography>
+//                                 </>
+//                               )}
+//                             </Stack>
+//                           </TableCell>
+//                         </TableRow>
+//                       );
+//                     })
+//                   ) : (
+//                     <TableRow>
+//                       <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+//                         <Users size={48} color="#9CA3AF" />
+//                         <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+//                           No learners found
+//                         </Typography>
+//                         <Typography variant="body2" color="text.secondary">
+//                           Try adjusting your search or filters
+//                         </Typography>
+//                       </TableCell>
+//                     </TableRow>
+//                   )}
+//                 </TableBody>
+//               </Table>
+//             </TableContainer>
+
+//             <TablePagination
+//               rowsPerPageOptions={[5, 10, 20, 25]}
+//               component="div"
+//               count={filteredUsers.length}
+//               rowsPerPage={rowsPerPage}
+//               page={page}
+//               onPageChange={handleChangePage}
+//               onRowsPerPageChange={handleChangeRowsPerPage}
+//               sx={{
+//                 borderTop: '1px solid',
+//                 borderColor: 'grey.200',
+//                 mt: 2
+//               }}
+//             />
+//           </Paper>
+//         </>
+//       )}
+//     </Container>
+//   );
+// }
 
 
 

@@ -8,6 +8,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class SubconceptReportDTO {
 	private String subconceptId;
     private String subconceptDesc;
+    private String dependency;
+	private Integer subconceptMaxscore;
+	private Integer numQuestions;
+    private String showTo;
+	private String subconceptGroup;
+	private String subconceptDesc2;
+	private String subconceptType;
     private boolean isCompleted;
     private double highestScore;
     private int attemptCount;
@@ -31,6 +38,48 @@ public class SubconceptReportDTO {
 	}
 	public void setSubconceptDesc(String subconceptDesc) {
 		this.subconceptDesc = subconceptDesc;
+	}
+	public String getDependency() {
+		return dependency;
+	}
+	public void setDependency(String dependency) {
+		this.dependency = dependency;
+	}
+	public Integer getSubconceptMaxscore() {
+		return subconceptMaxscore;
+	}
+	public void setSubconceptMaxscore(Integer subconceptMaxscore) {
+		this.subconceptMaxscore = subconceptMaxscore;
+	}
+	public Integer getNumQuestions() {
+		return numQuestions;
+	}
+	public void setNumQuestions(Integer numQuestions) {
+		this.numQuestions = numQuestions;
+	}
+	public String getShowTo() {
+		return showTo;
+	}
+	public void setShowTo(String showTo) {
+		this.showTo = showTo;
+	}
+	public String getSubconceptGroup() {
+		return subconceptGroup;
+	}
+	public void setSubconceptGroup(String subconceptGroup) {
+		this.subconceptGroup = subconceptGroup;
+	}
+	public String getSubconceptDesc2() {
+		return subconceptDesc2;
+	}
+	public void setSubconceptDesc2(String subconceptDesc2) {
+		this.subconceptDesc2 = subconceptDesc2;
+	}
+	public String getSubconceptType() {
+		return subconceptType;
+	}
+	public void setSubconceptType(String subconceptType) {
+		this.subconceptType = subconceptType;
 	}
 	public boolean isCompleted() {
 		return isCompleted;

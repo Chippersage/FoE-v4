@@ -1,25 +1,26 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User,Menu,X } from "lucide-react";
+import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User, Menu, X, ChevronDown } from "lucide-react";
 import axios from "axios";
+import { CircularProgress } from "@mui/material";
 import { useUserContext } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { fetchMentorCohorts, type CohortWithProgram } from "@/lib/mentor-api";
 
 interface MentorSideNavProps {
   cohortId: string;
   mentorId: string;
 }
 
-// Updated navItems with disabled items
 const navItems = [
   { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true, enabled: true },
   { label: "Learners Details", icon: Users, path: "learners", needsProgram: false, enabled: true },
   { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
   { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false, enabled: true },
   { label: "Reports", icon: BarChart, path: "reports", needsProgram: true, enabled: true },
-  { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: false }, // Disabled
+  { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: true },
+  { label: "Cohort Details", icon: List, path: "cohort-details", needsProgram: false, enabled: false },
   // { label: "Session Logs", icon: ClipboardList, path: "session-logs", needsProgram: false, enabled: true },
-  { label: "Cohort Details", icon: List, path: "cohort-details", needsProgram: false, enabled: false }, // Disabled
 ];
 
 export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavProps) {
@@ -29,10 +30,14 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
   const cohortId = cohortIdProp ?? params.cohortId ?? "";
   const urlProgramId = params.programId ?? "";
 
-  const { clearAuth, user, selectedCohortWithProgram } = useUserContext();
+  const { clearAuth, user, selectedCohortWithProgram, setSelectedCohortWithProgram, setIsChangingCohort } = useUserContext();
   const [isLoading, setIsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCohortDropdown, setShowCohortDropdown] = useState(false);
+  const [allCohorts, setAllCohorts] = useState<CohortWithProgram[]>([]);
+  const [loadingCohorts, setLoadingCohorts] = useState(false);
+  const [isChanging, setIsChanging] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   
@@ -52,7 +57,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
     return "";
   }, [urlProgramId, user]);
 
-  // Get mentor name - fallback to user name or user ID
+  // Get mentor name
   const mentorName = useMemo(() => {
     if (user?.userName) return user.userName;
     if (user?.userId) return user.userId;
@@ -70,7 +75,57 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
     return "Mentor";
   }, [user]);
 
-  // returns the correct path (includes programId if nav item needs it)
+  // Fetch all cohorts on mount
+  useEffect(() => {
+    if (user?.userId) {
+      fetchAllCohorts();
+    }
+  }, [user?.userId]);
+
+  const fetchAllCohorts = async () => {
+    if (!user?.userId) return;
+    
+    setLoadingCohorts(true);
+    try {
+      const data = await fetchMentorCohorts(user.userId);
+      if (data.userDetails?.allCohortsWithPrograms) {
+        setAllCohorts(data.userDetails.allCohortsWithPrograms);
+      }
+    } catch (error) {
+      console.error("Error fetching cohorts:", error);
+    } finally {
+      setLoadingCohorts(false);
+    }
+  };
+
+  const handleCohortChange = async (newCohort: CohortWithProgram) => {
+  if (isChanging) return;
+  
+  setIsChanging(true);
+  setIsChangingCohort(true);
+  
+  // Update context and localStorage
+  if (setSelectedCohortWithProgram) {
+    setSelectedCohortWithProgram(newCohort);
+  }
+
+  localStorage.setItem("selectedCohortWithProgram", JSON.stringify(newCohort));
+  
+  // Wait a bit to ensure state updates propagate
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Navigate to the dashboard of the new cohort
+  const newPath = `/mentor/${newCohort.cohortId}/${newCohort.program.programId}/dashboard`;
+  navigate(newPath);
+  setShowCohortDropdown(false);
+  setIsMobileMenuOpen(false);
+  
+  setTimeout(() => {
+    setIsChangingCohort(false);
+    setIsChanging(false);
+  }, 500);
+};
+  // returns the correct path
   const makePath = (itemPath: string, needsProgram: boolean) => {
     if (!cohortId) return `/mentor/${itemPath}`;
     if (needsProgram) {
@@ -81,7 +136,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    setIsMobileMenuOpen(false); // Close mobile menu after navigation
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -115,7 +170,6 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
 
   const confirmLogout = () => setShowLogoutConfirm(true);
   const cancelLogout = () => setShowLogoutConfirm(false);
-
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
@@ -176,13 +230,57 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
             </div>
           </div>
           
-          {/* Cohort Info */}
-          {selectedCohortWithProgram?.cohortName && (
-            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-              <p className="text-sm font-medium text-blue-800">Current Cohort</p>
-              <p className="text-sm text-blue-600 truncate">{selectedCohortWithProgram.cohortName}</p>
-            </div>
-          )}
+          {/* Cohort Selection Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowCohortDropdown(!showCohortDropdown)}
+              className="w-full bg-blue-50 rounded-lg p-3 border border-blue-200 hover:bg-blue-100 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-blue-800">Current Cohort</p>
+                  <p className="text-sm text-blue-600 truncate">
+                    {selectedCohortWithProgram?.cohortName || "Select Cohort"}
+                  </p>
+                </div>
+                <ChevronDown 
+                  className={`h-5 w-5 text-blue-600 transition-transform ${showCohortDropdown ? 'rotate-180' : ''}`} 
+                />
+              </div>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showCohortDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                {loadingCohorts ? (
+                  <div className="p-4 text-center text-gray-500">
+                    Loading cohorts...
+                  </div>
+                ) : allCohorts.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No cohorts available
+                  </div>
+                ) : (
+                  allCohorts.map((cohort) => (
+                    <button
+                      key={cohort.cohortId}
+                      onClick={() => { handleCohortChange(cohort).catch(console.error) }}
+                      className={`w-full p-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                        cohort.cohortId === cohortId ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {cohort.cohortName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate mt-1">
+                        {cohort.program.programName}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <nav className="flex-1 space-y-2">

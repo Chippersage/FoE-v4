@@ -230,7 +230,8 @@ public class UserSessionMappingServiceImpl implements UserSessionMappingService 
         CohortDetailsDTO cohortDetails = new CohortDetailsDTO();
         cohortDetails.setCohortId(cohort.getCohortId());
         cohortDetails.setCohortName(cohort.getCohortName());
-        
+        cohortDetails.setCohortStartDate(cohort.getCohortStartDate());
+        cohortDetails.setCohortEndDate(cohort.getCohortEndDate());
         // Set program details
         ProgramCountDTO programDTO = getProgramDetailsForCohort(cohortId);
         cohortDetails.setProgram(programDTO);

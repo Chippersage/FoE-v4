@@ -16,14 +16,19 @@ public class ProgramReportDTO {
     private int completedUnits;
     private int totalSubconcepts;
     private int completedSubconcepts;
+    private int totalAssignments;
+    private int completedAssignments;
     private double stageCompletionPercentage;
     private double unitCompletionPercentage;
     private double subconceptCompletionPercentage;
+    private double assignmentCompletionPercentage;
     private double averageScore;
     private OffsetDateTime firstAttemptDate;  
     private OffsetDateTime lastAttemptDate;  
     private List<StageReportDTO> stages;
     private Map<String, Integer> scoreDistribution;
+    
+    
 	public String getProgramId() {
 		return programId;
 	}
@@ -78,6 +83,18 @@ public class ProgramReportDTO {
 	public void setCompletedSubconcepts(int completedSubconcepts) {
 		this.completedSubconcepts = completedSubconcepts;
 	}
+	public int getTotalAssignments() {
+		return totalAssignments;
+	}
+	public void setTotalAssignments(int totalAssignments) {
+		this.totalAssignments = totalAssignments;
+	}
+	public int getCompletedAssignments() {
+		return completedAssignments;
+	}
+	public void setCompletedAssignments(int completedAssignments) {
+		this.completedAssignments = completedAssignments;
+	}
 	public double getStageCompletionPercentage() {
 		return stageCompletionPercentage;
 	}
@@ -95,6 +112,12 @@ public class ProgramReportDTO {
 	}
 	public void setSubconceptCompletionPercentage(double subconceptCompletionPercentage) {
 		this.subconceptCompletionPercentage = subconceptCompletionPercentage;
+	}
+	public double getAssignmentCompletionPercentage() {
+		return assignmentCompletionPercentage;
+	}
+	public void setAssignmentCompletionPercentage(double assignmentCompletionPercentage) {
+		this.assignmentCompletionPercentage = assignmentCompletionPercentage;
 	}
 	public double getAverageScore() {
 		return averageScore;

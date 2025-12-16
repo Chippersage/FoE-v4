@@ -127,4 +127,24 @@ public class UserAttemptsController {
         userAttemptsService.deleteUserAttempt(userAttemptId);
         return ResponseEntity.noContent().build();
     }
+    
+    @DeleteMapping("/user/{userId}/program/{programId}")
+    public ResponseEntity<?> deleteUserProgressByProgram(
+            @PathVariable String userId,
+            @PathVariable String programId) {
+
+        try {
+            userAttemptsService.deleteUserProgressByUserAndProgram(userId, programId);
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("Failed to delete user progress", ex);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unexpected error occurred"));
+        }
+    }
+
 }

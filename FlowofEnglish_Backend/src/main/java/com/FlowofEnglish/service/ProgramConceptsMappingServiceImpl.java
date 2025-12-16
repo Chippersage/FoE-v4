@@ -264,7 +264,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         currentIndex++;
        // subconceptCount++;
     }
-     // Update totalSubConceptCount based on accessible mappings
+        // Update totalSubConceptCount based on accessible mappings
         int totalNonAssignmentSubConceptCount = (int) accessibleMappings.stream()
                 .map(ProgramConceptsMapping::getSubconcept)
                 .filter(sub -> !sub.getSubconceptType().toLowerCase().startsWith("assignment"))
@@ -310,9 +310,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     }
 }
     
-    /**
-     * Helper method to determine if a subconcept is visible to the user based on user type.
-     */
+     // Helper method to determine if a subconcept is visible to the user based on user type.
     private boolean isSubconceptVisibleToUser(String userType, Subconcept subconcept) {
         try {
             logger.debug("Checking visibility for subconcept {} with userType: {}", subconcept.getSubconceptId(), userType);

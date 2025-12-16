@@ -246,6 +246,21 @@ public class UserCohortMappingController {
         }
     }
 
+    @DeleteMapping("/cohort/{cohortId}/user{userId}")
+    public ResponseEntity<?> deleteUserCohortMappingByUserIdAndCohortId(@PathVariable String userId, @PathVariable String cohortId) {
+    	try {
+            userCohortMappingService.deleteUserCohortMappingByUserIdAndCohortId(userId, cohortId);
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            logger.error("Error deleting user-cohort mapping", ex);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unexpected error occurred"));
+        }
+    }
     
     // Bulk disable users from a cohort
 //    @PostMapping("/cohort/{cohortId}/bulk-disable")

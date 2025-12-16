@@ -11,6 +11,7 @@ public interface UserSubConceptService {
     List<UserSubConcept> getAllUserSubConcepts();
     List<UserSubConcept> getAllUserSubConceptsByUserId(String userId);
     void deleteUserSubConcept(Long userSubconceptId);
+    void deleteUserSubConceptsByUserAndProgram(String userId, String programId);
     UserSubConcept updateUserSubConcept(Long userSubconceptId, UserSubConcept userSubConcept);
     
     UserSubConcept createUserSubConcept(UserSubConcept userSubConcept);
