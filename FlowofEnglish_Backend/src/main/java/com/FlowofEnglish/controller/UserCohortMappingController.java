@@ -246,7 +246,7 @@ public class UserCohortMappingController {
         }
     }
 
-    @DeleteMapping("/cohort/{cohortId}/user{userId}")
+    @DeleteMapping("/user/{userId}/cohort/{cohortId}")
     public ResponseEntity<?> deleteUserCohortMappingByUserIdAndCohortId(@PathVariable String userId, @PathVariable String cohortId) {
     	try {
             userCohortMappingService.deleteUserCohortMappingByUserIdAndCohortId(userId, cohortId);
