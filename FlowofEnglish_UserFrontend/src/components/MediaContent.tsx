@@ -30,7 +30,7 @@ interface UserData {
   subconceptId: string;
   userAttemptStartTimestamp: string;
   API_BASE_URL: string;
-  enableAiEvaluation?: boolean; // ADD THIS LINE
+  enableAiEvaluation?: boolean;
 }
 
 interface SubconceptData {
@@ -512,7 +512,26 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
 
 const MediaContent: React.FC<MediaContentProps> = ({ subconceptData, currentUnitId }) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
-  const userData: UserData = JSON.parse(localStorage.getItem("userData") || "{}");
+  
+  // Read userData from localStorage but we'll update it with current values
+  const storedUserData: UserData = JSON.parse(localStorage.getItem("userData") || "{}");
+  
+  // Create fresh userData with current props instead of relying on stale localStorage
+  const [userData, setUserData] = useState<UserData>(() => {
+    // Update localStorage with current data when component mounts
+    const updatedUserData = {
+      ...storedUserData,
+      unitId: currentUnitId,
+      subconceptId: subconceptData?.subconceptId,
+      userAttemptStartTimestamp: storedUserData.userAttemptStartTimestamp || new Date().toISOString()
+    };
+    
+    // Update localStorage with current data
+    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+    
+    return updatedUserData;
+  });
+  
   const [isComplete, setIsComplete] = useState(
     !(
       subconceptData?.subconceptType?.startsWith("assessment") ||
@@ -553,6 +572,19 @@ const MediaContent: React.FC<MediaContentProps> = ({ subconceptData, currentUnit
   const [currentAudioFile, setCurrentAudioFile] = useState<File | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
+  // Update userData whenever currentUnitId or subconceptData changes
+  useEffect(() => {
+    const updatedUserData = {
+      ...storedUserData,
+      unitId: currentUnitId,
+      subconceptId: subconceptData?.subconceptId,
+      userAttemptStartTimestamp: storedUserData.userAttemptStartTimestamp || new Date().toISOString()
+    };
+    
+    setUserData(updatedUserData);
+    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+  }, [currentUnitId, subconceptData?.subconceptId]);
+
   const appendParamsToUrl = (url: string, userId: string, cohortId: string): string => {
     try {
       const urlObj = new URL(url);
@@ -582,76 +614,77 @@ const MediaContent: React.FC<MediaContentProps> = ({ subconceptData, currentUnit
   };
 
   useEffect(() => {
-const fetchAssignment = async () => {
-  try {
-    const response = await axios.get(
-      `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
-    );
+    const fetchAssignment = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/assignments/user-assignment?userId=${userData?.userId}&subconceptId=${subconceptData?.subconceptId}`
+        );
 
-    const data = response.data;
-    
-    console.log('Raw API response:', data);
-    
-    // If no assignment found, don't proceed
-    if (!data || data.status === 'not_found' || data.message === 'No assignment found for this user and subconcept') {
-      console.log("No assignment found for this user and subconcept");
-      return; // DON'T open the modal
-    }
+        const data = response.data;
+        
+        console.log('Raw API response:', data);
+        
+        // If no assignment found, don't proceed
+        if (!data || data.status === 'not_found' || data.message === 'No assignment found for this user and subconcept') {
+          console.log("No assignment found for this user and subconcept");
+          return; // DON'T open the modal
+        }
 
-    // Safe data extraction
-    const formattedData: AssignmentData = {
-      status: data.status || 'not_submitted',
-      submittedFile: data.submittedFile ? {
-        name: data.submittedFile.fileName || data.submittedFile.name || 'Unknown file',
-        downloadUrl: data.submittedFile.downloadUrl || data.submittedFile.url || ''
-      } : undefined,
-      correctedFile: data.correctedFile ? {
-        name: data.correctedFile.fileName || data.correctedFile.name || 'Corrected file',
-        downloadUrl: data.correctedFile.downloadUrl || data.correctedFile.url || ''
-      } : undefined,
-      score: data.score || data.marks || 0,
-      remarks: data.remarks || data.feedback || ''
-    };
+        // Safe data extraction
+        const formattedData: AssignmentData = {
+          status: data.status || 'not_submitted',
+          submittedFile: data.submittedFile ? {
+            name: data.submittedFile.fileName || data.submittedFile.name || 'Unknown file',
+            downloadUrl: data.submittedFile.downloadUrl || data.submittedFile.url || ''
+          } : undefined,
+          correctedFile: data.correctedFile ? {
+            name: data.correctedFile.fileName || data.correctedFile.name || 'Corrected file',
+            downloadUrl: data.correctedFile.downloadUrl || data.correctedFile.url || ''
+          } : undefined,
+          score: data.score || data.marks || 0,
+          remarks: data.remarks || data.feedback || ''
+        };
 
-    console.log('Formatted assignment data:', formattedData);
+        console.log('Formatted assignment data:', formattedData);
 
-    // Update assignment data based on status
-    if (data.status === "not_corrected") {
-      setAssignmentData((prev) => ({
-        ...prev,
-        not_corrected: formattedData,
-      }));
-      setCurrentStatus("not_corrected");
-    } else if (data.status === "corrected" && data.correctedFile) {
-      setAssignmentData((prev) => ({
-        ...prev,
-        corrected_with_file: formattedData,
-      }));
-      setCurrentStatus("corrected_with_file");
-    } else if (data.status === "corrected") {
-      setAssignmentData((prev) => ({
-        ...prev,
-        corrected: formattedData,
-      }));
-      setCurrentStatus("corrected");
-    }
-    
-    // Only open modal if there's actual assignment data with valid status
-    if (data.status && data.status !== 'not_found' && data.status !== 'not_submitted') {
-      setIsAssignmentStatusModalOpen(true);
-    }
-  } catch (error) {
-    console.error("Error fetching assignment:", error);
-    // Don't show error for 404 - it just means no assignment submitted yet
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 404) {
-        console.log("No assignment found for this user and subconcept");
-      } else {
-        console.error("Assignment fetch error:", error.response?.data);
+        // Update assignment data based on status
+        if (data.status === "not_corrected") {
+          setAssignmentData((prev) => ({
+            ...prev,
+            not_corrected: formattedData,
+          }));
+          setCurrentStatus("not_corrected");
+        } else if (data.status === "corrected" && data.correctedFile) {
+          setAssignmentData((prev) => ({
+            ...prev,
+            corrected_with_file: formattedData,
+          }));
+          setCurrentStatus("corrected_with_file");
+        } else if (data.status === "corrected") {
+          setAssignmentData((prev) => ({
+            ...prev,
+            corrected: formattedData,
+          }));
+          setCurrentStatus("corrected");
+        }
+        
+        // Only open modal if there's actual assignment data with valid status
+        if (data.status && data.status !== 'not_found' && data.status !== 'not_submitted') {
+          setIsAssignmentStatusModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Error fetching assignment:", error);
+        // Don't show error for 404 - it just means no assignment submitted yet
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 404) {
+            console.log("No assignment found for this user and subconcept");
+          } else {
+            console.error("Assignment fetch error:", error.response?.data);
+          }
+        }
       }
-    }
-  }
-};
+    };
+    
     if (
       userData?.userId &&
       subconceptData?.subconceptType?.toLowerCase().startsWith("assignment")
@@ -721,14 +754,15 @@ const fetchAssignment = async () => {
     ) {
       contentRef.current?.pause();
     }
-    sendAttemptData(userData);
+    sendAttemptData();
   };
 
   const handleGoBack = () => {
-    navigate(`/subconcepts/${userData?.unitId}`);
+    navigate(`/subconcepts/${currentUnitId}`);
   };
 
-  const sendAttemptData = (userData: UserData) => {
+  // FIXED: Updated sendAttemptData to use current props instead of stale localStorage data
+  const sendAttemptData = () => {
     const finalScore =
       subconceptData?.subconceptType?.startsWith("assignment") ||
       subconceptData?.subconceptType?.startsWith("assessment")
@@ -754,19 +788,22 @@ const fetchAssignment = async () => {
     const ISTTime = new Date(date.getTime() + ISTOffset);
     const formattedISTTimestamp = ISTTime.toISOString().slice(0, 19);
 
+    // FIX: Use current unitId and subconceptId from props instead of stale userData
     const payload = {
       userAttemptFlag: true,
       userAttemptScore: finalScore,
       userAttemptStartTimestamp: userData.userAttemptStartTimestamp,
       userAttemptEndTimestamp: formattedISTTimestamp,
-      unitId: userData.unitId,
+      unitId: currentUnitId, // Use currentUnitId from props
       programId: userData.programId,
       stageId: userData.stageId,
       userId: userData.userId,
       sessionId: userData.sessionId,
-      subconceptId: userData.subconceptId,
+      subconceptId: subconceptData?.subconceptId, // Use current subconceptId from props
       cohortId: userData.cohortId,
     };
+
+    console.log("Sending attempt data:", payload);
 
     fetch(`${userData.API_BASE_URL}/user-attempts`, {
       method: "POST",
@@ -951,50 +988,51 @@ Return in valid JSON format:
     }
   };
 
-const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => {
-  // ✅ FIX: Get selectedCohortWithProgram from localStorage
-  const selectedCohortWithProgram = JSON.parse(
-    localStorage.getItem("selectedCohortWithProgram") || "{}"
-  );
+  const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => {
+    // ✅ FIX: Get selectedCohortWithProgram from localStorage
+    const selectedCohortWithProgram = JSON.parse(
+      localStorage.getItem("selectedCohortWithProgram") || "{}"
+    );
 
-  // ✅ FIX: Check selectedCohortWithProgram.enableAiEvaluation instead of userData
-  if (!selectedCohortWithProgram?.enableAiEvaluation) {
-    console.log('AI evaluation disabled for this cohort - skipping evaluation');
-    return true; // Skip AI evaluation and proceed with normal upload
-  }
+    // ✅ FIX: Check selectedCohortWithProgram.enableAiEvaluation instead of userData
+    if (!selectedCohortWithProgram?.enableAiEvaluation) {
+      console.log('AI evaluation disabled for this cohort - skipping evaluation');
+      return true; // Skip AI evaluation and proceed with normal upload
+    }
 
-  // Only trigger for assignment_image type
-  if (subconceptData?.subconceptType !== "assignment_image") {
-    return true;
-  }
+    // Only trigger for assignment_image type
+    if (subconceptData?.subconceptType !== "assignment_image") {
+      return true;
+    }
 
-  setIsEvaluatingAudio(true);
-  setShowAudioEvaluationModal(true);
-  setAudioEvaluationError(null);
+    setIsEvaluatingAudio(true);
+    setShowAudioEvaluationModal(true);
+    setAudioEvaluationError(null);
+    
+    // FIX: Use the actual current assessment image URL from subconceptData
+    const currentAssessmentImageUrl = subconceptData?.subconceptLink;
+    setCurrentImageUrl(currentAssessmentImageUrl);
+    
+    try {
+      // FIX: Pass the actual current assessment image URL to the evaluation function
+      const evaluation = await evaluateImageAudio(audioBlob, currentAssessmentImageUrl, subconceptData);
+      setIsEvaluatingAudio(false);
+      setAudioEvaluationResult(evaluation);
+      
+      const audioFile = new File([audioBlob], `audio-response-${Date.now()}.ogg`, {
+        type: audioBlob.type
+      });
+      setCurrentAudioFile(audioFile);
+      
+      return true;
+      
+    } catch (error: any) {
+      setIsEvaluatingAudio(false);
+      setAudioEvaluationError(error.message || "Evaluation failed");
+      return false;
+    }
+  };
   
-  // FIX: Use the actual current assessment image URL from subconceptData
-  const currentAssessmentImageUrl = subconceptData?.subconceptLink;
-  setCurrentImageUrl(currentAssessmentImageUrl);
-  
-  try {
-    // FIX: Pass the actual current assessment image URL to the evaluation function
-    const evaluation = await evaluateImageAudio(audioBlob, currentAssessmentImageUrl, subconceptData);
-    setIsEvaluatingAudio(false);
-    setAudioEvaluationResult(evaluation);
-    
-    const audioFile = new File([audioBlob], `audio-response-${Date.now()}.ogg`, {
-      type: audioBlob.type
-    });
-    setCurrentAudioFile(audioFile);
-    
-    return true;
-    
-  } catch (error: any) {
-    setIsEvaluatingAudio(false);
-    setAudioEvaluationError(error.message || "Evaluation failed");
-    return false;
-  }
-};
   const handleCloseAudioEvaluation = () => {
     setShowAudioEvaluationModal(false);
     setAudioEvaluationResult(null);
@@ -1337,13 +1375,14 @@ const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => 
           )}
           <div className="flex items-center justify-between sm:justify-center py-2 px-2 sm:gap-20">
             {subconceptData?.subconceptType.startsWith("assignment") ? (
-              subconceptData?.completionStatus === "ignored" ? (
+              subconceptData?.completionStatus === "ignored" || 
+              subconceptData?.completionStatus === "disabled" ? (
                 <FileUploaderRecorder
                   onUploadSuccess={handleUploadSuccess}
                   onImageAudioEvaluation={handleImageAudioEvaluation}
                   subconceptType={subconceptData?.subconceptType}
                 />
-              ) : (
+              ) : subconceptData?.completionStatus === "yes" ? (
                 <Button
                   onClick={() => setIsAssignmentStatusModalOpen(true)}
                   disabled={isAssignmentStatusModalOpen}
@@ -1351,7 +1390,14 @@ const handleImageAudioEvaluation = async (audioBlob: Blob): Promise<boolean> => 
                 >
                   View Assignment status
                 </Button>
-              )
+              )  : (
+              // Default fallback - show upload if status is unexpected
+              <FileUploaderRecorder
+                onUploadSuccess={handleUploadSuccess}
+                onImageAudioEvaluation={handleImageAudioEvaluation}
+                subconceptType={subconceptData?.subconceptType}
+              />
+            )
             ) : (
               <Button
                 onClick={() => {

@@ -481,4 +481,41 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
             throw new RuntimeException("Failed to delete user attempt", e);
         }
     }
+    
+    @Override
+    @Transactional
+    @CacheEvict(
+        value = {
+            "userAttempts",
+            "userSubConcepts",
+            "userSubConceptsByUser",
+            "completedSubconcepts",
+            "userProgress",
+            "programReports",
+            "cohortLeaderboards"
+        },
+        allEntries = true
+    )
+    public void deleteUserProgressByUserAndProgram(String userId, String programId) {
+
+        logger.warn("Deleting ALL progress for userId={} in programId={}", userId, programId);
+
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        if (programId == null || programId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Program ID cannot be null or empty");
+        }
+
+        // 1 Delete UserAttempts FIRST (attempts drive scores)
+        userAttemptsRepository
+                .deleteByUser_UserIdAndProgram_ProgramId(userId, programId);
+
+        // 2️ Delete UserSubConcept completions
+        userSubConceptService
+                .deleteUserSubConceptsByUserAndProgram(userId, programId);
+
+        logger.warn("Successfully deleted progress for userId={} programId={}", userId, programId);
+    }
+
 }

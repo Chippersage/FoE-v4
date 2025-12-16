@@ -1,11 +1,9 @@
-// src/mentor/pages/LearnersProgressDashboard.tsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
 import { fetchMentorCohortUsers, fetchProgramReport } from '@/lib/mentor-api';
 import { Download, Target, ChevronDown } from 'lucide-react';
 import { useUserContext } from '@/context/AuthContext';
-// Import components
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
 import CompletionChart from '../components/analytics/CompletionChart';
@@ -85,6 +83,14 @@ export default function LearnersProgressDashboard() {
     user => user.userId === selectedLearnerId
   );
 
+  const isSelectableUser = (u: any) => {
+  const type = u.userType?.toLowerCase();
+  return (
+    (type === 'learner' || type === 'mentor') &&
+    u.status?.toLowerCase() === 'active'
+  );
+};
+
   // Handle learner selection
   const handleSelectLearner = (userId: string) => {
     if (!userId) {
@@ -93,7 +99,6 @@ export default function LearnersProgressDashboard() {
       navigate(`/mentor/${cohortId}/analytics`, { replace: true });
       return;
     }
-    
     setSelectedLearnerId(userId);
     setShowUserDropdown(false);
   };
@@ -134,14 +139,13 @@ export default function LearnersProgressDashboard() {
                   >
                     <option value="">Select a learner...</option>
                     {cohortData?.users
-                      ?.filter(
-                        (u) => u.userType === "Learner" && u.status === "ACTIVE"
-                      )
+                      ?.filter(isSelectableUser)
                       .map((user) => (
                         <option key={user.userId} value={user.userId}>
                           {user.userName} ({user.userId})
                         </option>
-                      ))}
+                    ))}
+
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ChevronDown className="h-5 w-5 text-gray-400" />
@@ -152,13 +156,11 @@ export default function LearnersProgressDashboard() {
               {/* Quick Stats */}
               <div className="border-t pt-6">
                 <h3 className="text-md font-medium text-gray-700 mb-4">
-                  Available Learners: {cohortData?.users?.filter(u => u.userType === "Learner" && u.status === "ACTIVE").length || 0}
+                  Available Learners: {cohortData?.users?.filter(isSelectableUser).length || 0}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {cohortData?.users
-                    ?.filter(
-                      (u) => u.userType === "Learner" && u.status === "ACTIVE"
-                    )
+                    ?.filter(isSelectableUser)
                     .slice(0, 10) // Show only first 10 learners as preview
                     .map((user) => (
                       <button
@@ -298,9 +300,7 @@ export default function LearnersProgressDashboard() {
                         Select Learner
                       </div>
                       {cohortData?.users
-                        ?.filter(
-                          (u) => u.userType === "Learner" && u.status === "ACTIVE"
-                        )
+                        ?.filter(isSelectableUser)
                         .map((user) => (
                           <button
                             key={user.userId}

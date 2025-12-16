@@ -161,6 +161,26 @@ public class UserSubConceptServiceImpl implements UserSubConceptService {
         userSubConceptRepository.deleteById(userSubconceptId);
         logger.info("Successfully deleted UserSubConcept with ID: {}", userSubconceptId);
     }
+    
+    @Override
+    @Transactional
+    @CacheEvict(
+        value = {
+            "userSubConcepts",
+            "userSubConceptsByUser",
+            "completedSubconcepts",
+            "stageCompletionDates"
+        },
+        allEntries = true
+    )
+    public void deleteUserSubConceptsByUserAndProgram(String userId, String programId) {
+
+        logger.warn("Deleting UserSubConcept completions for userId={} programId={}", userId, programId);
+
+        userSubConceptRepository
+                .deleteByUser_UserIdAndProgram_ProgramId(userId, programId);
+    }
+
 }
 //    // Additional cache-enabled methods for better performance
 //

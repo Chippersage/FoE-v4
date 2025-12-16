@@ -2,7 +2,8 @@ package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.UserAttempts;
 import java.util.List;
-
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,4 +74,7 @@ public interface UserAttemptsRepository extends JpaRepository<UserAttempts, Long
              "GROUP BY ua.user.userId")
       List<Object[]> findLatestAttemptTimestampsForActiveUsersInActiveCohorts();
   
+      @Modifying
+      @Transactional
+      void deleteByUser_UserIdAndProgram_ProgramId(String userId, String programId);
 }

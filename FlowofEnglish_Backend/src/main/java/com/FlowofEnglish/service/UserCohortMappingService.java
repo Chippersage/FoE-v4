@@ -26,6 +26,7 @@ public interface UserCohortMappingService {
     List<UserCohortMappingDTO> getUserCohortMappingsByUserId(String userId);
     Optional<UserCohortMapping> findByUserUserIdAndProgramId(String userId, String programId);
     void deleteUserCohortMappingByUserId(String userId);
+    void deleteUserCohortMappingByUserIdAndCohortId(String userId, String cohortId);
     void updateUserCohortMapping(int userCohortId, UserCohortMapping userCohortMapping);
     UserCohortMappingDTO updateLeaderboardScore(String userId, String cohortId, Integer scoreToAdd);
 	UserCohortMapping updateUserCohortMapping(String userId, String cohortId, UserCohortMapping userCohortMapping);

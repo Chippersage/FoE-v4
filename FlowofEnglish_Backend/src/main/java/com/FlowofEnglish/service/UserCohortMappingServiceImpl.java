@@ -734,6 +734,39 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return mapping.getDeactivationDetails();
     }
     
+    @Override
+    @CacheEvict(
+        value = { "userCohortMappings", "cohortMappings", "userMappings", "cohortLeaderboards", "mentorCohortUsers"},
+        allEntries = true
+    )
+    public void deleteUserCohortMappingByUserIdAndCohortId(String userId, String cohortId) {
+
+        logger.info("Deleting user-cohort mapping. userId={}, cohortId={}", userId, cohortId);
+
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        if (cohortId == null || cohortId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Cohort ID cannot be null or empty");
+        }
+
+        // Validate mapping exists
+        Optional<UserCohortMapping> mappingOpt =
+                userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId);
+
+        if (mappingOpt.isEmpty()) {
+            throw new IllegalArgumentException(
+                "User is not mapped to the given cohort"
+            );
+        }
+
+        userCohortMappingRepository
+                .deleteByUser_UserIdAndCohort_CohortId(userId, cohortId);
+
+        logger.info("Successfully deleted mapping for userId={}, cohortId={}", userId, cohortId);
+    }
+
+    
 //    private void sendDeactivationNotification(UserCohortMapping mapping) {
 //        try {
 //            User user = mapping.getUser();

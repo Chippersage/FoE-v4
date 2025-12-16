@@ -11,6 +11,7 @@ public interface UserAttemptsService {
     UserAttempts createUserAttempt(UserAttempts userAttempt, String cohortId);
     UserAttempts updateUserAttempt(Long userAttemptId, UserAttempts userAttempt);
     void deleteUserAttempt(Long userAttemptId);
+    void deleteUserProgressByUserAndProgram(String userId, String programId);
     UserAttempts autoCompleteSubconcept(String userId, String programId, String stageId, 
             String unitId, String subconceptId, String cohortId);
 

@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,11 @@ public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, 
 	    );
 	    @Query("SELECT usc.subconcept.subconceptId FROM UserSubConcept usc WHERE usc.user.userId = :userId AND usc.completionDate IS NOT NULL")
 	    Set<String> findCompletedSubconceptIdsByUser_UserId(@Param("userId") String userId);
+	    
+	    @Modifying
+	    @Transactional
+	    void deleteByUser_UserIdAndProgram_ProgramId(String userId, String programId);
+
 
 }
 
