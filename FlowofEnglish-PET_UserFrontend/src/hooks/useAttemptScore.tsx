@@ -11,8 +11,18 @@ export const useAttemptScore = () => {
 
     const normalized = type.toLowerCase();
 
-    // Types that always return 0 score
-    const zeroTypes = ["assignment_image", "assessment"];
+    // Types that always return 0 score (will be overridden by iframe)
+    const zeroTypes = [
+      "assignment_image", 
+      "assessment",
+      "fib",
+      "comprehension",
+      "qna",
+      "words",
+      "listening",
+      "writer",
+      "mcq"
+    ];
 
     // Types that return maxScore
     const maxScoreTypes = ["video", "youtube", "image", "pdf"];

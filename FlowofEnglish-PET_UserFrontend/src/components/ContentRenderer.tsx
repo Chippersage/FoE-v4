@@ -337,6 +337,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
+    // For iframe activity types (fib, comprehension, qna, words, listening, writer, etc.)
+    // They should fall through to default case to render iframe
     default:
       return (
         <div className={`relative w-full h-full ${className}`}>
