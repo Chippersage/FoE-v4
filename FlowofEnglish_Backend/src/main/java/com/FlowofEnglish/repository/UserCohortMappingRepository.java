@@ -2,9 +2,12 @@ package com.FlowofEnglish.repository;
 
 import com.FlowofEnglish.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.*;
 
 @Repository
@@ -24,9 +27,11 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
 
     List<UserCohortMapping> findAllByUserUserId(String userId);
     
+    @Modifying
+    @Transactional
     void deleteByUser_UserIdAndCohort_CohortId(String userId, String cohortId);
     
-    void deleteByUserUserId(String userId);
+    // void deleteByUserUserId(String userId);
     
     @Query("SELECT u FROM UserCohortMapping u WHERE u.user.userId = :userId AND u.cohort.cohortId IN " +
             "(SELECT cp.cohort.cohortId FROM CohortProgram cp WHERE cp.program.programId = :programId)")

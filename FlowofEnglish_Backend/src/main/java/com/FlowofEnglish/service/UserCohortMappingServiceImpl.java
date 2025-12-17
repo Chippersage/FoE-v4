@@ -569,11 +569,11 @@ public class UserCohortMappingServiceImpl implements UserCohortMappingService {
         return userCohortMappingRepository.save(userCohortMapping);
     }
 
-    @Override
-    @CacheEvict(value = {"userMappings", "userCohortMappings", "cohortMappings"}, key = "#userId")
-    public void deleteUserCohortMappingByUserId(String userId) {
-        userCohortMappingRepository.deleteByUserUserId(userId);
-    }
+//    @Override
+//    @CacheEvict(value = {"userMappings", "userCohortMappings", "cohortMappings"}, key = "#userId")
+//    public void deleteUserCohortMappingByUserId(String userId) {
+//        userCohortMappingRepository.deleteByUserUserId(userId);
+//    }
 
     // Helper methods for cached entity lookups
     @Cacheable(value = "users", key = "#userId")

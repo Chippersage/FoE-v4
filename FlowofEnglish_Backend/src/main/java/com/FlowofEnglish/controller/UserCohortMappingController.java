@@ -140,11 +140,11 @@ public class UserCohortMappingController {
 
     
     // DELETE a specific mapping by userId
-    @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> deleteUserCohortMappingByUserId(@PathVariable String userId) {
-        userCohortMappingService.deleteUserCohortMappingByUserId(userId);
-        return ResponseEntity.noContent().build();
-    }
+//    @DeleteMapping("/user/{userId}")
+//    public ResponseEntity<Void> deleteUserCohortMappingByUserId(@PathVariable String userId) {
+//        userCohortMappingService.deleteUserCohortMappingByUserId(userId);
+//        return ResponseEntity.noContent().build();
+//    }
     // New endpoint to update leaderboard score from Google Forms
     @PutMapping("/update-score")
     public ResponseEntity<?> updateLeaderboardScore(@RequestBody Map<String, Object> request) {
