@@ -8,7 +8,7 @@ import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
 import CompletionChart from '../components/analytics/CompletionChart';
 import StageAccordion from '../components/analytics/StageAccordion';
-import ScoreDistributionChart from '../components/analytics/ScoreDistributionChart';
+// import ScoreDistributionChart from '../components/analytics/ScoreDistributionChart';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
 
@@ -389,7 +389,8 @@ export default function LearnersProgressDashboard() {
       </div>
 
       {/* Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"> */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <ProgressOverviewCards data={data} />
       </div>
 
@@ -450,7 +451,7 @@ export default function LearnersProgressDashboard() {
           )}
 
           {/* 3. Score Distribution - Moved to THIRD position */}
-          {data.scoreDistribution && (
+          {/* {data.scoreDistribution && (
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-800 mb-6">Score Distribution</h3>
               <ScoreDistributionChart distribution={data.scoreDistribution} />
@@ -463,7 +464,7 @@ export default function LearnersProgressDashboard() {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
