@@ -1,10 +1,17 @@
 // src/mentor/pages/MentorDashboard.tsx
 // Mentor dashboard (Tailwind + TypeScript)
-// Option A: mentorId from localStorage.user.userId and cohortId from localStorage.selectedCohort.cohortId
-// Comments present, no emojis
+// Updated with colored stat cards, pagination, and mobile responsiveness
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  MagnifyingGlassIcon,
+  ArrowPathRoundedSquareIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  ChartBarIcon,
+} from "@heroicons/react/24/outline";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "";
 
@@ -49,7 +56,6 @@ type LearnerAPIUser = {
   leaderboardScore?: number;
   createdAt?: string | number;
   recentSessions?: Session[];
-  // additional fields allowed
 };
 
 type LearnerActivityResponse = {
@@ -113,12 +119,101 @@ function computeDuration(startIso?: string, endIso?: string) {
   }
 }
 
+/* -------- Pagination Component with TypeScript types -------- */
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+  const pages: (number | string)[] = [];
+  
+  // Always show first page
+  pages.push(1);
+  
+  // Calculate page range to show
+  let startPage = Math.max(2, currentPage - 1);
+  let endPage = Math.min(totalPages - 1, currentPage + 1);
+  
+  // Adjust if near start
+  if (currentPage <= 3) {
+    endPage = Math.min(5, totalPages - 1);
+  }
+  
+  // Adjust if near end
+  if (currentPage >= totalPages - 2) {
+    startPage = Math.max(2, totalPages - 4);
+  }
+  
+  // Add ellipsis after first page if needed
+  if (startPage > 2) {
+    pages.push("...");
+  }
+  
+  // Add middle pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  
+  // Add ellipsis before last page if needed
+  if (endPage < totalPages - 1) {
+    pages.push("...");
+  }
+  
+  // Always show last page if there is more than one page
+  if (totalPages > 1) {
+    pages.push(totalPages);
+  }
+  
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="flex items-center gap-1 flex-wrap justify-center">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Previous
+        </button>
+        
+        <div className="flex items-center gap-1 flex-wrap justify-center">
+          {pages.map((pageNum, idx) => (
+            <button
+              key={idx}
+              onClick={() => typeof pageNum === 'number' && onPageChange(pageNum)}
+              disabled={pageNum === "..."}
+              className={`min-w-[36px] h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
+                currentPage === pageNum
+                  ? 'bg-blue-600 text-white border border-blue-600'
+                  : pageNum === "..."
+                  ? 'text-gray-400 cursor-default'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+        </div>
+        
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* -------- Component -------- */
 
 export default function MentorDashboard() {
   const navigate = useNavigate();
 
-  // Option A: read mentorId and cohort from localStorage
+  // Read mentorId and cohort from localStorage
   const storedUser = safeJsonParse<{ userId?: string; userName?: string }>(
     localStorage.getItem("user")
   );
@@ -142,6 +237,10 @@ export default function MentorDashboard() {
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     // Validate localStorage values
@@ -302,165 +401,296 @@ export default function MentorDashboard() {
     });
   }, [learners, searchTerm, statusFilter]);
 
+  /* -------- Pagination logic -------- */
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [totalPages, page]);
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
+
   /* -------- UI -------- */
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-600">
+        <ArrowPathRoundedSquareIcon className="w-8 h-8 animate-spin mr-3" />
+        <span>Loading dashboard...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-5 max-w-7xl mx-auto">
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-          {error}
-        </div>
-      )}
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 bg-gray-50">
+      <div className="max-w-[1200px] mx-auto">
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+            {error}
+          </div>
+        )}
 
-      <header className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-sky-700">Cohort Dashboard</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            {cohortMeta?.cohortName ?? cohortNameFromLS ?? "Cohort not found"}
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Program: {cohortMeta?.program?.programName ?? programId ?? "—"}
-          </p>
-        </div>
+        {/* Header - Mobile responsive */}
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Cohort Dashboard</h1>
+          
+          {/* Cohort info and stats - Mobile responsive */}
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 text-xs sm:text-sm">
+            <span className="text-gray-600">
+              Cohort: <span className="font-medium">{cohortMeta?.cohortName ?? cohortNameFromLS ?? "—"}</span>
+            </span>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <span className="text-gray-600">
+              Program: <span className="font-medium">{cohortMeta?.program?.programName ?? programId ?? "—"}</span>
+            </span>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <span className="text-gray-600">
+              Organization: <span className="font-medium">{organization?.organizationName ?? "—"}</span>
+            </span>
+          </div>
 
-        <div className="text-sm text-right">
-          <div className="font-medium text-slate-700">{organization?.organizationName ?? "-"}</div>
-          <div className="text-slate-500 text-xs mt-1">Org. Admin Name: {organization?.organizationAdminName ?? ""}</div>
-          <div className="text-slate-500 text-xs mt-1">Org. Admin Email: {organization?.organizationAdminEmail ?? ""}</div>
-          <div className="text-slate-400 text-xs mt-1">Mentor: {storedUser?.userName ?? storedUser?.userId ?? "-"}</div>
-        </div>
-      </header>
+          {/* Search and Filters - Mobile responsive */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search learners by name, ID, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="ALL">All status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="DISABLED">Disabled</option>
+              </select>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-sky-50 to-sky-100 border border-sky-200 p-4 rounded-xl shadow-sm">
-          <div className="text-sm text-sky-700 font-semibold">Total Learners</div>
-          <div className="text-3xl font-bold mt-2 text-sky-800">{totals.total}</div>
-          <div className="text-xs text-slate-500 mt-2">Users enrolled in cohort</div>
-        </div>
-
-        <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200 p-4 rounded-xl shadow-sm">
-          <div className="text-sm text-emerald-700 font-semibold">Active Learners</div>
-          <div className="text-3xl font-bold mt-2 text-emerald-800">{totals.active}</div>
-          <div className="text-xs text-slate-500 mt-2">Currently active users</div>
-        </div>
-
-        <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 p-4 rounded-xl shadow-sm">
-          <div className="text-sm text-amber-700 font-semibold">Assignments Pending</div>
-          <div className="text-3xl font-bold mt-2 text-amber-800">{assignmentsPending}</div>
-          <div className="text-xs text-slate-500 mt-2">Assignments awaiting review</div>
-        </div>
-
-        <div className="bg-gradient-to-r from-violet-50 to-violet-100 border border-violet-200 p-4 rounded-xl shadow-sm">
-          <div className="text-sm text-violet-700 font-semibold">Cohort Progress</div>
-          <div className="flex items-center gap-3 mt-2">
-            <div className="text-3xl font-bold text-violet-800">{overallProgress}%</div>
-            <div className="w-full">
-              <div className="w-full bg-violet-100 h-2 rounded overflow-hidden">
-                <div
-                  className="h-2 bg-violet-600"
-                  style={{ width: `${Math.max(0, Math.min(100, overallProgress))}%` }}
-                />
-              </div>
-              <div className="text-xs text-slate-500 mt-1">{loadingProgress ? "Updating..." : "Overall completion"}</div>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="mb-4">
-        <div className="bg-white rounded-lg flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <input
-            type="text"
-            placeholder="Search learners by name, id or email"
-            className="flex-1 p-2 border rounded-md outline-none focus:ring-1 focus:ring-sky-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Stats Cards - 2 per row on mobile, 4 on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {/* Total Learners Card - Blue theme */}
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <UserGroupIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-blue-700">Total Learners</div>
+                <div className="text-2xl font-bold text-blue-900">{totals.total}</div>
+              </div>
+            </div>
+            <div className="text-xs text-blue-600 mt-2">Users enrolled in cohort</div>
+          </div>
 
-          <select
-            className="p-2 border rounded-md"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-          >
-            <option value="ALL">All status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="DISABLED">Disabled</option>
-          </select>
+          {/* Active Learners Card - Green theme */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-green-700">Active Learners</div>
+                <div className="text-2xl font-bold text-green-900">{totals.active}</div>
+              </div>
+            </div>
+            <div className="text-xs text-green-600 mt-2">Currently active users</div>
+          </div>
+
+          {/* Assignments Pending Card - Orange theme */}
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <ClockIcon className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-orange-700">Assignments Pending</div>
+                <div className="text-2xl font-bold text-orange-900">{assignmentsPending}</div>
+              </div>
+            </div>
+            <div className="text-xs text-orange-600 mt-2">Awaiting review</div>
+          </div>
+
+          {/* Cohort Progress Card - Purple theme */}
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <ChartBarIcon className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-purple-700">Cohort Progress</div>
+                <div className="text-2xl font-bold text-purple-900">{overallProgress}%</div>
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-purple-100 h-2 rounded overflow-hidden">
+                <div
+                  className="h-2 bg-purple-600 transition-all duration-300"
+                  style={{ width: `${Math.max(0, Math.min(100, overallProgress))}%` }}
+                />
+              </div>
+              <div className="text-xs text-purple-600 mt-1">
+                {loadingProgress ? "Updating..." : "Overall completion"}
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section className="bg-white rounded-lg border overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Learners Activity</h2>
-          <div className="text-sm text-slate-500">Showing {filtered.length} learners</div>
-        </div>
+        {/* Learners Table with Pagination - Mobile responsive */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Table Header */}
+          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Learners Activity</h2>
+              <div className="text-sm text-gray-500">
+                Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} learners
+              </div>
+            </div>
+          </div>
 
-        <div className="w-full overflow-auto">
-          <table className="w-full text-left min-w-[720px]">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="p-3 text-sm font-medium">Learner</th>
-                <th className="p-3 text-sm font-medium">Status</th>
-                <th className="p-3 text-sm font-medium">Last Activity</th>
-                <th className="p-3 text-sm font-medium">Duration</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td className="p-6 text-center text-slate-500" colSpan={4}>
-                    No learners found. Try changing your filters.
-                  </td>
-                </tr>
-              )}
-
-              {filtered.map((l) => {
-                const isDisabled = (l.status ?? "").toUpperCase() === "DISABLED";
-                const last = (l as any).latestActivity as string | undefined | null;
-                const duration = (l as any).duration as string | undefined;
-                return (
-                  <tr
-                    key={l.userId}
-                    className={`border-t hover:bg-slate-50 ${isDisabled ? "opacity-60" : "cursor-pointer"}`}
-                    onClick={() =>
-                      navigate(
-                        `/mentor/${encodeURIComponent(cohortId)}/${encodeURIComponent(
-                          cohortMeta?.program?.programId ?? programId ?? ""
-                        )}/learner/${encodeURIComponent(l.userId)}`
-                      )
-                    }
-                  >
-                    <td className="p-3 align-top">
-                      <div className="font-semibold text-slate-800">{l.userName ?? "-"}</div>
-                      <div className="text-xs text-slate-500 mt-1">{l.userId}</div>
-                      {l.userEmail && <div className="text-xs text-slate-400 mt-1">{l.userEmail}</div>}
-                    </td>
-
-                    <td className="p-3 align-top">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                          (l.status ?? "").toUpperCase() === "ACTIVE"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {l.status ?? "UNKNOWN"}
-                      </span>
-                    </td>
-
-                    <td className="p-3 align-top text-sm text-slate-700">
-                      {last ? new Date(last).toLocaleString() : "Not Available"}
-                    </td>
-
-                    <td className="p-3 align-top text-sm text-slate-700">{duration ?? "—"}</td>
+          {/* Table - Mobile responsive with vertical scrolling */}
+          <div className="overflow-x-auto">
+            <div className="min-w-full">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-3 px-2 sm:px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Learner</th>
+                    <th className="py-3 px-2 sm:px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider text-center">Status</th>
+                    <th className="py-3 px-2 sm:px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Last Activity</th>
+                    <th className="py-3 px-2 sm:px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Duration</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+
+                <tbody>
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 px-4 text-center">
+                        <div className="flex flex-col items-center justify-center py-4">
+                          <UserGroupIcon className="w-10 h-10 text-gray-300 mb-2" />
+                          <p className="text-gray-500">No learners found</p>
+                          <p className="text-gray-400 text-sm mt-1">Try adjusting your search criteria</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginated.map((learner) => {
+                      const isDisabled = (learner.status ?? "").toUpperCase() === "DISABLED";
+                      const lastActivity = (learner as any).latestActivity as string | undefined | null;
+                      const duration = (learner as any).duration as string | undefined;
+                      
+                      return (
+                        <tr 
+                          key={learner.userId}
+                          className={`border-t border-gray-100 hover:bg-gray-50/50 ${
+                            isDisabled ? "opacity-60" : "cursor-pointer"
+                          }`}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              navigate(
+                                `/mentor/${encodeURIComponent(cohortId)}/${encodeURIComponent(
+                                  cohortMeta?.program?.programId ?? programId ?? ""
+                                )}/learner/${encodeURIComponent(learner.userId)}`
+                              );
+                            }
+                          }}
+                        >
+                          {/* Learner Info - Mobile responsive */}
+                          <td className="py-3 px-2 sm:px-4 align-middle">
+                            <div className="font-medium text-gray-900 text-xs sm:text-sm">{learner.userName ?? "-"}</div>
+                            <div className="text-xs text-gray-500 truncate max-w-[100px] sm:max-w-[200px]">
+                              {learner.userId}
+                            </div>
+                            {learner.userEmail && (
+                              <div className="text-xs text-gray-400 truncate max-w-[100px] sm:max-w-[200px]">
+                                {learner.userEmail}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Status - Mobile responsive */}
+                          <td className="py-3 px-2 sm:px-4 align-middle text-center">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
+                                (learner.status ?? "").toUpperCase() === "ACTIVE"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {learner.status === "ACTIVE" ? (
+                                <CheckCircleIcon className="w-3 h-3" />
+                              ) : null}
+                              <span className="hidden sm:inline">{learner.status ?? "UNKNOWN"}</span>
+                              <span className="sm:hidden">{learner.status === "ACTIVE" ? "Active" : "Disabled"}</span>
+                            </span>
+                          </td>
+
+                          {/* Last Activity - Mobile responsive */}
+                          <td className="py-3 px-2 sm:px-4 align-middle">
+                            <div className="text-xs sm:text-sm text-gray-900">
+                              {lastActivity ? new Date(lastActivity).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : "Not Available"}
+                            </div>
+                          </td>
+
+                          {/* Duration - Mobile responsive */}
+                          <td className="py-3 px-2 sm:px-4 align-middle">
+                            <div className="text-xs sm:text-sm text-gray-900">{duration ?? "—"}</div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination Controls - Mobile responsive */}
+          {paginated.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
+              <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+                Page {page} of {totalPages}
+              </div>
+
+              <Pagination 
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }

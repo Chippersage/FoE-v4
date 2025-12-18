@@ -252,7 +252,7 @@ export default function CohortReports() {
       </div>
 
       {/* View Mode Toggle and Charts/Table */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#0EA5E9]">
+      <div className="bg-white p-4 rounded-2xl shadow-sm ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <h2 className="text-lg font-semibold text-[#0EA5E9]">Progress Visualizations</h2>
           <div className="flex gap-2">
@@ -281,7 +281,7 @@ export default function CohortReports() {
       </div>
 
       {/* Performance Summary Section - Preserved from original */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#0EA5E9]">
+      <div className="bg-white p-4 rounded-2xl shadow-sm">
         <h3 className="text-lg font-semibold text-[#0EA5E9] mb-3">Performance Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="p-3 bg-blue-50 rounded-lg">

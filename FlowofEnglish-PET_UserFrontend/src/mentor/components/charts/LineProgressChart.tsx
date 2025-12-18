@@ -50,7 +50,7 @@ const LineProgressChart: React.FC<LineProgressChartProps> = ({ users = [] }) => 
 
   return (
     <div
-      className="bg-white p-4 rounded-2xl shadow-sm space-y-4 border border-[#0EA5E9]"
+      className="bg-white p-4 space-y-4"
       ref={chartContainerRef}
     >
       <div className="flex justify-between items-center">

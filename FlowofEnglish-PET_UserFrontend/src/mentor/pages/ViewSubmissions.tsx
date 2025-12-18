@@ -18,10 +18,9 @@ import { motion, AnimatePresence } from "framer-motion";
 
 /*
   ViewSubmissions.tsx
-  - Dropdown slides down below row when clicked
-  - Numbered pagination (1, 2, 3, ... 8, 9, Next)
-  - Reduced top gap
-  - Clean design matching image
+  Changes made:
+  - Added Reset button before Save Evaluation button
+  - Added asterisks (*) to indicate mandatory fields (Score and Remarks)
 */
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -35,8 +34,8 @@ const ALLOWED_FILE_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-// Dropdown content that slides down
-const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileChange }) => {
+// Dropdown content with all evaluation details (updated with Reset button and asterisks)
+const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileChange, onSave, onReset }) => {
   const formatDate = (ts) => {
     if (!ts) return "—";
     const n = Number(ts);
@@ -52,7 +51,26 @@ const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileCh
 
   return (
     <div className="bg-blue-50 border-t border-blue-100 p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* User Info */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">User ID</label>
+          <div className="font-medium text-gray-900">{assignment.userId}</div>
+          <div className="text-xs text-gray-500">{assignment.userName}</div>
+        </div>
+
+        {/* Submitted Date */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Submitted Date</label>
+          <div className="text-sm">{formatDate(assignment.submittedDate)}</div>
+        </div>
+
+        {/* Corrected Date */}
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Corrected On</label>
+          <div className="text-sm">{assignment.correctedDate ? formatDate(assignment.correctedDate) : "—"}</div>
+        </div>
+
         {/* Reference */}
         <div className="space-y-1">
           <label className="block text-xs font-medium text-gray-700 mb-1">Reference</label>
@@ -71,39 +89,55 @@ const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileCh
           )}
         </div>
 
-        {/* Submitted Date */}
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Submitted Date</label>
-          <div className="text-sm">{formatDate(assignment.submittedDate)}</div>
+        {/* Topic - Full width */}
+        <div className="space-y-1 lg:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Topic</label>
+          <div className="text-sm text-gray-900">{assignment.topic}</div>
         </div>
 
-        {/* Corrected Date */}
+        {/* Submitted File - Grouped with reference since they're related */}
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Corrected On</label>
-          <div className="text-sm">{assignment.correctedDate ? formatDate(assignment.correctedDate) : "—"}</div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Submitted File</label>
+          {assignment.fileUrl ? (
+            <a
+              href={assignment.fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+            >
+              <EyeIcon className="w-3 h-3" />
+              View Submitted File
+            </a>
+          ) : (
+            <div className="text-sm text-gray-500">No file submitted</div>
+          )}
         </div>
 
-        {/* Max Score */}
+        {/* Score Input - Mandatory field with asterisk */}
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Max Score</label>
-          <div className="text-sm font-medium">{assignment.maxScore || 5}</div>
-        </div>
-
-        {/* Remarks */}
-        <div className="space-y-1 md:col-span-2">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Remarks</label>
-          <textarea
-            value={edit.remarks ?? ""}
-            onChange={(e) => onEditChange(assignment.id, { remarks: e.target.value })}
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Score <span className="text-red-500">*</span>
+            <span className="text-gray-500 ml-1">/ {assignment.maxScore || 5}</span>
+          </label>
+          <input
+            type="number"
+            value={edit.score ?? ""}
+            onChange={(e) => onEditChange(assignment.id, { 
+              score: e.target.value === "" ? "" : Number(e.target.value) 
+            })}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            rows={2}
-            placeholder="Add remarks..."
+            min="0"
+            max={assignment.maxScore || 5}
+            placeholder="Enter score"
             disabled={isCorrected}
           />
+          <div className="text-xs text-red-500 mt-1">
+            {!edit.score && !isCorrected ? "Required field" : ""}
+          </div>
         </div>
 
         {/* Corrected File Upload */}
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-1">
           <label className="block text-xs font-medium text-gray-700 mb-1">Corrected File</label>
           {assignment.correctedDate ? (
             <div className="inline-flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
@@ -134,12 +168,49 @@ const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileCh
             </div>
           )}
         </div>
+
+        {/* Remarks - Mandatory field with asterisk */}
+        <div className="space-y-1 lg:col-span-3">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Remarks <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={edit.remarks ?? ""}
+            onChange={(e) => onEditChange(assignment.id, { remarks: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            rows={2}
+            placeholder="Add remarks..."
+            disabled={isCorrected}
+          />
+          <div className="text-xs text-red-500 mt-1">
+            {(!edit.remarks || edit.remarks.trim() === "") && !isCorrected ? "Required field" : ""}
+          </div>
+        </div>
+
+        {/* Action Buttons - Reset and Save - Only show for uncorrected assignments */}
+        {!isCorrected && (
+          <div className="lg:col-span-3 flex justify-end gap-3">
+            <button
+              onClick={() => onReset(assignment.id)}
+              className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => onSave(assignment.id)}
+              disabled={!edit.score || edit.score === "" || !edit.remarks || edit.remarks.trim() === ""}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Save Evaluation
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// Pagination component with numbered pages
+// Pagination component with numbered pages (updated for mobile)
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = [];
   
@@ -181,41 +252,43 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   }
   
   return (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage <= 1}
-        className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        Previous
-      </button>
-      
-      <div className="flex items-center gap-1">
-        {pages.map((pageNum, idx) => (
-          <button
-            key={idx}
-            onClick={() => typeof pageNum === 'number' && onPageChange(pageNum)}
-            disabled={pageNum === "..."}
-            className={`min-w-[36px] h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
-              currentPage === pageNum
-                ? 'bg-blue-600 text-white border border-blue-600'
-                : pageNum === "..."
-                ? 'text-gray-400 cursor-default'
-                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
+    <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="flex items-center gap-1 flex-wrap justify-center">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Previous
+        </button>
+        
+        <div className="flex items-center gap-1 flex-wrap justify-center">
+          {pages.map((pageNum, idx) => (
+            <button
+              key={idx}
+              onClick={() => typeof pageNum === 'number' && onPageChange(pageNum)}
+              disabled={pageNum === "..."}
+              className={`min-w-[36px] h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
+                currentPage === pageNum
+                  ? 'bg-blue-600 text-white border border-blue-600'
+                  : pageNum === "..."
+                  ? 'text-gray-400 cursor-default'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+        </div>
+        
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Next
+        </button>
       </div>
-      
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage >= totalPages}
-        className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        Next
-      </button>
     </div>
   );
 };
@@ -254,7 +327,7 @@ const ViewSubmissions: React.FC = () => {
   // Per-row edits (stored by assignment id)
   const [edits, setEdits] = useState<{ [id: string]: { score?: number; remarks?: string; file?: File | null } }>({});
 
-  // Which row's dropdown is open
+  // Which row's dropdown is open (triggered by Evaluate button)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Fetch assignments once cohortId is known
@@ -372,6 +445,28 @@ const ViewSubmissions: React.FC = () => {
     }));
   };
 
+  // Reset handler - clears all user-entered data
+  const handleReset = (assignmentId: string) => {
+    // Reset to original values from the assignment
+    const assignment = assignments.find((a) => a.id === assignmentId);
+    if (assignment) {
+      setEdits((prev) => ({
+        ...prev,
+        [assignmentId]: { 
+          score: assignment.score ?? "", 
+          remarks: assignment.remarks ?? "", 
+          file: null 
+        }
+      }));
+    } else {
+      // If no assignment found, reset to empty
+      setEdits((prev) => ({
+        ...prev,
+        [assignmentId]: { score: "", remarks: "", file: null }
+      }));
+    }
+  };
+
   const handleSave = async (assignmentId: string) => {
     const assignment = assignments.find((a) => a.id === assignmentId);
     if (!assignment) return alert("Assignment not found");
@@ -382,6 +477,11 @@ const ViewSubmissions: React.FC = () => {
 
     if (score === "" || score === null || typeof score === "undefined") {
       alert("Please enter a score before saving.");
+      return;
+    }
+
+    if (!remarks || remarks.trim() === "") {
+      alert("Please enter remarks before saving.");
       return;
     }
 
@@ -423,6 +523,12 @@ const ViewSubmissions: React.FC = () => {
     }
   };
 
+  // Handler for toggling dropdown via Evaluate button
+  const handleEvaluateClick = (assignmentId: string) => {
+    // Toggle dropdown for any assignment (both evaluated and pending)
+    setOpenDropdown(openDropdown === assignmentId ? null : assignmentId);
+  };
+
   // UI: loading
   if (loading) {
     return (
@@ -447,14 +553,14 @@ const ViewSubmissions: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 bg-gray-50">
       <div className="max-w-[1200px] mx-auto">
-        {/* Compact Header - Reduced top spacing */}
+        {/* Compact Header - Mobile responsive */}
         <div className="mb-3">
-          <h1 className="text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Review Assignments</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Review Assignments</h1>
           
-          {/* Cohort info and stats - compact like image */}
-          <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
+          {/* Cohort info and stats - Mobile responsive with dots */}
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 text-xs sm:text-sm">
             <span className="text-gray-600">
               Cohort: <span className="font-medium">{cohortName}</span>
             </span>
@@ -468,7 +574,7 @@ const ViewSubmissions: React.FC = () => {
             <span className="text-blue-600 font-medium">Users: {stats?.cohortUserCount ?? "-"}</span>
           </div>
 
-          {/* Search and Controls - Compact */}
+          {/* Search and Controls - Mobile responsive */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 relative">
               <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
@@ -484,10 +590,10 @@ const ViewSubmissions: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => toggleSort("User ID")}
-                className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
               >
                 <ChevronUpDownIcon className="w-4 h-4" />
-                Sort {sortOrderAsc ? "↑" : "↓"}
+                <span className="hidden sm:inline">Sort</span> {sortOrderAsc ? "↑" : "↓"}
               </button>
               
               <select
@@ -498,168 +604,126 @@ const ViewSubmissions: React.FC = () => {
                 }}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-                <option value={50}>50 per page</option>
-                <option value={100}>100 per page</option>
+                <option value={10}>10/page</option>
+                <option value={25}>25/page</option>
+                <option value={50}>50/page</option>
+                <option value={100}>100/page</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Mobile responsive */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          {/* Table */}
+          {/* Table - Mobile responsive with vertical scrolling */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-700">
-              <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b">
-                <tr>
-                  <th className="py-3 px-4 w-[140px]">USER ID</th>
-                  <th className="py-3 px-4">TOPIC</th>
-                  <th className="py-3 px-4 w-[80px] text-center">FILE</th>
-                  <th className="py-3 px-4 w-[120px] text-center">SCORE</th>
-                  <th className="py-3 px-4 w-[100px] text-center">STATUS</th>
-                  <th className="py-3 px-4 w-[100px] text-center">ACTIONS</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginated.length === 0 ? (
+            <div className="min-w-full">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b">
                   <tr>
-                    <td colSpan={6} className="py-8 px-4 text-center">
-                      <div className="flex flex-col items-center justify-center py-4">
-                        <DocumentArrowDownIcon className="w-10 h-10 text-gray-300 mb-2" />
-                        <p className="text-gray-500">No assignments found</p>
-                      </div>
-                    </td>
+                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[100px]">USER ID</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[150px]">TOPIC</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[80px] text-center">SCORE</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[100px] text-center">STATUS</th>
                   </tr>
-                ) : (
-                  paginated.map((a) => {
-                    const edit = edits[a.id] || { score: "", remarks: "", file: null };
-                    const isCorrected = Boolean(a.correctedDate);
-                    const isDropdownOpen = openDropdown === a.id;
-                    const currentScore = edit.score !== "" && edit.score !== null ? Number(edit.score) : a.score;
-                    
-                    return (
-                      <React.Fragment key={a.id}>
-                        <tr className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
-                          {/* USER ID */}
-                          <td className="py-3 px-4 align-middle">
-                            <div className="font-medium text-gray-900">{a.userId}</div>
-                            <div className="text-xs text-gray-500 truncate max-w-[140px]">{a.userName}</div>
-                          </td>
+                </thead>
 
-                          {/* TOPIC */}
-                          <td className="py-3 px-4 align-middle">
-                            <div className="text-sm line-clamp-2 max-w-[400px]">{a.topic}</div>
-                          </td>
+                <tbody>
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 px-4 text-center">
+                        <div className="flex flex-col items-center justify-center py-4">
+                          <DocumentArrowDownIcon className="w-10 h-10 text-gray-300 mb-2" />
+                          <p className="text-gray-500">No assignments found</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginated.map((a) => {
+                      const isCorrected = Boolean(a.correctedDate);
+                      const isDropdownOpen = openDropdown === a.id;
+                      
+                      return (
+                        <React.Fragment key={a.id}>
+                          <tr className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
+                            {/* USER ID - Mobile responsive */}
+                            <td className="py-3 px-2 sm:px-4 align-middle">
+                              <div className="font-medium text-gray-900 text-xs sm:text-sm">{a.userId}</div>
+                              <div className="text-xs text-gray-500 truncate max-w-[80px] sm:max-w-[140px]">{a.userName}</div>
+                            </td>
 
-                          {/* FILE */}
-                          <td className="py-3 px-4 align-middle text-center">
-                            {a.fileUrl ? (
-                              <a
-                                href={a.fileUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 mx-auto"
-                                title="View submitted file"
-                              >
-                                <EyeIcon className="w-4 h-4" />
-                                <span>View</span>
-                              </a>
-                            ) : (
-                              <span className="text-gray-400 text-sm">—</span>
-                            )}
-                          </td>
+                            {/* TOPIC - Mobile responsive */}
+                            <td className="py-3 px-2 sm:px-4 align-middle">
+                              <div className="text-xs sm:text-sm line-clamp-2 max-w-[150px] sm:max-w-[400px]">{a.topic}</div>
+                            </td>
 
-                          {/* SCORE */}
-                          <td className="py-3 px-4 align-middle">
-                            <div className="flex items-center justify-center gap-2">
-                              {!isCorrected ? (
-                                <input
-                                  type="number"
-                                  value={edit.score ?? ""}
-                                  onChange={(e) => handleEditChange(a.id, { score: e.target.value === "" ? "" : Number(e.target.value) })}
-                                  className="w-16 text-center border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                  min="0"
-                                  max={a.maxScore || 5}
-                                  placeholder="Score"
-                                />
-                              ) : (
-                                <span className="font-medium text-gray-900">{currentScore ?? "—"}</span>
-                              )}
-                              <span className="text-gray-500">/</span>
-                              <span className="text-gray-500">{a.maxScore || 5}</span>
-                            </div>
-                          </td>
+                            {/* SCORE - Mobile responsive */}
+                            <td className="py-3 px-2 sm:px-4 align-middle text-center">
+                              <div className="text-xs sm:text-sm">
+                                {isCorrected ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <span className="font-medium text-gray-900">{a.score ?? "—"}</span>
+                                    <span className="text-gray-400">/</span>
+                                    <span className="text-gray-500">{a.maxScore || 5}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-orange-600 font-medium">Pending</span>
+                                )}
+                              </div>
+                            </td>
 
-                          {/* STATUS */}
-                          <td className="py-3 px-4 align-middle text-center">
-                            {isCorrected ? (
-                              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                <CheckCircleIcon className="w-3 h-3" />
-                                Corrected
-                              </span>
-                            ) : (
+                            {/* STATUS - Mobile responsive */}
+                            <td className="py-3 px-2 sm:px-4 align-middle text-center">
+                              {/* Evaluate button - always visible, toggles dropdown for both evaluated and pending */}
                               <button
-                                onClick={() => handleSave(a.id)}
-                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                disabled={!edit.score || edit.score === ""}
+                                onClick={() => handleEvaluateClick(a.id)}
+                                className={`px-3 sm:px-4 py-1.5 text-white rounded text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                                  isDropdownOpen 
+                                    ? 'bg-blue-700 hover:bg-blue-800' 
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
                               >
-                                Evaluate
+                                {isDropdownOpen ? "Hide" : "Evaluate"}
                               </button>
+                            </td>
+                          </tr>
+
+                          {/* DROPDOWN CONTENT - Mobile responsive - Shows for both evaluated and pending when clicked */}
+                          <AnimatePresence>
+                            {isDropdownOpen && (
+                              <motion.tr
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <td colSpan={4} className="p-0">
+                                  <DropdownContent
+                                    assignment={a}
+                                    edit={edits[a.id] || { score: a.score ?? "", remarks: a.remarks ?? "", file: null }}
+                                    isCorrected={isCorrected}
+                                    onEditChange={handleEditChange}
+                                    onFileChange={handleFileChange}
+                                    onSave={handleSave}
+                                    onReset={handleReset}
+                                  />
+                                </td>
+                              </motion.tr>
                             )}
-                          </td>
-
-                          {/* ACTIONS DROPDOWN */}
-                          <td className="py-3 px-4 align-middle text-center">
-                            <button
-                              onClick={() => setOpenDropdown(isDropdownOpen ? null : a.id)}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-all text-sm ${
-                                isDropdownOpen 
-                                  ? 'bg-blue-50 border-blue-300 text-blue-600' 
-                                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                              }`}
-                            >
-                              {isDropdownOpen ? "Close" : "Actions"}
-                              <ChevronDownIcon className={`w-3 h-3 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                          </td>
-                        </tr>
-
-                        {/* DROPDOWN CONTENT - Slides down below row */}
-                        <AnimatePresence>
-                          {isDropdownOpen && (
-                            <motion.tr
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <td colSpan={6} className="p-0">
-                                <DropdownContent
-                                  assignment={a}
-                                  edit={edit}
-                                  isCorrected={isCorrected}
-                                  onEditChange={handleEditChange}
-                                  onFileChange={handleFileChange}
-                                />
-                              </td>
-                            </motion.tr>
-                          )}
-                        </AnimatePresence>
-                      </React.Fragment>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          </AnimatePresence>
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Pagination controls with numbered pages */}
+          {/* Pagination controls with numbered pages - Mobile responsive */}
           {paginated.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
+              <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
                 Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredSorted.length)} of {filteredSorted.length} entries
               </div>
 

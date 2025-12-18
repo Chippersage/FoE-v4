@@ -82,7 +82,7 @@ const ProgressDataTable: React.FC<ProgressDataTableProps> = ({
   ];
 
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm space-y-4 border border-[#0EA5E9]">
+    <div className="bg-white p-4 space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-[#0EA5E9]">Learners Progress Data</h2>
         <ExportButtons
