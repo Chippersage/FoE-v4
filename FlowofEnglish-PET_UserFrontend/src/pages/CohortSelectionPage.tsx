@@ -123,6 +123,11 @@ const CohortSelectionPage = () => {
     });
   };
 
+  const handleMentorDashboard = (cohort) => {
+    localStorage.setItem("selectedCohort", JSON.stringify(cohort));
+    navigate("/mentor/dashboard", { state: { cohort } });
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
@@ -174,6 +179,7 @@ const CohortSelectionPage = () => {
                     onViewLearners={handleViewLearners}
                     onViewAssessments={handleViewAssignments}
                     onGenerateReport={() => console.log("Coming Soon")}
+                    onViewMentorDashboard={() => handleMentorDashboard(c)}
                   />
                 ))}
               </div>

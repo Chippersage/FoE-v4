@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { UsersIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 const CohortCard = ({
   cohort,
@@ -9,7 +10,8 @@ const CohortCard = ({
   onViewAssessments,
   onGenerateReport,
   assignmentStatistics,
-  userRole
+  userRole,
+  onViewMentorDashboard
 }) => {
   const {
     cohortName,
@@ -18,6 +20,8 @@ const CohortCard = ({
     cohortEndDate,
     cohortId
   } = cohort;
+
+  const navigate = useNavigate();
 
   const pendingCount =
     assignmentStatistics?.cohortDetails?.[cohortId]?.pendingAssignments || 0;
@@ -35,8 +39,8 @@ const CohortCard = ({
       if (onResume) await onResume();
     } finally {
       setTimeout(() => {
-      setIsResuming(false);
-    }, 3000);
+        setIsResuming(false);
+      }, 3000);
     }
   };
 
@@ -48,14 +52,11 @@ const CohortCard = ({
     >
       {/* LEFT SIDE */}
       <div className="flex flex-col flex-1">
-        
-        {/* Title */}
         <h2 className="flex items-center gap-2 text-[15px] font-medium text-slate-800">
           <UsersIcon className="w-4 h-4 text-[#0EA5E9]" />
           {cohortName}
         </h2>
 
-        {/* Progress Bar */}
         <div className="mt-2 w-full h-[5px] bg-slate-200 rounded-md overflow-hidden">
           <div
             className="h-full bg-[#0EA5E9] transition-all"
@@ -63,7 +64,6 @@ const CohortCard = ({
           />
         </div>
 
-        {/* Progress Text */}
         <span className="text-[11px] text-slate-600 mt-1">
           {progress}% completed
         </span>
@@ -80,30 +80,21 @@ const CohortCard = ({
 
         {userRole?.toLowerCase() === "mentor" && (
           <>
+            {/* 
             <button
               onClick={() => onViewLearners(cohort)}
               className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
             >
               View Learners
             </button>
+            */}
 
+            {/* Mentor Dashboard Button */}
             <button
-              onClick={ () => onViewAssessments(cohort)}
-              className="relative px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
+              onClick={() => onViewMentorDashboard(cohort)}
+              className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
             >
-              Assessments
-              {pendingCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] min-w-[16px] h-[16px] flex items-center justify-center rounded-full">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={onGenerateReport}
-              className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700"
-            >
-              Reports
+              Mentor Dashboard
             </button>
           </>
         )}

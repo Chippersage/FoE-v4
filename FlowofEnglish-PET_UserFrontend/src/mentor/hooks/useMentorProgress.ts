@@ -35,6 +35,8 @@ export const useMentorProgress = (cohortId: string) => {
           userId: u.userId,
           userName: u.userName,
           userType: u.userType,
+          userEmail: u.userEmail || null,
+          userPhoneNumber: u.userPhoneNumber || null,
           status: u.status,
           leaderboardScore: u.leaderboardScore ?? 0,
           lastLogin: formatDate(u.recentSessions?.[0]?.sessionStartTimestamp),
