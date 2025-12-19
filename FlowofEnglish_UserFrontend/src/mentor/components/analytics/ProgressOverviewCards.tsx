@@ -55,7 +55,7 @@ export default function ProgressOverviewCards({ data }) {
       bgColor: 'bg-blue-600',
     },
     {
-      title: 'Units Completion',
+      title: 'Sessions Completion',
       value: `${data.completedUnits || 0}/${data.totalUnits || 0}`,
       percentage: data.unitCompletionPercentage || 0,
       icon: TrendingUp,

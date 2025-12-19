@@ -3,9 +3,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export default function CompletionChart({ data }) {
   const chartData = [
-    { name: 'Stages', value: data.stageCompletionPercentage },
-    { name: 'Units', value: data.unitCompletionPercentage },
-    { name: 'Subconcepts', value: data.subconceptCompletionPercentage },
+    { name: 'Modules', value: data.stageCompletionPercentage },
+    { name: 'Sessions', value: data.unitCompletionPercentage },
+    { name: 'Activities', value: data.subconceptCompletionPercentage },
+    { name: 'Assignments', value: data.assignmentCompletionPercentage },
   ];
 
   return (
