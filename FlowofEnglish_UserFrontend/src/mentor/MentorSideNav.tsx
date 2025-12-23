@@ -15,10 +15,10 @@ interface MentorSideNavProps {
 const navItems = [
   { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true, enabled: true },
   { label: "Learners Details", icon: Users, path: "learners", needsProgram: false, enabled: true },
-  { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
+  // { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
   { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false, enabled: true },
   { label: "Reports", icon: BarChart, path: "reports", needsProgram: true, enabled: true },
-  { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: true },
+  // { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: true },
   { label: "Cohort Details", icon: List, path: "cohort-details", needsProgram: false, enabled: false },
   // { label: "Session Logs", icon: ClipboardList, path: "session-logs", needsProgram: false, enabled: true },
 ];

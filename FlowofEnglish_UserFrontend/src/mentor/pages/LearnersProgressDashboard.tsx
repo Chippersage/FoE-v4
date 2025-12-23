@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport } from '@/lib/mentor-api';
-import { Download, Target, ChevronDown } from 'lucide-react';
+import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions } from '@/lib/mentor-api';
+import { Download, Target, ChevronDown, User, UserX } from 'lucide-react';
 import { useUserContext } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
 import CompletionChart from '../components/analytics/CompletionChart';
+import SessionList from '../components/analytics/SessionList';
 import StageAccordion from '../components/analytics/StageAccordion';
-// import ScoreDistributionChart from '../components/analytics/ScoreDistributionChart';
+// import DetailedAttemptsView from '../components/analytics/DetailedAttemptsView';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
+import StudentAssignments from '../components/analytics/StudentAssignments';
 
 export default function LearnersProgressDashboard() {
   const navigate = useNavigate();
@@ -44,6 +47,15 @@ export default function LearnersProgressDashboard() {
     },
     [mentorId, cohortId]
   );
+
+  const { data: sessionsData, isLoading: sessionsLoading } = useFetch(
+  () => {
+    if (!mentorId || !cohortId) return null;
+    // If a learner is selected, fetch only their sessions
+    return fetchLatestSessions(mentorId, cohortId, selectedLearnerId || undefined);
+  },
+  [mentorId, cohortId, selectedLearnerId]
+);
 
   // Determine programId from various sources
   const progId = queryProgramId || urlProgramId || cohortData?.cohort?.program?.programId;
@@ -83,12 +95,10 @@ export default function LearnersProgressDashboard() {
     user => user.userId === selectedLearnerId
   );
 
-  const isSelectableUser = (u: any) => {
+
+const isSelectableUser = (u: any) => {
   const type = u.userType?.toLowerCase();
-  return (
-    (type === 'learner' || type === 'mentor') &&
-    u.status?.toLowerCase() === 'active'
-  );
+  return (type === 'learner' || type === 'mentor');
 };
 
   // Handle learner selection
@@ -254,289 +264,283 @@ export default function LearnersProgressDashboard() {
     );
   }
 
-  return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Header with Learner Selection and Controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-4 mb-2">
-            {/* Back to selection button */}
+return (
+  <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    {/* Header with Learner Selection and Controls */}
+    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-4 mb-2">
+          {/* Back to selection button */}
+          <button
+            onClick={() => setSelectedLearnerId(null)}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ChevronDown className="h-4 w-4 rotate-90" />
+            Back to selection
+          </button>
+          
+          {/* Learner Selector */}
+          <div className="relative">
             <button
-              onClick={() => setSelectedLearnerId(null)}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              <ChevronDown className="h-4 w-4 rotate-90" />
-              Back to selection
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                {selectedLearner?.userName?.charAt(0).toUpperCase() || 'L'}
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-800">
+                  {selectedLearner?.userName || data.userName || selectedLearnerId}
+                </div>
+                <div className="text-xs text-gray-500">Viewing analytics</div>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
             </button>
             
-            {/* Learner Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                  {selectedLearner?.userName?.charAt(0).toUpperCase() || 'L'}
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-gray-800">
-                    {selectedLearner?.userName || data.userName || selectedLearnerId}
-                  </div>
-                  <div className="text-xs text-gray-500">Viewing analytics</div>
-                </div>
-                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {/* Dropdown Menu */}
-              {showUserDropdown && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowUserDropdown(false)}
-                  />
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto">
-                    <div className="p-2">
-                      <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Select Learner
-                      </div>
-                      {cohortData?.users
-                        ?.filter(isSelectableUser)
-                        .map((user) => (
-                          <button
-                            key={user.userId}
-                            onClick={() => handleSelectLearner(user.userId)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded text-left hover:bg-gray-50 ${
-                              selectedLearnerId === user.userId ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                            }`}
-                          >
-                            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                              {user.userName?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{user.userName}</div>
-                              <div className="text-xs text-gray-500 truncate">{user.userId}</div>
-                            </div>
-                          </button>
-                        ))}
+            {/* Dropdown Menu */}
+            {showUserDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowUserDropdown(false)}
+                />
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto">
+                  <div className="p-2">
+                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Select Learner
                     </div>
+                    {cohortData?.users
+                      ?.filter(isSelectableUser)
+                      .map((user) => (
+                        <button
+                          key={user.userId}
+                          onClick={() => handleSelectLearner(user.userId)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded text-left hover:bg-gray-50 ${
+                            selectedLearnerId === user.userId ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                          }`}
+                        >
+                          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                            {user.userName?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{user.userName}</div>
+                            <div className="text-xs text-gray-500 truncate">{user.userId}</div>
+                          </div>
+                        </button>
+                      ))}
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
-          
-          <ProgramHeader 
-            programName={data.programName || progId || "Unknown Program"}
-            programDesc={data.programDesc || ""}
-            learnerName={data.userName || selectedLearnerId || "Unknown Learner"}
-          />
         </div>
         
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <select 
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-            value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value)}
+        <ProgramHeader 
+          programName={data.programName || progId || "Unknown Program"}
+          programDesc={data.programDesc || ""}
+          learnerName={data.userName || selectedLearnerId || "Unknown Learner"}
+        />
+      </div>
+      
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <select 
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          value={timeFilter}
+          onChange={(e) => setTimeFilter(e.target.value)}
+        >
+          <option value="all">All Time</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="30d">Last 30 Days</option>
+          <option value="90d">Last 90 Days</option>
+        </select>
+        
+        <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            className={`px-3 py-2 text-sm ${viewMode === 'overview' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+            onClick={() => setViewMode('overview')}
           >
-            <option value="all">All Time</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-          </select>
-          
-          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-            <button
-              className={`px-3 py-2 text-sm ${viewMode === 'overview' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
-              onClick={() => setViewMode('overview')}
+            Overview
+          </button>
+          <button
+            className={`px-3 py-2 text-sm ${viewMode === 'detailed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+            onClick={() => setViewMode('detailed')}
+          >
+            Detailed
+          </button>
+        </div>
+        
+        <div className="relative group">
+          <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50">
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+          <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+            <button 
+              onClick={() => handleExport('pdf')}
+              className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
             >
-              Overview
+              Export as PDF
             </button>
-            <button
-              className={`px-3 py-2 text-sm ${viewMode === 'detailed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
-              onClick={() => setViewMode('detailed')}
+            <button 
+              onClick={() => handleExport('excel')}
+              className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
             >
-              Detailed
+              Export as Excel
             </button>
-          </div>
-          
-          <div className="relative group">
-            <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50">
-              <Download className="h-4 w-4" />
-              Export
+            <button 
+              onClick={() => handleExport('csv')}
+              className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
+            >
+              Export as CSV
             </button>
-            <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-              <button 
-                onClick={() => handleExport('pdf')}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
-              >
-                Export as PDF
-              </button>
-              <button 
-                onClick={() => handleExport('excel')}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
-              >
-                Export as Excel
-              </button>
-              <button 
-                onClick={() => handleExport('csv')}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
-              >
-                Export as CSV
-              </button>
-            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      {/* Overview Metrics */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"> */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <ProgressOverviewCards data={data} />
-      </div>
+    {/* Overview Metrics Cards - Always visible */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <ProgressOverviewCards data={data} />
+    </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Completion Charts */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Completion Progress */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Progress Overview</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Target className="h-4 w-4" />
-                <span>Completion Rate</span>
-              </div>
-            </div>
-            <CompletionChart data={data} />
-          </div>
-
-          {/* Stage-wise Progress - Only if data has stages */}
-          {data.stages && data.stages.length > 0 && (
+    {/* Conditional rendering based on viewMode */}
+    {viewMode === 'overview' ? (
+      <>
+        {/* OVERVIEW VIEW - Show all analytics components */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Left Column - Completion Charts */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Completion Progress */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Stage-wise Progress</h3>
-                <span className="text-sm text-gray-500">
-                  {data.completedStages || 0} of {data.totalStages || 0} stages completed
-                </span>
+                <h3 className="text-lg font-semibold text-gray-800">Progress Overview</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Target className="h-4 w-4" />
+                  <span>Completion Rate</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                {data.stages.map((stage: any) => (
-                  <StageAccordion
+              <CompletionChart data={data} />
+            </div>
+
+            {/* SessionList component */}
+            <SessionList 
+              sessionsData={sessionsData}
+              learnerId={selectedLearnerId || undefined}
+              learnerName={selectedLearner?.userName || data?.userName}
+            />
+          </div>
+
+          {/* Right Column - Analytics */}
+          <div className="space-y-6">
+            {/* 1. Learning Timeline */}
+            {(data.firstAttemptDate || data.lastAttemptDate) && (
+              <TimeAnalysis 
+                firstAttemptDate={data.firstAttemptDate}
+                lastAttemptDate={data.lastAttemptDate}
+              />
+            )}
+
+            {/* 2. Skill Development */}
+            {data.stages && data.stages.length > 0 && (
+              <SkillBreakdown stages={data.stages} />
+            )}
+          </div>
+        </div>
+
+        {/* Student Assignments Section - Only in Overview */}
+        <StudentAssignments
+          data={data}
+          cohortName={cohortData?.cohort?.cohortName}
+          learnerName={selectedLearner?.userName || data?.userName}
+        />
+      </>
+    ) : (
+      <>
+        {/* DETAILED VIEW - Show only attempt history */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">Detailed Progress & Attempt History</h3>
+                  <p className="text-gray-600 mt-1">
+                    Interactive view combining Modules progress with detailed attempt history
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                    onClick={() => {
+                      // Expand all stages logic
+                      if (expandedStage) {
+                        setExpandedStage(null);
+                      } else {
+                        // Set expanded to first stage or implement expand all logic
+                        setExpandedStage(data.stages[0]?.stageId || null);
+                      }
+                    }}
+                  >
+                    {expandedStage ? 'Collapse All' : 'Expand All'}
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('overview')}
+                    className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Back to Overview
+                  </button>
+                </div>
+              </div>
+              
+              {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{data.completedStages}</div>
+                  <div className="text-xs text-gray-500">Modules Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{data.completedUnits}</div>
+                  <div className="text-xs text-gray-500">Sessions Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{data.completedSubconcepts}</div>
+                  <div className="text-xs text-gray-500">Activities Done</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{data.averageScore.toFixed(1)}</div>
+                  <div className="text-xs text-gray-500">Avg Score</div>
+                </div>
+              </div> */}
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-4">
+                {data.stages.map((stage: any, index: number) => (
+                  <motion.div
                     key={stage.stageId}
-                    stage={stage}
-                    isExpanded={expandedStage === stage.stageId}
-                    onToggle={() => setExpandedStage(
-                      expandedStage === stage.stageId ? null : stage.stageId
-                    )}
-                  />
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <StageAccordion
+                      stage={stage}
+                      isExpanded={expandedStage === stage.stageId}
+                      onToggle={() => setExpandedStage(
+                        expandedStage === stage.stageId ? null : stage.stageId
+                      )}
+                      defaultExpandedUnits={new Set()}
+                    />
+                  </motion.div>
                 ))}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Right Column - Analytics (REORDERED) */}
-        <div className="space-y-6">
-          {/* 1. Learning Timeline - Moved to FIRST position */}
-          {(data.firstAttemptDate || data.lastAttemptDate) && (
-            <TimeAnalysis 
-              firstAttemptDate={data.firstAttemptDate}
-              lastAttemptDate={data.lastAttemptDate}
-            />
-          )}
-
-          {/* 2. Skill Development - Moved to SECOND position */}
-          {data.stages && data.stages.length > 0 && (
-            <SkillBreakdown stages={data.stages} />
-          )}
-
-          {/* 3. Score Distribution - Moved to THIRD position */}
-          {/* {data.scoreDistribution && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Score Distribution</h3>
-              <ScoreDistributionChart distribution={data.scoreDistribution} />
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Average Score</span>
-                  <span className="text-lg font-semibold text-gray-800">
-                    {data.averageScore?.toFixed(1) || '0.0'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )} */}
-        </div>
-      </div>
-
-      {/* Attempt History (Expanded View) */}
-      {viewMode === 'detailed' && data.stages && data.stages.length > 0 && (
-        <div className="mt-6 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Detailed Attempt History</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Subconcept
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Concept
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Attempts
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.stages.flatMap((stage: any) => 
-                  stage.units.flatMap((unit: any) => 
-                    unit.subconcepts.map((subconcept: any) => (
-                      <tr key={subconcept.subconceptId}>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subconcept.lastAttemptDate 
-                            ? new Date(subconcept.lastAttemptDate * 1000).toLocaleDateString()
-                            : 'N/A'
-                          }
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {subconcept.subconceptDesc}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subconcept.concept?.conceptName || 'N/A'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center">
-                            <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-green-500"
-                                style={{ width: `${((subconcept.highestScore || 0) / 5) * 100}%` }}
-                              />
-                            </div>
-                            <span className="ml-2 text-sm font-medium text-gray-700">
-                              {subconcept.highestScore?.toFixed(1) || '0.0'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subconcept.attemptCount || 0} attempts
-                        </td>
-                      </tr>
-                    ))
-                  )
-                )}
-              </tbody>
-            </table>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </motion.div>
+      </>
+    )}
+  </div>
+);
 }
