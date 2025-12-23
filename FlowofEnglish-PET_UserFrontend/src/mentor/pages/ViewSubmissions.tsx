@@ -189,17 +189,17 @@ const DropdownContent = ({ assignment, edit, isCorrected, onEditChange, onFileCh
 
         {/* Action Buttons - Reset and Save - Only show for uncorrected assignments */}
         {!isCorrected && (
-          <div className="lg:col-span-3 flex justify-end gap-3">
+          <div className="lg:col-span-3 flex flex-col sm:flex-row gap-3 justify-end">
             <button
               onClick={() => onReset(assignment.id)}
-              className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto"
             >
               Reset
             </button>
             <button
               onClick={() => onSave(assignment.id)}
               disabled={!edit.score || edit.score === "" || !edit.remarks || edit.remarks.trim() === ""}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
             >
               Save Evaluation
             </button>
@@ -317,7 +317,7 @@ const ViewSubmissions: React.FC = () => {
 
   // UI states
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("User ID");
+  const [sortBy, setSortBy] = useState("User ID"); // Changed default to User ID
   const [sortOrderAsc, setSortOrderAsc] = useState(true);
 
   // Pagination
@@ -397,13 +397,32 @@ const ViewSubmissions: React.FC = () => {
 
     const fieldMap = {
       "User ID": "userId",
+      "User Name": "userName", // Added new sort option
+      "Topic": "topic", // Added new sort option
       "Submitted Date": "submittedDate",
-      Reference: "reference",
+      "Reference": "reference",
+      "Status": "correctedDate", // Added new sort option
+      "Score": "score", // Added new sort option
     };
 
     const field = fieldMap[sortBy] || "userId";
 
     list.sort((x, y) => {
+      // For status sorting (evaluated first or pending first)
+      if (field === "correctedDate") {
+        const xHasDate = Boolean(x.correctedDate);
+        const yHasDate = Boolean(y.correctedDate);
+        if (xHasDate && !yHasDate) return sortOrderAsc ? -1 : 1;
+        if (!xHasDate && yHasDate) return sortOrderAsc ? 1 : -1;
+      }
+      
+      // For score sorting
+      if (field === "score") {
+        const xScore = x.score === null ? -1 : x.score;
+        const yScore = y.score === null ? -1 : y.score;
+        return sortOrderAsc ? xScore - yScore : yScore - xScore;
+      }
+      
       const A = x[field] ?? "";
       const B = y[field] ?? "";
       if (A < B) return sortOrderAsc ? -1 : 1;
@@ -588,12 +607,28 @@ const ViewSubmissions: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => toggleSort("User ID")}
-                className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
+              {/* Sort select instead of button */}
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
-                <ChevronUpDownIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Sort</span> {sortOrderAsc ? "↑" : "↓"}
+                <option value="User ID">User ID</option>
+                <option value="User Name">User Name</option>
+                <option value="Topic">Topic</option>
+                <option value="Submitted Date">Submitted Date</option>
+                <option value="Reference">Reference</option>
+                <option value="Status">Status</option>
+                <option value="Score">Score</option>
+              </select>
+              
+              <button
+                onClick={() => toggleSort()}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap min-w-[40px]"
+              >
+                {sortOrderAsc ? "↑" : "↓"}
               </button>
               
               <select
@@ -615,16 +650,16 @@ const ViewSubmissions: React.FC = () => {
 
         {/* Main Content - Mobile responsive */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          {/* Table - Mobile responsive with vertical scrolling */}
-          <div className="overflow-x-auto">
+          {/* Table - Mobile responsive - NO horizontal scrolling */}
+          <div className="w-full overflow-x-auto">
             <div className="min-w-full">
               <table className="w-full text-sm text-left text-gray-700">
                 <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b">
                   <tr>
-                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[100px]">USER ID</th>
-                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[150px]">TOPIC</th>
-                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[80px] text-center">SCORE</th>
-                    <th className="py-3 px-2 sm:px-4 w-auto min-w-[100px] text-center">STATUS</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto">USER ID</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto">TOPIC</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto text-center">SCORE</th>
+                    <th className="py-3 px-2 sm:px-4 w-auto text-center">ACTION</th> {/* Changed from STATUS to ACTION */}
                   </tr>
                 </thead>
 
@@ -672,19 +707,31 @@ const ViewSubmissions: React.FC = () => {
                               </div>
                             </td>
 
-                            {/* STATUS - Mobile responsive */}
+                            {/* ACTION - Changed from STATUS */}
                             <td className="py-3 px-2 sm:px-4 align-middle text-center">
-                              {/* Evaluate button - always visible, toggles dropdown for both evaluated and pending */}
-                              <button
-                                onClick={() => handleEvaluateClick(a.id)}
-                                className={`px-3 sm:px-4 py-1.5 text-white rounded text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                                  isDropdownOpen 
-                                    ? 'bg-blue-700 hover:bg-blue-800' 
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
-                              >
-                                {isDropdownOpen ? "Hide" : "Evaluate"}
-                              </button>
+                              {isCorrected ? (
+                                // For evaluated assignments: Blue "View Details" text (not button)
+                                <span
+                                  onClick={() => handleEvaluateClick(a.id)}
+                                  className={`text-blue-600 hover:text-blue-800 cursor-pointer text-xs sm:text-sm font-medium transition-colors ${
+                                    isDropdownOpen ? 'underline' : ''
+                                  }`}
+                                >
+                                  {isDropdownOpen ? "Hide Details" : "View Details"}
+                                </span>
+                              ) : (
+                                // For pending assignments: Orange "Evaluate" button
+                                <button
+                                  onClick={() => handleEvaluateClick(a.id)}
+                                  className={`px-3 sm:px-4 py-1.5 text-white rounded text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                                    isDropdownOpen 
+                                      ? 'bg-orange-700 hover:bg-orange-800' 
+                                      : 'bg-orange-600 hover:bg-orange-700'
+                                  }`}
+                                >
+                                  {isDropdownOpen ? "Hide" : "Evaluate"}
+                                </button>
+                              )}
                             </td>
                           </tr>
 

@@ -14,11 +14,16 @@ export const useUserAttempt = () => {
   const { user, programId, currentContent } = useCourseContext();
   const { getScore } = useAttemptScore();
 
-  const recordAttempt = async (): Promise<void> => {
+  // 🔹 CHANGE: accept optional overrideScore
+  const recordAttempt = async (
+    overrideScore?: number
+  ): Promise<void> => {
     try {
       // Read identifiers and session info
       const selectedCohortRaw = localStorage.getItem("selectedCohort");
-      const selectedCohort = selectedCohortRaw ? JSON.parse(selectedCohortRaw) : null;
+      const selectedCohort = selectedCohortRaw
+        ? JSON.parse(selectedCohortRaw)
+        : null;
       const cohortId = selectedCohort?.cohortId;
       const sessionId = localStorage.getItem("sessionId");
 
@@ -34,14 +39,21 @@ export const useUserAttempt = () => {
       if (!sessionId || !cohortId || !programId || !user?.userId) return;
 
       // Ensure subconceptMaxScore is a valid number
-      const safeMaxScore = typeof subconceptMaxscore === "number" ? subconceptMaxscore : 0;
+      const safeMaxScore =
+        typeof subconceptMaxscore === "number" ? subconceptMaxscore : 0;
 
       if (typeof subconceptMaxscore !== "number") {
-        console.warn("Missing subconceptMaxScore for subconcept:", subconceptId);
+        console.warn(
+          "Missing subconceptMaxScore for subconcept:",
+          subconceptId
+        );
       }
 
-      // Compute score for this attempt
-      const userAttemptScore = getScore(type, safeMaxScore);
+      // 🔹 CHANGE: use overrideScore if provided (MCQ)
+      const userAttemptScore =
+        typeof overrideScore === "number"
+          ? overrideScore
+          : getScore(type, safeMaxScore);
 
       // Build API payload
       const payload: UserAttemptPayload = {
@@ -53,7 +65,9 @@ export const useUserAttempt = () => {
         subconceptId,
         userId: user.userId,
         userAttemptStartTimestamp: new Date().toISOString(),
-        userAttemptEndTimestamp: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
+        userAttemptEndTimestamp: new Date(
+          Date.now() + 3 * 60 * 1000
+        ).toISOString(),
         userAttemptFlag: true,
         userAttemptScore
       };

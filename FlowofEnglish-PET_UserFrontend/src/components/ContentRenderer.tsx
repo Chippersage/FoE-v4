@@ -6,7 +6,7 @@ import {
   XCircle,
   ChevronRight,
 } from "lucide-react";
-import QuizActivity from "./ActivityComponents/QuizActitivy";
+import QuizActivity from "./ActivityComponents/QuizActivity";
 import PDFRenderer from "./PDFRenderer";
 import { useCourseContext } from "../context/CourseContext";
 import { useUserAttempt } from "../hooks/useUserAttempt";
@@ -41,6 +41,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [showNextOverlay, setShowNextOverlay] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -81,14 +82,17 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       setAttemptRecorded(false);
       setShowNextOverlay(false);
       setCountdown(5);
+      setQuizScore(0);
       prevUrlRef.current = url;
     }
   }, [url]);
 
   // ----------------------------------------------------------
-  //  Video progress (95% = attempt)
+  //  Video progress (90% = attempt)
   // ----------------------------------------------------------
-  const handleVideoProgress = async (e: React.SyntheticEvent<HTMLVideoElement>) => {
+  const handleVideoProgress = async (
+    e: React.SyntheticEvent<HTMLVideoElement>
+  ) => {
     const video = e.currentTarget;
     const progress = (video.currentTime / video.duration) * 100;
 
@@ -104,6 +108,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         );
       } catch (err) {
         console.error("Error recording user attempt:", err);
+        setAttemptRecorded(false);
       }
     }
   };
@@ -125,7 +130,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
-      const nextBtn = document.getElementById("next-subconcept-btn-unlocked");
+      const nextBtn = document.getElementById(
+        "next-subconcept-btn-unlocked"
+      );
       nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);
@@ -150,7 +157,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           <div className="flex flex-col items-center gap-3">
             <VideoIcon size={isFullscreen ? 60 : 48} className="text-white" />
             <h2 className="text-lg md:text-2xl font-bold">
-              Next Topic starting in <span className="text-yellow-200 ml-2">{countdown}</span> sec
+              Next Topic starting in{" "}
+              <span className="text-yellow-200 ml-2">{countdown}</span> sec
             </h2>
           </div>
 
@@ -172,7 +180,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
             <button
               onClick={() => {
-                const btn = document.querySelector("#btn-unlocked #next-subconcept-btn");
+                const btn = document.querySelector(
+                  "#btn-unlocked #next-subconcept-btn"
+                );
                 btn?.click();
               }}
               className="flex items-center gap-2 bg-white text-[#0EA5E9] hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer"
@@ -207,20 +217,19 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   // --- Logic for user-attempt on NextsubconceptButton Click for specific types ---
   // =====================================================================
 
-  // Types that should record attempt *only when Next is clicked*
   const recordOnNextTypes = ["image", "youtube", "pdf"];
 
-  // Checks if currentContent.type requires attempt on Next click
   const shouldRecordOnNext = () => {
     const t = currentContent.type?.toLowerCase();
+    if (t === "mcq") return false;
     return recordOnNextTypes.includes(t);
   };
 
-  // Handles recording attempt for non-video types
   const handleNextAttempt = async () => {
-    if (!shouldRecordOnNext()) return;
+    if (!shouldRecordOnNext() || attemptRecorded) return;
 
     try {
+      setAttemptRecorded(true);
       await recordAttempt();
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
@@ -229,10 +238,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       );
     } catch (err) {
       console.error("Error recording user attempt:", err);
+      setAttemptRecorded(false);
     }
   };
 
-  // Listen for the Go To Next button click
   useEffect(() => {
     const nextBtn = document.getElementById("next-subconcept-btn");
     if (!nextBtn) return;
@@ -241,15 +250,39 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     nextBtn.addEventListener("click", handler);
     return () => nextBtn.removeEventListener("click", handler);
-  }, [currentContent]);
-  // =====================================================================
+  }, [currentContent, attemptRecorded]);
+
+  // ----------------------------------------------------------
+  //  Handle quiz submission - record attempt
+  // ----------------------------------------------------------
+  const handleQuizSubmission = async (payload: {
+    userAttemptFlag: boolean;
+    userAttemptScore: number;
+  }) => {
+    if (!payload?.userAttemptFlag || attemptRecorded) return;
+
+    try {
+      setAttemptRecorded(true);
+      await recordAttempt(payload.userAttemptScore);
+      window.dispatchEvent(
+        new CustomEvent("updateSidebarCompletion", {
+          detail: { subconceptId: currentContent.subconceptId },
+        })
+      );
+    } catch (err) {
+      console.error("Error recording quiz attempt:", err);
+      setAttemptRecorded(false);
+    }
+  };
 
   // ----------------------------------------------------------
   //  Type-based content rendering
   // ----------------------------------------------------------
   if (!url) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
+      <div
+        className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
+      >
         <p>No content available</p>
       </div>
     );
@@ -282,11 +315,11 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       return (
         <div className={`relative w-full h-full bg-white ${className}`}>
           {isLoading && renderLoading()}
-          <PDFRenderer 
-           pdfUrl={url} 
-          title={title}
-          onLoadSuccess={() => setIsLoading(false)}
-          onLoadError={() => setIsLoading(false)} 
+          <PDFRenderer
+            pdfUrl={url}
+            title={title}
+            onLoadSuccess={() => setIsLoading(false)}
+            onLoadError={() => setIsLoading(false)}
           />
         </div>
       );
@@ -294,7 +327,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     case "image":
     case "assignment_image":
       return (
-        <div className={`relative w-full h-full flex items-center justify-center bg-white ${className}`}>
+        <div
+          className={`relative w-full h-full flex items-center justify-center bg-white ${className}`}
+        >
           {isLoading && renderLoading()}
           <img
             src={url}
@@ -326,13 +361,14 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     case "mcq":
       return (
-        <div className={`relative w-full h-full ${className}`}>
+        <div className={`relative w-full h-full overflow-auto ${className}`}>
           <QuizActivity
-            triggerSubmit={() => console.log("Quiz submitted")}
+            triggerSubmit={() => {}}
             xmlUrl={url}
             key={url}
             subconceptMaxscore={10}
-            setSubmissionPayload={(payload) => console.log("Submission payload:", payload)}
+            setSubmissionPayload={handleQuizSubmission}
+            setScorePercentage={setQuizScore}
           />
         </div>
       );

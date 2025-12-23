@@ -7,7 +7,6 @@ import {
   Users,
   FileText,
   BarChart,
-  PieChart,
   List,
   ChevronDown,
 } from "lucide-react";
@@ -49,7 +48,7 @@ export default function MentorSideNav({ onNavigate = () => {} }) {
   }, [lsCohortId, lsProgramId]);
 
   /** -------------------------------
-   * Fetch cohorts + progress
+   * Fetch cohorts (without progress)
    -------------------------------- */
   useEffect(() => {
     if (!mentorId) return;
@@ -63,43 +62,12 @@ export default function MentorSideNav({ onNavigate = () => {} }) {
         const userDetails = res.data?.userDetails;
         const list = userDetails?.allCohortsWithPrograms || [];
 
-        const formatted = await Promise.all(
-          list.map(async (c) => {
-            let progress = 0;
-
-            try {
-              const progressRes = await axios.get(
-                `${API_BASE_URL}/reports/program/${c.program?.programId}/user/${mentorId}/progress`
-              );
-
-              const total = progressRes.data?.totalSubconcepts || 0;
-              const completed = progressRes.data?.completedSubconcepts || 0;
-
-              progress =
-                total > 0 ? Math.round((completed / total) * 100) : 0;
-            } catch {
-              progress = 0;
-            }
-
-            return {
-              cohortId: c.cohortId,
-              cohortName: c.cohortName,
-              cohortStartDate: new Date(c.cohortStartDate * 1000).toISOString(),
-              cohortEndDate: new Date(c.cohortEndDate * 1000).toISOString(),
-              showLeaderboard: c.showLeaderboard,
-              delayedStageUnlock: c.delayedStageUnlock,
-              delayInDays: c.delayInDays,
-              enableAiEvaluation: c.enableAiEvaluation,
-              organization: userDetails.organization,
-              programId: c.program?.programId,
-              programName: c.program?.programName,
-              programDesc: c.program?.programDesc,
-              stagesCount: c.program?.stagesCount,
-              unitCount: c.program?.unitCount,
-              progress,
-            };
-          })
-        );
+        const formatted = list.map((c) => ({
+          cohortId: c.cohortId,
+          cohortName: c.cohortName,
+          programId: c.program?.programId,
+          programName: c.program?.programName,
+        }));
 
         setCohorts(formatted);
       } catch (err) {
@@ -188,7 +156,7 @@ export default function MentorSideNav({ onNavigate = () => {} }) {
                     {c.cohortName}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {c.programName} • {c.progress}%
+                    {c.programName}
                   </p>
                 </button>
               ))}
