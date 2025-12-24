@@ -55,9 +55,12 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     
     private static final Logger logger = LoggerFactory.getLogger(ProgramConceptsMappingServiceImpl.class);
     
-    /**
-     * Helper method to process subconceptLink and generate signed URLs when needed
-     */
+//    private static final Set<String> DEMO_USER_ALLOWED_UNITS = Set.of("L1-W1-U03", "L1-W2-U01");
+//    private static final Set<String> DEMO_USERS = Set.of("Sachin10", "JohnDoe", "Joshson");
+//    private boolean isDemoUser(String userId) { return userId != null && DEMO_USERS.stream().anyMatch(u -> u.equalsIgnoreCase(userId)); }
+
+    
+     // Helper method to process subconceptLink and generate signed URLs when needed
     private String processSubconceptLink(String subconceptLink) {
         if (subconceptLink == null || subconceptLink.trim().isEmpty()) {
             return subconceptLink;
@@ -925,20 +928,17 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
     @Cacheable(value = "completeProgramStructure", key = "#userId + '_' + #programId")
     public ProgramDTO getCompleteProgramStructure(String userId, String programId) {
         try {
-            logger.info("Fetching complete program structure with subconcepts for userId: {} and programId: {}", 
-                        userId, programId);
+            logger.info("Fetching complete program structure with subconcepts for userId: {} and programId: {}", userId, programId);
             
             // STEP 1: Get base program structure with stages/units (reuses existing logic)
             ProgramDTO programDTO = unitService.getProgramWithStagesAndUnits(userId, programId);
             
             // STEP 2: Get user details for visibility filtering
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             String userType = user.getUserType();
             
             // STEP 3: Fetch ALL program mappings in ONE query (performance optimization)
-            List<ProgramConceptsMapping> allMappings = programConceptsMappingRepository
-                .findByProgram_ProgramId(programId);
+            List<ProgramConceptsMapping> allMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
             
             // STEP 4: Group mappings by unitId for O(1) lookup
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allMappings.stream()
@@ -949,8 +949,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 ));
             
             // STEP 5: Get ALL user completions in ONE query
-            List<UserSubConcept> userSubConcepts = userSubConceptRepository
-                .findByUser_UserIdAndProgram_ProgramId(userId, programId);
+            List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
             
             // STEP 6: Create completion lookup set for O(1) checks
             Set<String> completedSubconceptIds = userSubConcepts.stream()
@@ -982,9 +981,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         }
     }
 
-    /**
-     * Enriches a unit with its subconcepts maintaining existing completion logic
-     */
+   //  Enriches a unit with its subconcepts maintaining existing completion logic
     private void enrichUnitWithSubconcepts(
             UnitResponseDTO unitDTO,
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
@@ -1121,38 +1118,46 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             ProgramDTO programDTO = unitService.getProgramWithStagesAndUnits(userId, programId);
             
             // STEP 2: Get user details for visibility filtering
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            
             String userType = user.getUserType();
             
             // STEP 3: Fetch ALL program mappings in ONE query
-            List<ProgramConceptsMapping> allMappings = programConceptsMappingRepository
-                .findByProgram_ProgramId(programId);
+            List<ProgramConceptsMapping> allMappings = programConceptsMappingRepository.findByProgram_ProgramId(programId);
             
             // STEP 4: Group mappings by unitId for O(1) lookup
-            Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allMappings.stream()
-                .collect(Collectors.groupingBy(
+            Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allMappings.stream().collect(Collectors.groupingBy(
                     mapping -> mapping.getUnit().getUnitId(),
                     LinkedHashMap::new,
                     Collectors.toList()
                 ));
             
+//            Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allMappings.stream()
+//            	        //  USER-SPECIFIC FILTER
+//            		.filter(mapping -> {
+//            		    if (isDemoUser(userId)) {
+//            		        return DEMO_USER_ALLOWED_UNITS.contains(
+//            		            mapping.getUnit().getUnitId()
+//            		        );
+//            		    }
+//            		    return true;
+//            		})
+//            	        .collect(Collectors.groupingBy(
+//            	            mapping -> mapping.getUnit().getUnitId(),
+//            	            LinkedHashMap::new,
+//            	            Collectors.toList()
+//            	        ));
+            
             // STEP 5: Get ALL user completions in ONE query
-            List<UserSubConcept> userSubConcepts = userSubConceptRepository
-                .findByUser_UserIdAndProgram_ProgramId(userId, programId);
+            List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
             
             // STEP 6: Create completion lookup set for O(1) checks
-            Set<String> completedSubconceptIds = userSubConcepts.stream()
-                .map(us -> us.getSubconcept().getSubconceptId())
+            Set<String> completedSubconceptIds = userSubConcepts.stream().map(us -> us.getSubconcept().getSubconceptId())
                 .collect(Collectors.toSet());
             
             // STEP 7: Convert Map-based DTO to Array-based DTO
             CompleteProgramDTO completeProgramDTO = convertToArrayBasedDTO(
-                programDTO, 
-                mappingsByUnit, 
-                userType, 
-                completedSubconceptIds
-            );
+                programDTO, mappingsByUnit, userType, completedSubconceptIds);
             
             logger.info("Successfully built complete program structure for userId: {} and programId: {}", 
                         userId, programId);
@@ -1167,9 +1172,8 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         }
     }
 
-    /**
-     * Converts Map-based ProgramDTO to Array-based CompleteProgramDTO
-     */
+ 
+ //    Converts Map-based ProgramDTO to Array-based CompleteProgramDTO
     private CompleteProgramDTO convertToArrayBasedDTO(
             ProgramDTO programDTO,
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
@@ -1199,9 +1203,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         return completeDTO;
     }
 
-    /**
-     * Converts StageDTO to CompleteStageDTO with array-based units
-     */
+     // Converts StageDTO to CompleteStageDTO with array-based units
     private CompleteStageDTO convertToCompleteStageDTO(
             StageDTO stageDTO,
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
@@ -1219,22 +1221,25 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         
         // Convert Map<String, UnitResponseDTO> to List<CompleteUnitDTO>
         List<CompleteUnitDTO> units = stageDTO.getUnits().entrySet().stream()
-            .sorted(Map.Entry.comparingByKey()) // Sort by numeric key
-            .map(entry -> convertToCompleteUnitDTO(
-                entry.getValue(), 
-                mappingsByUnit, 
-                userType, 
-                completedSubconceptIds
-            ))
-            .collect(Collectors.toList());
-        
+        	    .sorted(Map.Entry.comparingByKey())
+        	    .map(entry -> convertToCompleteUnitDTO(
+        	        entry.getValue(), mappingsByUnit, userType, completedSubconceptIds
+        	    ))
+        	    .collect(Collectors.toList());
+//        List<CompleteUnitDTO> units = stageDTO.getUnits().entrySet().stream()
+//        	    .sorted(Map.Entry.comparingByKey())
+//        	    .map(entry -> convertToCompleteUnitDTO(
+//        	        entry.getValue(), mappingsByUnit, userType, completedSubconceptIds
+//        	    ))
+//        	    // 🔥 Remove units with no subconcepts (demo user case)
+//        	    .filter(unit -> unit.getSubconcepts() != null && !unit.getSubconcepts().isEmpty())
+//        	    .collect(Collectors.toList());
+
         completeStageDTO.setUnits(units);
         return completeStageDTO;
     }
 
-    /**
-     * Converts UnitResponseDTO to CompleteUnitDTO with subconcepts
-     */
+     // Converts UnitResponseDTO to CompleteUnitDTO with subconcepts
     private CompleteUnitDTO convertToCompleteUnitDTO(
             UnitResponseDTO unitDTO,
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit,
@@ -1259,9 +1264,8 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
         return completeUnitDTO;
     }
 
-    /**
-     * Builds subconcepts list with proper completion logic
-     */
+ 
+ //  Builds subconcepts list with proper completion logic
     private List<SubconceptResponseDTO> buildSubconceptsList(
             String unitId,
             Map<String, List<ProgramConceptsMapping>> mappingsByUnit,

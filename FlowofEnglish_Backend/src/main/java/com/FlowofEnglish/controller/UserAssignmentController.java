@@ -1,17 +1,13 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.model.MediaFile;
-import com.FlowofEnglish.model.Subconcept;
-import com.FlowofEnglish.model.UserAssignment;
+import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import com.FlowofEnglish.service.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-
 //import jakarta.annotation.Resource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +16,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-// import java.net.http.HttpHeaders;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/assignments")
@@ -102,7 +92,7 @@ public class UserAssignmentController {
         
         // Format each assignment
         for (UserAssignment assignment : assignments) {
-            Map<String, Object> assignmentData = new HashMap<>();
+            Map<String, Object> assignmentData = new LinkedHashMap<>();
             
          // Count corrected vs pending assignments
             if (assignment.getCorrectedDate() != null) {
@@ -119,31 +109,31 @@ public class UserAssignmentController {
             assignmentData.put("remarks", assignment.getRemarks());
             
             // Add user info
-            Map<String, Object> userData = new HashMap<>();
+            Map<String, Object> userData = new LinkedHashMap<>();
             userData.put("userId", assignment.getUser().getUserId());
             userData.put("userName", assignment.getUser().getUserName());
             assignmentData.put("user", userData);
             
             // Add program info
-            Map<String, Object> programData = new HashMap<>();
+            Map<String, Object> programData = new LinkedHashMap<>();
             programData.put("programId", assignment.getProgram().getProgramId());
             programData.put("programName", assignment.getProgram().getProgramName());
             assignmentData.put("program", programData);
             
             // Add stage info
-            Map<String, Object> stageData = new HashMap<>();
+            Map<String, Object> stageData = new LinkedHashMap<>();
             stageData.put("stageId", assignment.getStage().getStageId());
             stageData.put("stageName", assignment.getStage().getStageName());
             assignmentData.put("stage", stageData);
             
             // Add unit info
-            Map<String, Object> unitData = new HashMap<>();
+            Map<String, Object> unitData = new LinkedHashMap<>();
             unitData.put("unitId", assignment.getUnit().getUnitId());
             unitData.put("unitName", assignment.getUnit().getUnitName());
             assignmentData.put("unit", unitData);
             
             // Add subconcept info
-            Map<String, Object> subconceptData = new HashMap<>();
+            Map<String, Object> subconceptData = new LinkedHashMap<>();
             Subconcept subconcept = assignment.getSubconcept();
             subconceptData.put("subconceptId", subconcept.getSubconceptId());
             subconceptData.put("subconceptDesc", subconcept.getSubconceptDesc());
@@ -163,7 +153,7 @@ public class UserAssignmentController {
                     Optional<Subconcept> dependencySubconcept = subconceptRepository.findBySubconceptId(dependencyId);
                     
                     if (dependencySubconcept.isPresent()) {
-                        Map<String, Object> dependencyData = new HashMap<>();
+                        Map<String, Object> dependencyData = new LinkedHashMap<>();
                         dependencyData.put("subconceptId", dependencySubconcept.get().getSubconceptId());
                         dependencyData.put("subconceptDesc", dependencySubconcept.get().getSubconceptDesc());
                         dependencyData.put("subconceptLink", dependencySubconcept.get().getSubconceptLink());
@@ -186,7 +176,7 @@ public class UserAssignmentController {
                 // Generate public URL
                 String publicUrl = s3StorageService.generatePublicUrl(submittedFile.getFilePath());
                 
-                Map<String, Object> fileData = new HashMap<>();
+                Map<String, Object> fileData = new LinkedHashMap<>();
                 fileData.put("fileId", submittedFile.getFileId());
                 fileData.put("fileName", submittedFile.getFileName());
                 fileData.put("fileType", submittedFile.getFileType());
@@ -204,7 +194,7 @@ public class UserAssignmentController {
                 // Generate public URL
                 String publicUrl = s3StorageService.generatePublicUrl(correctedFile.getFilePath());
                 
-                Map<String, Object> fileData = new HashMap<>();
+                Map<String, Object> fileData = new LinkedHashMap<>();
                 fileData.put("fileId", correctedFile.getFileId());
                 fileData.put("fileName", correctedFile.getFileName());
                 fileData.put("fileType", correctedFile.getFileType());
@@ -222,11 +212,11 @@ public class UserAssignmentController {
         
         // Create the final response with assignments and user count
      // Create the final response with assignments and statistics
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response = new LinkedHashMap<>();
         response.put("assignments", formattedAssignments);
         
         // Add statistics
-        Map<String, Object> statistics = new HashMap<>();
+        Map<String, Object> statistics = new LinkedHashMap<>();
         statistics.put("cohortUserCount", userCount);
         statistics.put("totalAssignments", totalAssignments);
         statistics.put("correctedAssignments", correctedAssignments);
@@ -249,9 +239,19 @@ public class UserAssignmentController {
         return userCohortMappingRepository.countByCohortCohortId(cohortId);
     }
 
-    @GetMapping("/cohort/{cohortId}/user/{userId}")
-    public ResponseEntity<List<UserAssignment>> getAssignmentsByCohortIdAndUserId(@PathVariable String cohortId, @PathVariable String userId) {
-        return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortIdAndUserId(cohortId, userId));
+//    @GetMapping("/cohort/{cohortId}/user/{userId}")
+//    public ResponseEntity<List<UserAssignment>> getAssignmentsByCohortIdAndUserId(@PathVariable String cohortId, @PathVariable String userId) {
+//        return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortIdAndUserId(cohortId, userId));
+//    }
+    
+//    @GetMapping("/cohort/{cohortId}/user/{userId}/old")
+//    public ResponseEntity<Map<String, Object>> getUserAssignmentsForCohort( @PathVariable String cohortId, @PathVariable String userId ) {
+//        return ResponseEntity.ok( userAssignmentService.getUserAssignmentsForCohort(cohortId, userId) );
+//    }
+    
+    @GetMapping("/cohort/{cohortId}/user/{userId}/assignments")
+    public ResponseEntity<Map<String, Object>> getAssignmentsByCohortIdAndUserId( @PathVariable String cohortId, @PathVariable String userId, @RequestParam String programId) {  
+        return ResponseEntity.ok(userAssignmentService.getAssignmentsByCohortIdAndUserId(cohortId, userId, programId));
     }
     
     @GetMapping("/bulk-download")

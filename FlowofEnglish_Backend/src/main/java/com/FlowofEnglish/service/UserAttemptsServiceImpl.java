@@ -1,6 +1,6 @@
 package com.FlowofEnglish.service;
 
-import com.FlowofEnglish.exception.ResourceNotFoundException;
+import com.FlowofEnglish.exception.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
@@ -49,6 +49,9 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     private SubconceptService subconceptService;
 
     private static final Logger logger = LoggerFactory.getLogger(UserAttemptsServiceImpl.class);
+    
+    private static final Set<String> DEMO_USERS = Set.of("Sachin10", "JohnDoe", "Joshson");
+    private boolean isDemoUser(String userId) {return userId != null && DEMO_USERS.stream().anyMatch(u -> u.equalsIgnoreCase(userId)); }
 
 
     @Override
@@ -131,6 +134,14 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     @Override
     @Transactional(timeout = 30) // 30 seconds timeout
     public UserAttempts createUserAttempt(UserAttempts userAttempt, String cohortId) {
+    	
+    	String userId = userAttempt.getUser().getUserId();
+
+        if (isDemoUser(userId)) {
+            throw new DemoUserAccessException(
+                "Demo user access: You can explore the program structure, but attempting or completing activities is not allowed."
+            );
+        }
         try {
             logger.info("Creating user attempt for user ID: {} in cohort: {}",
                         userAttempt != null && userAttempt.getUser() != null ? userAttempt.getUser().getUserId() : "null",
@@ -163,7 +174,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
         updateUserSubConceptCompletionStatus(savedAttempt);
         
      // IMPORTANT: Enhanced cache eviction after completion status changes
-        String userId = savedAttempt.getUser().getUserId();
+      //  String userId = savedAttempt.getUser().getUserId();
         String programId = savedAttempt.getProgram().getProgramId();
         String stageId = savedAttempt.getStage().getStageId();
         String unitId = savedAttempt.getUnit().getUnitId();
@@ -173,7 +184,7 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
                 userId, subconceptId, programId);
         
 
-     // 1. FIRST: Evict the specific userAttempts cache (this should fix the immediate issue)
+        // 1. FIRST: Evict the specific userAttempts cache (this should fix the immediate issue)
         cacheManagementService.evictSpecificUserAttemptsCache(userId, subconceptId);
 
         // 2. SECOND: Evict program report with proper user type key (CRITICAL FIX)
@@ -308,6 +319,12 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     public UserAttempts autoCompleteSubconcept(String userId, String programId, 
                                                String stageId, String unitId, 
                                                String subconceptId, String cohortId) {
+    	 if (isDemoUser(userId)) {
+    	        throw new DemoUserAccessException(
+    	            "Demo user access: Auto-completion is disabled. This account is for preview only."
+    	        );
+    	    }
+    	
         // 1. Fetch required entities
         User user = userService.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -355,6 +372,13 @@ public class UserAttemptsServiceImpl implements UserAttemptsService {
     @Override
     @Transactional(timeout = 900)
     public List<UserAttempts> autoCompleteProgram(String userId, String programId, String cohortId) {
+    	
+    	 if (isDemoUser(userId)) {
+    	        throw new DemoUserAccessException(
+    	            "Demo user access: Auto-completion is disabled. This account is for preview only."
+    	        );
+    	    }
+    	
         User user = userService.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Program program = programService.findByProgramId(programId)

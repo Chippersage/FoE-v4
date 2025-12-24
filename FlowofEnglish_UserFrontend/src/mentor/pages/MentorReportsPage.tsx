@@ -134,7 +134,7 @@ export default function MentorReportsPage() {
           </FormControl>
 
           {/* Learner Select */}
-          <FormControl fullWidth>
+          {/* <FormControl fullWidth>
             <InputLabel id="learner-label">Select Learner</InputLabel>
             <Select
               labelId="learner-label"
@@ -149,7 +149,7 @@ export default function MentorReportsPage() {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
         </Box>
       </Card>
 

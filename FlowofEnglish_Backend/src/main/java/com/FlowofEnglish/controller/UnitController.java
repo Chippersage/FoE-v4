@@ -1,7 +1,6 @@
 package com.FlowofEnglish.controller;
 
-import com.FlowofEnglish.dto.ProgramDTO;
-import com.FlowofEnglish.dto.UnitResponseDTO;
+import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.Unit;
 import com.FlowofEnglish.service.UnitService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
-
-
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/units")
@@ -41,6 +37,12 @@ public class UnitController {
         Unit updatedUnit = unitService.updateUnit(unitId, unit);
         return ResponseEntity.ok(updatedUnit);
     }
+    
+    @PutMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> bulkUpdateUnits( @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(unitService.bulkUpdateUnits(file));
+    }
+
 
     // Get Unit by ID
     @GetMapping("/{unitId}")

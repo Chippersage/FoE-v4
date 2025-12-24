@@ -156,6 +156,7 @@ const getLatestSessionForUser = (sessions?: any[]) => {
 export default function MentorDashboardClean() {
   const { cohortId } = useParams<{ cohortId: string }>();
   const { user, selectedCohortWithProgram, isChangingCohort } = useUserContext();
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const mentorId = user?.userId ?? "";
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -217,12 +218,15 @@ export default function MentorDashboardClean() {
 
   useEffect(() => {
     if (isChangingCohort) {
+      setInitialDataLoaded(false);
       return;
     }
     if (!cohortId || !mentorId) {
       setError("Missing cohortId or mentorId. Please re-select your cohort.");
+      setInitialDataLoaded(true);
       return;
     }
+    setInitialDataLoaded(false);
     fetchData();
   }, [cohortId, mentorId, isChangingCohort]);
 
@@ -235,6 +239,16 @@ export default function MentorDashboardClean() {
       fetchCohortProgress();
     }
   }, [programId, cohortId, mentorId, isChangingCohort]);
+
+   // Check when all data is loaded
+  useEffect(() => {
+    if (!loading && !loadingProgress && !isChangingCohort && cohortId) {
+      const timer = setTimeout(() => {
+        setInitialDataLoaded(true);
+      }, 100); // Small delay to ensure state updates
+      return () => clearTimeout(timer);
+    }
+  }, [loading, loadingProgress, isChangingCohort, cohortId]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -293,6 +307,7 @@ export default function MentorDashboardClean() {
     } catch (err: any) {
       console.error("Mentor dashboard fetch error:", err);
       setError(err?.message ?? "Failed to load mentor cohort data.");
+      setInitialDataLoaded(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -330,6 +345,7 @@ export default function MentorDashboardClean() {
       
     } catch (err: any) {
       console.error("Error fetching cohort progress:", err);
+      setInitialDataLoaded(true);
     } finally {
       setLoadingProgress(false);
     }
@@ -385,22 +401,25 @@ export default function MentorDashboardClean() {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Show loading overlay when cohort is changing */}
-      {isChangingCohort && (
+       {(isChangingCohort || !initialDataLoaded) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
           <div className="text-center p-8 bg-white rounded-lg shadow-xl">
             <CircularProgress className="mb-4" />
             <Typography variant="h6" className="mb-2">
-              Switching to {selectedCohortWithProgram?.cohortName}
+              {isChangingCohort 
+                ? `Switching to ${selectedCohortWithProgram?.cohortName}`
+                : `Loading ${cohortMeta?.cohortName || "Cohort"} Dashboard`
+              }
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Loading cohort data...
+              Loading all data...
             </Typography>
           </div>
         </div>
       )}
 
       {/* Wrap ALL content in blur div when changing cohort */}
-      <div className={isChangingCohort ? "opacity-50 pointer-events-none blur-sm" : ""}>
+      <div className={(isChangingCohort || !initialDataLoaded) ? "opacity-50 pointer-events-none blur-sm" : ""}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>

@@ -38,30 +38,20 @@ public class ProgramConceptsMappingController {
     }
 
     @GetMapping("{userId}/program/{programId}")
-    public ResponseEntity<ProgramDTO> getCompleteProgramStructure(
-            @PathVariable String userId,
-            @PathVariable String programId) {
-
+    public ResponseEntity<ProgramDTO> getCompleteProgramStructure(@PathVariable String userId, @PathVariable String programId) {
         ProgramDTO response = programConceptsMappingService.getCompleteProgramStructure(userId, programId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
-    /**
-     * NEW API endpoint - returns complete program structure with array-based JSON
-     * Does NOT affect existing APIs
-     */
+     // NEW API endpoint - returns complete program structure with array-based JSON
     @GetMapping("{userId}/program/{programId}/complete")
-    public ResponseEntity<CompleteProgramDTO> getCompleteArrayProgramStructure(
-            @PathVariable String userId,
-            @PathVariable String programId) {
-        
+    public ResponseEntity<CompleteProgramDTO> getCompleteArrayProgramStructure(@PathVariable String userId,@PathVariable String programId) {
         CompleteProgramDTO response = programConceptsMappingService.getCompleteArrayProgramStructure(userId, programId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/create")
-    public ProgramConceptsMapping createProgramConceptsMapping(
-            @RequestBody ProgramConceptsMapping programConceptsMapping) {
+    public ProgramConceptsMapping createProgramConceptsMapping(@RequestBody ProgramConceptsMapping programConceptsMapping) {
         return programConceptsMappingService.createProgramConceptsMapping(programConceptsMapping);
     }
 

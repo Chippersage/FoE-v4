@@ -18,7 +18,8 @@ public interface UserAssignmentRepository extends JpaRepository<UserAssignment, 
     Optional<UserAssignment> findByUserUserIdAndSubconceptSubconceptId(String userId, String subconceptId);
     
     List<UserAssignment> findByCohortCohortIdAndUserUserId(String cohortId, String userId);
-    
+    List<UserAssignment> findByCohort_CohortIdAndUser_UserIdAndProgram_ProgramId( String cohortId, String userId, String programId );
+
     Optional<UserAssignment> findByUserUserIdAndProgramProgramIdAndStageStageIdAndUnitUnitIdAndSubconceptSubconceptId(
     	    String userId, String programId, String stageId, String unitId, String subconceptId
     	);

@@ -3,14 +3,13 @@ package com.FlowofEnglish.service;
 import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
+import com.FlowofEnglish.exception.*;
 import org.springframework.cache.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.*;
-
-import com.FlowofEnglish.exception.ResourceNotFoundException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -251,7 +250,7 @@ public class UnitServiceImpl implements UnitService {
             throw new RuntimeException("Failed to update unit", e);
         }
     }
-
+    
 
     @Override
     @Cacheable(value = "units", key = "#unitId")
@@ -281,6 +280,95 @@ public class UnitServiceImpl implements UnitService {
         }
     }
 
+    
+    @Override
+    @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
+    @Transactional
+    public Map<String, Object> bulkUpdateUnits(MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("CSV file cannot be empty");
+        }
+
+        int success = 0;
+        int failed = 0;
+        List<String> errors = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(file.getInputStream()))) {
+
+            String line;
+            boolean headerSkipped = false;
+
+            while ((line = br.readLine()) != null) {
+
+                if (!headerSkipped) {
+                    headerSkipped = true;
+                    continue;
+                }
+
+                String[] data = line.split(",", -1);
+                if (data.length < 5) {
+                    failed++;
+                    errors.add("Invalid row: " + line);
+                    continue;
+                }
+
+                String unitId = data[0].trim();
+                String unitName = data[1].trim();
+                String unitDesc = data[2].trim();
+                String programId = data[3].trim();
+                String stageId = data[4].trim();
+
+                Optional<Unit> optionalUnit = unitRepository.findById(unitId);
+                if (optionalUnit.isEmpty()) {
+                    failed++;
+                    errors.add("Unit not found: " + unitId);
+                    continue;
+                }
+
+                Unit unit = optionalUnit.get();
+
+                // Update only if present
+                if (!unitName.isEmpty()) {
+                    unit.setUnitName(unitName);
+                }
+
+                if (!unitDesc.isEmpty()) {
+                    unit.setUnitDesc(unitDesc);
+                }
+
+                if (!programId.isEmpty()) {
+                    Program program = programRepository.findById(programId)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException("Program not found: " + programId));
+                    unit.setProgram(program);
+                }
+
+                if (!stageId.isEmpty()) {
+                    Stage stage = stageRepository.findById(stageId)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException("Stage not found: " + stageId));
+                    unit.setStage(stage);
+                }
+
+                unitRepository.save(unit);
+                success++;
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Bulk update failed", e);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("updated", success);
+        response.put("failed", failed);
+        response.put("errors", errors);
+
+        return response;
+    }
+
+    
     @Override
     @CacheEvict(value = {"units", "programStagesUnits", "allUnits"}, allEntries = true)
     public void deleteUnit(String unitId) {
@@ -735,10 +823,7 @@ public class UnitServiceImpl implements UnitService {
         return programResponse;
     }
     
-    
-    /**
-     * Helper method to determine if a sub-concept is visible to the user based on user type.
-     */
+     // Helper method to determine if a sub-concept is visible to the user based on user type.
     private boolean isSubconceptVisibleToUser(String userType, Subconcept subconcept) {
         // Assuming 'showTo' can have multiple values separated by commas, e.g., "student,teacher"
         Set<String> visibilitySet = Arrays.stream(subconcept.getShowTo().split(","))
@@ -748,10 +833,8 @@ public class UnitServiceImpl implements UnitService {
         return visibilitySet.contains(userType.toLowerCase());
     }
 
-    /**
-     * Helper method to get the total sub concept count for a unit.
-     * (No changes needed here since counting is handled differently now)
-     */
+
+//   Helper method to get the total sub concept count for a unit. (No changes needed here since counting is handled differently now)
     private int getTotalSubConceptCount(String unitId) {
         List<ProgramConceptsMapping> subconcepts = programConceptsMappingRepository.findByUnit_UnitId(unitId);
         return subconcepts.size();
