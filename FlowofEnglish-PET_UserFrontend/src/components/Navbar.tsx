@@ -1,13 +1,16 @@
 // @ts-nocheck
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUserContext } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { XCircle, Menu } from "lucide-react";
+import { XCircle, Menu, Eye } from "lucide-react";
+
+// Import demo user check
+import { isDemoUser } from "../config/demoUsers";
 
 type NavbarProps = {
   toggleSidebar?: () => void;
@@ -18,6 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isCurrentUserDemo, setIsCurrentUserDemo] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,12 +35,19 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const isMentorRoute = location.pathname.startsWith("/mentor");
   const showMentorHamburger = isMentor && isMentorRoute;
 
+  // Check if current user is a demo user
+  useEffect(() => {
+    if (user?.userId) {
+      setIsCurrentUserDemo(isDemoUser(user.userId));
+    }
+  }, [user?.userId]);
+
   const menuItems = [
-    { title: "Profile", path: "/profile" },
-    { title: "View Progress", path: "/view-progress" },
-    { title: "About Program", path: "/about-program" },
-    { title: "Help", path: "/help" },
-    { title: "Terms of Use", path: "/terms" },
+    { title: "Profile", path: "/profile", id: "profile", demoAccessible: false },
+    { title: "View Progress", path: "/view-progress", id: "view-progress", demoAccessible: false },
+    { title: "About Program", path: "/about-program", id: "about-program", demoAccessible: false },
+    { title: "Help", path: "/help", id: "help", demoAccessible: false },
+    { title: "Terms of Use", path: "/terms", id: "terms", demoAccessible: false },
   ];
 
   const handleLogout = async () => {
@@ -89,13 +100,34 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   };
 
   const handleMenuClick = (item) => {
-    if (item.title === "View Progress") {
+    // Demo users cannot access View Progress
+    if (isCurrentUserDemo && item.id === "view-progress") {
+      toast.error("View Progress is not available in Demo Mode");
+      setMenuOpen(false);
+      return;
+    }
+
+    if (item.id === "view-progress") {
       navigate(item.path);
       setMenuOpen(false);
       return;
     }
 
+    // All other menu items show "Coming soon"
     toast("Coming soon...");
+    setMenuOpen(false);
+  };
+
+  // Function to check if a menu item should be disabled
+  const isMenuItemDisabled = (item) => {
+    // For demo users: Disable View Progress and non-accessible items
+    if (isCurrentUserDemo) {
+      if (item.id === "view-progress") return true;
+      if (!item.demoAccessible) return true;
+    }
+    
+    // For all users: Only enable View Progress
+    return item.id !== "view-progress";
   };
 
   return (
@@ -150,8 +182,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             </span>
           </div>
 
+          {/* Profile bubble - SAME YELLOW COLOR for demo users */}
           <div
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0EA5E9] flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold shadow-md cursor-pointer select-none hover:scale-105 transition-all"
+            style={{
+              backgroundColor: isCurrentUserDemo ? '#f59e0b' : '#0EA5E9' // Yellow for demo, blue for regular
+            }}
             onMouseEnter={() => setMenuOpen(true)}
             onMouseLeave={() => setMenuOpen(false)}
           >
@@ -169,8 +205,23 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                 onMouseEnter={() => setMenuOpen(true)}
                 onMouseLeave={() => setMenuOpen(false)}
               >
+                {/* Demo User Indicator - Inside menu only */}
+                {isCurrentUserDemo && (
+                  <div className="bg-yellow-50 border-b border-yellow-200 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                        <Eye size={12} className="text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-yellow-800">Demo Account</p>
+                        <p className="text-xs text-yellow-600 mt-0.5">Limited features available</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {menuItems.map((item, idx) => {
-                  const isDisabled = item.title !== "View Progress";
+                  const isDisabled = isMenuItemDisabled(item);
                   const isHovered = hoveredItem === idx;
 
                   return (
@@ -186,7 +237,14 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                           : "text-gray-700 hover:bg-[#E0F4FD] hover:text-[#0EA5E9] cursor-pointer"
                       }`}
                     >
-                      <span>{item.title}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{item.title}</span>
+                        {isCurrentUserDemo && item.id === "view-progress" && (
+                          <span className="text-xs text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                            Restricted
+                          </span>
+                        )}
+                      </div>
 
                       {isDisabled && isHovered && (
                         <motion.div

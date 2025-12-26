@@ -7,6 +7,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import QuizActivity from "./ActivityComponents/QuizActivity";
+import VocabularyActivity from "./ActivityComponents/VocabularyActivity"; // Import the Vocabulary Activity
 import PDFRenderer from "./PDFRenderer";
 import { useCourseContext } from "../context/CourseContext";
 import { useUserAttempt } from "../hooks/useUserAttempt";
@@ -42,6 +43,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [countdown, setCountdown] = useState(5);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
+  const [vocabularyScore, setVocabularyScore] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -83,6 +85,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       setShowNextOverlay(false);
       setCountdown(5);
       setQuizScore(0);
+      setVocabularyScore(0);
       prevUrlRef.current = url;
     }
   }, [url]);
@@ -217,7 +220,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   // --- Logic for user-attempt on NextsubconceptButton Click for specific types ---
   // =====================================================================
 
-  const recordOnNextTypes = ["image", "youtube", "pdf"];
+  const recordOnNextTypes = ["image", "youtube", "pdf", "mtf"];
 
   const shouldRecordOnNext = () => {
     const t = currentContent.type?.toLowerCase();
@@ -276,6 +279,29 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
+  //  Handle vocabulary activity submission - record attempt
+  // ----------------------------------------------------------
+  const handleVocabularySubmission = async (payload: {
+    userAttemptFlag: boolean;
+    userAttemptScore: number;
+  }) => {
+    if (!payload?.userAttemptFlag || attemptRecorded) return;
+
+    try {
+      setAttemptRecorded(true);
+      await recordAttempt(payload.userAttemptScore);
+      window.dispatchEvent(
+        new CustomEvent("updateSidebarCompletion", {
+          detail: { subconceptId: currentContent.subconceptId },
+        })
+      );
+    } catch (err) {
+      console.error("Error recording vocabulary attempt:", err);
+      setAttemptRecorded(false);
+    }
+  };
+
+  // ----------------------------------------------------------
   //  Type-based content rendering
   // ----------------------------------------------------------
   if (!url) {
@@ -288,7 +314,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     );
   }
 
-  switch (type) {
+  switch (type.toLowerCase()) {
     case "video":
       return (
         <div className={`relative w-full h-full ${className}`}>
@@ -369,6 +395,20 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             subconceptMaxscore={10}
             setSubmissionPayload={handleQuizSubmission}
             setScorePercentage={setQuizScore}
+          />
+        </div>
+      );
+
+    case "mtf": // Match The Following - Vocabulary Activity
+      return (
+        <div className={`relative w-full h-full overflow-auto ${className}`}>
+          <VocabularyActivity
+            triggerSubmit={() => {}}
+            xmlUrl={url}
+            key={url}
+            subconceptMaxscore={10}
+            setSubmissionPayload={handleVocabularySubmission}
+            setScorePercentage={setVocabularyScore}
           />
         </div>
       );
