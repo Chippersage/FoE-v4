@@ -10,20 +10,12 @@ interface SessionListProps {
 }
 
 export default function SessionList({ 
-  sessionsData, 
-  learnerId, 
-  learnerName, 
-  className = '' 
-}: SessionListProps) {
+  sessionsData, learnerId, learnerName, className = '' }: SessionListProps) {
   // Filter sessions for selected learner or show all
-  const filteredData = learnerId 
-    ? sessionsData?.filter(user => user.userId === learnerId)
-    : sessionsData;
+  const filteredData = learnerId ? sessionsData?.filter(user => user.userId === learnerId) : sessionsData;
 
   // Get sessions for the selected user (if any)
-  const userSessions = learnerId 
-    ? filteredData?.find(user => user.userId === learnerId)?.sessions || []
-    : [];
+  const userSessions = learnerId ? filteredData?.find(user => user.userId === learnerId)?.sessions || [] : [];
 
   // Calculate total sessions
   const totalSessions = userSessions.length || 0;

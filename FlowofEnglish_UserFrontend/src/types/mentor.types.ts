@@ -135,6 +135,26 @@ export interface Concept {
   content: Content;
 }
 
+export interface ConceptProgress {
+  conceptId: string;
+  conceptName: string;
+  conceptDesc: string;
+  'conceptSkill-1': string;
+  'conceptSkill-2': string;
+  totalMaxScore: number;
+  userTotalScore: number;
+  completedSubconcepts: number;
+  totalSubconcepts: number;
+}
+
+export interface ConceptsProgressResponse {
+  concepts: ConceptProgress[];
+  userId: string;
+  userName: string;
+  programId: string;
+  programName: string;
+}
+
 export interface Subconcept {
   subconceptId: string;
   subconceptDesc: string;
@@ -202,7 +222,7 @@ export interface LearnerDetailedProgress {
   userName?: string;
 }
 
-// NEW: Fetch mentor's cohorts with assignment statistics
+// Fetch mentor's cohorts with assignment statistics
 export interface CohortWithProgram {
   cohortId: string;
   cohortName: string;
@@ -254,4 +274,103 @@ export interface MentorCohortsResponse {
       };
     };
   };
+}
+
+export interface AssignmentFile {
+  fileId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: number;
+  downloadUrl: string;
+}
+
+export interface SubconceptDependency {
+  subconceptId: string;
+  subconceptDesc: string;
+  subconceptLink: string;
+  subconceptMaxscore: number;
+  subconceptType: string;
+}
+
+export interface SubconceptInfo {
+  subconceptId: string;
+  showTo: string;
+  subconceptDesc: string;
+  subconceptLink: string;
+  subconceptType: string;
+  numQuestions: number;
+  subconceptMaxscore: number;
+  dependencies?: SubconceptDependency[];
+}
+
+export interface Assignment {
+  assignmentId: string;
+  program: {
+    programId: string;
+    programName: string;
+  };
+  stage: {
+    stageId: string;
+    stageName: string;
+  };
+  unit: {
+    unitId: string;
+    unitName: string;
+  };
+  subconcept: SubconceptInfo;
+  submittedFile?: AssignmentFile;
+  correctedFile?: AssignmentFile;
+  submittedDate: number;
+  correctedDate?: number;
+  score?: number;
+  remarks?: string;
+}
+
+export interface UserInfo {
+  userId: string;
+  userName: string;
+  userType: string;
+  userEmail?: string;
+  userAddress?: string;
+  userPhoneNumber?: string;
+  status: string;
+  leaderboardScore: number;
+  createdAt: number;
+}
+
+export interface ProgramInfo {
+  programId: string;
+  programName: string;
+}
+
+export interface CohortInfo {
+  cohortId: string;
+  cohortName: string;
+  cohortStartDate: number;
+  cohortEndDate: number;
+  program: ProgramInfo;
+}
+
+export interface UserAssignmentsResponse {
+  user: UserInfo;
+  cohort: CohortInfo;
+  submitted: number;
+  evaluated: number;
+  pendingReview: number;
+  assignments: Assignment[];
+}
+
+export interface SubmitCorrectionParams {
+  score?: number;
+  remarks?: string;
+  correctedDate?: string;
+  file?: File;
+}
+
+export interface SubmitCorrectionResponse {
+  assignmentId: string;
+  correctedDate?: number;
+  score?: number;
+  remarks?: string;
 }

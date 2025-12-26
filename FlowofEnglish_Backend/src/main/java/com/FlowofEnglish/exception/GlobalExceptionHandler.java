@@ -46,5 +46,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
             .body("File size exceeds the maximum allowed limit.");
     }
+    
+    @ExceptionHandler(DemoUserAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDemoUserAccessException(DemoUserAccessException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponse("DEMO_USER_RESTRICTED",ex.getMessage()
+            ));
+    }
+
     // You can also add more exception handlers here if needed
 }

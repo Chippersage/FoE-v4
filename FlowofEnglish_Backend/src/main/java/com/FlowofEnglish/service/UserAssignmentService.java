@@ -21,6 +21,10 @@ public interface UserAssignmentService {
     List<UserAssignment> getAssignmentsByCohortId(String cohortId);
 
     List<UserAssignment> getAssignmentsByCohortIdAndUserId(String cohortId, String userId);
+     
+    Map<String, Object> getUserAssignmentsForCohort( String cohortId, String userId );
+   
+    Map<String, Object> getAssignmentsByCohortIdAndUserId(String cohortId, String userId, String programId);
 
     UserAssignment submitNewAssignment(String userId, String cohortId, String programId, 
             String stageId, String unitId, String subconceptId, 

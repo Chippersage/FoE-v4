@@ -21,10 +21,7 @@ public class AssignmentWithAttemptController {
     @Autowired
     private UserAssignmentAttemptTransactionalService transactionCoordinator;
 
-    /**
-     * Combined endpoint for assignment submission with attempt creation.
-     * This ensures that both operations succeed or fail together.
-     */
+     // Combined endpoint for assignment submission with attempt creation. This ensures that both operations succeed or fail together.     
     @PostMapping("/submit")
     public ResponseEntity<UserAssignmentMinimalDTO> submitAssignmentWithAttempt(
             @RequestParam("userId") String userId,

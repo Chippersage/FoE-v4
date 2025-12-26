@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort } from '@/lib/mentor-api';
-import type { MentorCohortUser, MentorCohortMetadata } from '@/types/mentor.types';
+import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort, fetchUserConceptsProgress } from '@/lib/mentor-api';
+import type { MentorCohortUser, MentorCohortMetadata, ConceptsProgressResponse } from '@/types/mentor.types';
 import { Download, Target, ChevronDown, User, UserX, Search, TrendingUp, Circle, Filter, SortAsc, SortDesc, X, RefreshCw, AlertTriangle, 
     CheckCircle2, HelpCircle, Users, Menu, BarChart3, FileText, Activity, BarChart, PieChart, List, LogOut, ChevronLeft,ChevronRight, Eye, 
     EyeOff, MoreVertical, Clock, Users as UsersIcon, UserCheck, Activity as ActivityIcon } from 'lucide-react';
@@ -11,7 +11,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
 import CompletionChart from '../components/analytics/CompletionChart';
+import RadarChartComponent from '../components/analytics/RadarChartComponent';
+import SkillImpactMatrix from '../components/analytics/SkillImpactMatrix';
 import SessionList from '../components/analytics/SessionList';
+import RecentProgramAttempts from '../components/analytics/RecentProgramAttempts';
 import StageAccordion from '../components/analytics/StageAccordion';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
@@ -91,10 +94,7 @@ export default function UnifiedLearnersPage() {
     learnerId?: string;
     programId?: string;
   }>();
-  
-  const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(
-    urlLearnerId || null
-  );
+  const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>( urlLearnerId || null );
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const mentorId = user?.userId || "";
   
@@ -112,6 +112,8 @@ export default function UnifiedLearnersPage() {
   } | null>(null);
   const [disableReason, setDisableReason] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [conceptsProgressData, setConceptsProgressData] = useState<ConceptsProgressResponse | null>(null);
+  const [isConceptsLoading, setIsConceptsLoading] = useState(false);
   
   // Dashboard states
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
@@ -131,6 +133,8 @@ export default function UnifiedLearnersPage() {
     },
     [mentorId, cohortId]
   );
+  // Determine programId
+  const progId = queryProgramId || urlProgramId || cohortData?.cohort?.program?.programId;
 
   // 2. Load all sessions data for the cohort (for stats)
   const { data: allSessionsData, isLoading: allSessionsLoading } = useFetch(
@@ -150,9 +154,6 @@ export default function UnifiedLearnersPage() {
     [mentorId, cohortId, selectedLearnerId]
   );
 
-  // Determine programId
-  const progId = queryProgramId || urlProgramId || cohortData?.cohort?.program?.programId;
-
   // 4. Load learner analytics data
   const { data: analyticsData, isLoading: analyticsLoading, error, refresh: refreshAnalytics } = useFetch(
     () => {
@@ -161,6 +162,77 @@ export default function UnifiedLearnersPage() {
     },
     [selectedLearnerId, progId]
   );
+
+  //5. Fetch concepts progress when a learner is selected
+  useEffect(() => {
+    const fetchConceptsProgress = async () => {
+      if (!selectedLearnerId || !progId) {
+        setConceptsProgressData(null);
+        return;
+      }
+
+      setIsConceptsLoading(true);
+      try {
+        const data = await fetchUserConceptsProgress(progId, selectedLearnerId);
+        setConceptsProgressData(data);
+      } catch (error) {
+        console.error('Error fetching concepts progress:', error);
+        setConceptsProgressData(null);
+      } finally {
+        setIsConceptsLoading(false);
+      }
+    };
+
+    if (selectedLearnerId && progId) {
+      fetchConceptsProgress();
+    } else {
+      setConceptsProgressData(null);
+    }
+  }, [selectedLearnerId, progId]);
+
+  // Process skill data function
+  const processSkillData = useCallback((concepts: any[]) => {
+    if (!concepts) return [];
+    
+    const skillGroups = concepts.reduce((acc, concept) => {
+      const skill1 = concept['conceptSkill-1'] || 'Other';
+      
+      if (!acc[skill1]) {
+        acc[skill1] = {
+          name: skill1,
+          totalScore: 0,
+          userScore: 0,
+          conceptCount: 0,
+        };
+      }
+      
+      acc[skill1].totalScore += concept.totalMaxScore;
+      acc[skill1].userScore += concept.userTotalScore;
+      acc[skill1].conceptCount += 1;
+      
+      return acc;
+    }, {} as Record<string, any>);
+    
+    return Object.values(skillGroups)
+      .filter((skill: any) => skill.name !== '')
+      .map((skill: any) => ({
+        name: skill.name,
+        score: skill.totalScore > 0 ? Math.round((skill.userScore / skill.totalScore) * 100) : 0,
+        conceptCount: skill.conceptCount,
+      }));
+  }, []);
+
+  // Skill colors constant - moved outside component for better performance
+  const skillColors = {
+    'Grammar': '#FF6B6B',
+    'Reading': '#4ECDC4',
+    'Writing': '#45B7D1',
+    'Speaking': '#4CAF50',
+    'Critical Thinking': '#FF1493',
+    'Active listening': '#D2B48C',
+    'Other': '#FF69B4'
+  };
+
 
   // Calculate stats from data
   const stats = useMemo(() => {
@@ -873,9 +945,9 @@ export default function UnifiedLearnersPage() {
           {viewMode === 'overview' ? (
             <>
               {/* OVERVIEW VIEW */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                {/*  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-semibold text-gray-800">Progress Overview</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -884,13 +956,60 @@ export default function UnifiedLearnersPage() {
                       </div>
                     </div>
                     <CompletionChart data={analyticsData} />
-                  </div>
+                  </div> */}
+                  {/* <SkillImpactMatrix stages={analyticsData.stages} /> */}
 
-                  <SessionList 
-                    sessionsData={sessionsData}
+{/*  RadarChart Section */}
+<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+  <div className="flex items-center justify-between mb-6">
+    <div>
+      <h3 className="text-lg font-semibold text-gray-800">Skills OverView </h3>
+      <p className="text-sm text-gray-600 mt-1">
+        Comprehensive view of skill proficiency across all concepts
+      </p>
+    </div>
+    <div className="flex items-center gap-2 text-sm text-gray-500">
+      <Target className="h-4 w-4" />
+      <span>Skill Proficiency (%)</span>
+    </div>
+  </div>
+  
+  {isConceptsLoading ? (
+    <div className="h-96 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-500">Loading skill analysis...</p>
+      </div>
+    </div>
+  ) : conceptsProgressData?.concepts ? (
+    <RadarChartComponent data={processSkillData(conceptsProgressData.concepts)} height={450} />
+  ) : (
+    <div className="h-96 flex items-center justify-center">
+      <p className="text-gray-500">No skill data available for this learner</p>
+    </div>
+  )}
+  {/* <div className="mt-4 pt-4 border-t border-gray-200">
+    <div className="flex flex-wrap gap-4 justify-center">
+      {conceptsProgressData?.concepts && processSkillData(conceptsProgressData.concepts).map((skill: any) => (
+          <div key={skill.name} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: skillColors[skill.name] || skillColors.Other }} />
+            <span className="text-sm text-gray-700">{skill.name}</span>
+            <span className="text-sm font-semibold text-blue-600">{skill.score}%</span>
+          </div>
+        ))}
+    </div>
+  </div> */}
+</div>
+                  {/* <SessionList sessionsData={sessionsData}
                     learnerId={selectedLearnerId || undefined}
                     learnerName={selectedLearner?.userName || analyticsData?.userName}
+                  /> */}
+                  <RecentProgramAttempts
+                    analyticsData={analyticsData}
+                    learnerName={selectedLearner?.userName || analyticsData?.userName}
+                    onViewDetailed={() => setViewMode('detailed')}
                   />
+
                 </div>
 
                 <div className="space-y-6">

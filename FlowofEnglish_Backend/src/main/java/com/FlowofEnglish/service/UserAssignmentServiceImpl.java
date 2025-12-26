@@ -6,6 +6,9 @@ import com.FlowofEnglish.repository.*;
 import jakarta.transaction.Transactional;
 
 import com.FlowofEnglish.dto.*;
+import com.FlowofEnglish.exception.ForbiddenException;
+import com.FlowofEnglish.exception.ResourceNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +43,9 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     
     @Autowired
     private CohortRepository cohortRepository;
+    
+    @Autowired
+    private CohortProgramRepository cohortProgramRepository;
     
     @Autowired
     private ProgramRepository programRepository;
@@ -94,6 +100,188 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     @Override
     public List<UserAssignment> getAssignmentsByCohortIdAndUserId(String cohortId, String userId) {
         return userAssignmentRepository.findByCohortCohortIdAndUserUserId(cohortId, userId);
+    }
+    @Override
+    public Map<String, Object> getUserAssignmentsForCohort(String cohortId, String userId) {
+        // This is a wrapper for backward compatibility
+        return getAssignmentsByCohortIdAndUserId(cohortId, userId, null);
+    }
+    
+    @Override
+    public Map<String, Object> getAssignmentsByCohortIdAndUserId(String cohortId, String userId, String programId) {
+        // Find user-cohort mapping to validate user belongs to cohort
+        UserCohortMapping userCohortMapping = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(userId, cohortId)
+                .orElseThrow(() -> new ResourceNotFoundException("User '" + userId + "' is not mapped to cohort '" + cohortId + "'"));
+        
+        // Validate: cohort is mapped to program
+        cohortProgramRepository.findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId).orElseThrow(() -> new ForbiddenException(
+                        "Invalid mapping: Cohort '" + cohortId + "' is not assigned under program '" + "'"));
+        
+        // Get all assignments for the user in this cohort
+        List<UserAssignment> assignments = userAssignmentRepository.findByCohortCohortIdAndUserUserId(cohortId, userId);
+        
+        // Get user details
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        
+        // Get cohort details
+        Cohort cohort = cohortRepository.findById(cohortId).orElseThrow(() -> new ResourceNotFoundException("Cohort not found: " + cohortId));
+        
+        // Get program details
+        Program program = programRepository.findById(programId).orElseThrow(() -> new ResourceNotFoundException("Program not found: "));
+        
+        // Calculate statistics
+        long submittedCount = assignments.size();
+        long evaluatedCount = assignments.stream().filter(assignment -> assignment.getCorrectedDate() != null).count();
+        long pendingReviewCount = submittedCount - evaluatedCount;
+        
+        // Create response map
+        Map<String, Object> response = new LinkedHashMap<>();
+        
+        // Add user info
+        Map<String, Object> userInfo = new LinkedHashMap<>();
+        userInfo.put("userId", user.getUserId());
+        userInfo.put("userName", user.getUserName());
+        userInfo.put("userType", user.getUserType());
+        userInfo.put("userEmail", user.getUserEmail());
+        userInfo.put("userAddress", user.getUserAddress());
+        userInfo.put("userPhoneNumber", user.getUserPhoneNumber());
+        userInfo.put("status", user.getStatus());
+        userInfo.put("leaderboardScore", userCohortMapping.getLeaderboardScore());
+        userInfo.put("createdAt", user.getCreatedAt());
+        response.put("user", userInfo);
+        
+        // Add cohort info
+        Map<String, Object> cohortInfo = new LinkedHashMap<>();
+        cohortInfo.put("cohortId", cohort.getCohortId());
+        cohortInfo.put("cohortName", cohort.getCohortName());
+        cohortInfo.put("cohortStartDate", cohort.getCohortStartDate());
+        cohortInfo.put("cohortEndDate", cohort.getCohortEndDate());
+        
+        // Add program info to cohort
+        Map<String, Object> programInfo = new LinkedHashMap<>();
+        programInfo.put("programId", program.getProgramId());
+        programInfo.put("programName", program.getProgramName());
+        cohortInfo.put("program", programInfo);
+        
+        response.put("cohort", cohortInfo);
+        
+        // Add statistics
+        response.put("submitted", submittedCount);
+        response.put("evaluated", evaluatedCount);
+        response.put("pendingReview", pendingReviewCount);
+        
+        // Process assignments
+        List<Map<String, Object>> assignmentList = new ArrayList<>();
+        
+        for (UserAssignment assignment : assignments) {
+            Map<String, Object> assignmentMap = new LinkedHashMap<>();
+            
+            // Basic assignment info
+            assignmentMap.put("assignmentId", assignment.getAssignmentId());
+            
+            // Program info
+            Map<String, Object> assignmentProgram = new LinkedHashMap<>();
+            assignmentProgram.put("programId", assignment.getProgram().getProgramId());
+            assignmentProgram.put("programName", assignment.getProgram().getProgramName());
+            assignmentMap.put("program", assignmentProgram);
+            
+            // Stage info
+            Map<String, Object> stageInfo = new LinkedHashMap<>();
+            stageInfo.put("stageId", assignment.getStage().getStageId());
+            stageInfo.put("stageName", assignment.getStage().getStageName());
+            assignmentMap.put("stage", stageInfo);
+            
+            // Unit info
+            Map<String, Object> unitInfo = new LinkedHashMap<>();
+            unitInfo.put("unitId", assignment.getUnit().getUnitId());
+            unitInfo.put("unitName", assignment.getUnit().getUnitName());
+            assignmentMap.put("unit", unitInfo);
+            
+            // Subconcept info
+            Map<String, Object> subconceptInfo = new LinkedHashMap<>();
+            Subconcept subconcept = assignment.getSubconcept();
+            subconceptInfo.put("subconceptId", subconcept.getSubconceptId());
+            subconceptInfo.put("showTo", subconcept.getShowTo());
+            subconceptInfo.put("subconceptDesc", subconcept.getSubconceptDesc());
+            subconceptInfo.put("subconceptLink", subconcept.getSubconceptLink());
+            subconceptInfo.put("subconceptType", subconcept.getSubconceptType());
+            subconceptInfo.put("numQuestions", subconcept.getNumQuestions());
+            subconceptInfo.put("subconceptMaxscore", subconcept.getSubconceptMaxscore());
+         // Process dependency information
+            String dependencyIds = subconcept.getDependency();
+            if (dependencyIds != null && !dependencyIds.isEmpty()) {
+                // Parse dependency IDs (assuming comma-separated list)
+                String[] dependencyIdArray = dependencyIds.split(",");
+                List<Map<String, Object>> dependencyList = new ArrayList<>();
+                
+                for (String dependencyId : dependencyIdArray) {
+                    dependencyId = dependencyId.trim();
+                    // Fetch the dependency subconcept
+                    Optional<Subconcept> dependencySubconcept = subconceptRepository.findBySubconceptId(dependencyId);
+                    
+                    if (dependencySubconcept.isPresent()) {
+                        Map<String, Object> dependencyData = new LinkedHashMap<>();
+                        dependencyData.put("subconceptId", dependencySubconcept.get().getSubconceptId());
+                        dependencyData.put("subconceptDesc", dependencySubconcept.get().getSubconceptDesc());
+                        dependencyData.put("subconceptLink", dependencySubconcept.get().getSubconceptLink());
+                        dependencyData.put("subconceptMaxscore", dependencySubconcept.get().getSubconceptMaxscore());
+                        dependencyData.put("subconceptType", dependencySubconcept.get().getSubconceptType());
+                        dependencyList.add(dependencyData);
+                    }
+                }
+                
+                subconceptInfo.put("dependencies", dependencyList);
+            }
+            assignmentMap.put("subconcept", subconceptInfo);
+            
+            // Submitted file info
+            if (assignment.getSubmittedFile() != null) {
+                MediaFile submittedFile = assignment.getSubmittedFile();
+                Map<String, Object> submittedFileInfo = new LinkedHashMap<>();
+                submittedFileInfo.put("fileId", submittedFile.getFileId());
+                submittedFileInfo.put("fileName", submittedFile.getFileName());
+                submittedFileInfo.put("fileType", submittedFile.getFileType());
+                submittedFileInfo.put("fileSize", submittedFile.getFileSize());
+                submittedFileInfo.put("uploadedAt", submittedFile.getUploadedAt());
+                
+                // Generate public URL for the file
+                s3StorageService.makeFilePublic(submittedFile.getFilePath());
+                String publicUrl = s3StorageService.generatePublicUrl(submittedFile.getFilePath());
+                submittedFileInfo.put("downloadUrl", publicUrl);
+                
+                assignmentMap.put("submittedFile", submittedFileInfo);
+            }
+            
+            // Corrected file info
+            if (assignment.getCorrectedFile() != null) {
+                MediaFile correctedFile = assignment.getCorrectedFile();
+                Map<String, Object> correctedFileInfo = new LinkedHashMap<>();
+                correctedFileInfo.put("fileId", correctedFile.getFileId());
+                correctedFileInfo.put("fileName", correctedFile.getFileName());
+                correctedFileInfo.put("fileType", correctedFile.getFileType());
+                correctedFileInfo.put("fileSize", correctedFile.getFileSize());
+                correctedFileInfo.put("uploadedAt", correctedFile.getUploadedAt());
+                
+                // Generate public URL for the file
+                s3StorageService.makeFilePublic(correctedFile.getFilePath());
+                String publicUrl = s3StorageService.generatePublicUrl(correctedFile.getFilePath());
+                correctedFileInfo.put("downloadUrl", publicUrl);
+                
+                assignmentMap.put("correctedFile", correctedFileInfo);
+            }
+            
+            // Assignment dates and scores
+            assignmentMap.put("submittedDate", assignment.getSubmittedDate());
+            assignmentMap.put("correctedDate", assignment.getCorrectedDate());
+            assignmentMap.put("score", assignment.getScore());
+            assignmentMap.put("remarks", assignment.getRemarks());
+            
+            assignmentList.add(assignmentMap);
+        }
+        
+        response.put("assignments", assignmentList);
+        
+        return response;
     }
 
  // Method for creating the assignment entry after submitting a file
@@ -222,8 +410,7 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
     
     @Override
     @Transactional
-    public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, 
-                                                   MultipartFile correctedFile, 
+    public UserAssignment submitCorrectedAssignment(String assignmentId, Integer score, MultipartFile correctedFile, 
                                                    String remarks, OffsetDateTime correctedDate) throws IOException {
         UserAssignment assignment = userAssignmentRepository.findById(assignmentId)
             .orElseThrow(() -> new RuntimeException("Assignment not found"));
@@ -295,9 +482,8 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return savedAssignment;
     }
     
-    /**
-     * Update the corresponding UserAttempts entry with the corrected score
-     */
+    
+     // Update the corresponding UserAttempts entry with the corrected score
     private void updateUserAttemptsScore(UserAssignment assignment, Integer newScore, Integer oldScore) {
         try {
             // Find the UserAttempts entry that corresponds to this assignment
@@ -769,4 +955,6 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         // Return null if not found (to be handled in controller)
         return assignmentOptional.orElse(null);
     }
+    
+
 }
