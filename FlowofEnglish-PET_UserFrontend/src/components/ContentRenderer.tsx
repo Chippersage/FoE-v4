@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import {
   Video as VideoIcon,
   RotateCcw,
@@ -7,35 +8,48 @@ import {
   ChevronRight,
 } from "lucide-react";
 import QuizActivity from "./ActivityComponents/QuizActivity";
-import VocabularyActivity from "./ActivityComponents/VocabularyActivity"; // Import the Vocabulary Activity
+import VocabularyActivity from "./ActivityComponents/VocabularyActivity";
 import PDFRenderer from "./PDFRenderer";
-import { useCourseContext } from "../context/CourseContext";
 import { useUserAttempt } from "../hooks/useUserAttempt";
+import useCourseStore from "../store/courseStore";
+import { useUserContext } from "../context/AuthContext";
 
 interface ContentRendererProps {
-  type: string;
-  url: string;
-  title?: string;
   className?: string;
+  // REMOVED: type, url, title, and all content props
 }
 
 const ContentRenderer: React.FC<ContentRendererProps> = ({
-  type,
-  url,
-  title,
   className = "",
 }) => {
-  const {
-    currentContent,
-    stages,
-    setCurrentContent,
-    canGoNext,
-    setCanGoNext,
-    remainingTime,
-    setRemainingTime,
-  } = useCourseContext();
-
+  // 1. Get current content from URL
+  const { programId, stageId, unitId, conceptId } = useParams<{
+    programId: string;
+    stageId: string;
+    unitId: string;
+    conceptId: string;
+  }>();
+  
+  // 2. Get user info
+  const { user } = useUserContext();
+  
+  // 3. Get course data from store
+  const { getSubconceptById } = useCourseStore();
+  
+  // 4. Get attempt hook
   const { recordAttempt } = useUserAttempt();
+  
+  // State for current subconcept data
+  const [currentSubconcept, setCurrentSubconcept] = useState<{
+    subconceptId: string;
+    subconceptLink: string;
+    subconceptType: string;
+    subconceptMaxscore: number;
+    stageId: string;
+    unitId: string;
+    isLockedForDemo?: boolean;
+    completionStatus: string;
+  } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [attemptRecorded, setAttemptRecorded] = useState(false);
@@ -46,6 +60,53 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [vocabularyScore, setVocabularyScore] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // ----------------------------------------------------------
+  //  Load subconcept data when URL changes
+  // ----------------------------------------------------------
+  useEffect(() => {
+    const loadSubconcept = () => {
+      if (!conceptId || !programId || !stageId || !unitId) {
+        console.log("Missing URL params:", { conceptId, programId, stageId, unitId });
+        setIsLoading(false);
+        return;
+      }
+
+      const subconcept = getSubconceptById(conceptId);
+      
+      if (!subconcept) {
+        console.log("Subconcept not found:", conceptId);
+        setIsLoading(false);
+        return;
+      }
+
+      setCurrentSubconcept({
+        subconceptId: subconcept.subconceptId,
+        subconceptLink: subconcept.subconceptLink,
+        subconceptType: subconcept.subconceptType,
+        subconceptMaxscore: Number(subconcept.subconceptMaxscore || 0),
+        stageId: subconcept.stageId,
+        unitId: subconcept.unitId,
+        isLockedForDemo: subconcept.isLockedForDemo,
+        completionStatus: subconcept.completionStatus
+      });
+      
+      setIsLoading(false);
+    };
+
+    loadSubconcept();
+  }, [conceptId, programId, stageId, unitId, getSubconceptById]);
+
+  // ----------------------------------------------------------
+  //  Reset attempt state when content changes
+  // ----------------------------------------------------------
+  useEffect(() => {
+    setAttemptRecorded(false);
+    setShowNextOverlay(false);
+    setCountdown(5);
+    setQuizScore(0);
+    setVocabularyScore(0);
+  }, [conceptId]);
 
   // ----------------------------------------------------------
   //  Detect fullscreen mode
@@ -74,28 +135,16 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   }, []);
 
   // ----------------------------------------------------------
-  //  Reset state when content changes
-  // ----------------------------------------------------------
-  const prevUrlRef = useRef(url);
-
-  useEffect(() => {
-    if (url !== prevUrlRef.current) {
-      setIsLoading(true);
-      setAttemptRecorded(false);
-      setShowNextOverlay(false);
-      setCountdown(5);
-      setQuizScore(0);
-      setVocabularyScore(0);
-      prevUrlRef.current = url;
-    }
-  }, [url]);
-
-  // ----------------------------------------------------------
   //  Video progress (90% = attempt)
   // ----------------------------------------------------------
   const handleVideoProgress = async (
     e: React.SyntheticEvent<HTMLVideoElement>
   ) => {
+    if (!currentSubconcept || !user) return;
+    
+    // Skip if demo user or locked content
+    if (currentSubconcept.isLockedForDemo) return;
+    
     const video = e.currentTarget;
     const progress = (video.currentTime / video.duration) * 100;
 
@@ -103,10 +152,20 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       window.dispatchEvent(new Event("video90"));
       setAttemptRecorded(true);
       try {
-        await recordAttempt();
+        await recordAttempt({
+          userId: user.userId,
+          programId: programId!,
+          stageId: currentSubconcept.stageId,
+          unitId: currentSubconcept.unitId,
+          subconceptId: currentSubconcept.subconceptId,
+          subconceptType: currentSubconcept.subconceptType,
+          subconceptMaxscore: currentSubconcept.subconceptMaxscore
+        });
+        
+        // Update completion status
         window.dispatchEvent(
           new CustomEvent("updateSidebarCompletion", {
-            detail: { subconceptId: currentContent.subconceptId },
+            detail: { subconceptId: currentSubconcept.subconceptId }
           })
         );
       } catch (err) {
@@ -133,9 +192,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
-      const nextBtn = document.getElementById(
-        "next-subconcept-btn-unlocked"
-      );
+      const nextBtn = document.getElementById("next-subconcept-btn-unlocked");
       nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);
@@ -216,27 +273,38 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     </div>
   );
 
-  // =====================================================================
-  // --- Logic for user-attempt on NextsubconceptButton Click for specific types ---
-  // =====================================================================
-
+  // ----------------------------------------------------------
+  //  Logic for specific content types
+  // ----------------------------------------------------------
   const recordOnNextTypes = ["image", "youtube", "pdf", "mtf"];
 
   const shouldRecordOnNext = () => {
-    const t = currentContent.type?.toLowerCase();
+    if (!currentSubconcept) return false;
+    const t = currentSubconcept.subconceptType.toLowerCase();
     if (t === "mcq") return false;
     return recordOnNextTypes.includes(t);
   };
 
   const handleNextAttempt = async () => {
+    if (!currentSubconcept || !user) return;
     if (!shouldRecordOnNext() || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt();
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -245,31 +313,43 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     }
   };
 
+  // Attach handler to next button
   useEffect(() => {
     const nextBtn = document.getElementById("next-subconcept-btn");
     if (!nextBtn) return;
 
     const handler = () => handleNextAttempt();
-
     nextBtn.addEventListener("click", handler);
     return () => nextBtn.removeEventListener("click", handler);
-  }, [currentContent, attemptRecorded]);
+  }, [currentSubconcept, attemptRecorded]);
 
   // ----------------------------------------------------------
-  //  Handle quiz submission - record attempt
+  //  Handle quiz submission
   // ----------------------------------------------------------
   const handleQuizSubmission = async (payload: {
     userAttemptFlag: boolean;
     userAttemptScore: number;
   }) => {
+    if (!currentSubconcept || !user) return;
     if (!payload?.userAttemptFlag || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt(payload.userAttemptScore);
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore,
+        score: payload.userAttemptScore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -279,20 +359,32 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  //  Handle vocabulary activity submission - record attempt
+  //  Handle vocabulary activity submission
   // ----------------------------------------------------------
   const handleVocabularySubmission = async (payload: {
     userAttemptFlag: boolean;
     userAttemptScore: number;
   }) => {
+    if (!currentSubconcept || !user) return;
     if (!payload?.userAttemptFlag || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt(payload.userAttemptScore);
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore,
+        score: payload.userAttemptScore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -302,19 +394,52 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  //  Type-based content rendering
+  //  Show loading state
   // ----------------------------------------------------------
-  if (!url) {
+  if (isLoading) {
     return (
-      <div
-        className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
-      >
-        <p>No content available</p>
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
+        <div className="animate-spin h-8 w-8 border-b-2 border-blue-500 rounded-full" />
       </div>
     );
   }
 
-  switch (type.toLowerCase()) {
+  // ----------------------------------------------------------
+  //  Show error if no subconcept
+  // ----------------------------------------------------------
+  if (!currentSubconcept) {
+    return (
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
+        <p>Content not found</p>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------------
+  //  Show locked content for demo users
+  // ----------------------------------------------------------
+  if (currentSubconcept.isLockedForDemo) {
+    return (
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-gray-50 p-8 ${className}`}>
+        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">Content Locked for Demo</h3>
+        <p className="text-gray-500 text-center max-w-md">
+          This content is not available in demo mode. Please upgrade to access full features.
+        </p>
+      </div>
+    );
+  }
+
+  const { subconceptLink, subconceptType } = currentSubconcept;
+
+  // ----------------------------------------------------------
+  //  Type-based content rendering
+  // ----------------------------------------------------------
+  switch (subconceptType.toLowerCase()) {
     case "video":
       return (
         <div className={`relative w-full h-full ${className}`}>
@@ -325,7 +450,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             controlsList="nodownload noremoteplayback"
             autoPlay
             className="w-full h-full bg-black rounded-xl"
-            src={url}
+            src={subconceptLink}
             onContextMenu={(e) => e.preventDefault()}
             onLoadedData={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -342,8 +467,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full bg-white ${className}`}>
           {isLoading && renderLoading()}
           <PDFRenderer
-            pdfUrl={url}
-            title={title}
+            pdfUrl={subconceptLink}
+            title="PDF Content"
             onLoadSuccess={() => setIsLoading(false)}
             onLoadError={() => setIsLoading(false)}
           />
@@ -358,8 +483,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         >
           {isLoading && renderLoading()}
           <img
-            src={url}
-            alt={title || "Image content"}
+            src={subconceptLink}
+            alt="Image content"
             className="max-w-full max-h-full object-contain rounded-xl"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -374,9 +499,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
-            src={url}
+            src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
-            title={title || "External Content"}
+            title="External Content"
             frameBorder="0"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -390,9 +515,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <QuizActivity
             triggerSubmit={() => {}}
-            xmlUrl={url}
-            key={url}
-            subconceptMaxscore={10}
+            xmlUrl={subconceptLink}
+            key={subconceptLink}
+            subconceptMaxscore={currentSubconcept.subconceptMaxscore}
             setSubmissionPayload={handleQuizSubmission}
             setScorePercentage={setQuizScore}
           />
@@ -404,9 +529,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <VocabularyActivity
             triggerSubmit={() => {}}
-            xmlUrl={url}
-            key={url}
-            subconceptMaxscore={10}
+            xmlUrl={subconceptLink}
+            key={subconceptLink}
+            subconceptMaxscore={currentSubconcept.subconceptMaxscore}
             setSubmissionPayload={handleVocabularySubmission}
             setScorePercentage={setVocabularyScore}
           />
@@ -418,9 +543,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
-            src={url}
+            src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
-            title={title || "External Content"}
+            title="External Content"
             frameBorder="0"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}

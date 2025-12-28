@@ -1,25 +1,35 @@
-// -----------------------------------------------------------------------------
-// useUserAttempt.ts
-// -----------------------------------------------------------------------------
-// Hook for creating and submitting user attempt records.
-// Prepares attempt data, calculates score, and updates progress state.
-// -----------------------------------------------------------------------------
+// @ts-nocheck
+import axios from 'axios';
 
-import { useCourseContext } from "../context/CourseContext";
-import { postUserAttempt } from "../services/userAttemptService";
-import type { UserAttemptPayload } from "../services/userAttemptService";
-import { useAttemptScore } from "./useAttemptScore";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+interface RecordAttemptParams {
+  userId: string;
+  programId: string;
+  stageId: string;
+  unitId: string;
+  subconceptId: string;
+  subconceptType: string;
+  subconceptMaxscore: number;
+  score?: number; // Optional override score (for quizzes, etc.)
+}
 
 export const useUserAttempt = () => {
-  const { user, programId, currentContent } = useCourseContext();
-  const { getScore } = useAttemptScore();
-
-  // 🔹 CHANGE: accept optional overrideScore
-  const recordAttempt = async (
-    overrideScore?: number
-  ): Promise<void> => {
+  
+  const recordAttempt = async (params: RecordAttemptParams): Promise<void> => {
     try {
-      // Read identifiers and session info
+      const {
+        userId,
+        programId,
+        stageId,
+        unitId,
+        subconceptId,
+        subconceptType,
+        subconceptMaxscore,
+        score
+      } = params;
+
+      // Read from localStorage
       const selectedCohortRaw = localStorage.getItem("selectedCohort");
       const selectedCohort = selectedCohortRaw
         ? JSON.parse(selectedCohortRaw)
@@ -27,64 +37,53 @@ export const useUserAttempt = () => {
       const cohortId = selectedCohort?.cohortId;
       const sessionId = localStorage.getItem("sessionId");
 
-      const {
-        stageId,
-        unitId,
-        subconceptId,
-        type,
-        subconceptMaxscore
-      } = currentContent;
-
-      // Validate essential fields
-      if (!sessionId || !cohortId || !programId || !user?.userId) return;
-
-      // Ensure subconceptMaxScore is a valid number
-      const safeMaxScore =
-        typeof subconceptMaxscore === "number" ? subconceptMaxscore : 0;
-
-      if (typeof subconceptMaxscore !== "number") {
-        console.warn(
-          "Missing subconceptMaxScore for subconcept:",
-          subconceptId
-        );
+      // Validate
+      if (!sessionId || !cohortId || !programId || !userId) {
+        console.warn("Missing required fields for attempt recording");
+        return;
       }
 
-      // 🔹 CHANGE: use overrideScore if provided (MCQ)
-      const userAttemptScore =
-        typeof overrideScore === "number"
-          ? overrideScore
-          : getScore(type, safeMaxScore);
+      // Calculate score
+      const getAttemptScore = () => {
+        if (typeof score === 'number') return score;
+        
+        const type = subconceptType.toLowerCase();
+        if (type === "video") return subconceptMaxscore;
+        if (type === "pdf" || type === "image" || type === "assignment") return subconceptMaxscore;
+        return 0; // Default for other types
+      };
 
-      // Build API payload
-      const payload: UserAttemptPayload = {
+      const userAttemptScore = getAttemptScore();
+
+      // Build payload
+      const payload = {
         cohortId,
         programId,
         sessionId,
         stageId,
         unitId,
         subconceptId,
-        userId: user.userId,
+        userId,
         userAttemptStartTimestamp: new Date().toISOString(),
-        userAttemptEndTimestamp: new Date(
-          Date.now() + 3 * 60 * 1000
-        ).toISOString(),
+        userAttemptEndTimestamp: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
         userAttemptFlag: true,
         userAttemptScore
       };
 
-      // Submit attempt to backend
-      await postUserAttempt(payload);
+      // Submit to backend
+      await axios.post(`${API_BASE_URL}/user-attempts`, payload);
 
-      // Notify components of progress update
+      // Dispatch event for sidebar updates
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
           detail: { subconceptId }
         })
       );
 
-      console.log("User attempt recorded for:", subconceptId);
-    } catch (err) {
-      console.error("Error recording user attempt:", err);
+      console.log("Attempt recorded for:", subconceptId);
+    } catch (error: any) {
+      console.error("Error recording user attempt:", error);
+      throw error; // Re-throw for component error handling
     }
   };
 

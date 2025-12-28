@@ -18,7 +18,8 @@ const CohortCard = ({
     progress = 0,
     cohortStartDate,
     cohortEndDate,
-    cohortId
+    cohortId,
+    programId  // CRITICAL: Make sure this is passed from parent
   } = cohort;
 
   const navigate = useNavigate();
@@ -35,8 +36,30 @@ const CohortCard = ({
   const handleResumeClick = async () => {
     if (isResuming) return;
     setIsResuming(true);
+    
     try {
+      // CRITICAL CHANGE: Store selected cohort in localStorage
+      localStorage.setItem("selectedCohort", JSON.stringify({
+        cohortId,
+        cohortName,
+        programId
+      }));
+      
+      // CRITICAL CHANGE: Generate session ID if not exists
+      if (!localStorage.getItem("sessionId")) {
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("sessionId", sessionId);
+      }
+      
+      // CRITICAL CHANGE: Navigate to course with FIRST concept
+      // This will automatically load the courseStore
+      navigate(`/course/${programId}/stage/1/unit/1/concept/1`);
+      
+      // Optional: Call parent callback if needed
       if (onResume) await onResume();
+      
+    } catch (error) {
+      console.error("Error resuming course:", error);
     } finally {
       setTimeout(() => {
         setIsResuming(false);
@@ -80,15 +103,6 @@ const CohortCard = ({
 
         {userRole?.toLowerCase() === "mentor" && (
           <>
-            {/* 
-            <button
-              onClick={() => onViewLearners(cohort)}
-              className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
-            >
-              View Learners
-            </button>
-            */}
-
             {/* Mentor Dashboard Button */}
             <button
               onClick={() => onViewMentorDashboard(cohort)}
