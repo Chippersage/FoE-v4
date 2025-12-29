@@ -238,7 +238,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     // Assignments: Lock until completed
     if(currentType.startsWith("assignment")) {
-      return (sub.completionStatus || "").toLowerCase() !== "yes";
+      // Check for disabled status (case-insensitive)
+      const isDisabled = (sub.completionStatus || "").toLowerCase() === "disabled";
+      // If status is "disabled", lock it; otherwise, it's accessible
+      return isDisabled;
     }
 
     // Find last completed non-assignment
