@@ -277,8 +277,7 @@ export const exportAPI = {
 export async function testAPIConnection(): Promise<boolean> {
   try {
     const testUrl = `${API_BASE_URL}/health`;
-    const response = await fetch(testUrl, { 
-      method: 'GET',
+    const response = await fetch(testUrl, { method: 'GET',
       headers: { 'Accept': 'application/json' }
     });
     return response.ok;

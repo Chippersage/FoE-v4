@@ -46,6 +46,7 @@ public class SecurityConfig {
                                     "https://flowofenglish-admin.thechippersage.com",
                                     "https://flowofenglish-old.thechippersage.com/",
                                     "https://flowofenglish-backend.thechippersage.com",
+                                    "https://teachers.thechippersage.com",
                                     "http://localhost:5174",
                                     "http://localhost:5173",
                                     "http://10.12.131.110:5173/",

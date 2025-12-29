@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort, fetchUserConceptsProgress } from '@/lib/mentor-api';
+import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort, fetchUserConceptsProgress,
+  fetchUserAssignments, } from '@/lib/mentor-api';
 import type { MentorCohortUser, MentorCohortMetadata, ConceptsProgressResponse } from '@/types/mentor.types';
 import { Download, Target, ChevronDown, User, UserX, Search, TrendingUp, Circle, Filter, SortAsc, SortDesc, X, RefreshCw, AlertTriangle, 
     CheckCircle2, HelpCircle, Users, Menu, BarChart3, FileText, Activity, BarChart, PieChart, List, LogOut, ChevronLeft,ChevronRight, Eye, 
@@ -163,7 +164,22 @@ export default function UnifiedLearnersPage() {
     [selectedLearnerId, progId]
   );
 
-  //5. Fetch concepts progress when a learner is selected
+  // 5. Load user assignments data
+  const { data: assignmentsData, isLoading: assignmentsLoading, refresh: refreshAssignments } = useFetch(
+    () => {
+      if (!selectedLearnerId || !cohortId || !progId) return null;
+      return fetchUserAssignments(cohortId, selectedLearnerId, progId);
+    },
+    [selectedLearnerId, cohortId, progId]
+  );
+
+  // Combine refresh functions
+  const handleRefreshAll = useCallback(() => {
+    refreshAnalytics();
+    refreshAssignments();
+  }, [refreshAnalytics, refreshAssignments]);
+
+  //6. Fetch concepts progress when a learner is selected
   useEffect(() => {
     const fetchConceptsProgress = async () => {
       if (!selectedLearnerId || !progId) {
@@ -1028,8 +1044,12 @@ export default function UnifiedLearnersPage() {
 
               <StudentAssignments
                 data={analyticsData}
+                assignmentsData={assignmentsData}
+                cohortId={cohortId}
                 cohortName={cohortData?.cohort?.cohortName}
                 learnerName={selectedLearner?.userName || analyticsData?.userName}
+                programId={progId}
+                onRefresh={handleRefreshAll}
               />
             </>
           ) : (
