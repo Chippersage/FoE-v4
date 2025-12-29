@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-rea
 import { useUserContext } from "../context/AuthContext";
 import HomeExitIcon from "./icons/HomeExitIcon";
 import useCourseStore from "../store/courseStore";
+import SidebarSkeleton from "../pages/course/skeletons/SidebarSkeleton";
 import { DEMO_USER_MESSAGE } from "../config/demoUsers";
 import { 
   isUnitAllowedForDemo,
@@ -313,16 +314,7 @@ const Sidebar: React.FC = () => {
   
   // Loading state
   if (isLoading) {
-    return (
-      <aside className="bg-white text-black flex flex-col h-full">
-        <div className="px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200">
-          <span>Loading...</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin h-6 w-6 border-b-2 border-blue-500 rounded-full" />
-        </div>
-      </aside>
-    );
+    return <SidebarSkeleton />;
   }
   
   return (

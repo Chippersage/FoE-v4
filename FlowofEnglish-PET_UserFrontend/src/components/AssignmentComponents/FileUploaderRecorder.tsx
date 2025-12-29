@@ -10,13 +10,28 @@ import { Upload, Mic, Video, Camera } from "lucide-react";
 import UploadModal from "../modals/UploadModal";
 import { PhotoCapture } from "./PhotoCapture";
 
+/* -------------------------------------------------------------------------- */
+/* Types                                                                      */
+/* -------------------------------------------------------------------------- */
+
 interface FileUploaderRecorderProps {
   onUploadSuccess: () => void;
   assignmentStatus?: any;
+  uploadMeta: {
+    programId: string;
+    cohortId: string;
+    stageId: string;
+    unitId: string;
+    subconceptId: string;
+  };
 }
 
 type RecordingState = "recording" | "paused" | "stopped";
 type ActiveAction = "upload" | "audio" | "video" | "photo" | null;
+
+/* -------------------------------------------------------------------------- */
+/* Constants                                                                  */
+/* -------------------------------------------------------------------------- */
 
 const allowedTypes = [
   "application/pdf",
@@ -31,25 +46,34 @@ const allowedTypes = [
   "video/mp4",
   "video/webm",
 ];
+
 const MAX_SIZE = 10 * 1024 * 1024;
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
   onUploadSuccess,
   assignmentStatus,
+  uploadMeta,
 }) => {
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
-  const [recordingState, setRecordingState] = useState<RecordingState>("recording");
+  const [recordingState, setRecordingState] =
+    useState<RecordingState>("recording");
   const [previewContent, setPreviewContent] = useState<ReactNode | null>(null);
+
   const streamRef = useRef<MediaStream | null>(null);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [recordedMedia, setRecordedMedia] = useState<{
     type: "audio" | "video" | "photo";
     blob: Blob;
   } | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const isDisabled =
     assignmentStatus &&
@@ -58,14 +82,18 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
       assignmentStatus === "waiting_for_feedback" ||
       assignmentStatus === "approved");
 
-  const startRecordingTimer = (): void => {
+  /* -------------------------------------------------------------------------- */
+  /* Helpers                                                                   */
+  /* -------------------------------------------------------------------------- */
+
+  const startRecordingTimer = () => {
     if (recordingInterval.current) clearInterval(recordingInterval.current);
     recordingInterval.current = setInterval(() => {
       setRecordingDuration((prev) => prev + 1);
     }, 1000);
   };
 
-  const stopRecordingTimer = (): void => {
+  const stopRecordingTimer = () => {
     if (recordingInterval.current) {
       clearInterval(recordingInterval.current);
       recordingInterval.current = null;
@@ -79,52 +107,66 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     }
 
     if (type && type.startsWith("audio/ogg")) return true;
+
     if (type && !allowedTypes.includes(type)) {
       alert("Invalid file type. Only PDF, DOC, Image, Audio, or Video allowed.");
       return false;
     }
+
     return true;
   };
 
-  const handleUpload = (file: File): void => {
+  /* -------------------------------------------------------------------------- */
+  /* Actions                                                                   */
+  /* -------------------------------------------------------------------------- */
+
+  const handleUpload = (file: File) => {
     if (isDisabled) return;
     if (!validateFile(file, file.type)) return;
+
     setUploadedFile(file);
     setIsUploadModalOpen(true);
   };
 
-  const handleAudioRecordingStart = (): void => {
+  const handleAudioRecordingStart = () => {
     if (isDisabled) return;
+
     setActiveAction("audio");
     startRecordingTimer();
     setPreviewContent(<AudioPulse />);
   };
 
-  const handleVideoRecordingStart = (stream: MediaStream): void => {
+  const handleVideoRecordingStart = (stream: MediaStream) => {
     if (isDisabled) return;
+
     setActiveAction("video");
     streamRef.current = stream;
     startRecordingTimer();
     setPreviewContent(<VideoPreview stream={stream} />);
   };
 
-  const handleRecordingStop = (blob: Blob, type: "audio" | "video"): void => {
+  const handleRecordingStop = (blob: Blob, type: "audio" | "video") => {
     stopRecordingTimer();
+    setRecordingState("stopped");
     setActiveAction(null);
     setPreviewContent(null);
-    setRecordingState("stopped");
     streamRef.current = null;
+
     if (!validateFile(blob, blob.type)) return;
+
     setRecordedMedia({ type, blob });
     setIsUploadModalOpen(true);
   };
 
-  const handleRecordingStateChange = (state: RecordingState): void => {
+  const handleRecordingStateChange = (state: RecordingState) => {
     setRecordingState(state);
+
     if (state === "paused") {
       stopRecordingTimer();
       setPreviewContent(<div className="text-sm">Recording paused</div>);
-    } else if (state === "recording") {
+    }
+
+    if (state === "recording") {
       startRecordingTimer();
       setPreviewContent(
         activeAction === "audio" ? (
@@ -133,15 +175,18 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
           <VideoPreview stream={streamRef.current!} />
         )
       );
-    } else if (state === "stopped") {
+    }
+
+    if (state === "stopped") {
       stopRecordingTimer();
       setRecordingDuration(0);
     }
   };
 
-  const handlePhotoCapture = (blob: Blob, type: "photo"): void => {
+  const handlePhotoCapture = (blob: Blob, type: "photo") => {
     if (isDisabled) return;
     if (!validateFile(blob, blob.type)) return;
+
     setRecordedMedia({ type, blob });
     setIsUploadModalOpen(true);
     setActiveAction(null);
@@ -155,52 +200,43 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
     setActiveAction(null);
   };
 
-  const handleUploadSuccess = () => {
-    setUploadSuccess(true);
-    onUploadSuccess();
-  };
-
-  // Reset upload success when assignment status changes
-  useEffect(() => {
-    if (assignmentStatus) {
-      setUploadSuccess(false);
-    }
-  }, [assignmentStatus]);
+  /* -------------------------------------------------------------------------- */
+  /* Render                                                                    */
+  /* -------------------------------------------------------------------------- */
 
   return (
     <>
-      {/* Action buttons - hide if assignment is already submitted */}
       {!assignmentStatus && (
         <div
-          className="flex justify-center h-10 sm:h-11 md:h-12 items-center"
+          className="flex justify-center h-12 items-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex space-x-1.5 sm:space-x-2 bg-white rounded-full shadow-md p-1.5 sm:p-2">
+          <div className="flex space-x-2 bg-white rounded-full shadow-md p-2">
             <ActionButton
               icon={<Upload />}
-              onClick={() => setActiveAction("upload")}
               isActive={activeAction === "upload"}
+              onClick={() => setActiveAction("upload")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
             <ActionButton
               icon={<Mic />}
-              onClick={() => setActiveAction("audio")}
               isActive={activeAction === "audio"}
+              onClick={() => setActiveAction("audio")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
             <ActionButton
               icon={<Video />}
-              onClick={() => setActiveAction("video")}
               isActive={activeAction === "video"}
+              onClick={() => setActiveAction("video")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
             <ActionButton
               icon={<Camera />}
-              onClick={() => setActiveAction("photo")}
               isActive={activeAction === "photo"}
+              onClick={() => setActiveAction("photo")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
@@ -208,7 +244,6 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
         </div>
       )}
 
-      {/* Conditional components */}
       {activeAction === "upload" && !isDisabled && (
         <FileUploader onUpload={handleUpload} onClose={() => setActiveAction(null)} />
       )}
@@ -236,7 +271,6 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
         />
       )}
 
-      {/* Preview and upload modal */}
       <Preview
         recordingDuration={recordingDuration}
         activeAction={activeAction}
@@ -250,10 +284,14 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
         file={uploadedFile}
         recordedMedia={recordedMedia}
         onClose={handleCloseModal}
-        onUploadSuccess={handleUploadSuccess}
+        onUploadSuccess={onUploadSuccess}
+        programId={uploadMeta.programId}
+        cohortId={uploadMeta.cohortId}
+        stageId={uploadMeta.stageId}
+        unitId={uploadMeta.unitId}
+        subconceptId={uploadMeta.subconceptId}
       />
 
-      {/* Submission state note */}
       {isDisabled && (
         <div className="text-center text-sm text-gray-500 mt-2">
           Assignment already submitted. Waiting for mentor feedback.
@@ -263,8 +301,17 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
   );
 };
 
-// Action button component
-const ActionButton = ({ icon, isActive, onClick, activeAction, disabled }: any) => {
+/* -------------------------------------------------------------------------- */
+/* Small Components                                                           */
+/* -------------------------------------------------------------------------- */
+
+const ActionButton = ({
+  icon,
+  isActive,
+  onClick,
+  activeAction,
+  disabled,
+}: any) => {
   return (
     <button
       disabled={disabled || (!isActive && !!activeAction)}
@@ -272,19 +319,17 @@ const ActionButton = ({ icon, isActive, onClick, activeAction, disabled }: any) 
         e.stopPropagation();
         onClick();
       }}
-      className={`rounded-full flex items-center justify-center transition-colors cursor-pointer
-      h-10 w-10 sm:h-9 sm:w-9 md:h-8 md:w-8
-      p-2 sm:p-1.5
-      ${isActive ? "bg-green-500 text-white" : "text-gray-500 hover:bg-gray-200"}
-      ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-    `}
+      className={`rounded-full flex items-center justify-center transition-colors
+        h-10 w-10 p-2
+        ${isActive ? "bg-[#0EA5E9] text-white" : "text-gray-500 hover:bg-gray-200"}
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+      `}
     >
       {icon}
     </button>
   );
 };
 
-// Audio pulse animation for active recording
 const AudioPulse = () => (
   <div className="relative w-8 h-8">
     <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
@@ -294,19 +339,20 @@ const AudioPulse = () => (
   </div>
 );
 
-// Video preview during recording
 const VideoPreview = ({ stream }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
     if (videoRef.current) videoRef.current.srcObject = stream;
   }, [stream]);
+
   return (
     <video
       ref={videoRef}
       autoPlay
       muted
       playsInline
-      className="w-16 h-16 sm:w-36 sm:h-36 lg:w-52 lg:h-52 rounded-lg object-cover"
+      className="w-20 h-20 rounded-lg object-cover"
     />
   );
 };
