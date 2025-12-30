@@ -13,14 +13,13 @@ import { XCircle, Menu, Eye } from "lucide-react";
 import { isDemoUser } from "../config/demoUsers";
 
 type NavbarProps = {
-  toggleSidebar?: () => void;
+  toggleSidebar?: () => void; // For mentor sidebar
 };
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
-
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [isCurrentUserDemo, setIsCurrentUserDemo] = useState(false);
 
   const navigate = useNavigate();
@@ -30,10 +29,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
   const userName = user?.userName || "User";
   const isSelectCohortPage = location.pathname === "/select-cohort";
-
+  const isCoursePage = location.pathname.startsWith("/course/");
   const isMentor = user?.userType === "Mentor";
   const isMentorRoute = location.pathname.startsWith("/mentor");
-  const showMentorHamburger = isMentor && isMentorRoute;
+  
+  // Show hamburger for BOTH mentor routes AND course pages
+  const showHamburger = (isMentor && isMentorRoute) || isCoursePage;
 
   // Check if current user is a demo user
   useEffect(() => {
@@ -99,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     localStorage.removeItem("selectedCohort");
   };
 
-  const handleMenuClick = (item) => {
+  const handleMenuClick = (item: any) => {
     // Demo users cannot access View Progress
     if (isCurrentUserDemo && item.id === "view-progress") {
       toast.error("View Progress is not available in Demo Mode");
@@ -119,7 +120,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   };
 
   // Function to check if a menu item should be disabled
-  const isMenuItemDisabled = (item) => {
+  const isMenuItemDisabled = (item: any) => {
     // For demo users: Disable View Progress and non-accessible items
     if (isCurrentUserDemo) {
       if (item.id === "view-progress") return true;
@@ -130,6 +131,19 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     return item.id !== "view-progress";
   };
 
+  // Handle hamburger click - different behavior for course vs mentor
+  const handleHamburgerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isCoursePage) {
+      // Trigger custom event for course sidebar
+      window.dispatchEvent(new CustomEvent('toggleCourseSidebar'));
+    } else if (toggleSidebar && isMentor && isMentorRoute) {
+      // Use regular toggle for mentor sidebar
+      toggleSidebar();
+    }
+  };
+
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm"
@@ -138,7 +152,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
     >
       <div className="flex items-center justify-between px-4 py-2 h-14">
-
         <div
           className={`flex items-center gap-2 select-none ${
             isSelectCohortPage
@@ -150,13 +163,11 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             if (!isSelectCohortPage) navigate("/select-cohort");
           }}
         >
-          {showMentorHamburger && (
+          {/* Show hamburger for BOTH mentor routes AND course pages */}
+          {showHamburger && (
             <button
-              className="lg:hidden mr-2 p-2 rounded-md hover:bg-gray-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleSidebar && toggleSidebar();
-              }}
+              className="lg:hidden mr-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
+              onClick={handleHamburgerClick}
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -166,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             src="/icons/chipper-sage-logo.png"
             alt="Logo"
             className={`w-14 h-14 sm:w-20 sm:h-20 object-contain ${
-              showMentorHamburger ? "hidden lg:block" : ""
+              showHamburger ? "hidden lg:block" : ""
             }`}
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-react";
 import { useUserContext } from "../context/AuthContext";
@@ -15,11 +15,34 @@ import {
 } from "../config/demoUsers";
 
 // --------------------------------------------------------------------------
-// SIDEBAR COMPONENT - NO PROPS, URL-DRIVEN
+// STATIC COMPONENTS
 // --------------------------------------------------------------------------
+
+const RoundCheckbox = React.memo(({ completed, active }: { 
+  completed: boolean; 
+  active: boolean 
+}) => (
+  <div className="relative flex-shrink-0 self-center">
+    <div
+      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
+        ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
+        ${active ? "border-[#0EA5E9]" : ""}`}
+    >
+      {completed && <Check size={10} className="text-white stroke-[3]" />}
+    </div>
+    {completed && (
+      <div className="absolute inset-0 rounded-full bg-[#0EA5E9] opacity-20 animate-pulse" />
+    )}
+  </div>
+));
+
+// --------------------------------------------------------------------------
+// MAIN SIDEBAR COMPONENT
+// --------------------------------------------------------------------------
+
 const Sidebar: React.FC = () => {
   // --------------------------------------------------------------------------
-  // 1. NAVIGATION & URL STATE
+  // 1. HOOKS & STATE
   // --------------------------------------------------------------------------
   const navigate = useNavigate();
   const { programId, stageId, unitId, conceptId } = useParams<{
@@ -29,15 +52,9 @@ const Sidebar: React.FC = () => {
     conceptId?: string;
   }>();
   
-  // --------------------------------------------------------------------------
-  // 2. USER & COURSE DATA
-  // --------------------------------------------------------------------------
   const { user } = useUserContext();
   const { programName, stages, isLoading } = useCourseStore();
   
-  // --------------------------------------------------------------------------
-  // 3. LOCAL STATE
-  // --------------------------------------------------------------------------
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [localStages, setLocalStages] = useState<any[]>(stages);
   const [programType, setProgramType] = useState<string>('');
@@ -46,17 +63,174 @@ const Sidebar: React.FC = () => {
   const isDemoUser = user?.userId ? checkIsDemoUser(user.userId) : false;
   
   // --------------------------------------------------------------------------
+  // 2. MEMOIZED VALUES
+  // --------------------------------------------------------------------------
+  
+  const buildGlobalList = useMemo(() => {
+    const list: Array<{
+      stageId: string;
+      unitId: string;
+      subconceptId: string;
+      type: string;
+      completed: boolean;
+    }> = [];
+
+    localStages?.forEach((stage: any) => {
+      stage.units?.forEach((unit: any) => {
+        unit.subconcepts?.forEach((sub: any) => {
+          list.push({
+            stageId: stage.stageId,
+            unitId: unit.unitId,
+            subconceptId: sub.subconceptId,
+            type: (sub.subconceptType || "").toLowerCase(),
+            completed: (sub.completionStatus || "").toLowerCase() === "yes",
+          });
+        });
+      });
+    });
+
+    return list;
+  }, [localStages]);
+  
+  // --------------------------------------------------------------------------
+  // 3. CALLBACK HANDLERS
+  // --------------------------------------------------------------------------
+  
+  const toggleStage = useCallback((stageId: string) => {
+    setOpenStages((prev) =>
+      prev.includes(stageId)
+        ? prev.filter(id => id !== stageId)
+        : [...prev, stageId]
+    );
+  }, []);
+  
+  const isStageAccessibleForDemo = useCallback((stage: any): boolean => {
+    if (!isDemoUser || !programId) return true;
+    return programType === 'PET-2' ? isStageAllowedForDemo(stage.stageId) : true;
+  }, [isDemoUser, programId, programType]);
+  
+  const isUnitAccessibleForDemo = useCallback((unitId: string): boolean => {
+    if (!isDemoUser || !programId) return true;
+    return programType === 'PET-1' ? isUnitAllowedForDemo(unitId) : true;
+  }, [isDemoUser, programId, programType]);
+  
+  const isContentAccessibleForDemo = useCallback((stage: any, unit?: any): boolean => {
+    if (!isDemoUser || !programId) return true;
+    
+    if (programType === 'PET-1') {
+      return unit ? isUnitAccessibleForDemo(unit.unitId) : true;
+    }
+    
+    if (programType === 'PET-2') {
+      return isStageAccessibleForDemo(stage);
+    }
+    
+    return true;
+  }, [isDemoUser, programId, programType, isUnitAccessibleForDemo, isStageAccessibleForDemo]);
+  
+  const doesStageHaveAccessibleUnits = useCallback((stage: any): boolean => {
+    if (!isDemoUser || programType !== 'PET-1') return true;
+    
+    return stage.units.some(unit => isUnitAccessibleForDemo(unit.unitId));
+  }, [isDemoUser, programType, isUnitAccessibleForDemo]);
+  
+  const isSubconceptLocked = useCallback((unit: any, subIndex: number, stage: any): boolean => {
+    const sub = unit.subconcepts?.[subIndex];
+    if (!sub) return true;
+
+    if (isDemoUser) {
+      const isAccessible = isContentAccessibleForDemo(stage, unit);
+      if (!isAccessible) {
+        return true;
+      }
+      return false;
+    }
+
+    if (isMentor) return false;
+
+    if (!buildGlobalList.length) return false;
+
+    const currentGlobalIndex = buildGlobalList.findIndex(
+      (g) => g.subconceptId === sub.subconceptId
+    );
+    if (currentGlobalIndex === -1) return true;
+
+    const currentType = (sub.subconceptType || "").toLowerCase();
+    
+    if(currentType.startsWith("assignment")) {
+      const isDisabled = (sub.completionStatus || "").toLowerCase() === "disabled";
+      return isDisabled;
+    }
+
+    let lastCompletedIndex = -1;
+    for (let i = 0; i < buildGlobalList.length; i++) {
+      const g = buildGlobalList[i];
+      if (!g.type.startsWith("assignment") && g.completed) {
+        lastCompletedIndex = i;
+      }
+    }
+
+    if (lastCompletedIndex === -1) return currentGlobalIndex !== 0;
+    if (buildGlobalList[currentGlobalIndex].completed) return false;
+
+    let nextUnlockIndex = lastCompletedIndex + 1;
+    while (
+      nextUnlockIndex < buildGlobalList.length &&
+      buildGlobalList[nextUnlockIndex].type.startsWith("assignment")
+    ) {
+      nextUnlockIndex++;
+    }
+
+    return currentGlobalIndex > nextUnlockIndex;
+  }, [isDemoUser, isMentor, buildGlobalList, isContentAccessibleForDemo]);
+  
+  const handleSubconceptClick = useCallback((
+    sub: any, 
+    unit: any, 
+    stage: any, 
+    isLocked: boolean
+  ) => {
+    if (isLocked) {
+      if (isDemoUser) {
+        alert(DEMO_USER_MESSAGE);
+      }
+      return;
+    }
+    
+    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
+    
+    localStorage.setItem("lastViewedSubconcept", sub.subconceptId);
+    
+    navigate(
+      `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${sub.subconceptId}`
+    );
+  }, [isDemoUser, programId, navigate, isContentAccessibleForDemo]);
+  
+  const handleUnitClick = useCallback((unit: any, stage: any) => {
+    if (!unit.unitLink) return;
+    
+    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
+    
+    if (isLockedForDemo) {
+      alert(DEMO_USER_MESSAGE);
+      return;
+    }
+    
+    navigate(
+      `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${unit.unitId}`
+    );
+  }, [isDemoUser, programId, navigate, isContentAccessibleForDemo]);
+  
+  // --------------------------------------------------------------------------
   // 4. EFFECTS
   // --------------------------------------------------------------------------
   
-  // Sync local stages when store updates
   useEffect(() => {
     if (stages && stages.length > 0) {
       setLocalStages(stages);
     }
   }, [stages]);
   
-  // Get program type for demo logic
   useEffect(() => {
     if (programId) {
       const type = getProgramType(programId);
@@ -64,19 +238,16 @@ const Sidebar: React.FC = () => {
     }
   }, [programId]);
   
-  // Auto-open stage containing current concept
   useEffect(() => {
     if (!conceptId || !localStages.length) return;
     
     const findStageForConcept = () => {
       for (const stage of localStages) {
         for (const unit of stage.units || []) {
-          // Check unit match
           if (unit.unitId === conceptId) {
             return stage.stageId;
           }
           
-          // Check subconcept match
           const hasMatch = (unit.subconcepts || []).some(
             (sub: any) => sub.subconceptId === conceptId
           );
@@ -94,7 +265,6 @@ const Sidebar: React.FC = () => {
     }
   }, [conceptId, localStages]);
   
-  // Listen for completion updates
   useEffect(() => {
     const handleCompletionUpdate = (e: CustomEvent) => {
       const { subconceptId } = e.detail;
@@ -122,257 +292,14 @@ const Sidebar: React.FC = () => {
   }, []);
   
   // --------------------------------------------------------------------------
-  // 5. HANDLERS - DIRECT NAVIGATION
-  // --------------------------------------------------------------------------
-  const toggleStage = (stageId: string) => {
-    setOpenStages((prev) =>
-      prev.includes(stageId)
-        ? prev.filter(id => id !== stageId)
-        : [...prev, stageId]
-    );
-  };
-  
-  // Demo user checks
-  const isStageAccessibleForDemo = (stage: any): boolean => {
-    if (!isDemoUser || !programId) return true;
-    return programType === 'PET-2' ? isStageAllowedForDemo(stage.stageId) : true;
-  };
-  
-  const isUnitAccessibleForDemo = (unitId: string): boolean => {
-    if (!isDemoUser || !programId) return true;
-    return programType === 'PET-1' ? isUnitAllowedForDemo(unitId) : true;
-  };
-  
-  const isContentAccessibleForDemo = (stage: any, unit?: any): boolean => {
-    if (!isDemoUser || !programId) return true;
-    
-    if (programType === 'PET-1') {
-      return unit ? isUnitAccessibleForDemo(unit.unitId) : true;
-    }
-    
-    if (programType === 'PET-2') {
-      return isStageAccessibleForDemo(stage);
-    }
-    
-    return true;
-  };
-  
-  // Check if stage has accessible units (for PET-1 demo users)
-  const doesStageHaveAccessibleUnits = (stage: any): boolean => {
-    if (!isDemoUser || programType !== 'PET-1') return true;
-    
-    return stage.units.some(unit => isUnitAccessibleForDemo(unit.unitId));
-  };
-  
-  // Handle subconcept click - DIRECT NAVIGATION
-  const handleSubconceptClick = (
-    sub: any, 
-    unit: any, 
-    stage: any, 
-    isLocked: boolean
-  ) => {
-    if (isLocked) {
-      if (isDemoUser) {
-        alert(DEMO_USER_MESSAGE);
-      }
-      return;
-    }
-    
-    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
-    
-    localStorage.setItem("lastViewedSubconcept", sub.subconceptId);
-    
-    // DIRECT NAVIGATION - NO CALLBACKS
-    navigate(
-      `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${sub.subconceptId}`
-    );
-  };
-  
-  // Handle unit click - DIRECT NAVIGATION
-  const handleUnitClick = (unit: any, stage: any) => {
-    if (!unit.unitLink) return;
-    
-    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
-    
-    if (isLockedForDemo) {
-      alert(DEMO_USER_MESSAGE);
-      return;
-    }
-    
-    // DIRECT NAVIGATION
-    navigate(
-      `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${unit.unitId}`
-    );
-  };
-  
-  // --------------------------------------------------------------------------
-  // 6. RENDER HELPERS
-  // --------------------------------------------------------------------------
-  const RoundCheckbox = ({ completed, active }: { completed: boolean; active: boolean }) => (
-    <div className="relative flex-shrink-0 self-center">
-      <div
-        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
-          ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
-          ${active ? "border-[#0EA5E9]" : ""}`}
-      >
-        {completed && <Check size={10} className="text-white stroke-[3]" />}
-      </div>
-      {completed && (
-        <div className="absolute inset-0 rounded-full bg-[#0EA5E9] opacity-20 animate-pulse" />
-      )}
-    </div>
-  );
-  
-  // Check if content is locked
-  const isSubconceptLocked = (unit: any, subIndex: number, stage: any): boolean => {
-    const sub = unit.subconcepts?.[subIndex];
-    if (!sub) return true;
-
-    // 1. DEMO USER LOGIC - Check first
-    if (isDemoUser) {
-      const isAccessible = isContentAccessibleForDemo(stage, unit);
-      // If NOT accessible for demo user, LOCK it
-      if (!isAccessible) {
-        return true;
-      }
-      // If accessible for demo user, skip normal progression
-      return false;
-    }
-
-    // 2. MENTOR LOGIC - Mentors see everything
-    if (isMentor) return false;
-
-    // 3. NORMAL LEARNER PROGRESSION LOGIC
-    const global = buildGlobalList();
-    if (!global.length) return false;
-
-    const currentGlobalIndex = global.findIndex(
-      (g) => g.subconceptId === sub.subconceptId
-    );
-    if (currentGlobalIndex === -1) return true;
-
-    const currentType = (sub.subconceptType || "").toLowerCase();
-    
-    // Assignments: Lock until completed
-    if(currentType.startsWith("assignment")) {
-      return (sub.completionStatus || "").toLowerCase() !== "yes";
-    }
-
-    // Find last completed non-assignment
-    let lastCompletedIndex = -1;
-    for (let i = 0; i < global.length; i++) {
-      const g = global[i];
-      if (!g.type.startsWith("assignment") && g.completed) {
-        lastCompletedIndex = i;
-      }
-    }
-
-    if (lastCompletedIndex === -1) return currentGlobalIndex !== 0;
-    if (global[currentGlobalIndex].completed) return false;
-
-    // Skip assignments in progression
-    let nextUnlockIndex = lastCompletedIndex + 1;
-    while (
-      nextUnlockIndex < global.length &&
-      global[nextUnlockIndex].type.startsWith("assignment")
-    ) {
-      nextUnlockIndex++;
-    }
-
-    return currentGlobalIndex > nextUnlockIndex;
-  };
-
-  const buildGlobalList = () => {
-    const list: Array<{
-      stageId: string;
-      unitId: string;
-      subconceptId: string;
-      type: string;
-      completed: boolean;
-    }> = [];
-
-    localStages?.forEach((stage: any) => {
-      stage.units?.forEach((unit: any) => {
-        unit.subconcepts?.forEach((sub: any) => {
-          list.push({
-            stageId: stage.stageId,
-            unitId: unit.unitId,
-            subconceptId: sub.subconceptId,
-            type: (sub.subconceptType || "").toLowerCase(),
-            completed: (sub.completionStatus || "").toLowerCase() === "yes",
-          });
-        });
-      });
-    });
-
-    return list;
-  };
-
-  // --------------------------------------------------------------------------
-  // 7. MAIN RENDER
+  // 5. RENDER
   // --------------------------------------------------------------------------
   
-  // Loading state
   if (isLoading) {
     return <SidebarSkeleton />;
   }
   
-  return (
-    <aside className="bg-white text-black flex flex-col h-full">
-      {/* Demo User Banner - Mobile Only (KEPT as requested) */}
-      {isDemoUser && (
-        <div className="md:hidden bg-yellow-50 border-b border-yellow-200 p-2 text-xs text-yellow-800 flex items-center gap-2">
-          <Lock size={12} />
-          <span className="flex-1">
-            <strong>Demo Mode:</strong> Some content locked
-          </span>
-        </div>
-      )}
-
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col h-full border-r border-gray-300 bg-white">
-        <div className="h-16 w-full" />
-        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200 flex items-center justify-between ${
-          isDemoUser ? 'bg-yellow-50' : ''
-        }`}>
-            <div className="mr-4">
-              <HomeExitIcon size={22} className="cursor-pointer"/>
-            </div>
-          <span>{programName || "Course"}</span>
-          {isDemoUser && (
-            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">
-              DEMO
-            </span>
-          )}
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <SidebarContent />
-        </div>
-      </div>
-
-      {/* Mobile Sidebar */}
-      <div className="flex md:hidden flex-col h-full overflow-y-auto">
-        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-base border-b border-gray-200 flex items-center justify-between ${
-          isDemoUser ? 'bg-yellow-50' : 'bg-white'
-        }`}>
-          <span className="truncate">{programName || "Course"}</span>
-          {isDemoUser && (
-            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-              DEMO
-            </span>
-          )}
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <SidebarContent />
-        </div>
-      </div>
-    </aside>
-  );
-  
-  // --------------------------------------------------------------------------
-  // 8. SIDEBAR CONTENT COMPONENT
-  // --------------------------------------------------------------------------
-  function SidebarContent() {
+  const SidebarContent = () => {
     if (localStages.length === 0) {
       return (
         <div className="flex-1 flex items-center justify-center p-4">
@@ -384,13 +311,9 @@ const Sidebar: React.FC = () => {
     return (
       <div className="px-3 py-4 space-y-4">
         {localStages.map((stage: any, stageIndex: number) => {
-          // Check if stage is accessible for demo users
           const isStageAccessible = isStageAccessibleForDemo(stage);
-          
-          // Check if stage has accessible units (for PET-1 demo users)
           const hasAccessibleUnits = doesStageHaveAccessibleUnits(stage);
           
-          // Determine the stage label for demo users
           const getStageLabel = () => {
             if (!isDemoUser) return null;
             
@@ -409,7 +332,6 @@ const Sidebar: React.FC = () => {
           
           return (
             <div key={stage.stageId} className="border-b border-gray-200 pb-3">
-              
               {/* Stage Header */}
               <button
                 onClick={() => toggleStage(stage.stageId)}
@@ -446,15 +368,12 @@ const Sidebar: React.FC = () => {
               {/* Units + Subconcepts */}
               {openStages.includes(stage.stageId) && (
                 <div className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
-                  
                   {stage.units.map((unit: any, unitIndex: number) => {
-                    // Check if unit is accessible for demo users
                     const isUnitAccessible = isUnitAccessibleForDemo(unit.unitId);
                     const isContentAccessible = isContentAccessibleForDemo(stage, unit);
                     
                     return (
                       <div key={unit.unitId} className="flex flex-col">
-                        
                         {/* Unit Row */}
                         <div
                           onClick={() => handleUnitClick(unit, stage)}
@@ -468,7 +387,6 @@ const Sidebar: React.FC = () => {
                               : "opacity-70 cursor-not-allowed"
                           }`}
                         >
-                          {/* Lock icon for demo-locked units */}
                           {isDemoUser && !isUnitAccessible && (
                             <Lock size={14} className="text-gray-400 flex-shrink-0" />
                           )}
@@ -529,7 +447,6 @@ const Sidebar: React.FC = () => {
                                 })()} ${sub.subconceptDesc || sub.subconceptName || `Concept ${subIndex + 1}`}`}
                               </span>
 
-                              {/* Lock icons - Show for both demo and regular users when locked */}
                               {isLocked && (
                                 <Lock size={14} className={`flex-shrink-0 ${
                                   isDemoUser && !isContentAccessible 
@@ -540,7 +457,6 @@ const Sidebar: React.FC = () => {
                             </div>
                           );
                         })}
-
                       </div>
                     );
                   })}
@@ -551,12 +467,65 @@ const Sidebar: React.FC = () => {
         })}
       </div>
     );
-  }
+  };
+
+  return (
+    // CRITICAL: Ensure full height with proper flex structure
+    <aside className="flex flex-col h-full min-h-0 bg-white text-black">
+      {/* Demo User Banner - Mobile Only */}
+      {isDemoUser && (
+        <div className="md:hidden bg-yellow-50 border-b border-yellow-200 p-2 text-xs text-yellow-800 flex items-center gap-2 shrink-0">
+          <Lock size={12} />
+          <span className="flex-1">
+            <strong>Demo Mode:</strong> Some content locked
+          </span>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex flex-col h-full min-h-0 border-r border-gray-300">
+        {/* Header - Fixed height */}
+        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200 flex items-center justify-between shrink-0 ${
+          isDemoUser ? 'bg-yellow-50' : ''
+        }`}>
+          <div className="mr-4">
+            <HomeExitIcon size={22} className="cursor-pointer"/>
+          </div>
+          <span>{programName || "Course"}</span>
+          {isDemoUser && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">
+              DEMO
+            </span>
+          )}
+        </div>
+        
+        {/* Content - Takes remaining space */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <SidebarContent />
+        </div>
+      </div>
+
+      {/* Mobile Sidebar */}
+      <div className="flex md:hidden flex-col h-full min-h-0">
+        {/* Header - Fixed height */}
+        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-base border-b border-gray-200 flex items-center justify-between shrink-0 ${
+          isDemoUser ? 'bg-yellow-50' : 'bg-white'
+        }`}>
+          <span>{programName || "Course"}</span>
+          {isDemoUser && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+              DEMO
+            </span>
+          )}
+        </div>
+        
+        {/* Content - Takes remaining space */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <SidebarContent />
+        </div>
+      </div>
+    </aside>
+  );
 };
 
-// CRITICAL: Memoize the Sidebar with custom comparison
-export default React.memo(Sidebar, (prevProps, nextProps) => {
-  // Since Sidebar has no props, it should never re-render
-  // unless React forces it (which it shouldn't)
-  return true; // Always return true to prevent re-renders
-});
+export default React.memo(Sidebar);

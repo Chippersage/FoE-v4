@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useMemo, useRef } from "react";
+import { useParams, useOutletContext } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 
 import useCourseStore from "../../store/courseStore";
@@ -10,15 +10,25 @@ import ContentRenderer from "../../components/ContentRenderer";
 import NextSubconceptButton from "../../components/NextSubconceptButton";
 import AssignmentActions from "./components/AssignmentActions";
 import GoogleFormActions from "./components/GoogleFormActions";
+import { FileUploaderRecorder } from "../../components/AssignmentComponents/FileUploaderRecorder";
 
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
 
+interface OutletContext {
+  isSidebarOpen: boolean;
+  closeSidebar: () => void;
+}
+
 const CoursePage: React.FC = () => {
   const { programId, stageId, unitId, conceptId } = useParams();
-  const { user } = useUserContext();
+  const infoStr = localStorage.getItem("selectedCohort");
+  const info = infoStr ? JSON.parse(infoStr) : null;
 
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const { user } = useUserContext();
+  const { isSidebarOpen } = useOutletContext<OutletContext>();
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const {
     loadCourse,
@@ -29,6 +39,9 @@ const CoursePage: React.FC = () => {
     markSubconceptCompleted,
   } = useCourseStore();
 
+  // ------------------------------------------------------
+  // Load course
+  // ------------------------------------------------------
   useEffect(() => {
     if (programId && user?.userId) {
       loadCourse(programId, user.userId);
@@ -39,6 +52,9 @@ const CoursePage: React.FC = () => {
     enabled: Boolean(programId && !stageId && !unitId && !conceptId),
   });
 
+  // ------------------------------------------------------
+  // Resolve subconcept
+  // ------------------------------------------------------
   const subconcept = useMemo(() => {
     if (!conceptId || stages.length === 0) return null;
     return getSubconceptById(conceptId);
@@ -55,11 +71,31 @@ const CoursePage: React.FC = () => {
       type
     );
 
+  // ------------------------------------------------------
+  // ADD: Dynamic height (NO logic removed)
+  // ------------------------------------------------------
+  const contentHeightClass = useMemo(() => {
+    if (window.innerWidth >= 768) {
+      return "h-[82vh]";
+    }
+
+    if (type === "video" || type === "audio") {
+      return "h-[50vh]";
+    }
+
+    return "h-[75vh]";
+  }, [type]);
+
+  // ------------------------------------------------------
+  // Iframe attempt handler (SINGLE SOURCE OF TRUTH)
+  // ------------------------------------------------------
   const {
     showSubmit,
     attemptRecorded,
     isSubmitting,
     onSubmitClicked,
+    scoreData,
+    showScore,
   } = useIframeAttemptHandler({
     enabled:
       isIframeContent &&
@@ -76,9 +112,21 @@ const CoursePage: React.FC = () => {
     markSubconceptCompleted,
   });
 
+  // ------------------------------------------------------
+  // Submit click → forward to iframe
+  // ------------------------------------------------------
+  const handleSubmit = () => {
+    if (!iframeRef.current || !iframeRef.current.contentWindow) return;
+    iframeRef.current.contentWindow.postMessage("submitClicked", "*");
+    onSubmitClicked();
+  };
+
+  // ------------------------------------------------------
+  // Guards
+  // ------------------------------------------------------
   if (!stageId || !unitId || !conceptId) return null;
 
-  if (isLoading || stages.length === 0 || !subconcept) {
+  if (isLoading || !subconcept) {
     return <CourseSkeleton />;
   }
 
@@ -90,25 +138,29 @@ const CoursePage: React.FC = () => {
     );
   }
 
-  const handleSubmit = () => {
-    iframeRef.current?.contentWindow?.postMessage("submitClicked", "*");
-    onSubmitClicked();
-  };
-
+  // ------------------------------------------------------
+  // Render
+  // ------------------------------------------------------
   return (
-    <>
-      <div className="bg-white flex justify-center items-center p-4 h-[80vh]">
-        <div className="w-full max-w-5xl rounded-xl shadow-md overflow-hidden bg-white h-full">
+    <div className="h-full flex flex-col">
+      {/* MAIN CONTENT */}
+      <div
+        className={`${contentHeightClass} bg-white flex justify-center items-center p-2 md:p-4 lg:p-6 overflow-auto`}
+      >
+        <div className="w-full max-w-5xl rounded-xl overflow-hidden bg-white h-full relative">
           <ContentRenderer
-            type={subconcept.subconceptType}
-            url={subconcept.subconceptLink}
             iframeRef={iframeRef}
+            style={{
+              opacity: showScore ? 0.1 : 1,
+              pointerEvents: showScore ? "none" : "auto",
+            }}
           />
         </div>
       </div>
 
-      <div className="hidden md:flex justify-center mt-6">
-        <div className="flex items-center gap-6">
+      {/* DESKTOP ACTIONS */}
+      <div className="hidden md:flex justify-center py-4 bg-white">
+        <div className="flex items-center gap-4">
           {isAssignment && (
             <AssignmentActions
               subconceptId={subconcept.subconceptId}
@@ -123,11 +175,11 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {isIframeContent && showSubmit && !attemptRecorded && (
+          {isIframeContent && showSubmit && !attemptRecorded && !showScore && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`px-6 py-2 rounded-md text-sm font-medium text-white ${
+              className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
                 isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#0EA5E9] hover:bg-[#0284c7]"
@@ -137,12 +189,83 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
+          {(attemptRecorded || showScore) && scoreData && (
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md text-sm font-medium">
+              Score: {scoreData.score}/{scoreData.total}
+            </div>
+          )}
+
           <NextSubconceptButton
             disabled={isIframeContent && !attemptRecorded}
           />
         </div>
       </div>
-    </>
+
+      {/* MOBILE ACTION BAR - FIXED: Added GoogleFormActions */}
+      <div
+        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 py-3 px-4 ${
+          isSidebarOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      >
+        <div className="flex items-center justify-center gap-3">
+          {isAssignment && (
+            <div className="flex-shrink-0">
+              <FileUploaderRecorder
+                onUploadSuccess={() => {
+                  // optional for now – can be empty
+                  // later you can refetch assignment / mark completed
+                }}
+                assignmentStatus={subconcept.assignmentStatus}
+                uploadMeta={{
+                  programId,
+                  cohortId: info?.cohortId || "",
+                  stageId,
+                  unitId,
+                  subconceptId: conceptId,
+                }}
+              />
+            </div>
+          )}
+
+          {isGoogleForm && (
+            <div className="flex-shrink-0">
+              <GoogleFormActions
+                subconceptId={subconcept.subconceptId}
+                completionStatus={subconcept.completionStatus}
+                isMobile={true}
+              />
+            </div>
+          )}
+
+          {isIframeContent && showSubmit && !attemptRecorded && !showScore && (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`px-4 py-2 rounded-md text-sm font-medium text-white flex-shrink-0 ${
+                isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#0EA5E9]"
+              }`}
+            >
+              {isSubmitting ? "..." : "Submit"}
+            </button>
+          )}
+
+          {(attemptRecorded || showScore) && scoreData && (
+            <div className="bg-green-100 text-green-800 px-3 py-2 rounded-md text-sm font-medium flex-shrink-0">
+              {scoreData.score}/{scoreData.total}
+            </div>
+          )}
+
+          <NextSubconceptButton
+            disabled={isIframeContent && !attemptRecorded}
+          />
+        </div>
+      </div>
+
+      {/* Spacer so content is not hidden */}
+      {!isSidebarOpen && <div className="md:hidden h-32" />}
+    </div>
   );
 };
 

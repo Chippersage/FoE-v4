@@ -9,11 +9,13 @@ import { Loader2 } from "lucide-react";
 interface Props {
   subconceptId: string;
   completionStatus?: string;
+  isMobile?: boolean; // Add mobile prop
 }
 
 const AssignmentActions: React.FC<Props> = ({
   subconceptId,
   completionStatus,
+  isMobile = false
 }) => {
   const { cohort, user } = useUserContext();
   const { markSubconceptCompleted, getSubconceptById, programId } =
@@ -70,8 +72,65 @@ const AssignmentActions: React.FC<Props> = ({
 
   /* ---------------- Render ---------------- */
 
+  // Mobile rendering
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col items-center gap-2">
+          {!isCompleted && !uploaded && (
+            <div className="w-full">
+              <FileUploaderRecorder
+                assignmentStatus={null}
+                onUploadSuccess={handleUploadSuccess}
+                uploadMeta={{
+                  programId,
+                  cohortId: cohort.cohortId,
+                  stageId: sub.stageId,
+                  unitId: sub.unitId,
+                  subconceptId: sub.subconceptId,
+                }}
+                isMobile={true}
+              />
+            </div>
+          )}
+
+          {(isCompleted || uploaded) && (
+            <button
+              className="w-full py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
+              onClick={async () => {
+                setShowAssignmentModal(true);
+                if (!assignmentStatus) {
+                  await fetchAssignmentStatus();
+                }
+              }}
+            >
+              {loadingStatus && <Loader2 size={14} className="animate-spin" />}
+              <span className="truncate">View Status</span>
+            </button>
+          )}
+        </div>
+
+        {showAssignmentModal && (
+          <AssignmentModal
+            onClose={() => setShowAssignmentModal(false)}
+            loading={loadingStatus}
+            submissionDate={assignmentStatus?.submittedDate}
+            status={assignmentStatus?.status}
+            fileUrl={assignmentStatus?.submittedFile?.downloadUrl}
+            correctedFile={assignmentStatus?.correctedFile}
+            correctedDate={assignmentStatus?.correctedDate}
+            remarks={assignmentStatus?.remarks}
+            score={assignmentStatus?.score}
+            isMobile={true}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Desktop rendering
   return (
-    <div className="w-full flex justify-center mt-6">
+    <div className="w-full flex justify-center">
       <div className="flex flex-row items-center gap-4">
         {!isCompleted && !uploaded && (
           <FileUploaderRecorder
@@ -91,9 +150,9 @@ const AssignmentActions: React.FC<Props> = ({
           <button
             className="h-10 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 rounded-md text-sm font-medium transition flex items-center gap-2"
             onClick={async () => {
-              setShowAssignmentModal(true); // OPEN FIRST
+              setShowAssignmentModal(true);
               if (!assignmentStatus) {
-                await fetchAssignmentStatus(); // LOAD DATA
+                await fetchAssignmentStatus();
               }
             }}
           >
@@ -103,7 +162,6 @@ const AssignmentActions: React.FC<Props> = ({
         )}
       </div>
 
-      {/* MODAL ALWAYS OPENS */}
       {showAssignmentModal && (
         <AssignmentModal
           onClose={() => setShowAssignmentModal(false)}

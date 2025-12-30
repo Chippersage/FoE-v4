@@ -17,95 +17,131 @@ export const useIframeAttemptHandler = ({
   const [attemptRecorded, setAttemptRecorded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const scoreRef = useRef<number | null>(null);
+  const [iframeScore, setIframeScore] = useState<number | null>(null);
+  const [scoreData, setScoreData] = useState<{ score: number; total: number } | null>(null);
+  const [showScore, setShowScore] = useState(false);
+
   const submittedRef = useRef(false);
   const fallbackTimerRef = useRef<any>(null);
+  const lastScoreRef = useRef<number | null>(null);
 
   const recordAttempt = useCallback(
-    async (score: number) => {
+    async (score: number, total?: number) => {
       if (submittedRef.current) return;
       submittedRef.current = true;
 
-      const cohort = JSON.parse(
-        localStorage.getItem("selectedCohort") || "{}"
-      );
+      const cohort = JSON.parse(localStorage.getItem("selectedCohort") || "{}");
       const sessionId = localStorage.getItem("sessionId");
 
-      await axios.post(`${API_BASE_URL}/user-attempts`, {
-        cohortId: cohort.cohortId,
-        programId,
-        sessionId,
-        stageId,
-        unitId,
-        subconceptId: subconcept.subconceptId,
-        userId: user.userId,
-        userAttemptFlag: true,
-        userAttemptScore: score,
-        userAttemptStartTimestamp: new Date().toISOString(),
-        userAttemptEndTimestamp: new Date().toISOString(),
-      });
+      const totalQuestions =
+        total ??
+        (typeof subconcept?.subconceptMaxscore === "number" && subconcept.subconceptMaxscore > 0
+          ? subconcept.subconceptMaxscore
+          : 1);
 
-      markSubconceptCompleted(subconcept.subconceptId);
+      try {
+        await axios.post(`${API_BASE_URL}/user-attempts`, {
+          cohortId: cohort.cohortId,
+          programId,
+          sessionId,
+          stageId,
+          unitId,
+          subconceptId: subconcept.subconceptId,
+          userId: user.userId,
+          userAttemptFlag: true,
+          userAttemptScore: score,
+          userAttemptStartTimestamp: new Date().toISOString(),
+          userAttemptEndTimestamp: new Date().toISOString(),
+        });
 
-      setAttemptRecorded(true);
-      setShowSubmit(false);
-      setIsSubmitting(false);
+        setScoreData({ score, total: totalQuestions });
+        setIframeScore(score);
+        setShowScore(true);
+        setAttemptRecorded(true);
+        setShowSubmit(false);
+        setIsSubmitting(false);
 
-      window.dispatchEvent(
-        new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: subconcept.subconceptId },
-        })
-      );
+        markSubconceptCompleted(subconcept.subconceptId);
+
+        window.dispatchEvent(
+          new CustomEvent("updateSidebarCompletion", {
+            detail: { subconceptId: subconcept.subconceptId },
+          })
+        );
+      } catch (error) {
+        // Fallback: UI still proceeds even if backend fails
+        setScoreData({ score, total: totalQuestions });
+        setIframeScore(score);
+        setShowScore(true);
+        setAttemptRecorded(true);
+        setShowSubmit(false);
+        setIsSubmitting(false);
+      }
     },
-    [
-      user,
-      programId,
-      stageId,
-      unitId,
-      subconcept,
-      markSubconceptCompleted,
-    ]
+    [user, programId, stageId, unitId, subconcept, markSubconceptCompleted]
   );
 
+  // ------------------------------------------------------
+  // Listen to iframe messages
+  // ------------------------------------------------------
   useEffect(() => {
     if (!enabled) return;
 
     const handler = (event: MessageEvent) => {
       if (attemptRecorded) return;
 
-      // last slide reached
+      // Enable submit
       if (event.data === "enableSubmit") {
         setShowSubmit(true);
         return;
       }
 
+      // Disable submit
       if (event.data === "disableSubmit") {
         setShowSubmit(false);
         return;
       }
 
-      // ✅ score wins always
-      if (event.data?.type === "scoreData") {
+      // Unified score formats
+      if (event.data?.type === "score") {
         clearTimeout(fallbackTimerRef.current);
-
-        const score = event.data.payload?.userAttemptScore;
-        scoreRef.current = score;
-
-        recordAttempt(score);
+        lastScoreRef.current = event.data.score;
+        recordAttempt(event.data.score, event.data.total);
         return;
       }
 
-      // confirm without score
+      if (event.data?.type === "scoreData") {
+        clearTimeout(fallbackTimerRef.current);
+        const score = event.data.payload?.userAttemptScore ?? 0;
+        const total = event.data.payload?.totalQuestions;
+        lastScoreRef.current = score;
+        recordAttempt(score, total);
+        return;
+      }
+
+      if (event.data?.type === "quizResults") {
+        clearTimeout(fallbackTimerRef.current);
+        lastScoreRef.current = event.data.correct ?? 0;
+        recordAttempt(event.data.correct ?? 0, event.data.total);
+        return;
+      }
+
+      if (event.data?.score !== undefined) {
+        clearTimeout(fallbackTimerRef.current);
+        lastScoreRef.current = event.data.score;
+        recordAttempt(event.data.score, event.data.total);
+        return;
+      }
+
+      // Absolute fallback
       if (event.data === "confirmSubmission") {
         clearTimeout(fallbackTimerRef.current);
-
-        const fallback =
-          typeof subconcept.subconceptMaxscore === "number" &&
-          subconcept.subconceptMaxscore > 0
+        const fallbackScore =
+          lastScoreRef.current ??
+          (typeof subconcept?.subconceptMaxscore === "number" && subconcept.subconceptMaxscore > 0
             ? subconcept.subconceptMaxscore
-            : 1;
-
-        recordAttempt(scoreRef.current ?? fallback);
+            : 1);
+        recordAttempt(fallbackScore);
       }
     };
 
@@ -113,24 +149,29 @@ export const useIframeAttemptHandler = ({
     return () => window.removeEventListener("message", handler);
   }, [enabled, attemptRecorded, recordAttempt, subconcept]);
 
-  // 🔥 THIS WAS MISSING BEFORE
+  // ------------------------------------------------------
+  // Triggered by CoursePage submit button
+  // ------------------------------------------------------
   const onSubmitClicked = () => {
     if (isSubmitting || attemptRecorded) return;
 
     setIsSubmitting(true);
 
-    // fallback if iframe stays silent
     fallbackTimerRef.current = setTimeout(() => {
       if (submittedRef.current) return;
 
-      const fallback =
-        typeof subconcept.subconceptMaxscore === "number" &&
-        subconcept.subconceptMaxscore > 0
+      const fallbackScore =
+        lastScoreRef.current ??
+        (typeof subconcept?.subconceptMaxscore === "number" && subconcept.subconceptMaxscore > 0
           ? subconcept.subconceptMaxscore
-          : 1;
+          : 1);
 
-      recordAttempt(scoreRef.current ?? fallback);
-    }, 2000); // same feel as old page
+      recordAttempt(fallbackScore);
+    }, 2000);
+  };
+
+  const closeScoreDisplay = () => {
+    setShowScore(false);
   };
 
   return {
@@ -138,5 +179,10 @@ export const useIframeAttemptHandler = ({
     attemptRecorded,
     isSubmitting,
     onSubmitClicked,
+    iframeScore,
+    scoreData,
+    showScore,
+    setShowScore,
+    closeScoreDisplay,
   };
 };

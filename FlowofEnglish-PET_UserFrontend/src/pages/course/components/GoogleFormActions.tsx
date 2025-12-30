@@ -6,11 +6,13 @@ import { useUserContext } from "../../../context/AuthContext";
 interface Props {
   subconceptId: string;
   completionStatus?: string;
+  isMobile?: boolean;
 }
 
 const GoogleFormActions: React.FC<Props> = ({
   subconceptId,
   completionStatus,
+  isMobile = false
 }) => {
   const { user, cohort } = useUserContext();
 
@@ -72,8 +74,28 @@ const GoogleFormActions: React.FC<Props> = ({
     }
   };
 
-  /* -------- UI -------- */
+  /* -------- Mobile UI -------- */
+  if (isMobile) {
+    if (isCompleted) {
+      return (
+        <div className="px-4 py-2 flex items-center justify-center bg-green-100 text-green-800 rounded-md text-sm font-medium">
+          <span className="truncate">Submitted</span>
+        </div>
+      );
+    }
 
+    return (
+      <button
+        onClick={handleConfirmSubmit}
+        disabled={loading}
+        className="px-4 py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center"
+      >
+        {loading ? "..." : "Submit Form"}
+      </button>
+    );
+  }
+
+  /* -------- Desktop UI -------- */
   if (isCompleted) {
     return (
       <div className="h-[38px] flex items-center bg-green-100 text-green-800 px-4 rounded-md text-sm font-medium">

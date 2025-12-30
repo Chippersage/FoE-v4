@@ -16,11 +16,156 @@ import { useUserContext } from "../context/AuthContext";
 
 interface ContentRendererProps {
   className?: string;
-  // REMOVED: type, url, title, and all content props
+  iframeRef?: React.RefObject<HTMLIFrameElement>;
+  style?: React.CSSProperties;
+}
+
+// Helper: Format Google Form URL with user data - DYNAMIC VERSION
+function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: string): string {
+  try {
+    // Check if URL is a Google Form
+    if (!originalUrl.includes("docs.google.com/forms") || !originalUrl.includes("/viewform")) {
+      return originalUrl;
+    }
+
+    console.log("Formatting Google Form URL with:", { userId, cohortId, originalUrl });
+    
+    // Use URL API for proper parsing
+    const urlObj = new URL(originalUrl);
+    const params = urlObj.searchParams;
+    
+    console.log("Current URL parameters:", Object.fromEntries(params.entries()));
+    
+    // Get all entry parameter keys from the original URL
+    const entryKeys = Array.from(params.keys()).filter(key => key.startsWith('entry.'));
+    console.log("Found entry keys in form:", entryKeys);
+    
+    if (entryKeys.length >= 2) {
+      // Fill the first TWO empty entry fields with userId and cohortId
+      let userIdAssigned = false;
+      let cohortAssigned = false;
+      
+      for (let i = 0; i < entryKeys.length; i++) {
+        const key = entryKeys[i];
+        const currentValue = params.get(key);
+        
+        // Check if field is empty
+        if ((currentValue === '' || !currentValue) && !userIdAssigned) {
+          // First empty field gets userId
+          params.set(key, userId);
+          userIdAssigned = true;
+          console.log(`Assigned userId to field: ${key}`);
+        } else if ((currentValue === '' || !currentValue) && userIdAssigned && !cohortAssigned) {
+          // Second empty field gets cohortId
+          params.set(key, cohortId);
+          cohortAssigned = true;
+          console.log(`Assigned cohortId to field: ${key}`);
+        } else if (currentValue && currentValue !== '') {
+          console.log(`Field ${key} already has value: "${currentValue}", skipping`);
+        }
+        
+        // Stop if both are assigned
+        if (userIdAssigned && cohortAssigned) {
+          break;
+        }
+      }
+      
+      // If not all assigned, check if we need to add new parameters
+      if (!userIdAssigned || !cohortAssigned) {
+        console.log(`Could not assign all values. userId assigned: ${userIdAssigned}, cohort assigned: ${cohortAssigned}`);
+        
+        // Add missing values as new parameters
+        if (!userIdAssigned) {
+          // Try to find the first available entry field pattern
+          let newFieldIndex = 1;
+          let newFieldName = `entry.userId`;
+          
+          // Try common patterns
+          const commonPatterns = [
+            'entry.userId',
+            'entry.user_id',
+            'entry.user',
+            'entry.learnerId',
+            'entry.learner_id',
+            'entry.learner'
+          ];
+          
+          for (const pattern of commonPatterns) {
+            if (!params.has(pattern)) {
+              newFieldName = pattern;
+              break;
+            }
+          }
+          
+          params.set(newFieldName, userId);
+          console.log(`Added userId as new parameter: ${newFieldName}`);
+        }
+        
+        if (!cohortAssigned) {
+          let newFieldName = `entry.cohort`;
+          
+          // Try common patterns for cohort ID
+          const commonPatterns = [
+            'entry.cohortId',
+            'entry.cohort_id',
+            'entry.cohort',
+            'entry.cohortID',
+            'entry.classId',
+            'entry.groupId'
+          ];
+          
+          for (const pattern of commonPatterns) {
+            if (!params.has(pattern)) {
+              newFieldName = pattern;
+              break;
+            }
+          }
+          
+          params.set(newFieldName, cohortId);
+          console.log(`Added cohortId as new parameter: ${newFieldName}`);
+        }
+      }
+    } else if (entryKeys.length === 1) {
+      // If only one entry field, fill it with userId
+      const key = entryKeys[0];
+      const currentValue = params.get(key);
+      
+      if (currentValue === '' || !currentValue) {
+        params.set(key, userId);
+        console.log(`Assigned userId to single field: ${key}`);
+        
+        // Add cohortId as a separate parameter
+        params.set('cohortId', cohortId);
+        console.log(`Added cohortId as separate parameter`);
+      } else {
+        console.log(`Single field ${key} already has value: "${currentValue}"`);
+        // Add both as new parameters
+        params.set('userId', userId);
+        params.set('cohortId', cohortId);
+      }
+    } else {
+      // No entry fields found, add our parameters
+      console.warn("No entry fields found in form, adding default parameters");
+      params.set('userId', userId);
+      params.set('cohortId', cohortId);
+    }
+    
+    // Update the URL
+    urlObj.search = params.toString();
+    const formattedUrl = urlObj.toString();
+    
+    console.log("Formatted Google Form URL:", formattedUrl);
+    return formattedUrl;
+  } catch (error) {
+    console.error("Error formatting Google Form URL:", error);
+    return originalUrl;
+  }
 }
 
 const ContentRenderer: React.FC<ContentRendererProps> = ({
   className = "",
+  iframeRef,
+  style,
 }) => {
   // 1. Get current content from URL
   const { programId, stageId, unitId, conceptId } = useParams<{
@@ -58,6 +203,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   const [vocabularyScore, setVocabularyScore] = useState(0);
+  const [formattedUrl, setFormattedUrl] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -96,6 +242,50 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     loadSubconcept();
   }, [conceptId, programId, stageId, unitId, getSubconceptById]);
+
+  // ----------------------------------------------------------
+  //  Format Google Form URL for assessment types
+  // ----------------------------------------------------------
+  useEffect(() => {
+    const formatAssessmentUrl = () => {
+      if (!currentSubconcept) return;
+      
+      const normalizedType = currentSubconcept.subconceptType.toLowerCase();
+      
+      // Check if it's a Google Form/Assessment type
+      if (normalizedType === "assessment" || normalizedType === "googleform") {
+        try {
+          // Get user data
+          const userId = user?.userId || "";
+          
+          // Get cohort ID from localStorage
+          const selectedCohortRaw = localStorage.getItem("selectedCohort");
+          const selectedCohort = selectedCohortRaw ? JSON.parse(selectedCohortRaw) : null;
+          const cohortId = selectedCohort?.cohortId || "";
+          
+          console.log("Formatting Google Form URL in ContentRenderer:", { 
+            userId, 
+            cohortId,
+            originalUrl: currentSubconcept.subconceptLink 
+          });
+          
+          // Format the URL using the dynamic helper function
+          const formatted = formatGoogleFormUrl(currentSubconcept.subconceptLink, userId, cohortId);
+          setFormattedUrl(formatted);
+        } catch (error) {
+          console.error("Error formatting Google Form URL in ContentRenderer:", error);
+          setFormattedUrl(currentSubconcept.subconceptLink);
+        }
+      } else {
+        // If not a Google Form, use original URL
+        setFormattedUrl(currentSubconcept.subconceptLink);
+      }
+    };
+
+    if (currentSubconcept) {
+      formatAssessmentUrl();
+    }
+  }, [currentSubconcept, user?.userId]);
 
   // ----------------------------------------------------------
   //  Reset attempt state when content changes
@@ -494,14 +684,33 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     case "medium":
     case "toastmasters":
-    case "assessment":
       return (
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
+            ref={iframeRef}
             src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
             title="External Content"
+            frameBorder="0"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            loading="lazy"
+          />
+        </div>
+      );
+
+    case "assessment":
+    case "googleform":
+      // Use formatted URL for Google Forms/Assessments
+      return (
+        <div className={`relative w-full h-full ${className}`}>
+          {isLoading && renderLoading()}
+          <iframe
+            ref={iframeRef}
+            src={formattedUrl}
+            className="w-full h-full rounded-xl bg-white"
+            title="Google Form Assessment"
             frameBorder="0"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -543,6 +752,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
+            ref={iframeRef}
             src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
             title="External Content"
