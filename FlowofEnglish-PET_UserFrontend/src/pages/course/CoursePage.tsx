@@ -4,7 +4,6 @@ import { useParams, useOutletContext } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 
 import useCourseStore from "../../store/courseStore";
-import useCourseEntryRedirect from "./hooks/useCourseEntryRedirect";
 
 import ContentRenderer from "../../components/ContentRenderer";
 import NextSubconceptButton from "../../components/NextSubconceptButton";
@@ -48,10 +47,6 @@ const CoursePage: React.FC = () => {
     }
   }, [programId, user?.userId]);
 
-  useCourseEntryRedirect({
-    enabled: Boolean(programId && !stageId && !unitId && !conceptId),
-  });
-
   // ------------------------------------------------------
   // Resolve subconcept
   // ------------------------------------------------------
@@ -76,7 +71,7 @@ const CoursePage: React.FC = () => {
   // ------------------------------------------------------
   const contentHeightClass = useMemo(() => {
     if (window.innerWidth >= 768) {
-      return "h-[82vh]";
+      return "h-[80vh]";
     }
 
     if (type === "video" || type === "audio") {
@@ -158,14 +153,26 @@ const CoursePage: React.FC = () => {
         </div>
       </div>
 
-      {/* DESKTOP ACTIONS */}
+      {/* DESKTOP ACTIONS - USING FileUploaderRecorder INSTEAD OF AssignmentActions */}
       <div className="hidden md:flex justify-center py-4 bg-white">
         <div className="flex items-center gap-4">
           {isAssignment && (
-            <AssignmentActions
-              subconceptId={subconcept.subconceptId}
-              completionStatus={subconcept.completionStatus}
-            />
+            <div className="flex-shrink-0">
+              <FileUploaderRecorder
+                onUploadSuccess={() => {
+                  // optional for now – can be empty
+                  // later you can refetch assignment / mark completed
+                }}
+                assignmentStatus={subconcept.assignmentStatus}
+                uploadMeta={{
+                  programId,
+                  cohortId: info?.cohortId || "",
+                  stageId,
+                  unitId,
+                  subconceptId: conceptId,
+                }}
+              />
+            </div>
           )}
 
           {isGoogleForm && (

@@ -299,32 +299,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   }, [conceptId]);
 
   // ----------------------------------------------------------
-  //  Detect fullscreen mode
-  // ----------------------------------------------------------
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const fsElement =
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement;
-      setIsFullscreen(!!fsElement);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
-    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
-    };
-  }, []);
-
-  // ----------------------------------------------------------
   //  Video progress (90% = attempt)
   // ----------------------------------------------------------
   const handleVideoProgress = async (

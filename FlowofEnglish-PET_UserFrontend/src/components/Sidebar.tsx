@@ -13,6 +13,7 @@ import {
   getProgramType,
   isDemoUser as checkIsDemoUser
 } from "../config/demoUsers";
+import useCourseEntryRedirect from "../pages/course/hooks/useCourseEntryRedirect"; 
 
 // --------------------------------------------------------------------------
 // STATIC COMPONENTS
@@ -63,7 +64,14 @@ const Sidebar: React.FC = () => {
   const isDemoUser = user?.userId ? checkIsDemoUser(user.userId) : false;
   
   // --------------------------------------------------------------------------
-  // 2. MEMOIZED VALUES
+  // 2. USE COURSE ENTRY REDIRECT HOOK (IMPORTED)
+  // --------------------------------------------------------------------------
+  useCourseEntryRedirect({
+    enabled: Boolean(programId && !stageId && !unitId && !conceptId),
+  });
+  
+  // --------------------------------------------------------------------------
+  // 3. MEMOIZED VALUES
   // --------------------------------------------------------------------------
   
   const buildGlobalList = useMemo(() => {
@@ -93,7 +101,7 @@ const Sidebar: React.FC = () => {
   }, [localStages]);
   
   // --------------------------------------------------------------------------
-  // 3. CALLBACK HANDLERS
+  // 4. CALLBACK HANDLERS
   // --------------------------------------------------------------------------
   
   const toggleStage = useCallback((stageId: string) => {
@@ -222,7 +230,7 @@ const Sidebar: React.FC = () => {
   }, [isDemoUser, programId, navigate, isContentAccessibleForDemo]);
   
   // --------------------------------------------------------------------------
-  // 4. EFFECTS
+  // 5. EFFECTS
   // --------------------------------------------------------------------------
   
   useEffect(() => {
@@ -292,7 +300,7 @@ const Sidebar: React.FC = () => {
   }, []);
   
   // --------------------------------------------------------------------------
-  // 5. RENDER
+  // 6. RENDER
   // --------------------------------------------------------------------------
   
   if (isLoading) {
