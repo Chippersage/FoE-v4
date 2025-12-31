@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -24,6 +24,34 @@ export const useIframeAttemptHandler = ({
   const submittedRef = useRef(false);
   const fallbackTimerRef = useRef<any>(null);
   const lastScoreRef = useRef<number | null>(null);
+
+  // Create a unique identifier for the current subconcept
+  const subconceptKey = useMemo(() => {
+    return subconcept?.subconceptId || 'no-subconcept';
+  }, [subconcept?.subconceptId]);
+
+  // ------------------------------------------------------
+  // Reset all states when subconcept changes
+  // ------------------------------------------------------
+  useEffect(() => {
+    // Reset all state variables
+    setShowSubmit(false);
+    setAttemptRecorded(false);
+    setIsSubmitting(false);
+    setIframeScore(null);
+    setScoreData(null);
+    setShowScore(false);
+    
+    // Reset refs
+    submittedRef.current = false;
+    lastScoreRef.current = null;
+    
+    // Clear any pending timeout
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+  }, [subconceptKey]); // Reset when subconceptId changes
 
   const recordAttempt = useCallback(
     async (score: number, total?: number) => {
@@ -174,6 +202,23 @@ export const useIframeAttemptHandler = ({
     setShowScore(false);
   };
 
+  // Optional: Expose a manual reset function
+  const reset = useCallback(() => {
+    setShowSubmit(false);
+    setAttemptRecorded(false);
+    setIsSubmitting(false);
+    setIframeScore(null);
+    setScoreData(null);
+    setShowScore(false);
+    submittedRef.current = false;
+    lastScoreRef.current = null;
+    
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+  }, []);
+
   return {
     showSubmit,
     attemptRecorded,
@@ -184,5 +229,6 @@ export const useIframeAttemptHandler = ({
     showScore,
     setShowScore,
     closeScoreDisplay,
+    reset, // Expose reset for manual control
   };
 };

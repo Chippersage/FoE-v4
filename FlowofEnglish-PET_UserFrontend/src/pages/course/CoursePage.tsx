@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useRef, useState } from "react"; // Add useState
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 
@@ -241,12 +241,7 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          <NextSubconceptButton
-            disabled={
-              (isIframeContent && !attemptRecorded) || 
-              (needsManualCompletion && !isCompleted)
-            }
-          />
+          <NextSubconceptButton/>
         </div>
       </div>
 
@@ -320,12 +315,7 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          <NextSubconceptButton
-            disabled={
-              (isIframeContent && !attemptRecorded) || 
-              (needsManualCompletion && !isCompleted)
-            }
-          />
+          <NextSubconceptButton/>
         </div>
       </div>
 
