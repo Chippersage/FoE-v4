@@ -143,6 +143,7 @@ const Sidebar: React.FC = () => {
   }, [isDemoUser, programType, isUnitAccessibleForDemo]);
   
   const isSubconceptLocked = useCallback((unit: any, subIndex: number, stage: any): boolean => {
+    return false; // Temporarily disable locking logic
     const sub = unit.subconcepts?.[subIndex];
     if (!sub) return true;
 

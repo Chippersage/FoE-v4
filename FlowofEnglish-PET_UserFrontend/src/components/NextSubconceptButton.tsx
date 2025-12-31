@@ -117,7 +117,7 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
       id={`next-subconcept-btn${disabled ? "-locked" : "-unlocked"}`}
       onClick={handleNext}
       disabled={disabled}
-      className={`px-4 py-2 rounded-md text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all duration-200 ${
+      className={`px-4 py-2.5 rounded-md text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all duration-200 ${
         disabled
           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
           : "bg-[#0EA5E9] hover:bg-[#DB5788] text-white cursor-pointer hover:shadow-md active:scale-95"

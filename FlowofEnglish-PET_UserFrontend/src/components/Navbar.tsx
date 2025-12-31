@@ -32,9 +32,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const isCoursePage = location.pathname.startsWith("/course/");
   const isMentor = user?.userType === "Mentor";
   const isMentorRoute = location.pathname.startsWith("/mentor");
-  
-  // Show hamburger for BOTH mentor routes AND course pages
-  const showHamburger = (isMentor && isMentorRoute) || isCoursePage;
 
   // Check if current user is a demo user
   useEffect(() => {
@@ -163,8 +160,18 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             if (!isSelectCohortPage) navigate("/select-cohort");
           }}
         >
-          {/* Show hamburger for BOTH mentor routes AND course pages */}
-          {showHamburger && (
+          {/* Course Page Hamburger - Hidden on 768px and above */}
+          {isCoursePage && (
+            <button
+              className="md:hidden mr-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
+              onClick={handleHamburgerClick}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Mentor Route Hamburger - Hidden on 1024px and above */}
+          {isMentor && isMentorRoute && (
             <button
               className="lg:hidden mr-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
               onClick={handleHamburgerClick}
@@ -173,12 +180,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             </button>
           )}
 
+          {/* Logo - Hidden when hamburger is visible */}
           <img
             src="/icons/chipper-sage-logo.png"
             alt="Logo"
-            className={`w-14 h-14 sm:w-20 sm:h-20 object-contain ${
-              showHamburger ? "hidden lg:block" : ""
-            }`}
+            className={`
+              w-14 h-14 sm:w-20 sm:h-20 object-contain
+              ${isCoursePage ? 'hidden md:block' : ''} /* Hide on mobile for course pages */
+              ${(isMentor && isMentorRoute) ? 'hidden lg:block' : ''} /* Hide on mobile/tablet for mentor routes */
+            `}
           />
           <h1 className="text-lg font-semibold text-black tracking-tight">
             Professional English for Teachers

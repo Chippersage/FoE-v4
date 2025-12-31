@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react"; // Add useState
 import { useParams, useOutletContext } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
 
@@ -9,10 +9,19 @@ import ContentRenderer from "../../components/ContentRenderer";
 import NextSubconceptButton from "../../components/NextSubconceptButton";
 import AssignmentActions from "./components/AssignmentActions";
 import GoogleFormActions from "./components/GoogleFormActions";
-import { FileUploaderRecorder } from "../../components/AssignmentComponents/FileUploaderRecorder";
+import MarkCompleteButton from "./components/MarkCompleteButton";
+import ScoreBadge from "./components/ScoreBadge";
+import ScoreSummaryModal from "./components/ScoreSummaryModal";
 
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
+
+// Import completion types constants
+import { 
+  MANUAL_COMPLETION_TYPES, 
+  AUTO_COMPLETION_TYPES, 
+  NEEDS_SUBMISSION_TYPES 
+} from "./constants/completionTypes";
 
 interface OutletContext {
   isSidebarOpen: boolean;
@@ -28,6 +37,9 @@ const CoursePage: React.FC = () => {
   const { isSidebarOpen } = useOutletContext<OutletContext>();
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Add state for score summary modal
+  const [showScoreSummary, setShowScoreSummary] = useState(false);
 
   const {
     loadCourse,
@@ -59,12 +71,20 @@ const CoursePage: React.FC = () => {
 
   const isAssignment = type?.startsWith("assignment");
   const isGoogleForm = type === "googleform" || type === "assessment";
+  
+  // NEW: Use constants for completion types
+  const needsManualCompletion = MANUAL_COMPLETION_TYPES.includes(type || "");
+  const isAutoCompletion = AUTO_COMPLETION_TYPES.includes(type || "");
+  const needsSubmission = NEEDS_SUBMISSION_TYPES.includes(type || "");
 
   const isIframeContent =
     !!type &&
     !["video", "audio", "pdf", "image", "youtube", "mcq", "mtf", "word"].includes(
       type
     );
+
+  // Check if already completed
+  const isCompleted = subconcept?.completionStatus?.toLowerCase() === "yes";
 
   // ------------------------------------------------------
   // ADD: Dynamic height (NO logic removed)
@@ -106,6 +126,15 @@ const CoursePage: React.FC = () => {
     subconcept,
     markSubconceptCompleted,
   });
+
+  // ------------------------------------------------------
+  // CRITICAL: Auto-show modal when score is received
+  // ------------------------------------------------------
+  useEffect(() => {
+    if (scoreData && !showScoreSummary) {
+      setShowScoreSummary(true);
+    }
+  }, [scoreData]);
 
   // ------------------------------------------------------
   // Submit click → forward to iframe
@@ -153,24 +182,14 @@ const CoursePage: React.FC = () => {
         </div>
       </div>
 
-      {/* DESKTOP ACTIONS - USING FileUploaderRecorder INSTEAD OF AssignmentActions */}
+      {/* DESKTOP ACTIONS */}
       <div className="hidden md:flex justify-center py-4 bg-white">
         <div className="flex items-center gap-4">
           {isAssignment && (
-            <div className="flex-shrink-0">
-              <FileUploaderRecorder
-                onUploadSuccess={() => {
-                  // optional for now – can be empty
-                  // later you can refetch assignment / mark completed
-                }}
-                assignmentStatus={subconcept.assignmentStatus}
-                uploadMeta={{
-                  programId,
-                  cohortId: info?.cohortId || "",
-                  stageId,
-                  unitId,
-                  subconceptId: conceptId,
-                }}
+            <div className="flex-shrink-0" key={`assignment-${subconcept.subconceptId}`}>
+              <AssignmentActions
+                subconceptId={subconcept.subconceptId}
+                completionStatus={subconcept.completionStatus}
               />
             </div>
           )}
@@ -179,6 +198,23 @@ const CoursePage: React.FC = () => {
             <GoogleFormActions
               subconceptId={subconcept.subconceptId}
               completionStatus={subconcept.completionStatus}
+            />
+          )}
+
+          {/* NEW: Mark Complete Button for manual completion types */}
+          {needsManualCompletion && !isCompleted && (
+            <MarkCompleteButton
+              userId={user?.userId || ""}
+              programId={programId!}
+              stageId={stageId!}
+              unitId={unitId!}
+              subconceptId={subconcept.subconceptId}
+              subconceptType={subconcept.subconceptType}
+              subconceptMaxscore={subconcept.subconceptMaxscore || 0}
+              onMarkComplete={() => {
+                // Update local store state
+                markSubconceptCompleted(subconcept.subconceptId);
+              }}
             />
           )}
 
@@ -196,19 +232,25 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
+          {/* REPLACED: Score display with clickable ScoreBadge */}
           {(attemptRecorded || showScore) && scoreData && (
-            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md text-sm font-medium">
-              Score: {scoreData.score}/{scoreData.total}
-            </div>
+            <ScoreBadge
+              score={scoreData.score}
+              total={scoreData.total}
+              onClick={() => setShowScoreSummary(true)}
+            />
           )}
 
           <NextSubconceptButton
-            disabled={isIframeContent && !attemptRecorded}
+            disabled={
+              (isIframeContent && !attemptRecorded) || 
+              (needsManualCompletion && !isCompleted)
+            }
           />
         </div>
       </div>
 
-      {/* MOBILE ACTION BAR - FIXED: Added GoogleFormActions */}
+      {/* MOBILE ACTION BAR */}
       <div
         className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 py-3 px-4 ${
           isSidebarOpen ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -216,20 +258,11 @@ const CoursePage: React.FC = () => {
       >
         <div className="flex items-center justify-center gap-3">
           {isAssignment && (
-            <div className="flex-shrink-0">
-              <FileUploaderRecorder
-                onUploadSuccess={() => {
-                  // optional for now – can be empty
-                  // later you can refetch assignment / mark completed
-                }}
-                assignmentStatus={subconcept.assignmentStatus}
-                uploadMeta={{
-                  programId,
-                  cohortId: info?.cohortId || "",
-                  stageId,
-                  unitId,
-                  subconceptId: conceptId,
-                }}
+            <div className="flex-shrink-0" key={`assignment-${subconcept.subconceptId}`}>
+              <AssignmentActions
+                subconceptId={subconcept.subconceptId}
+                completionStatus={subconcept.completionStatus}
+                isMobile={true}
               />
             </div>
           )}
@@ -240,6 +273,25 @@ const CoursePage: React.FC = () => {
                 subconceptId={subconcept.subconceptId}
                 completionStatus={subconcept.completionStatus}
                 isMobile={true}
+              />
+            </div>
+          )}
+
+          {/* NEW: Mark Complete Button for mobile */}
+          {needsManualCompletion && !isCompleted && (
+            <div className="flex-shrink-0">
+              <MarkCompleteButton
+                userId={user?.userId || ""}
+                programId={programId!}
+                stageId={stageId!}
+                unitId={unitId!}
+                subconceptId={subconcept.subconceptId}
+                subconceptType={subconcept.subconceptType}
+                subconceptMaxscore={subconcept.subconceptMaxscore || 10}
+                isMobile={true}
+                onMarkComplete={() => {
+                  markSubconceptCompleted(subconcept.subconceptId);
+                }}
               />
             </div>
           )}
@@ -258,17 +310,34 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
+          {/* REPLACED: Mobile score display with clickable ScoreBadge */}
           {(attemptRecorded || showScore) && scoreData && (
-            <div className="bg-green-100 text-green-800 px-3 py-2 rounded-md text-sm font-medium flex-shrink-0">
-              {scoreData.score}/{scoreData.total}
-            </div>
+            <ScoreBadge
+              score={scoreData.score}
+              total={scoreData.total}
+              onClick={() => setShowScoreSummary(true)}
+              isMobile={true}
+            />
           )}
 
           <NextSubconceptButton
-            disabled={isIframeContent && !attemptRecorded}
+            disabled={
+              (isIframeContent && !attemptRecorded) || 
+              (needsManualCompletion && !isCompleted)
+            }
           />
         </div>
       </div>
+
+      {/* Score Summary Modal */}
+      {scoreData && (
+        <ScoreSummaryModal
+          isOpen={showScoreSummary}
+          onClose={() => setShowScoreSummary(false)}
+          score={scoreData.score}
+          total={scoreData.total}
+        />
+      )}
 
       {/* Spacer so content is not hidden */}
       {!isSidebarOpen && <div className="md:hidden h-32" />}

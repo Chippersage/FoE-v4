@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FileUploaderRecorder } from "../../../components/AssignmentComponents/FileUploaderRecorder";
 import AssignmentModal from "../../../components/modals/AssignmentModal";
 import useCourseStore from "../../../store/courseStore";
@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 interface Props {
   subconceptId: string;
   completionStatus?: string;
-  isMobile?: boolean; // Add mobile prop
+  isMobile?: boolean;
 }
 
 const AssignmentActions: React.FC<Props> = ({
@@ -25,9 +25,17 @@ const AssignmentActions: React.FC<Props> = ({
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [assignmentStatus, setAssignmentStatus] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
+  const [hasFetchedStatus, setHasFetchedStatus] = useState(false);
 
   const isCompleted = completionStatus?.toLowerCase() === "yes";
   const sub = getSubconceptById(subconceptId);
+
+  // Fetch assignment status on mount if completed
+  useEffect(() => {
+    if ((isCompleted || uploaded) && !hasFetchedStatus && user?.userId) {
+      fetchAssignmentStatus();
+    }
+  }, [isCompleted, uploaded, user?.userId]);
 
   if (!sub || !programId || !cohort?.cohortId || !user?.userId) return null;
 
@@ -36,6 +44,7 @@ const AssignmentActions: React.FC<Props> = ({
   const fetchAssignmentStatus = async () => {
     try {
       setLoadingStatus(true);
+      setHasFetchedStatus(true);
 
       const res = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/assignments/user-assignment?userId=${user.userId}&subconceptId=${subconceptId}`
@@ -72,43 +81,48 @@ const AssignmentActions: React.FC<Props> = ({
 
   /* ---------------- Render ---------------- */
 
+  // Show uploader if not completed and no assignment exists
+  const showUploader = !isCompleted && !uploaded && !assignmentStatus;
+
+  // Show view status button if completed, uploaded, or assignment exists
+  const showViewStatus = isCompleted || uploaded || assignmentStatus;
+
   // Mobile rendering
   if (isMobile) {
     return (
       <div className="w-full">
-        <div className="flex flex-col items-center gap-2">
-          {!isCompleted && !uploaded && (
-            <div className="w-full">
-              <FileUploaderRecorder
-                assignmentStatus={null}
-                onUploadSuccess={handleUploadSuccess}
-                uploadMeta={{
-                  programId,
-                  cohortId: cohort.cohortId,
-                  stageId: sub.stageId,
-                  unitId: sub.unitId,
-                  subconceptId: sub.subconceptId,
-                }}
-                isMobile={true}
-              />
-            </div>
-          )}
-
-          {(isCompleted || uploaded) && (
-            <button
-              className="w-full py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
-              onClick={async () => {
-                setShowAssignmentModal(true);
-                if (!assignmentStatus) {
-                  await fetchAssignmentStatus();
-                }
+        {showUploader && (
+          <div className="w-full">
+            <FileUploaderRecorder
+              assignmentStatus={null}
+              onUploadSuccess={handleUploadSuccess}
+              uploadMeta={{
+                programId,
+                cohortId: cohort.cohortId,
+                stageId: sub.stageId,
+                unitId: sub.unitId,
+                subconceptId: sub.subconceptId,
               }}
-            >
-              {loadingStatus && <Loader2 size={14} className="animate-spin" />}
-              <span className="truncate">View Status</span>
-            </button>
-          )}
-        </div>
+              isMobile={true}
+            />
+          </div>
+        )}
+
+        {showViewStatus && (
+          <button
+            className="w-full py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
+            onClick={async () => {
+              setShowAssignmentModal(true);
+              if (!assignmentStatus) {
+                await fetchAssignmentStatus();
+              }
+            }}
+            disabled={loadingStatus}
+          >
+            {loadingStatus && <Loader2 size={14} className="animate-spin" />}
+            <span className="truncate">View Status</span>
+          </button>
+        )}
 
         {showAssignmentModal && (
           <AssignmentModal
@@ -132,7 +146,7 @@ const AssignmentActions: React.FC<Props> = ({
   return (
     <div className="w-full flex justify-center">
       <div className="flex flex-row items-center gap-4">
-        {!isCompleted && !uploaded && (
+        {showUploader && (
           <FileUploaderRecorder
             assignmentStatus={null}
             onUploadSuccess={handleUploadSuccess}
@@ -146,7 +160,7 @@ const AssignmentActions: React.FC<Props> = ({
           />
         )}
 
-        {(isCompleted || uploaded) && (
+        {showViewStatus && (
           <button
             className="h-10 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 rounded-md text-sm font-medium transition flex items-center gap-2"
             onClick={async () => {
@@ -155,6 +169,7 @@ const AssignmentActions: React.FC<Props> = ({
                 await fetchAssignmentStatus();
               }
             }}
+            disabled={loadingStatus}
           >
             {loadingStatus && <Loader2 size={16} className="animate-spin" />}
             View Assignment Status

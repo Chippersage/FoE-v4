@@ -598,7 +598,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     );
   }
 
-  const { subconceptLink, subconceptType } = currentSubconcept;
+  const { subconceptLink, subconceptType, completionStatus } = currentSubconcept;
 
   // ----------------------------------------------------------
   //  Type-based content rendering
@@ -676,6 +676,24 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     case "assessment":
     case "googleform":
+
+      const isCompleted = completionStatus?.toLowerCase() === "yes";
+      if (isCompleted) {
+        return (
+          <div className="flex items-center justify-center w-full h-full p-6">
+            <div className="max-w-md w-full bg-gray-50 border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Form already submitted
+              </h2>
+              <p className="text-sm text-gray-600 mt-2">
+                You have already submitted this form.
+                <br />
+                You can attempt it only once.
+              </p>
+            </div>
+          </div>
+        );
+      }
       // Use formatted URL for Google Forms/Assessments
       return (
         <div className={`relative w-full h-full ${className}`}>
@@ -707,7 +725,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
-    case "mtf": // Match The Following - Vocabulary Activity
+    case "mtf":
       return (
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <VocabularyActivity
