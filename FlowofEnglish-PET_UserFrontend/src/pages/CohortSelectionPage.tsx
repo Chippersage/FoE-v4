@@ -151,7 +151,7 @@ const CohortSelectionPage = () => {
     <div className="min-h-screen bg-slate-50 px-4 md:px-10 pt-3">
       <div className="max-w-6xl mx-auto">
 
-        <h1 className="font-semibold text-slate-800 text-lg sm:text-xl md:text-2xl mb-6">
+        <h1 className="text-slate-800 text-lg sm:text-xl md:text-2xl mb-6 font-bold sm:font-semibold">
           Continue Learning
         </h1>
 

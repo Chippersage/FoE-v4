@@ -8,10 +8,11 @@ import MentorLayout from "./mentor/layout/MentorLayout";
 /* -------------------- Auth & Core Pages -------------------- */
 const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
 const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
-const CoursePage = lazy(() => import("./pages/CoursePage"));
+const CoursePage = lazy(() => import("./pages/course/CoursePage"));
 const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RootLayout = lazy(() => import("./pages/RootLayout"));
+const CourseLayout = lazy(() => import("./pages/course/CourseLayout"));
 
 /* -------------------- Mentor Pages -------------------- */
 const MentorDashboard = lazy(() => import("./mentor/pages/MentorDashboard"));
@@ -69,17 +70,32 @@ const App: React.FC = () => {
             }
           />
 
-          {/* ===================== Course Page ===================== */}
-          <Route
-            path="/course/:programId"
-            element={
-              isAuthenticatedAndValid ? (
-                <CoursePage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          />
+          {/* ===================== COURSE ROUTES ===================== */}
+          <Route element={<CourseLayout />}>
+            {/* ENTRY ROUTE (decision only) */}
+            <Route
+              path="/course/:programId"
+              element={
+                isAuthenticatedAndValid ? (
+                  <CoursePage />
+                ) : (
+                  <Navigate to="/sign-in" />
+                )
+              }
+            />
+
+            {/* REAL CONTENT ROUTE */}
+            <Route
+              path="/course/:programId/stage/:stageId/unit/:unitId/concept/:conceptId"
+              element={
+                isAuthenticatedAndValid ? (
+                  <CoursePage />
+                ) : (
+                  <Navigate to="/sign-in" />
+                )
+              }
+            />
+          </Route>
 
           {/* -------- Learner Progress -------- */}
           <Route
@@ -93,7 +109,7 @@ const App: React.FC = () => {
             }
           />
 
-          {/* -------- Mentor Submissions (standalone) -------- */}
+          {/* -------- Mentor Submissions -------- */}
           <Route
             path="/view-submissions"
             element={
@@ -117,39 +133,27 @@ const App: React.FC = () => {
               )
             }
           >
-            {/* Dashboard */}
             <Route path="/mentor/dashboard" element={<MentorDashboard />} />
-
             <Route
               path="/mentor/:cohortId/:programId/dashboard"
               element={<MentorDashboard />}
             />
-
-            {/* Learners */}
             <Route
               path="/mentor/:cohortId/:programId/learners"
               element={<ViewLearnersPage />}
             />
-
-            {/* Reports */}
             <Route
               path="/mentor/:cohortId/:programId/reports"
               element={<CohortReports />}
             />
-
-            {/* Assignments */}
             <Route
               path="/mentor/:cohortId/:programId/assignments"
               element={<ViewSubmissions />}
             />
-
-            {/* Learner Overview */}
             <Route
               path="/mentor/:cohortId/:programId/learner/:userId"
               element={<StudentOverviewPage />}
             />
-
-            {/* Cohort Details */}
             <Route
               path="/mentor/:cohortId/:programId/cohort-details"
               element={<CohortDetails />}

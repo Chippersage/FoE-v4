@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import {
   Video as VideoIcon,
   RotateCcw,
@@ -7,35 +8,193 @@ import {
   ChevronRight,
 } from "lucide-react";
 import QuizActivity from "./ActivityComponents/QuizActivity";
-import VocabularyActivity from "./ActivityComponents/VocabularyActivity"; // Import the Vocabulary Activity
+import VocabularyActivity from "./ActivityComponents/VocabularyActivity";
 import PDFRenderer from "./PDFRenderer";
-import { useCourseContext } from "../context/CourseContext";
 import { useUserAttempt } from "../hooks/useUserAttempt";
+import useCourseStore from "../store/courseStore";
+import { useUserContext } from "../context/AuthContext";
 
 interface ContentRendererProps {
-  type: string;
-  url: string;
-  title?: string;
   className?: string;
+  iframeRef?: React.RefObject<HTMLIFrameElement>;
+  style?: React.CSSProperties;
+}
+
+// Helper: Format Google Form URL with user data - DYNAMIC VERSION
+function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: string): string {
+  try {
+    // Check if URL is a Google Form
+    if (!originalUrl.includes("docs.google.com/forms") || !originalUrl.includes("/viewform")) {
+      return originalUrl;
+    }
+
+    console.log("Formatting Google Form URL with:", { userId, cohortId, originalUrl });
+    
+    // Use URL API for proper parsing
+    const urlObj = new URL(originalUrl);
+    const params = urlObj.searchParams;
+    
+    console.log("Current URL parameters:", Object.fromEntries(params.entries()));
+    
+    // Get all entry parameter keys from the original URL
+    const entryKeys = Array.from(params.keys()).filter(key => key.startsWith('entry.'));
+    console.log("Found entry keys in form:", entryKeys);
+    
+    if (entryKeys.length >= 2) {
+      // Fill the first TWO empty entry fields with userId and cohortId
+      let userIdAssigned = false;
+      let cohortAssigned = false;
+      
+      for (let i = 0; i < entryKeys.length; i++) {
+        const key = entryKeys[i];
+        const currentValue = params.get(key);
+        
+        // Check if field is empty
+        if ((currentValue === '' || !currentValue) && !userIdAssigned) {
+          // First empty field gets userId
+          params.set(key, userId);
+          userIdAssigned = true;
+          console.log(`Assigned userId to field: ${key}`);
+        } else if ((currentValue === '' || !currentValue) && userIdAssigned && !cohortAssigned) {
+          // Second empty field gets cohortId
+          params.set(key, cohortId);
+          cohortAssigned = true;
+          console.log(`Assigned cohortId to field: ${key}`);
+        } else if (currentValue && currentValue !== '') {
+          console.log(`Field ${key} already has value: "${currentValue}", skipping`);
+        }
+        
+        // Stop if both are assigned
+        if (userIdAssigned && cohortAssigned) {
+          break;
+        }
+      }
+      
+      // If not all assigned, check if we need to add new parameters
+      if (!userIdAssigned || !cohortAssigned) {
+        console.log(`Could not assign all values. userId assigned: ${userIdAssigned}, cohort assigned: ${cohortAssigned}`);
+        
+        // Add missing values as new parameters
+        if (!userIdAssigned) {
+          // Try to find the first available entry field pattern
+          let newFieldIndex = 1;
+          let newFieldName = `entry.userId`;
+          
+          // Try common patterns
+          const commonPatterns = [
+            'entry.userId',
+            'entry.user_id',
+            'entry.user',
+            'entry.learnerId',
+            'entry.learner_id',
+            'entry.learner'
+          ];
+          
+          for (const pattern of commonPatterns) {
+            if (!params.has(pattern)) {
+              newFieldName = pattern;
+              break;
+            }
+          }
+          
+          params.set(newFieldName, userId);
+          console.log(`Added userId as new parameter: ${newFieldName}`);
+        }
+        
+        if (!cohortAssigned) {
+          let newFieldName = `entry.cohort`;
+          
+          // Try common patterns for cohort ID
+          const commonPatterns = [
+            'entry.cohortId',
+            'entry.cohort_id',
+            'entry.cohort',
+            'entry.cohortID',
+            'entry.classId',
+            'entry.groupId'
+          ];
+          
+          for (const pattern of commonPatterns) {
+            if (!params.has(pattern)) {
+              newFieldName = pattern;
+              break;
+            }
+          }
+          
+          params.set(newFieldName, cohortId);
+          console.log(`Added cohortId as new parameter: ${newFieldName}`);
+        }
+      }
+    } else if (entryKeys.length === 1) {
+      // If only one entry field, fill it with userId
+      const key = entryKeys[0];
+      const currentValue = params.get(key);
+      
+      if (currentValue === '' || !currentValue) {
+        params.set(key, userId);
+        console.log(`Assigned userId to single field: ${key}`);
+        
+        // Add cohortId as a separate parameter
+        params.set('cohortId', cohortId);
+        console.log(`Added cohortId as separate parameter`);
+      } else {
+        console.log(`Single field ${key} already has value: "${currentValue}"`);
+        // Add both as new parameters
+        params.set('userId', userId);
+        params.set('cohortId', cohortId);
+      }
+    } else {
+      // No entry fields found, add our parameters
+      console.warn("No entry fields found in form, adding default parameters");
+      params.set('userId', userId);
+      params.set('cohortId', cohortId);
+    }
+    
+    // Update the URL
+    urlObj.search = params.toString();
+    const formattedUrl = urlObj.toString();
+    
+    console.log("Formatted Google Form URL:", formattedUrl);
+    return formattedUrl;
+  } catch (error) {
+    console.error("Error formatting Google Form URL:", error);
+    return originalUrl;
+  }
 }
 
 const ContentRenderer: React.FC<ContentRendererProps> = ({
-  type,
-  url,
-  title,
   className = "",
+  iframeRef,
+  style,
 }) => {
-  const {
-    currentContent,
-    stages,
-    setCurrentContent,
-    canGoNext,
-    setCanGoNext,
-    remainingTime,
-    setRemainingTime,
-  } = useCourseContext();
-
+  // 1. Get current content from URL
+  const { programId, stageId, unitId, conceptId } = useParams<{
+    programId: string;
+    stageId: string;
+    unitId: string;
+    conceptId: string;
+  }>();
+  
+  // 2. Get user info
+  const { user } = useUserContext();
+  
+  // 3. Get course data from store
+  const { getSubconceptById } = useCourseStore();
+  
+  // 4. Get attempt hook
   const { recordAttempt } = useUserAttempt();
+  
+  // State for current subconcept data
+  const [currentSubconcept, setCurrentSubconcept] = useState<{
+    subconceptId: string;
+    subconceptLink: string;
+    subconceptType: string;
+    subconceptMaxscore: number;
+    stageId: string;
+    unitId: string;
+    isLockedForDemo?: boolean;
+    completionStatus: string;
+  } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [attemptRecorded, setAttemptRecorded] = useState(false);
@@ -44,51 +203,100 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   const [vocabularyScore, setVocabularyScore] = useState(0);
+  const [formattedUrl, setFormattedUrl] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ----------------------------------------------------------
-  //  Detect fullscreen mode
+  //  Load subconcept data when URL changes
   // ----------------------------------------------------------
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      const fsElement =
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement;
-      setIsFullscreen(!!fsElement);
+    const loadSubconcept = () => {
+      if (!conceptId || !programId || !stageId || !unitId) {
+        console.log("Missing URL params:", { conceptId, programId, stageId, unitId });
+        setIsLoading(false);
+        return;
+      }
+
+      const subconcept = getSubconceptById(conceptId);
+      
+      if (!subconcept) {
+        console.log("Subconcept not found:", conceptId);
+        setIsLoading(false);
+        return;
+      }
+
+      setCurrentSubconcept({
+        subconceptId: subconcept.subconceptId,
+        subconceptLink: subconcept.subconceptLink,
+        subconceptType: subconcept.subconceptType,
+        subconceptMaxscore: Number(subconcept.subconceptMaxscore || 0),
+        stageId: subconcept.stageId,
+        unitId: subconcept.unitId,
+        isLockedForDemo: subconcept.isLockedForDemo,
+        completionStatus: subconcept.completionStatus
+      });
+      
+      setIsLoading(false);
     };
 
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
-    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
-    };
-  }, []);
+    loadSubconcept();
+  }, [conceptId, programId, stageId, unitId, getSubconceptById]);
 
   // ----------------------------------------------------------
-  //  Reset state when content changes
+  //  Format Google Form URL for assessment types
   // ----------------------------------------------------------
-  const prevUrlRef = useRef(url);
-
   useEffect(() => {
-    if (url !== prevUrlRef.current) {
-      setIsLoading(true);
-      setAttemptRecorded(false);
-      setShowNextOverlay(false);
-      setCountdown(5);
-      setQuizScore(0);
-      setVocabularyScore(0);
-      prevUrlRef.current = url;
+    const formatAssessmentUrl = () => {
+      if (!currentSubconcept) return;
+      
+      const normalizedType = currentSubconcept.subconceptType.toLowerCase();
+      
+      // Check if it's a Google Form/Assessment type
+      if (normalizedType === "assessment" || normalizedType === "googleform") {
+        try {
+          // Get user data
+          const userId = user?.userId || "";
+          
+          // Get cohort ID from localStorage
+          const selectedCohortRaw = localStorage.getItem("selectedCohort");
+          const selectedCohort = selectedCohortRaw ? JSON.parse(selectedCohortRaw) : null;
+          const cohortId = selectedCohort?.cohortId || "";
+          
+          console.log("Formatting Google Form URL in ContentRenderer:", { 
+            userId, 
+            cohortId,
+            originalUrl: currentSubconcept.subconceptLink 
+          });
+          
+          // Format the URL using the dynamic helper function
+          const formatted = formatGoogleFormUrl(currentSubconcept.subconceptLink, userId, cohortId);
+          setFormattedUrl(formatted);
+        } catch (error) {
+          console.error("Error formatting Google Form URL in ContentRenderer:", error);
+          setFormattedUrl(currentSubconcept.subconceptLink);
+        }
+      } else {
+        // If not a Google Form, use original URL
+        setFormattedUrl(currentSubconcept.subconceptLink);
+      }
+    };
+
+    if (currentSubconcept) {
+      formatAssessmentUrl();
     }
-  }, [url]);
+  }, [currentSubconcept, user?.userId]);
+
+  // ----------------------------------------------------------
+  //  Reset attempt state when content changes
+  // ----------------------------------------------------------
+  useEffect(() => {
+    setAttemptRecorded(false);
+    setShowNextOverlay(false);
+    setCountdown(5);
+    setQuizScore(0);
+    setVocabularyScore(0);
+  }, [conceptId]);
 
   // ----------------------------------------------------------
   //  Video progress (90% = attempt)
@@ -96,6 +304,11 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const handleVideoProgress = async (
     e: React.SyntheticEvent<HTMLVideoElement>
   ) => {
+    if (!currentSubconcept || !user) return;
+    
+    // Skip if demo user or locked content
+    if (currentSubconcept.isLockedForDemo) return;
+    
     const video = e.currentTarget;
     const progress = (video.currentTime / video.duration) * 100;
 
@@ -103,10 +316,20 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       window.dispatchEvent(new Event("video90"));
       setAttemptRecorded(true);
       try {
-        await recordAttempt();
+        await recordAttempt({
+          userId: user.userId,
+          programId: programId!,
+          stageId: currentSubconcept.stageId,
+          unitId: currentSubconcept.unitId,
+          subconceptId: currentSubconcept.subconceptId,
+          subconceptType: currentSubconcept.subconceptType,
+          subconceptMaxscore: currentSubconcept.subconceptMaxscore
+        });
+        
+        // Update completion status
         window.dispatchEvent(
           new CustomEvent("updateSidebarCompletion", {
-            detail: { subconceptId: currentContent.subconceptId },
+            detail: { subconceptId: currentSubconcept.subconceptId }
           })
         );
       } catch (err) {
@@ -133,9 +356,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     if (!showNextOverlay) return;
 
     if (countdown === 0) {
-      const nextBtn = document.getElementById(
-        "next-subconcept-btn-unlocked"
-      );
+      const nextBtn = document.getElementById("next-subconcept-btn-unlocked");
       nextBtn?.click();
       setShowNextOverlay(false);
       setCountdown(5);
@@ -216,27 +437,38 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     </div>
   );
 
-  // =====================================================================
-  // --- Logic for user-attempt on NextsubconceptButton Click for specific types ---
-  // =====================================================================
-
+  // ----------------------------------------------------------
+  //  Logic for specific content types
+  // ----------------------------------------------------------
   const recordOnNextTypes = ["image", "youtube", "pdf", "mtf"];
 
   const shouldRecordOnNext = () => {
-    const t = currentContent.type?.toLowerCase();
+    if (!currentSubconcept) return false;
+    const t = currentSubconcept.subconceptType.toLowerCase();
     if (t === "mcq") return false;
     return recordOnNextTypes.includes(t);
   };
 
   const handleNextAttempt = async () => {
+    if (!currentSubconcept || !user) return;
     if (!shouldRecordOnNext() || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt();
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -245,31 +477,43 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     }
   };
 
+  // Attach handler to next button
   useEffect(() => {
     const nextBtn = document.getElementById("next-subconcept-btn");
     if (!nextBtn) return;
 
     const handler = () => handleNextAttempt();
-
     nextBtn.addEventListener("click", handler);
     return () => nextBtn.removeEventListener("click", handler);
-  }, [currentContent, attemptRecorded]);
+  }, [currentSubconcept, attemptRecorded]);
 
   // ----------------------------------------------------------
-  //  Handle quiz submission - record attempt
+  //  Handle quiz submission
   // ----------------------------------------------------------
   const handleQuizSubmission = async (payload: {
     userAttemptFlag: boolean;
     userAttemptScore: number;
   }) => {
+    if (!currentSubconcept || !user) return;
     if (!payload?.userAttemptFlag || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt(payload.userAttemptScore);
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore,
+        score: payload.userAttemptScore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -279,20 +523,32 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  //  Handle vocabulary activity submission - record attempt
+  //  Handle vocabulary activity submission
   // ----------------------------------------------------------
   const handleVocabularySubmission = async (payload: {
     userAttemptFlag: boolean;
     userAttemptScore: number;
   }) => {
+    if (!currentSubconcept || !user) return;
     if (!payload?.userAttemptFlag || attemptRecorded) return;
+    if (currentSubconcept.isLockedForDemo) return;
 
     try {
       setAttemptRecorded(true);
-      await recordAttempt(payload.userAttemptScore);
+      await recordAttempt({
+        userId: user.userId,
+        programId: programId!,
+        stageId: currentSubconcept.stageId,
+        unitId: currentSubconcept.unitId,
+        subconceptId: currentSubconcept.subconceptId,
+        subconceptType: currentSubconcept.subconceptType,
+        subconceptMaxscore: currentSubconcept.subconceptMaxscore,
+        score: payload.userAttemptScore
+      });
+      
       window.dispatchEvent(
         new CustomEvent("updateSidebarCompletion", {
-          detail: { subconceptId: currentContent.subconceptId },
+          detail: { subconceptId: currentSubconcept.subconceptId }
         })
       );
     } catch (err) {
@@ -302,19 +558,52 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   };
 
   // ----------------------------------------------------------
-  //  Type-based content rendering
+  //  Show loading state
   // ----------------------------------------------------------
-  if (!url) {
+  if (isLoading) {
     return (
-      <div
-        className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
-      >
-        <p>No content available</p>
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
+        <div className="animate-spin h-8 w-8 border-b-2 border-blue-500 rounded-full" />
       </div>
     );
   }
 
-  switch (type.toLowerCase()) {
+  // ----------------------------------------------------------
+  //  Show error if no subconcept
+  // ----------------------------------------------------------
+  if (!currentSubconcept) {
+    return (
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
+        <p>Content not found</p>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------------
+  //  Show locked content for demo users
+  // ----------------------------------------------------------
+  if (currentSubconcept.isLockedForDemo) {
+    return (
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-gray-50 p-8 ${className}`}>
+        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">Content Locked for Demo</h3>
+        <p className="text-gray-500 text-center max-w-md">
+          This content is not available in demo mode. Please upgrade to access full features.
+        </p>
+      </div>
+    );
+  }
+
+  const { subconceptLink, subconceptType, completionStatus } = currentSubconcept;
+
+  // ----------------------------------------------------------
+  //  Type-based content rendering
+  // ----------------------------------------------------------
+  switch (subconceptType.toLowerCase()) {
     case "video":
       return (
         <div className={`relative w-full h-full ${className}`}>
@@ -325,7 +614,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             controlsList="nodownload noremoteplayback"
             autoPlay
             className="w-full h-full bg-black rounded-xl"
-            src={url}
+            src={subconceptLink}
             onContextMenu={(e) => e.preventDefault()}
             onLoadedData={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -342,8 +631,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full bg-white ${className}`}>
           {isLoading && renderLoading()}
           <PDFRenderer
-            pdfUrl={url}
-            title={title}
+            pdfUrl={subconceptLink}
+            title="PDF Content"
             onLoadSuccess={() => setIsLoading(false)}
             onLoadError={() => setIsLoading(false)}
           />
@@ -358,8 +647,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         >
           {isLoading && renderLoading()}
           <img
-            src={url}
-            alt={title || "Image content"}
+            src={subconceptLink}
+            alt="Image content"
             className="max-w-full max-h-full object-contain rounded-xl"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -369,14 +658,51 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     case "medium":
     case "toastmasters":
-    case "assessment":
       return (
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
-            src={url}
+            ref={iframeRef}
+            src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
-            title={title || "External Content"}
+            title="External Content"
+            frameBorder="0"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            loading="lazy"
+          />
+        </div>
+      );
+
+    case "assessment":
+    case "googleform":
+
+      const isCompleted = completionStatus?.toLowerCase() === "yes";
+      if (isCompleted) {
+        return (
+          <div className="flex items-center justify-center w-full h-full p-6">
+            <div className="max-w-md w-full bg-gray-50 border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Form already submitted
+              </h2>
+              <p className="text-sm text-gray-600 mt-2">
+                You have already submitted this form.
+                <br />
+                You can attempt it only once.
+              </p>
+            </div>
+          </div>
+        );
+      }
+      // Use formatted URL for Google Forms/Assessments
+      return (
+        <div className={`relative w-full h-full ${className}`}>
+          {isLoading && renderLoading()}
+          <iframe
+            ref={iframeRef}
+            src={formattedUrl}
+            className="w-full h-full rounded-xl bg-white"
+            title="Google Form Assessment"
             frameBorder="0"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
@@ -390,23 +716,23 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <QuizActivity
             triggerSubmit={() => {}}
-            xmlUrl={url}
-            key={url}
-            subconceptMaxscore={10}
+            xmlUrl={subconceptLink}
+            key={subconceptLink}
+            subconceptMaxscore={currentSubconcept.subconceptMaxscore}
             setSubmissionPayload={handleQuizSubmission}
             setScorePercentage={setQuizScore}
           />
         </div>
       );
 
-    case "mtf": // Match The Following - Vocabulary Activity
+    case "mtf":
       return (
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <VocabularyActivity
             triggerSubmit={() => {}}
-            xmlUrl={url}
-            key={url}
-            subconceptMaxscore={10}
+            xmlUrl={subconceptLink}
+            key={subconceptLink}
+            subconceptMaxscore={currentSubconcept.subconceptMaxscore}
             setSubmissionPayload={handleVocabularySubmission}
             setScorePercentage={setVocabularyScore}
           />
@@ -418,9 +744,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         <div className={`relative w-full h-full ${className}`}>
           {isLoading && renderLoading()}
           <iframe
-            src={url}
+            ref={iframeRef}
+            src={subconceptLink}
             className="w-full h-full rounded-xl bg-white"
-            title={title || "External Content"}
+            title="External Content"
             frameBorder="0"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
