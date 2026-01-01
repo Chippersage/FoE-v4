@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import useCourseStore from "../../../store/courseStore";
 import { useUserContext } from "../../../context/AuthContext";
 
@@ -23,6 +23,8 @@ const GoogleFormActions: React.FC<Props> = ({
   } = useCourseStore();
 
   const [loading, setLoading] = useState(false);
+  // Add a ref to track if already submitting
+  const isSubmittingRef = useRef(false);
 
   const isCompleted = completionStatus?.toLowerCase() === "yes";
   const sub = getSubconceptById(subconceptId);
@@ -30,7 +32,11 @@ const GoogleFormActions: React.FC<Props> = ({
   if (!user?.userId || !programId || !cohort?.cohortId || !sub) return null;
 
   const handleConfirmSubmit = async () => {
+    // PREVENT DOUBLE CLICKING
+    if (isSubmittingRef.current || loading) return;
+    
     try {
+      isSubmittingRef.current = true;
       setLoading(true);
 
       const sessionId = localStorage.getItem("sessionId") || "";
@@ -38,7 +44,6 @@ const GoogleFormActions: React.FC<Props> = ({
       const startTs = new Date().toISOString();
       const endTs = new Date().toISOString();
 
-      /* -------- CORRECT FULL PAYLOAD -------- */
       const payload = {
         cohortId: cohort.cohortId,
         programId,
@@ -59,7 +64,6 @@ const GoogleFormActions: React.FC<Props> = ({
         body: JSON.stringify(payload),
       });
 
-      /* -------- MARK COMPLETED -------- */
       markSubconceptCompleted(subconceptId);
 
       window.dispatchEvent(
@@ -71,6 +75,7 @@ const GoogleFormActions: React.FC<Props> = ({
       console.error("Google Form attempt failed", err);
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -87,8 +92,8 @@ const GoogleFormActions: React.FC<Props> = ({
     return (
       <button
         onClick={handleConfirmSubmit}
-        disabled={loading}
-        className="px-4 py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center"
+        disabled={loading || isSubmittingRef.current}
+        className="px-4 py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "..." : "Submit Form"}
       </button>
@@ -107,8 +112,8 @@ const GoogleFormActions: React.FC<Props> = ({
   return (
     <button
       onClick={handleConfirmSubmit}
-      disabled={loading}
-      className="h-[38px] bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-6 rounded-md text-sm font-medium transition flex items-center justify-center"
+      disabled={loading || isSubmittingRef.current}
+      className="h-[38px] bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-6 rounded-md text-sm font-medium transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {loading ? "Submitting..." : "I have submitted the form"}
     </button>

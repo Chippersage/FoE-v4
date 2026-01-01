@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -59,8 +59,27 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // Add ref to prevent double submission
+  const isSubmittingRef = useRef(false);
+  const hasSubmittedRef = useRef(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+
+  /* -------------------------------------------------------------------------- */
+  /* Reset state when modal opens/closes                                        */
+  /* -------------------------------------------------------------------------- */
+  useEffect(() => {
+    if (isOpen) {
+      // Reset submission flags when modal opens
+      isSubmittingRef.current = false;
+      hasSubmittedRef.current = false;
+      setErrorMessage(null);
+    } else {
+      // Clean up when modal closes
+      cleanupPreview();
+    }
+  }, [isOpen]);
 
   /* -------------------------------------------------------------------------- */
   /* Preview Handling                                                           */
@@ -90,24 +109,27 @@ const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   /* -------------------------------------------------------------------------- */
-  /* Submit                                                                     */
+  /* Submit - with double-click prevention                                      */
   /* -------------------------------------------------------------------------- */
 
   const handleSubmit = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
+    // PREVENT DOUBLE SUBMISSION
+    if (isSubmittingRef.current || hasSubmittedRef.current) return;
+    
+    if (!user?.userId || !programId || !cohortId || !stageId || !unitId || !subconceptId) {
+      setErrorMessage("Missing upload metadata. Please reload the course.");
+      return;
+    }
+
+    if (!file && !recordedMedia) {
+      setErrorMessage("No file selected for upload.");
+      return;
+    }
 
     try {
-      if (
-        !user?.userId ||
-        !programId ||
-        !cohortId ||
-        !stageId ||
-        !unitId ||
-        !subconceptId
-      ) {
-        throw new Error("Missing upload metadata. Please reload the course.");
-      }
+      isSubmittingRef.current = true;
+      setIsLoading(true);
+      setErrorMessage(null);
 
       const formData = new FormData();
       const sessionId = localStorage.getItem("sessionId") || "";
@@ -133,8 +155,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
           recordedMedia.blob,
           `${user.userId}-${cohortId}-${programId}-${subconceptId}.${ext}`
         );
-      } else {
-        throw new Error("No file selected for upload.");
       }
 
       /* -------------------- Attempt Metadata -------------------- */
@@ -172,12 +192,22 @@ const UploadModal: React.FC<UploadModalProps> = ({
       await axios.post(
         `${API_BASE_URL}/assignment-with-attempt/submit`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { 
+          headers: { "Content-Type": "multipart/form-data" },
+          // Add timeout to prevent hanging requests
+          timeout: 30000 
+        }
       );
 
+      // Mark as successfully submitted
+      hasSubmittedRef.current = true;
       setShowSuccessModal(true);
+      
     } catch (err: any) {
       setErrorMessage(err.message || "Upload failed");
+      // Reset submission flags on error
+      isSubmittingRef.current = false;
+      hasSubmittedRef.current = false;
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +217,17 @@ const UploadModal: React.FC<UploadModalProps> = ({
     cleanupPreview();
     setErrorMessage(null);
     onClose();
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* Handle success modal close                                                 */
+  /* -------------------------------------------------------------------------- */
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    if (onUploadSuccess) {
+      onUploadSuccess();
+    }
+    handleClose();
   };
 
   /* -------------------------------------------------------------------------- */
@@ -218,7 +259,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
                     Submit Assignment
                   </h3>
                 </div>
-                <button onClick={handleClose}>
+                <button 
+                  onClick={handleClose}
+                  disabled={isSubmittingRef.current}
+                >
                   <X size={16} className="text-gray-400 hover:text-gray-600" />
                 </button>
               </div>
@@ -264,13 +308,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
               <div className="px-5 py-3 flex justify-end border-t border-gray-100">
                 <button
                   onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-sm disabled:opacity-60"
+                  disabled={isLoading || isSubmittingRef.current || hasSubmittedRef.current}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />
                       Submitting
+                    </>
+                  ) : hasSubmittedRef.current ? (
+                    <>
+                      <CheckCircle2 size={14} />
+                      Submitted
                     </>
                   ) : (
                     <>
@@ -287,11 +336,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          onUploadSuccess();
-          handleClose();
-        }}
+        onClose={handleSuccessClose}
       />
     </>
   );

@@ -1,6 +1,6 @@
 // components/MarkCompleteButton.tsx
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Check } from "lucide-react";
 import { useUserAttempt } from "../../../hooks/useUserAttempt";
 
@@ -30,11 +30,15 @@ const MarkCompleteButton: React.FC<MarkCompleteButtonProps> = ({
   const { recordAttempt } = useUserAttempt();
   const [isLoading, setIsLoading] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  // Add ref to prevent double submissions
+  const isSubmittingRef = useRef(false);
 
   const handleMarkComplete = async () => {
-    if (isLoading || isCompleted) return;
+    // PREVENT DOUBLE CLICKING
+    if (isSubmittingRef.current || isLoading || isCompleted) return;
     
     try {
+      isSubmittingRef.current = true;
       setIsLoading(true);
       
       await recordAttempt({
@@ -60,6 +64,9 @@ const MarkCompleteButton: React.FC<MarkCompleteButtonProps> = ({
       
     } catch (error) {
       console.error("Error marking as complete:", error);
+      // Reset states on error
+      isSubmittingRef.current = false;
+      setIsCompleted(false);
     } finally {
       setIsLoading(false);
     }
@@ -77,14 +84,15 @@ const MarkCompleteButton: React.FC<MarkCompleteButtonProps> = ({
   return (
     <button
       onClick={handleMarkComplete}
-      disabled={isLoading}
+      disabled={isLoading || isSubmittingRef.current}
       className={`
         ${isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2 text-sm'}
         rounded-md font-medium transition flex items-center gap-2
-        ${isLoading 
+        ${isLoading || isSubmittingRef.current
           ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
           : 'bg-[#0EA5E9] hover:bg-[#0284C7] text-white'
         }
+        disabled:opacity-50 disabled:cursor-not-allowed
       `}
     >
       {isLoading ? (

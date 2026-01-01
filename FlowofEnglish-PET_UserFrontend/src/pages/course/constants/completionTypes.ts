@@ -2,6 +2,7 @@
 export const MANUAL_COMPLETION_TYPES = [
   "image",
   "pdf",
+  "youtube",
   // Add more types later as needed
   // "audio",
   // "word",
@@ -12,7 +13,6 @@ export const MANUAL_COMPLETION_TYPES = [
 
 export const AUTO_COMPLETION_TYPES = [
   "video",
-  "youtube",
   // These auto-complete based on user interaction
   "assignment", // Actually needs submission but auto-completes after upload
   "googleform",

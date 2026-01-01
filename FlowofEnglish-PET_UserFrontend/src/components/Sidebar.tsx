@@ -6,13 +6,6 @@ import { useUserContext } from "../context/AuthContext";
 import HomeExitIcon from "./icons/HomeExitIcon";
 import useCourseStore from "../store/courseStore";
 import SidebarSkeleton from "../pages/course/skeletons/SidebarSkeleton";
-import { DEMO_USER_MESSAGE } from "../config/demoUsers";
-import { 
-  isUnitAllowedForDemo,
-  isStageAllowedForDemo,
-  getProgramType,
-  isDemoUser as checkIsDemoUser
-} from "../config/demoUsers";
 import useCourseEntryRedirect from "../pages/course/hooks/useCourseEntryRedirect"; 
 
 // --------------------------------------------------------------------------
@@ -23,17 +16,14 @@ const RoundCheckbox = React.memo(({ completed, active }: {
   completed: boolean; 
   active: boolean 
 }) => (
-  <div className="relative flex-shrink-0 self-center">
+  <div className="relative flex-shrink-0">
     <div
-      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200
-        ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-[#7DD3FC]"}
+      className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all duration-200
+        ${completed ? "bg-[#0EA5E9] border-[#0EA5E9]" : "border-gray-300 group-hover:border-gray-400"}
         ${active ? "border-[#0EA5E9]" : ""}`}
     >
       {completed && <Check size={10} className="text-white stroke-[3]" />}
     </div>
-    {completed && (
-      <div className="absolute inset-0 rounded-full bg-[#0EA5E9] opacity-20 animate-pulse" />
-    )}
   </div>
 ));
 
@@ -58,17 +48,15 @@ const Sidebar: React.FC = () => {
   
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [localStages, setLocalStages] = useState<any[]>(stages);
-  const [programType, setProgramType] = useState<string>('');
   
   const isMentor = user?.userType?.toLowerCase() === "mentor";
-  const isDemoUser = user?.userId ? checkIsDemoUser(user.userId) : false;
   
   // --------------------------------------------------------------------------
   // 2. USE COURSE ENTRY REDIRECT HOOK (IMPORTED)
   // --------------------------------------------------------------------------
-  useCourseEntryRedirect({
-    enabled: Boolean(programId && !stageId && !unitId && !conceptId),
-  });
+  // useCourseEntryRedirect({
+  //   enabled: Boolean(programId && !stageId && !unitId && !conceptId),
+  // });
   
   // --------------------------------------------------------------------------
   // 3. MEMOIZED VALUES
@@ -112,47 +100,9 @@ const Sidebar: React.FC = () => {
     );
   }, []);
   
-  const isStageAccessibleForDemo = useCallback((stage: any): boolean => {
-    if (!isDemoUser || !programId) return true;
-    return programType === 'PET-2' ? isStageAllowedForDemo(stage.stageId) : true;
-  }, [isDemoUser, programId, programType]);
-  
-  const isUnitAccessibleForDemo = useCallback((unitId: string): boolean => {
-    if (!isDemoUser || !programId) return true;
-    return programType === 'PET-1' ? isUnitAllowedForDemo(unitId) : true;
-  }, [isDemoUser, programId, programType]);
-  
-  const isContentAccessibleForDemo = useCallback((stage: any, unit?: any): boolean => {
-    if (!isDemoUser || !programId) return true;
-    
-    if (programType === 'PET-1') {
-      return unit ? isUnitAccessibleForDemo(unit.unitId) : true;
-    }
-    
-    if (programType === 'PET-2') {
-      return isStageAccessibleForDemo(stage);
-    }
-    
-    return true;
-  }, [isDemoUser, programId, programType, isUnitAccessibleForDemo, isStageAccessibleForDemo]);
-  
-  const doesStageHaveAccessibleUnits = useCallback((stage: any): boolean => {
-    if (!isDemoUser || programType !== 'PET-1') return true;
-    
-    return stage.units.some(unit => isUnitAccessibleForDemo(unit.unitId));
-  }, [isDemoUser, programType, isUnitAccessibleForDemo]);
-  
-  const isSubconceptLocked = useCallback((unit: any, subIndex: number, stage: any): boolean => {
+  const isSubconceptLocked = useCallback((unit: any, subIndex: number): boolean => {
     const sub = unit.subconcepts?.[subIndex];
     if (!sub) return true;
-
-    if (isDemoUser) {
-      const isAccessible = isContentAccessibleForDemo(stage, unit);
-      if (!isAccessible) {
-        return true;
-      }
-      return false;
-    }
 
     if (isMentor) return false;
 
@@ -190,7 +140,7 @@ const Sidebar: React.FC = () => {
     }
 
     return currentGlobalIndex > nextUnlockIndex;
-  }, [isDemoUser, isMentor, buildGlobalList, isContentAccessibleForDemo]);
+  }, [isMentor, buildGlobalList]);
   
   const handleSubconceptClick = useCallback((
     sub: any, 
@@ -198,36 +148,22 @@ const Sidebar: React.FC = () => {
     stage: any, 
     isLocked: boolean
   ) => {
-    if (isLocked) {
-      if (isDemoUser) {
-        alert(DEMO_USER_MESSAGE);
-      }
-      return;
-    }
-    
-    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
+    if (isLocked) return;
     
     localStorage.setItem("lastViewedSubconcept", sub.subconceptId);
     
     navigate(
       `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${sub.subconceptId}`
     );
-  }, [isDemoUser, programId, navigate, isContentAccessibleForDemo]);
+  }, [programId, navigate]);
   
   const handleUnitClick = useCallback((unit: any, stage: any) => {
     if (!unit.unitLink) return;
     
-    const isLockedForDemo = isDemoUser && !isContentAccessibleForDemo(stage, unit);
-    
-    if (isLockedForDemo) {
-      alert(DEMO_USER_MESSAGE);
-      return;
-    }
-    
     navigate(
       `/course/${programId}/stage/${stage.stageId}/unit/${unit.unitId}/concept/${unit.unitId}`
     );
-  }, [isDemoUser, programId, navigate, isContentAccessibleForDemo]);
+  }, [programId, navigate]);
   
   // --------------------------------------------------------------------------
   // 5. EFFECTS
@@ -238,13 +174,6 @@ const Sidebar: React.FC = () => {
       setLocalStages(stages);
     }
   }, [stages]);
-  
-  useEffect(() => {
-    if (programId) {
-      const type = getProgramType(programId);
-      setProgramType(type);
-    }
-  }, [programId]);
   
   useEffect(() => {
     if (!conceptId || !localStages.length) return;
@@ -311,120 +240,77 @@ const Sidebar: React.FC = () => {
     if (localStages.length === 0) {
       return (
         <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-gray-500 text-sm">No content available</p>
+          <p className="text-gray-500 text-sm font-sans">No content available</p>
         </div>
       );
     }
 
     return (
-      <div className="px-3 py-4 space-y-4">
+      <div className="px-0 py-0 space-y-0 font-sans">
         {localStages.map((stage: any, stageIndex: number) => {
-          const isStageAccessible = isStageAccessibleForDemo(stage);
-          const hasAccessibleUnits = doesStageHaveAccessibleUnits(stage);
-          
-          const getStageLabel = () => {
-            if (!isDemoUser) return null;
-            
-            if (programType === 'PET-1') {
-              return hasAccessibleUnits ? 'View' : 'No Access';
-            }
-            
-            if (programType === 'PET-2') {
-              return isStageAccessible ? 'View' : 'Not for Demo';
-            }
-            
-            return 'View';
-          };
-
-          const stageLabel = getStageLabel();
-          
           return (
-            <div key={stage.stageId} className="border-b border-gray-200 pb-3">
+            <div key={stage.stageId} className="border-b border-gray-100 last:border-b-0">
               {/* Stage Header */}
               <button
                 onClick={() => toggleStage(stage.stageId)}
-                className="flex flex-col w-full text-left hover:text-gray-900 cursor-pointer"
+                className="flex w-full text-left hover:bg-gray-50 cursor-pointer px-6 py-4"
               >
-                <span className="text-xs font-semibold text-gray-500 mb-1 flex items-center justify-between">
-                  <span>{`Module ${stageIndex + 1}`}</span>
-                  {isDemoUser && stageLabel && (
-                    <span className={`text-xs ${
-                      stageLabel === 'Locked' || stageLabel === 'No Access'
-                        ? 'text-gray-500' 
-                        : 'text-gray-700'
-                    }`}>
-                      {stageLabel}
-                    </span>
-                  )}
-                </span>
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${
-                    isDemoUser && programType === 'PET-2' && !isStageAccessible 
-                      ? 'text-gray-500' 
-                      : 'text-gray-800'
-                  }`}>
+                <div className="flex-1 text-left">
+                  <div className="text-xs text-gray-600 mb-1 font-medium leading-none">
+                    {`Module ${stageIndex + 1}`}
+                  </div>
+                  <div className="text-[14px] font-medium text-gray-900 leading-snug">
                     {stage.stageName || `Stage ${stageIndex + 1}`}
-                  </span>
+                  </div>
+                </div>
+                <div className="ml-2 flex-shrink-0 self-center">
                   {openStages.includes(stage.stageId) ? (
-                    <ChevronUp size={16} />
+                    <ChevronUp size={18} className="text-gray-500" />
                   ) : (
-                    <ChevronDown size={16} />
+                    <ChevronDown size={18} className="text-gray-500" />
                   )}
                 </div>
               </button>
 
               {/* Units + Subconcepts */}
               {openStages.includes(stage.stageId) && (
-                <div className="mt-2 flex flex-col gap-1 text-sm text-gray-700">
+                <div className="bg-gray-50">
                   {stage.units.map((unit: any, unitIndex: number) => {
-                    const isUnitAccessible = isUnitAccessibleForDemo(unit.unitId);
-                    const isContentAccessible = isContentAccessibleForDemo(stage, unit);
-                    
                     return (
-                      <div key={unit.unitId} className="flex flex-col">
+                      <div key={unit.unitId} className="border-t border-gray-100 first:border-t-0">
                         {/* Unit Row */}
                         <div
                           onClick={() => handleUnitClick(unit, stage)}
-                          className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                          className={`px-6 py-3 transition-colors ${
                             !unit.unitLink
                               ? 'opacity-70 cursor-not-allowed'
                               : conceptId === unit.unitId
-                              ? "bg-[#E0F2FE] text-[#0EA5E9] cursor-pointer"
-                              : isContentAccessible
-                              ? "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700 cursor-pointer"
-                              : "opacity-70 cursor-not-allowed"
+                              ? "bg-blue-50"
+                              : "hover:bg-gray-100 cursor-pointer"
                           }`}
                         >
-                          {isDemoUser && !isUnitAccessible && (
-                            <Lock size={14} className="text-gray-400 flex-shrink-0" />
-                          )}
-                          
-                          <span className={`text-sm flex-1 pl-1 ${
-                            isDemoUser && !isContentAccessible ? 'text-gray-500' : ''
-                          }`}>
+                          <div className="text-[14px] font-medium text-gray-900">
                             {unit.unitName || `Unit ${unitIndex + 1}`}
-                          </span>
+                          </div>
                         </div>
 
-                        {/* Subconcept Rows */}
+                        {/* Subconcept Rows - CHANGED: items-start → items-center */}
                         {unit.subconcepts?.map((sub: any, subIndex: number) => {
                           const subCompleted = (sub.completionStatus || "").toLowerCase() === "yes";
                           const type = (sub.subconceptType || "").toLowerCase();
                           const isVideo = type === "video";
-                          const isLocked = isSubconceptLocked(unit, subIndex, stage);
+                          const isLocked = isSubconceptLocked(unit, subIndex);
 
                           return (
                             <div
                               key={sub.subconceptId}
                               onClick={() => handleSubconceptClick(sub, unit, stage, isLocked)}
-                              className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                              className={`px-6 py-3 border-t border-gray-100 flex items-center gap-3 transition-colors ${
                                 isLocked
-                                  ? "cursor-not-allowed"
+                                  ? "cursor-not-allowed opacity-70"
                                   : conceptId === sub.subconceptId
-                                  ? "bg-[#E0F2FE] text-[#0EA5E9] cursor-pointer"
-                                  : "hover:text-[#0EA5E9] hover:bg-[#E0F2FE] text-gray-700 cursor-pointer"
-                              } ${
-                                isDemoUser && !isContentAccessible ? 'opacity-70' : ''
+                                  ? "bg-blue-50 cursor-pointer"
+                                  : "hover:bg-gray-100 cursor-pointer"
                               }`}
                             >
                               <RoundCheckbox
@@ -432,35 +318,35 @@ const Sidebar: React.FC = () => {
                                 active={conceptId === sub.subconceptId}
                               />
 
-                              {isVideo ? (
-                                <Video size={14} className={`${
-                                  isLocked ? 'text-gray-400' : 'text-gray-600'
-                                } group-hover:text-[#0EA5E9]`} />
-                              ) : (
-                                <FileText size={14} className={`${
-                                  isLocked ? 'text-gray-400' : 'text-gray-600'
-                                } group-hover:text-[#0EA5E9]`} />
-                              )}
-
-                              <span className={`text-sm flex-1 ${
-                                isLocked ? 'text-gray-500' : ''
-                              }`}>
-                                {`${stageIndex + 1}.${(() => {
-                                  let count = 1;
-                                  for (let u of stage.units) {
-                                    if (u.unitId === unit.unitId) break;
-                                    count += u.subconcepts?.length || 0;
-                                  }
-                                  return count + subIndex;
-                                })()} ${sub.subconceptDesc || sub.subconceptName || `Concept ${subIndex + 1}`}`}
-                              </span>
+                              <div className="flex-1 min-w-0 flex items-center gap-3">
+                                {isVideo ? (
+                                  <Video size={16} className={`flex-shrink-0 ${
+                                    isLocked ? 'text-gray-400' : 'text-gray-600'
+                                  }`} />
+                                ) : (
+                                  <FileText size={16} className={`flex-shrink-0 ${
+                                    isLocked ? 'text-gray-400' : 'text-gray-600'
+                                  }`} />
+                                )}
+                                
+                                <div className="flex-1">
+                                  <div className={`text-[13px] leading-snug ${
+                                    isLocked ? 'text-gray-500' : conceptId === sub.subconceptId ? 'text-gray-900 font-medium' : 'text-gray-800'
+                                  }`}>
+                                    {`${stageIndex + 1}.${(() => {
+                                      let count = 1;
+                                      for (let u of stage.units) {
+                                        if (u.unitId === unit.unitId) break;
+                                        count += u.subconcepts?.length || 0;
+                                      }
+                                      return count + subIndex;
+                                    })()} ${sub.subconceptDesc || sub.subconceptName || `Concept ${subIndex + 1}`}`}
+                                  </div>
+                                </div>
+                              </div>
 
                               {isLocked && (
-                                <Lock size={14} className={`flex-shrink-0 ${
-                                  isDemoUser && !isContentAccessible 
-                                    ? 'text-yellow-500' 
-                                    : 'text-gray-500'
-                                }`} />
+                                <Lock size={14} className="text-gray-400 flex-shrink-0 ml-2" />
                               )}
                             </div>
                           );
@@ -478,36 +364,24 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    // CRITICAL: Ensure full height with proper flex structure
-    <aside className="flex flex-col h-full min-h-0 bg-white text-black">
-      {/* Demo User Banner - Mobile Only */}
-      {isDemoUser && (
-        <div className="md:hidden bg-yellow-50 border-b border-yellow-200 p-2 text-xs text-yellow-800 flex items-center gap-2 shrink-0">
-          <Lock size={12} />
-          <span className="flex-1">
-            <strong>Demo Mode:</strong> Some content locked
-          </span>
-        </div>
-      )}
-
+    <aside className="flex flex-col h-full min-h-0 bg-white text-black font-sans antialiased">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col h-full min-h-0 border-r border-gray-300">
-        {/* Header - Fixed height */}
-        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-lg border-b border-gray-200 flex items-center justify-between shrink-0 ${
-          isDemoUser ? 'bg-yellow-50' : ''
-        }`}>
-          <div className="mr-4">
-            <HomeExitIcon size={22} className="cursor-pointer"/>
+      <div className="hidden md:flex flex-col h-full min-h-0 border-r border-gray-200">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="cursor-pointer">
+              <HomeExitIcon size={22} className="text-gray-600 hover:text-gray-900 transition-colors" />
+            </div>
+            <div>
+              <div className="text-[16px] font-semibold text-gray-900 leading-tight">
+                {programName || "Course"}
+              </div>
+            </div>
           </div>
-          <span>{programName || "Course"}</span>
-          {isDemoUser && (
-            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">
-              DEMO
-            </span>
-          )}
         </div>
         
-        {/* Content - Takes remaining space */}
+        {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <SidebarContent />
         </div>
@@ -515,19 +389,19 @@ const Sidebar: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <div className="flex md:hidden flex-col h-full min-h-0">
-        {/* Header - Fixed height */}
-        <div className={`px-4 py-2 text-[#0EA5E9] font-semibold text-base border-b border-gray-200 flex items-center justify-between shrink-0 ${
-          isDemoUser ? 'bg-yellow-50' : 'bg-white'
-        }`}>
-          <span>{programName || "Course"}</span>
-          {isDemoUser && (
-            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-              DEMO
-            </span>
-          )}
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="cursor-pointer">
+              <HomeExitIcon size={20} className="text-gray-600" />
+            </div>
+            <div className="text-[15px] font-semibold text-gray-900">
+              {programName || "Course"}
+            </div>
+          </div>
         </div>
         
-        {/* Content - Takes remaining space */}
+        {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <SidebarContent />
         </div>

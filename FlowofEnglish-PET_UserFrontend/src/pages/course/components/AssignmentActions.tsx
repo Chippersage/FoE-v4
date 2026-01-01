@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FileUploaderRecorder } from "../../../components/AssignmentComponents/FileUploaderRecorder";
 import AssignmentModal from "../../../components/modals/AssignmentModal";
 import useCourseStore from "../../../store/courseStore";
@@ -26,13 +26,17 @@ const AssignmentActions: React.FC<Props> = ({
   const [assignmentStatus, setAssignmentStatus] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [hasFetchedStatus, setHasFetchedStatus] = useState(false);
+  
+  // Add refs to prevent double actions
+  const isFetchingStatusRef = useRef(false);
+  const isOpeningModalRef = useRef(false);
 
   const isCompleted = completionStatus?.toLowerCase() === "yes";
   const sub = getSubconceptById(subconceptId);
 
   // Fetch assignment status on mount if completed
   useEffect(() => {
-    if ((isCompleted || uploaded) && !hasFetchedStatus && user?.userId) {
+    if ((isCompleted || uploaded) && !hasFetchedStatus && user?.userId && !isFetchingStatusRef.current) {
       fetchAssignmentStatus();
     }
   }, [isCompleted, uploaded, user?.userId]);
@@ -42,7 +46,11 @@ const AssignmentActions: React.FC<Props> = ({
   /* ---------------- Fetch Assignment Status ---------------- */
 
   const fetchAssignmentStatus = async () => {
+    // Prevent multiple simultaneous fetches
+    if (isFetchingStatusRef.current) return;
+    
     try {
+      isFetchingStatusRef.current = true;
       setLoadingStatus(true);
       setHasFetchedStatus(true);
 
@@ -62,12 +70,16 @@ const AssignmentActions: React.FC<Props> = ({
       setAssignmentStatus(null);
     } finally {
       setLoadingStatus(false);
+      isFetchingStatusRef.current = false;
     }
   };
 
   /* ---------------- Upload Success ---------------- */
 
   const handleUploadSuccess = async () => {
+    // Prevent multiple success handlers
+    if (uploaded) return;
+    
     markSubconceptCompleted(subconceptId);
     setUploaded(true);
     await fetchAssignmentStatus();
@@ -77,6 +89,28 @@ const AssignmentActions: React.FC<Props> = ({
         detail: { subconceptId },
       })
     );
+  };
+
+  /* ---------------- Handle View Status Click ---------------- */
+
+  const handleViewStatusClick = async () => {
+    // Prevent double clicking on view status button
+    if (isOpeningModalRef.current || loadingStatus) return;
+    
+    try {
+      isOpeningModalRef.current = true;
+      setShowAssignmentModal(true);
+      
+      // Only fetch if we don't have status yet
+      if (!assignmentStatus) {
+        await fetchAssignmentStatus();
+      }
+    } finally {
+      // Reset after a short delay to prevent rapid clicking
+      setTimeout(() => {
+        isOpeningModalRef.current = false;
+      }, 500);
+    }
   };
 
   /* ---------------- Render ---------------- */
@@ -110,17 +144,14 @@ const AssignmentActions: React.FC<Props> = ({
 
         {showViewStatus && (
           <button
-            className="w-full py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2"
-            onClick={async () => {
-              setShowAssignmentModal(true);
-              if (!assignmentStatus) {
-                await fetchAssignmentStatus();
-              }
-            }}
-            disabled={loadingStatus}
+            className="w-full py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-md text-sm font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleViewStatusClick}
+            disabled={loadingStatus || isOpeningModalRef.current}
           >
             {loadingStatus && <Loader2 size={14} className="animate-spin" />}
-            <span className="truncate">View Status</span>
+            <span className="truncate">
+              {loadingStatus ? "Loading..." : "View Status"}
+            </span>
           </button>
         )}
 
@@ -162,17 +193,12 @@ const AssignmentActions: React.FC<Props> = ({
 
         {showViewStatus && (
           <button
-            className="h-10 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 rounded-md text-sm font-medium transition flex items-center gap-2"
-            onClick={async () => {
-              setShowAssignmentModal(true);
-              if (!assignmentStatus) {
-                await fetchAssignmentStatus();
-              }
-            }}
-            disabled={loadingStatus}
+            className="h-10 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 rounded-md text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleViewStatusClick}
+            disabled={loadingStatus || isOpeningModalRef.current}
           >
             {loadingStatus && <Loader2 size={16} className="animate-spin" />}
-            View Assignment Status
+            {loadingStatus ? "Loading..." : "View Assignment Status"}
           </button>
         )}
       </div>
