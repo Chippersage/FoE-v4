@@ -53,7 +53,7 @@ const CohortCard = ({
       
       // CRITICAL CHANGE: Navigate to course with FIRST concept
       // This will automatically load the courseStore
-      navigate(`/course/${programId}/stage/1/unit/1/concept/1`);
+      navigate(`/course/${programId}`);
       
       // Optional: Call parent callback if needed
       if (onResume) await onResume();

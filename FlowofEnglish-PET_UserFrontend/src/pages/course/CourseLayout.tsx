@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useParams, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import useCourseEntryRedirect from '../course/hooks/useCourseEntryRedirect';
 
@@ -23,8 +23,9 @@ const CourseLayout: React.FC = () => {
 
   // This hook handles auto-redirect to first not completed subconcept
   // It runs on ALL devices (desktop and mobile)
+  const isEntryRoute = location.pathname === `/course/${programId}`;
   useCourseEntryRedirect({
-    enabled: Boolean(programId),
+    enabled: Boolean(isEntryRoute),
   });
 
   useEffect(() => {

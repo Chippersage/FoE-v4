@@ -28,17 +28,12 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
       return originalUrl;
     }
 
-    console.log("Formatting Google Form URL with:", { userId, cohortId, originalUrl });
-    
     // Use URL API for proper parsing
     const urlObj = new URL(originalUrl);
     const params = urlObj.searchParams;
     
-    console.log("Current URL parameters:", Object.fromEntries(params.entries()));
-    
     // Get all entry parameter keys from the original URL
     const entryKeys = Array.from(params.keys()).filter(key => key.startsWith('entry.'));
-    console.log("Found entry keys in form:", entryKeys);
     
     if (entryKeys.length >= 2) {
       // Fill the first TWO empty entry fields with userId and cohortId
@@ -54,14 +49,10 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
           // First empty field gets userId
           params.set(key, userId);
           userIdAssigned = true;
-          console.log(`Assigned userId to field: ${key}`);
         } else if ((currentValue === '' || !currentValue) && userIdAssigned && !cohortAssigned) {
           // Second empty field gets cohortId
           params.set(key, cohortId);
           cohortAssigned = true;
-          console.log(`Assigned cohortId to field: ${key}`);
-        } else if (currentValue && currentValue !== '') {
-          console.log(`Field ${key} already has value: "${currentValue}", skipping`);
         }
         
         // Stop if both are assigned
@@ -72,12 +63,9 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
       
       // If not all assigned, check if we need to add new parameters
       if (!userIdAssigned || !cohortAssigned) {
-        console.log(`Could not assign all values. userId assigned: ${userIdAssigned}, cohort assigned: ${cohortAssigned}`);
-        
         // Add missing values as new parameters
         if (!userIdAssigned) {
           // Try to find the first available entry field pattern
-          let newFieldIndex = 1;
           let newFieldName = `entry.userId`;
           
           // Try common patterns
@@ -98,7 +86,6 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
           }
           
           params.set(newFieldName, userId);
-          console.log(`Added userId as new parameter: ${newFieldName}`);
         }
         
         if (!cohortAssigned) {
@@ -122,7 +109,6 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
           }
           
           params.set(newFieldName, cohortId);
-          console.log(`Added cohortId as new parameter: ${newFieldName}`);
         }
       }
     } else if (entryKeys.length === 1) {
@@ -132,20 +118,13 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
       
       if (currentValue === '' || !currentValue) {
         params.set(key, userId);
-        console.log(`Assigned userId to single field: ${key}`);
-        
-        // Add cohortId as a separate parameter
         params.set('cohortId', cohortId);
-        console.log(`Added cohortId as separate parameter`);
       } else {
-        console.log(`Single field ${key} already has value: "${currentValue}"`);
-        // Add both as new parameters
         params.set('userId', userId);
         params.set('cohortId', cohortId);
       }
     } else {
       // No entry fields found, add our parameters
-      console.warn("No entry fields found in form, adding default parameters");
       params.set('userId', userId);
       params.set('cohortId', cohortId);
     }
@@ -154,10 +133,8 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
     urlObj.search = params.toString();
     const formattedUrl = urlObj.toString();
     
-    console.log("Formatted Google Form URL:", formattedUrl);
     return formattedUrl;
   } catch (error) {
-    console.error("Error formatting Google Form URL:", error);
     return originalUrl;
   }
 }
@@ -213,7 +190,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   useEffect(() => {
     const loadSubconcept = () => {
       if (!conceptId || !programId || !stageId || !unitId) {
-        console.log("Missing URL params:", { conceptId, programId, stageId, unitId });
         setIsLoading(false);
         return;
       }
@@ -221,7 +197,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       const subconcept = getSubconceptById(conceptId);
       
       if (!subconcept) {
-        console.log("Subconcept not found:", conceptId);
         setIsLoading(false);
         return;
       }
@@ -263,17 +238,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           const selectedCohort = selectedCohortRaw ? JSON.parse(selectedCohortRaw) : null;
           const cohortId = selectedCohort?.cohortId || "";
           
-          console.log("Formatting Google Form URL in ContentRenderer:", { 
-            userId, 
-            cohortId,
-            originalUrl: currentSubconcept.subconceptLink 
-          });
-          
           // Format the URL using the dynamic helper function
           const formatted = formatGoogleFormUrl(currentSubconcept.subconceptLink, userId, cohortId);
           setFormattedUrl(formatted);
         } catch (error) {
-          console.error("Error formatting Google Form URL in ContentRenderer:", error);
           setFormattedUrl(currentSubconcept.subconceptLink);
         }
       } else {
@@ -299,7 +267,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   }, [conceptId]);
 
   // ----------------------------------------------------------
-  //  Video progress (90% = attempt)
+  //  Video progress (90% = attempt) - UPDATED WITH EVENT DISPATCH
   // ----------------------------------------------------------
   const handleVideoProgress = async (
     e: React.SyntheticEvent<HTMLVideoElement>
@@ -311,10 +279,24 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     
     const video = e.currentTarget;
     const progress = (video.currentTime / video.duration) * 100;
+    
+    // Dispatch progress event to parent (CoursePage)
+    window.dispatchEvent(new CustomEvent('videoProgress', {
+      detail: { 
+        progress,
+        conceptId: currentSubconcept.subconceptId
+      }
+    }));
 
     if (progress >= 90 && !attemptRecorded) {
+      // Dispatch video completed event
+      window.dispatchEvent(new CustomEvent('videoCompleted', {
+        detail: { conceptId: currentSubconcept.subconceptId }
+      }));
+      
       window.dispatchEvent(new Event("video90"));
       setAttemptRecorded(true);
+      
       try {
         await recordAttempt({
           userId: user.userId,
@@ -333,16 +315,22 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           })
         );
       } catch (err) {
-        console.error("Error recording user attempt:", err);
         setAttemptRecorded(false);
       }
     }
   };
 
   // ----------------------------------------------------------
-  //  Show overlay when video ends
+  //  Show overlay when video ends - UPDATED WITH EVENT DISPATCH
   // ----------------------------------------------------------
   const handleVideoEnded = () => {
+    if (!currentSubconcept) return;
+    
+    // Dispatch video ended event to parent
+    window.dispatchEvent(new CustomEvent('videoCompleted', {
+      detail: { conceptId: currentSubconcept.subconceptId }
+    }));
+    
     if (!showNextOverlay) {
       setShowNextOverlay(true);
       setCountdown(5);
@@ -404,9 +392,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
             <button
               onClick={() => {
-                const btn = document.querySelector(
-                  "#btn-unlocked #next-subconcept-btn"
-                );
+                const btn = document.getElementById("next-subconcept-btn-unlocked");
                 btn?.click();
               }}
               className="flex items-center gap-2 bg-white text-[#0EA5E9] hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer"
@@ -472,7 +458,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         })
       );
     } catch (err) {
-      console.error("Error recording user attempt:", err);
       setAttemptRecorded(false);
     }
   };
@@ -517,7 +502,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         })
       );
     } catch (err) {
-      console.error("Error recording quiz attempt:", err);
       setAttemptRecorded(false);
     }
   };
@@ -552,7 +536,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         })
       );
     } catch (err) {
-      console.error("Error recording vocabulary attempt:", err);
       setAttemptRecorded(false);
     }
   };
@@ -676,7 +659,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     case "assessment":
     case "googleform":
-
       const isCompleted = completionStatus?.toLowerCase() === "yes";
       if (isCompleted) {
         return (

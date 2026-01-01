@@ -16,7 +16,6 @@ import ScoreSummaryModal from "./components/ScoreSummaryModal";
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
 
-// Import completion types constants
 import { 
   MANUAL_COMPLETION_TYPES, 
   AUTO_COMPLETION_TYPES, 
@@ -30,16 +29,13 @@ interface OutletContext {
 
 const CoursePage: React.FC = () => {
   const { programId, stageId, unitId, conceptId } = useParams();
-  const infoStr = localStorage.getItem("selectedCohort");
-  const info = infoStr ? JSON.parse(infoStr) : null;
-
   const { user } = useUserContext();
   const { isSidebarOpen } = useOutletContext<OutletContext>();
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Add state for score summary modal
   const [showScoreSummary, setShowScoreSummary] = useState(false);
+  const [videoProgressPercent, setVideoProgressPercent] = useState(0);
+  const [isVideoCompleted, setIsVideoCompleted] = useState(false);
 
   const {
     loadCourse,
@@ -50,18 +46,44 @@ const CoursePage: React.FC = () => {
     markSubconceptCompleted,
   } = useCourseStore();
 
-  // ------------------------------------------------------
-  // Load course
-  // ------------------------------------------------------
   useEffect(() => {
     if (programId && user?.userId) {
       loadCourse(programId, user.userId);
     }
   }, [programId, user?.userId]);
 
-  // ------------------------------------------------------
-  // Resolve subconcept
-  // ------------------------------------------------------
+  useEffect(() => {
+    const handleVideoProgress = (e: CustomEvent) => {
+      if (e.detail.conceptId === conceptId) {
+        setVideoProgressPercent(e.detail.progress);
+        if (e.detail.progress >= 90) {
+          setIsVideoCompleted(true);
+        }
+      }
+    };
+
+    const handleVideoCompleted = (e: CustomEvent) => {
+      if (e.detail.conceptId === conceptId) {
+        setIsVideoCompleted(true);
+      }
+    };
+
+    window.addEventListener('videoProgress', handleVideoProgress as EventListener);
+    window.addEventListener('videoCompleted', handleVideoCompleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('videoProgress', handleVideoProgress as EventListener);
+      window.removeEventListener('videoCompleted', handleVideoCompleted as EventListener);
+      setVideoProgressPercent(0);
+      setIsVideoCompleted(false);
+    };
+  }, [conceptId]);
+
+  useEffect(() => {
+    setVideoProgressPercent(0);
+    setIsVideoCompleted(false);
+  }, [conceptId]);
+
   const subconcept = useMemo(() => {
     if (!conceptId || stages.length === 0) return null;
     return getSubconceptById(conceptId);
@@ -72,7 +94,6 @@ const CoursePage: React.FC = () => {
   const isAssignment = type?.startsWith("assignment");
   const isGoogleForm = type === "googleform" || type === "assessment";
   
-  // NEW: Use constants for completion types
   const needsManualCompletion = MANUAL_COMPLETION_TYPES.includes(type || "");
   const isAutoCompletion = AUTO_COMPLETION_TYPES.includes(type || "");
   const needsSubmission = NEEDS_SUBMISSION_TYPES.includes(type || "");
@@ -83,12 +104,8 @@ const CoursePage: React.FC = () => {
       type
     );
 
-  // Check if already completed
   const isCompleted = subconcept?.completionStatus?.toLowerCase() === "yes";
 
-  // ------------------------------------------------------
-  // ADD: Dynamic height (NO logic removed)
-  // ------------------------------------------------------
   const contentHeightClass = useMemo(() => {
     if (window.innerWidth >= 768) {
       return "h-[80vh]";
@@ -101,9 +118,6 @@ const CoursePage: React.FC = () => {
     return "h-[75vh]";
   }, [type]);
 
-  // ------------------------------------------------------
-  // Iframe attempt handler (SINGLE SOURCE OF TRUTH)
-  // ------------------------------------------------------
   const {
     showSubmit,
     attemptRecorded,
@@ -127,27 +141,43 @@ const CoursePage: React.FC = () => {
     markSubconceptCompleted,
   });
 
-  // ------------------------------------------------------
-  // CRITICAL: Auto-show modal when score is received
-  // ------------------------------------------------------
   useEffect(() => {
     if (scoreData && !showScoreSummary) {
       setShowScoreSummary(true);
     }
   }, [scoreData]);
 
-  // ------------------------------------------------------
-  // Submit click → forward to iframe
-  // ------------------------------------------------------
   const handleSubmit = () => {
     if (!iframeRef.current || !iframeRef.current.contentWindow) return;
     iframeRef.current.contentWindow.postMessage("submitClicked", "*");
     onSubmitClicked();
   };
 
-  // ------------------------------------------------------
-  // Guards
-  // ------------------------------------------------------
+  const isVideoType = type === "video";
+  const isIframeType = isIframeContent;
+
+  const shouldDisableNext = () => {
+    if (isVideoType) {
+      return !isVideoCompleted;
+    }
+    
+    if (isIframeType && needsSubmission) {
+      return !attemptRecorded && !isCompleted;
+    }
+    
+    if (isAutoCompletion) {
+      return false;
+    }
+    
+    if (needsManualCompletion) {
+      return false;
+    }
+    
+    return false;
+  };
+
+  const isNextButtonDisabled = shouldDisableNext();
+
   if (!stageId || !unitId || !conceptId) return null;
 
   if (isLoading || !subconcept) {
@@ -162,12 +192,8 @@ const CoursePage: React.FC = () => {
     );
   }
 
-  // ------------------------------------------------------
-  // Render
-  // ------------------------------------------------------
   return (
     <div className="h-full flex flex-col">
-      {/* MAIN CONTENT */}
       <div
         className={`${contentHeightClass} bg-white flex justify-center items-center p-2 md:p-4 lg:p-6 overflow-auto`}
       >
@@ -182,7 +208,6 @@ const CoursePage: React.FC = () => {
         </div>
       </div>
 
-      {/* DESKTOP ACTIONS */}
       <div className="hidden md:flex justify-center py-4 bg-white">
         <div className="flex items-center gap-4">
           {isAssignment && (
@@ -201,7 +226,6 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {/* NEW: Mark Complete Button for manual completion types */}
           {needsManualCompletion && !isCompleted && (
             <MarkCompleteButton
               userId={user?.userId || ""}
@@ -212,7 +236,6 @@ const CoursePage: React.FC = () => {
               subconceptType={subconcept.subconceptType}
               subconceptMaxscore={subconcept.subconceptMaxscore || 0}
               onMarkComplete={() => {
-                // Update local store state
                 markSubconceptCompleted(subconcept.subconceptId);
               }}
             />
@@ -232,7 +255,6 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
-          {/* REPLACED: Score display with clickable ScoreBadge */}
           {(attemptRecorded || showScore) && scoreData && (
             <ScoreBadge
               score={scoreData.score}
@@ -241,11 +263,10 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          <NextSubconceptButton/>
+          <NextSubconceptButton disabled={isNextButtonDisabled} />
         </div>
       </div>
 
-      {/* MOBILE ACTION BAR */}
       <div
         className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 py-3 px-4 ${
           isSidebarOpen ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -272,7 +293,6 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
-          {/* NEW: Mark Complete Button for mobile */}
           {needsManualCompletion && !isCompleted && (
             <div className="flex-shrink-0">
               <MarkCompleteButton
@@ -305,7 +325,6 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
-          {/* REPLACED: Mobile score display with clickable ScoreBadge */}
           {(attemptRecorded || showScore) && scoreData && (
             <ScoreBadge
               score={scoreData.score}
@@ -315,11 +334,10 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          <NextSubconceptButton/>
+          <NextSubconceptButton disabled={isNextButtonDisabled} />
         </div>
       </div>
 
-      {/* Score Summary Modal */}
       {scoreData && (
         <ScoreSummaryModal
           isOpen={showScoreSummary}
@@ -329,7 +347,6 @@ const CoursePage: React.FC = () => {
         />
       )}
 
-      {/* Spacer so content is not hidden */}
       {!isSidebarOpen && <div className="md:hidden h-32" />}
     </div>
   );
