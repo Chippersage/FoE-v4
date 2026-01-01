@@ -5,29 +5,13 @@ import useCourseStore from "../store/courseStore";
 import { ArrowRight } from "lucide-react";
 
 interface NextSubconceptButtonProps {
-  disabled?: boolean; // Keep disabled prop for external control (like video 90% rule)
-  isDemoUser?: boolean;
-  onDisabledClick?: () => void; // For demo user locked content
+  disabled?: boolean;
 }
 
-/**
- * NextSubconceptButton Component
- * 
- * NEW ARCHITECTURE:
- * - NO props for stages, currentContentId, onNext
- * - Reads current location from URL params
- * - Calculates next concept from courseStore
- * - Navigates directly using useNavigate()
- * - Completely independent of CoursePage/CourseContext
- */
 const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
   disabled = false,
-  isDemoUser = false,
-  onDisabledClick
 }) => {
   const navigate = useNavigate();
-  
-  // Get current location from URL
   const { programId, stageId, unitId, conceptId } = useParams<{
     programId: string;
     stageId?: string;
@@ -35,48 +19,17 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
     conceptId?: string;
   }>();
   
-  // Get course data from store
-  const { getNextSubconcept, getSubconceptById } = useCourseStore();
+  const { getNextSubconcept } = useCourseStore();
   
-  // Handle disabled click (demo users trying to access locked content)
-  const handleDisabledClick = () => {
-    if (isDemoUser && onDisabledClick) {
-      onDisabledClick();
-    }
-  };
-  
-  // Find the next subconcept
   const findNextSubconcept = () => {
     if (!conceptId) return null;
-    
-    // Get current subconcept to check if locked for demo
-    const currentSubconcept = getSubconceptById(conceptId);
-    if (isDemoUser && currentSubconcept?.isLockedForDemo) {
-      return null; // Can't navigate from locked content
-    }
-    
-    // Get next subconcept from store
-    const next = getNextSubconcept(conceptId);
-    
-    if (!next) return null;
-    
-    // Check if next is locked for demo
-    if (isDemoUser && next.isLockedForDemo) {
-      return null; // Can't navigate to locked content
-    }
-    
-    return next;
+    return getNextSubconcept(conceptId);
   };
   
   const nextSubconcept = findNextSubconcept();
   
-  // Handle navigation to next
   const handleNext = () => {
-    if (disabled) {
-      handleDisabledClick();
-      return;
-    }
-    
+    if (disabled) return;
     if (!programId || !nextSubconcept) return;
     
     navigate(
@@ -84,7 +37,6 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
     );
   };
   
-  // End of program - show completed button
   if (!nextSubconcept) {
     return (
       <button
@@ -96,17 +48,12 @@ const NextSubconceptButton: React.FC<NextSubconceptButtonProps> = ({
     );
   }
   
-  // Determine button label based on navigation type
   const getButtonLabel = () => {
     if (!conceptId || !nextSubconcept) return "Go To Next";
     
-    // If moving to different unit
     if (nextSubconcept.unitId !== unitId) return "Next Session";
-    
-    // If moving to different stage  
     if (nextSubconcept.stageId !== stageId) return "Next Module";
     
-    // Same unit, same stage
     return "Go To Next";
   };
   
