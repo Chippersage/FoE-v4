@@ -1,10 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { FileUploaderRecorder } from "../../../components/AssignmentComponents/FileUploaderRecorder";
 import AssignmentModal from "../../../components/modals/AssignmentModal";
 import useCourseStore from "../../../store/courseStore";
 import { useUserContext } from "../../../context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface Props {
   subconceptId: string;
@@ -17,7 +18,8 @@ const AssignmentActions: React.FC<Props> = ({
   completionStatus,
   isMobile = false
 }) => {
-  const { cohort, user } = useUserContext();
+  const { cohort: contextCohort, user } = useUserContext();
+  const { cohortId: cohortIdFromParams } = useParams();
   const { markSubconceptCompleted, getSubconceptById, programId } =
     useCourseStore();
 
@@ -26,27 +28,77 @@ const AssignmentActions: React.FC<Props> = ({
   const [assignmentStatus, setAssignmentStatus] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [hasFetchedStatus, setHasFetchedStatus] = useState(false);
+  const [localCohort, setLocalCohort] = useState<any>(null);
+  const [isCheckingCohort, setIsCheckingCohort] = useState(true);
   
-  // Add refs to prevent double actions
   const isFetchingStatusRef = useRef(false);
   const isOpeningModalRef = useRef(false);
 
-  const isCompleted = completionStatus?.toLowerCase() === "yes";
+  // Try to get cohort from multiple sources in priority order
+  useEffect(() => {
+    // Priority 1: URL parameters
+    if (cohortIdFromParams) {
+      setLocalCohort({ cohortId: cohortIdFromParams });
+      setIsCheckingCohort(false);
+      return;
+    }
+    
+    // Priority 2: User context
+    if (contextCohort?.cohortId) {
+      setLocalCohort(contextCohort);
+      setIsCheckingCohort(false);
+      return;
+    }
+    
+    // Priority 3: localStorage
+    const storedCohort = localStorage.getItem("selectedCohort");
+    if (storedCohort) {
+      try {
+        const parsedCohort = JSON.parse(storedCohort);
+        if (parsedCohort?.cohortId) {
+          setLocalCohort(parsedCohort);
+          setIsCheckingCohort(false);
+          return;
+        }
+      } catch (e) {
+        // Silently handle parse errors
+      }
+    }
+    
+    // Priority 4: URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryCohortId = urlParams.get("cohortId");
+    if (queryCohortId) {
+      setLocalCohort({ cohortId: queryCohortId });
+      setIsCheckingCohort(false);
+      return;
+    }
+    
+    setIsCheckingCohort(false);
+  }, [contextCohort, cohortIdFromParams]);
+
+  // Get subconcept data
   const sub = getSubconceptById(subconceptId);
 
-  // Fetch assignment status on mount if completed
+  // Use cohort from the best available source
+  const cohort = contextCohort || localCohort || (cohortIdFromParams ? { cohortId: cohortIdFromParams } : null);
+
+  const isCompleted = completionStatus?.toLowerCase() === "yes";
+
+  // Fetch assignment status when needed
   useEffect(() => {
-    if ((isCompleted || uploaded) && !hasFetchedStatus && user?.userId && !isFetchingStatusRef.current) {
+    if ((isCompleted || uploaded) && !hasFetchedStatus && user?.userId && !isFetchingStatusRef.current && sub && programId) {
       fetchAssignmentStatus();
     }
-  }, [isCompleted, uploaded, user?.userId]);
+  }, [isCompleted, uploaded, hasFetchedStatus, user?.userId, sub, programId, subconceptId]);
 
-  if (!sub || !programId || !cohort?.cohortId || !user?.userId) return null;
+  // Don't render if missing critical data
+  if (!sub || !programId || !user?.userId) {
+    return null;
+  }
 
-  /* ---------------- Fetch Assignment Status ---------------- */
-
+  // Fetch assignment status from API
   const fetchAssignmentStatus = async () => {
-    // Prevent multiple simultaneous fetches
     if (isFetchingStatusRef.current) return;
     
     try {
@@ -66,7 +118,6 @@ const AssignmentActions: React.FC<Props> = ({
         setAssignmentStatus(data);
       }
     } catch (err) {
-      console.error("Error fetching assignment status", err);
       setAssignmentStatus(null);
     } finally {
       setLoadingStatus(false);
@@ -74,10 +125,8 @@ const AssignmentActions: React.FC<Props> = ({
     }
   };
 
-  /* ---------------- Upload Success ---------------- */
-
+  // Handle successful upload
   const handleUploadSuccess = async () => {
-    // Prevent multiple success handlers
     if (uploaded) return;
     
     markSubconceptCompleted(subconceptId);
@@ -91,35 +140,59 @@ const AssignmentActions: React.FC<Props> = ({
     );
   };
 
-  /* ---------------- Handle View Status Click ---------------- */
-
+  // Handle view status button click
   const handleViewStatusClick = async () => {
-    // Prevent double clicking on view status button
     if (isOpeningModalRef.current || loadingStatus) return;
     
     try {
       isOpeningModalRef.current = true;
       setShowAssignmentModal(true);
       
-      // Only fetch if we don't have status yet
-      if (!assignmentStatus) {
+      if (!assignmentStatus && !hasFetchedStatus) {
         await fetchAssignmentStatus();
       }
     } finally {
-      // Reset after a short delay to prevent rapid clicking
       setTimeout(() => {
         isOpeningModalRef.current = false;
       }, 500);
     }
   };
 
-  /* ---------------- Render ---------------- */
+  // Retry fetching cohort data
+  const handleRetryCohort = () => {
+    setIsCheckingCohort(true);
+    setLocalCohort(null);
+    
+    setTimeout(() => {
+      const storedCohort = localStorage.getItem("selectedCohort");
+      if (storedCohort) {
+        try {
+          const parsedCohort = JSON.parse(storedCohort);
+          if (parsedCohort?.cohortId) {
+            setLocalCohort(parsedCohort);
+          }
+        } catch (e) {
+          // Silently handle parse errors
+        }
+      }
+      setIsCheckingCohort(false);
+    }, 500);
+  };
 
-  // Show uploader if not completed and no assignment exists
-  const showUploader = !isCompleted && !uploaded && !assignmentStatus;
-
-  // Show view status button if completed, uploaded, or assignment exists
+  // Determine what to render based on current state
+  const showUploader = !isCompleted && !uploaded && !assignmentStatus && cohort?.cohortId;
   const showViewStatus = isCompleted || uploaded || assignmentStatus;
+  const showCohortWarning = !isCompleted && !uploaded && !assignmentStatus && !cohort?.cohortId;
+
+  // Show loading state while checking for cohort
+  if (isCheckingCohort) {
+    return (
+      <div className="flex items-center justify-center gap-2 px-4 py-2">
+        <Loader2 size={16} className="animate-spin" />
+        <span className="text-sm">Loading assignment...</span>
+      </div>
+    );
+  }
 
   // Mobile rendering
   if (isMobile) {
@@ -139,6 +212,21 @@ const AssignmentActions: React.FC<Props> = ({
               }}
               isMobile={true}
             />
+          </div>
+        )}
+
+        {showCohortWarning && (
+          <div className="w-full p-3 text-center bg-yellow-50 rounded-md">
+            <div className="text-sm text-yellow-600 mb-1">
+              Unable to load assignment
+            </div>
+            <button
+              onClick={handleRetryCohort}
+              className="flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+            >
+              <RefreshCw size={12} />
+              <span>Retry</span>
+            </button>
           </div>
         )}
 
@@ -189,6 +277,23 @@ const AssignmentActions: React.FC<Props> = ({
               subconceptId: sub.subconceptId,
             }}
           />
+        )}
+
+        {showCohortWarning && (
+          <div className="px-4 py-2 bg-yellow-50 rounded-md">
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-yellow-600">
+                Assignment loading...
+              </div>
+              <button
+                onClick={handleRetryCohort}
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+              >
+                <RefreshCw size={12} />
+                <span>Retry</span>
+              </button>
+            </div>
+          </div>
         )}
 
         {showViewStatus && (

@@ -51,6 +51,7 @@ const CohortSelectionPage = () => {
           stagesCount: c.program?.stagesCount,
           unitCount: c.program?.unitCount,
           progress: 0,
+          completedSubconcepts: 0, // Add this to track completed subconcepts
         }));
 
         const activeCohorts = formattedCohorts.filter(isCohortActive);
@@ -64,9 +65,17 @@ const CohortSelectionPage = () => {
             const total = progressRes.data?.totalSubconcepts || 0;
             const completed = progressRes.data?.completedSubconcepts || 0;
 
-            return { ...cohort, progress: total > 0 ? Math.round((completed / total) * 100) : 0 };
+            return { 
+              ...cohort, 
+              progress: total > 0 ? Math.round((completed / total) * 100) : 0,
+              completedSubconcepts: completed // Store completed subconcepts count
+            };
           } catch {
-            return { ...cohort, progress: 0 };
+            return { 
+              ...cohort, 
+              progress: 0,
+              completedSubconcepts: 0
+            };
           }
         });
 
