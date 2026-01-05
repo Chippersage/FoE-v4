@@ -21,12 +21,9 @@ const CourseLayout: React.FC = () => {
     conceptId?: string;
   }>();
 
-  // This hook handles auto-redirect to first not completed subconcept
-  // It runs on ALL devices (desktop and mobile)
-  const isEntryRoute = location.pathname === `/course/${programId}`;
-  useCourseEntryRedirect({
-    enabled: Boolean(isEntryRoute),
-  });
+  // Track if we're on entry route
+  const location = useLocation();
+  const isEntryRoute = !stageId && !unitId && !conceptId && !!programId;
 
   useEffect(() => {
     const handleToggleSidebar = () => {
@@ -70,7 +67,7 @@ const CourseLayout: React.FC = () => {
       {/* COURSE CONTENT */}
       <div className="flex-1 flex flex-col h-full min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <Outlet context={{ isSidebarOpen, closeSidebar }} />
+          <Outlet context={{ isSidebarOpen, closeSidebar, isEntryRoute }} />
         </div>
       </div>
 

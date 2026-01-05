@@ -1,19 +1,41 @@
 // @ts-nocheck
-import { useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useCallback, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import useCourseStore from "../../../store/courseStore";
 import { useUserContext } from "../../../context/AuthContext";
 
 const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { programId } = useParams();
-  const { stages } = useCourseStore();
+  const { stages, isLoading: isCourseLoading } = useCourseStore();
   const { user } = useUserContext();
+  
+  // Track redirect state to prevent multiple runs
+  const hasRunRef = useRef(false);
+  const redirectInProgressRef = useRef(false);
   
   const isMentor = user?.userType?.toLowerCase() === "mentor";
 
-  // Build global list for locking logic
+  // Check if we're already on a concept page
+  const isAlreadyOnConceptPage = useMemo(() => {
+    return location.pathname.includes('/concept/');
+  }, [location.pathname]);
+
+  // Conditions for running redirect logic
+  const shouldRun = useMemo(() => {
+    return enabled && 
+           !isCourseLoading && 
+           stages && 
+           stages.length > 0 && 
+           !isAlreadyOnConceptPage &&
+           !hasRunRef.current;
+  }, [enabled, isCourseLoading, stages, isAlreadyOnConceptPage]);
+
+  // Build global list of all subconcepts for locking logic
   const buildGlobalList = useMemo(() => {
+    if (!shouldRun) return [];
+
     const list: Array<{
       subconceptId: string;
       type: string;
@@ -33,10 +55,11 @@ const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
     });
 
     return list;
-  }, [stages]);
+  }, [stages, shouldRun]);
 
-  // Check if subconcept is locked (same logic as Sidebar)
+  // Check if a subconcept is locked based on completion and type rules
   const isSubconceptLocked = useCallback((subconceptId: string): boolean => {
+    if (!shouldRun) return true;
     if (isMentor) return false;
     if (!buildGlobalList.length) return false;
 
@@ -66,6 +89,7 @@ const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
       return isDisabled;
     }
 
+    // Find last completed non-assignment subconcept
     let lastCompletedIndex = -1;
     for (let i = 0; i < buildGlobalList.length; i++) {
       const g = buildGlobalList[i];
@@ -77,6 +101,7 @@ const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
     if (lastCompletedIndex === -1) return currentGlobalIndex !== 0;
     if (buildGlobalList[currentGlobalIndex].completed) return false;
 
+    // Skip assignments when determining next unlock index
     let nextUnlockIndex = lastCompletedIndex + 1;
     while (
       nextUnlockIndex < buildGlobalList.length &&
@@ -86,11 +111,16 @@ const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
     }
 
     return currentGlobalIndex > nextUnlockIndex;
-  }, [isMentor, buildGlobalList, stages]);
+  }, [isMentor, buildGlobalList, stages, shouldRun]);
 
+  // Main redirect logic
   useEffect(() => {
-    if (!enabled) return;
-    if (!programId || !stages.length) return;
+    // Prevent multiple concurrent redirects
+    if (redirectInProgressRef.current) return;
+    if (!shouldRun) return;
+
+    redirectInProgressRef.current = true;
+    hasRunRef.current = true;
 
     let target = null;
 
@@ -161,12 +191,25 @@ const useCourseEntryRedirect = ({ enabled }: { enabled: boolean }) => {
 
     if (target) {
       localStorage.setItem("lastViewedSubconcept", target.sub.subconceptId);
-      navigate(
-        `/course/${programId}/stage/${target.stage.stageId}/unit/${target.unit.unitId}/concept/${target.sub.subconceptId}`,
-        { replace: true }
-      );
+      const newUrl = `/course/${programId}/stage/${target.stage.stageId}/unit/${target.unit.unitId}/concept/${target.sub.subconceptId}`;
+      
+      // Schedule navigation in next tick to avoid blocking
+      setTimeout(() => {
+        navigate(newUrl, { replace: true });
+        redirectInProgressRef.current = false;
+      }, 0);
+    } else {
+      redirectInProgressRef.current = false;
     }
-  }, [enabled, programId, stages, navigate, isSubconceptLocked]);
+  }, [shouldRun, programId, stages, navigate, isSubconceptLocked]);
+
+  // Cleanup refs when component unmounts
+  useEffect(() => {
+    return () => {
+      hasRunRef.current = false;
+      redirectInProgressRef.current = false;
+    };
+  }, []);
 };
 
 export default useCourseEntryRedirect;

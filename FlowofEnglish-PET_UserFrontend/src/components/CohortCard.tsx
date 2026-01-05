@@ -16,10 +16,11 @@ const CohortCard = ({
   const {
     cohortName,
     progress = 0,
+    completedSubconcepts = 0, // Add this prop
     cohortStartDate,
     cohortEndDate,
     cohortId,
-    programId  // CRITICAL: Make sure this is passed from parent
+    programId
   } = cohort;
 
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const CohortCard = ({
   const [isResuming, setIsResuming] = useState(false);
 
   const isCompleted = progress >= 100;
+  const isFirstTime = completedSubconcepts === 0; // Check if it's first time (0 completed subconcepts)
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "N/A");
 
@@ -38,24 +40,19 @@ const CohortCard = ({
     setIsResuming(true);
     
     try {
-      // CRITICAL CHANGE: Store selected cohort in localStorage
       localStorage.setItem("selectedCohort", JSON.stringify({
         cohortId,
         cohortName,
         programId
       }));
       
-      // CRITICAL CHANGE: Generate session ID if not exists
       if (!localStorage.getItem("sessionId")) {
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         localStorage.setItem("sessionId", sessionId);
       }
       
-      // CRITICAL CHANGE: Navigate to course with FIRST concept
-      // This will automatically load the courseStore
       navigate(`/course/${programId}`);
       
-      // Optional: Call parent callback if needed
       if (onResume) await onResume();
       
     } catch (error) {
@@ -115,9 +112,16 @@ const CohortCard = ({
 
         <button
           onClick={handleResumeClick}
-          className="px-3 py-[6px] bg-[#0EA5E9] text-white rounded-md text-[11px] font-medium cursor-pointer"
+          className={`px-3 py-[6px] rounded-md text-[11px] font-medium cursor-pointer
+            ${isFirstTime 
+              ? "bg-green-600 text-white hover:bg-green-700" 
+              : "bg-[#0EA5E9] text-white hover:bg-[#0284C7]"}`}
         >
-          {isResuming ? "Resuming..." : "Resume"}
+          {isResuming 
+            ? "Loading..." 
+            : isFirstTime 
+              ? "Start" 
+              : "Resume"}
         </button>
       </div>
     </div>
