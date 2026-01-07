@@ -8,7 +8,6 @@ import {
   ArrowTopRightOnSquareIcon,
   ArrowUpTrayIcon,
   EyeIcon,
-  ChevronDownIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +36,7 @@ interface StudentAssignmentsProps {
   cohortId: string;
   userId: string;
   cohortName?: string;
+  programId: string; // Added programId prop
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -315,6 +315,7 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
   cohortId,
   userId,
   cohortName = "Cohort",
+  programId,
 }) => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -348,9 +349,9 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
   // Which row's dropdown is open
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  // Fetch assignments
+  // Fetch assignments for specific user
   useEffect(() => {
-    if (!cohortId || !userId) {
+    if (!cohortId || !userId || !programId) {
       setLoading(false);
       return;
     }
@@ -359,37 +360,38 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
     const fetchAssignments = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/assignments/cohort/${cohortId}`);
-        const { assignments: rawAssignments = [], statistics = {} } = res.data || {};
+        // Updated URL to fetch user-specific assignments with programId
+        const url = `${API_BASE_URL}/assignments/cohort/${cohortId}/user/${userId}/assignments?programId=${programId}`;
+        const res = await axios.get(url);
+        
+        const { assignments: rawAssignments = [], submitted = 0, evaluated = 0, pendingReview = 0 } = res.data || {};
 
-        // Filter by userId and format
-        const userAssignments = rawAssignments
-          .filter(a => a.user?.userId === userId)
-          .map((a) => ({
-            id: a.assignmentId,
-            userId: a.user?.userId || "",
-            userName: a.user?.userName || "",
-            topic: a.subconcept?.subconceptDesc || "",
-            reference: a.subconcept?.subconceptId || "",
-            referenceLink: a.subconcept?.subconceptLink || "",
-            maxScore: a.subconcept?.subconceptMaxscore ?? 5,
-            score: a.score ?? null,
-            remarks: a.remarks ?? "",
-            fileUrl: a.submittedFile?.downloadUrl ?? null,
-            submittedDate: a.submittedDate ?? null,
-            correctedDate: a.correctedDate ?? null,
-            stageName: a.stage?.stageName || "",
-            unitName: a.unit?.unitName || "",
-            submittedFile: a.submittedFile || null,
-            correctedFile: a.correctedFile || null,
-          }));
+        // Format assignments from API response
+        const userAssignments = rawAssignments.map((a) => ({
+          id: a.assignmentId,
+          userId: a.user?.userId || userId,
+          userName: a.user?.userName || "",
+          topic: a.subconcept?.subconceptDesc || "",
+          reference: a.subconcept?.subconceptId || "",
+          referenceLink: a.subconcept?.subconceptLink || "",
+          maxScore: a.subconcept?.subconceptMaxscore ?? 5,
+          score: a.score ?? null,
+          remarks: a.remarks ?? "",
+          fileUrl: a.submittedFile?.downloadUrl ?? null,
+          submittedDate: a.submittedDate ?? null,
+          correctedDate: a.correctedDate ?? null,
+          stageName: a.stage?.stageName || "",
+          unitName: a.unit?.unitName || "",
+          submittedFile: a.submittedFile || null,
+          correctedFile: a.correctedFile || null,
+        }));
 
         if (!cancelled) {
           setAssignments(userAssignments);
           setStats({
-            totalAssignments: userAssignments.length,
-            correctedAssignments: userAssignments.filter(a => a.score !== null && a.score !== undefined).length,
-            pendingAssignments: userAssignments.filter(a => a.score === null || a.score === undefined).length,
+            totalAssignments: submitted,
+            correctedAssignments: evaluated,
+            pendingAssignments: pendingReview,
           });
           
           // Initialize edits with existing scores/remarks
@@ -414,7 +416,7 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [cohortId, userId, API_BASE_URL]);
+  }, [cohortId, userId, programId, API_BASE_URL]);
 
   // Derived: filtered + sorted list
   const filteredSorted = useMemo(() => {
@@ -626,6 +628,8 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
             <span className="text-gray-300">•</span>
             <span className="text-gray-600">Student: <span className="font-medium">{userId}</span></span>
             <span className="text-gray-300">•</span>
+            <span className="text-gray-600">Program: <span className="font-medium">{programId}</span></span>
+            <span className="text-gray-300">•</span>
             <span className="text-gray-600">Total: {stats.totalAssignments}</span>
             <span className="text-gray-300">•</span>
             <span className="text-orange-600 font-medium">Pending: {stats.pendingAssignments}</span>
@@ -633,10 +637,9 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
             <span className="text-green-600 font-medium">Graded: {stats.correctedAssignments}</span>
           </div>
 
-          {/* Search and Controls - Mobile responsive */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              
               <input
                 type="text"
                 placeholder="Search by topic, stage, or unit..."
