@@ -616,16 +616,19 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
       <div className="max-w-[1200px] mx-auto">
         {/* Compact Header - Mobile responsive */}
         <div className="mb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Student Assignments</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0EA5E9] tracking-tight mb-1">Learner Assignments</h1>
           
           {/* Cohort info and stats - Mobile responsive with dots */}
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 text-xs sm:text-sm">
+<<<<<<< Updated upstream
             <span className="text-gray-600">
               Cohort: <span className="font-medium">{cohortName}</span>
             </span>
             <span className="text-gray-300">•</span>
             <span className="text-gray-600">Student: <span className="font-medium">{userId}</span></span>
             <span className="text-gray-300">•</span>
+=======
+>>>>>>> Stashed changes
             <span className="text-gray-600">Total: {stats.totalAssignments}</span>
             <span className="text-gray-300">•</span>
             <span className="text-orange-600 font-medium">Pending: {stats.pendingAssignments}</span>
@@ -642,7 +645,7 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
                 placeholder="Search by topic, stage, or unit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="w-full pl-3 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               />
             </div>
             
@@ -663,10 +666,10 @@ const StudentAssignments: React.FC<StudentAssignmentsProps> = ({
                 }}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
-                <option value={10}>10/page</option>
-                <option value={25}>25/page</option>
-                <option value={50}>50/page</option>
-                <option value={100}>100/page</option>
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
               </select>
             </div>
           </div>

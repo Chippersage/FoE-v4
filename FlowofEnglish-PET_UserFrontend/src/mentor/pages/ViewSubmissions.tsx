@@ -580,10 +580,6 @@ const ViewSubmissions: React.FC = () => {
           
           {/* Cohort info and stats - Mobile responsive with dots */}
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 text-xs sm:text-sm">
-            <span className="text-gray-600">
-              Cohort: <span className="font-medium">{cohortName}</span>
-            </span>
-            <span className="text-gray-300">•</span>
             <span className="text-gray-600">Total: {stats?.totalAssignments ?? assignments.length}</span>
             <span className="text-gray-300">•</span>
             <span className="text-orange-600 font-medium">Pending: {stats?.pendingAssignments ?? "-"}</span>

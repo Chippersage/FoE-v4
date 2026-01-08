@@ -182,7 +182,7 @@ export default function MentorSideNav({ onNavigate = () => {} }) {
                 navigate(path);
                 onNavigate();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+              className={`w-full flex items-center gap-3 cursor-pointer px-3 py-2 rounded-lg text-sm ${
                 active
                   ? "bg-blue-50 text-blue-600"
                   : "text-gray-700 hover:bg-gray-100"
