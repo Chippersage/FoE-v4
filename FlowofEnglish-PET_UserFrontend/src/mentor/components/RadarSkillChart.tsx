@@ -1,103 +1,141 @@
-import {
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Tooltip as ReTooltip,
-} from "recharts";
-import { SKILL_COLORS } from "../utils/skillMapper";
-
-interface RadarData {
-  skill: string;
-  value: number;
-}
+// components/RadarSkillChart.tsx
+import React from 'react';
+import { 
+  RadarChart as RechartsRadarChart, 
+  Radar, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  ResponsiveContainer, 
+  Tooltip 
+} from 'recharts';
 
 interface RadarSkillChartProps {
-  data?: RadarData[];
+  data: Array<{
+    name: string;
+    score: number;
+    conceptCount: number;
+  }>;
+  height?: number;
 }
 
-interface CustomTickProps {
-  payload?: {
-    value: string;
-    coordinate: number;
-    index: number;
-    offset: number;
-  };
-  x?: number;
-  y?: number;
-  textAnchor?: "start" | "middle" | "end";
-  stroke?: string;
-  radius?: number;
-}
-
-const CustomTick = ({ payload, x, y, textAnchor }: CustomTickProps) => {
-  if (!payload || x === undefined || y === undefined) return null;
-  
-  const color = SKILL_COLORS[payload.value] || "#374151";
-  return (
-    <text 
-      x={x} 
-      y={y} 
-      textAnchor={textAnchor || "middle"} 
-      fill={color} 
-      fontWeight="600" 
-      fontSize={12}
-    >
-      {payload.value}
-    </text>
-  );
+// Skill colors matching your original component
+const skillColors: Record<string, string> = {
+  'Grammar': '#FF6B6B',
+  'Reading': '#4ECDC4',
+  'Writing': '#45B7D1',
+  'Speaking': '#4CAF50',
+  'Critical Thinking': '#FF1493',
+  'Active listening': '#D2B48C',
+  'Listening': '#D2B48C', // Alias for Active listening
+  'Vocabulary': '#FF69B4',
+  'Skill Development': '#FF69B4',
+  'Other': '#FF69B4'
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null;
-  const p = payload[0];
-  return (
-    <div className="bg-white p-2 rounded shadow text-sm border">
-      <div className="font-semibold">{p.payload.skill}</div>
-      <div>Score: {p.value}%</div>
-    </div>
-  );
+const getSkillColor = (skillName: string): string => {
+  return skillColors[skillName] || skillColors.Other;
 };
 
-export default function RadarSkillChart({ data = [] }: RadarSkillChartProps) {
-  const order = [
-    "Speaking",
-    "Grammar",
-    "Skill Development",
-    "Vocabulary",
-    "Reading",
-    "Writing",
-    "Listening",
-    "Critical Thinking",
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+        <p className="font-semibold text-gray-900">{label}</p>
+        <p className="text-blue-600">Score: {payload[0].value}%</p>
+        <p className="text-gray-600">
+          Concepts: {payload[0].payload.conceptCount || 0}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const RadarSkillChart: React.FC<RadarSkillChartProps> = ({ data, height = 340 }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-96 flex items-center justify-center bg-white rounded-lg border border-gray-200">
+        <p className="text-gray-500">No skill data available</p>
+      </div>
+    );
+  }
+
+  // Order skills for consistent display
+  const skillOrder = [
+    'Speaking', 'Grammar', 'Reading', 'Writing', 
+    'Listening', 'Critical Thinking', 'Vocabulary', 'Skill Development'
   ];
   
-  const displayData = order.map((s) => {
-    const found = data.find((d) => d.skill === s);
-    return { skill: s, value: found ? Number(found.value || 0) : 0 };
+  // Sort data according to predefined order
+  const sortedData = [...data].sort((a, b) => {
+    const indexA = skillOrder.indexOf(a.name);
+    const indexB = skillOrder.indexOf(b.name);
+    
+    // If both are in the order array, sort by that order
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    
+    // If only one is in order array, prioritize it
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    
+    // Otherwise sort alphabetically
+    return a.name.localeCompare(b.name);
   });
 
   return (
-    <div style={{ width: "100%", height: 340 }}>
+    <div className="w-full" style={{ height: `${height}px` }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={displayData}>
-          <PolarGrid />
-          <PolarAngleAxis 
-            dataKey="skill" 
-            tick={(props: any) => <CustomTick {...props} />} 
+        <RechartsRadarChart
+          cx="50%"
+          cy="50%"
+          outerRadius="80%"
+          data={sortedData}
+          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+        >
+          <PolarGrid 
+            stroke="#E5E7EB"
+            strokeWidth={1}
           />
-          <PolarRadiusAxis angle={30} domain={[0, 100]} />
-          <ReTooltip content={<CustomTooltip />} />
+          <PolarAngleAxis
+            dataKey="name"
+            tick={({ payload, x, y, textAnchor, ...rest }) => (
+              <text
+                {...rest}
+                x={x}
+                y={y}
+                textAnchor={textAnchor}
+                fill={getSkillColor(payload.value)}
+                fontWeight="500"
+                fontSize={12}
+                dy={4}
+              >
+                {payload.value}
+              </text>
+            )}
+          />
+          <PolarRadiusAxis
+            domain={[0, 100]}
+            angle={30}
+            tickCount={6}
+            tick={{ fontSize: 10, fill: '#6B7280' }}
+            stroke="#9CA3AF"
+          />
+          <Tooltip content={<CustomTooltip />} />
           <Radar
-            name="Score"
-            dataKey="value"
-            stroke="#374151"
-            fill="#374151"
-            fillOpacity={0.6}
+            name="Skill Score"
+            dataKey="score"
+            stroke="#8884d8"
+            fill="#8884d8"
+            fillOpacity={0.4}
+            strokeWidth={2}
           />
-        </RadarChart>
+        </RechartsRadarChart>
       </ResponsiveContainer>
     </div>
   );
-}
+};
+
+export default RadarSkillChart;

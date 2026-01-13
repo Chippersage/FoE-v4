@@ -1,22 +1,39 @@
 // @ts-nocheck
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
+
+const NAVBAR_HEIGHT = "h-14"; // 56px
 
 const RootLayout = () => {
   const location = useLocation();
 
-  // Hide Navbar only on auth pages
   const hideNavbarRoutes = ["/sign-in"];
   const hideNavbar = hideNavbarRoutes.includes(location.pathname);
 
+  const isMentorRoute = location.pathname.startsWith("/mentor");
+  const [isMentorSidebarOpen, setIsMentorSidebarOpen] = useState(false);
+
+  const toggleMentorSidebar = () => {
+    setIsMentorSidebarOpen(prev => !prev);
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-slate-50"> {/* Changed to flex-col and h-screen */}
-      {!hideNavbar && <Navbar />}
-      {/* Main content area that will scroll */}
-      <main className={`flex-1 overflow-y-auto ${!hideNavbar ? "pt-16" : ""}`}> {/* Added flex-1 and overflow-y-auto */}
+    <div className="h-screen flex flex-col bg-slate-50">
+      
+      {!hideNavbar && (
+        <div className={`shrink-0 ${NAVBAR_HEIGHT}`}>
+          <Navbar
+            toggleSidebar={isMentorRoute ? toggleMentorSidebar : undefined}
+          />
+        </div>
+      )}
+
+      {/* IMPORTANT: no overflow-hidden here */}
+      <div className="flex-1 min-h-0">
         <Outlet />
-      </main>
+      </div>
+
     </div>
   );
 };

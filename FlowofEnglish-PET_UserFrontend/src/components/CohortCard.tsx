@@ -16,9 +16,11 @@ const CohortCard = ({
   const {
     cohortName,
     progress = 0,
+    completedSubconcepts = 0, // Add this prop
     cohortStartDate,
     cohortEndDate,
-    cohortId
+    cohortId,
+    programId
   } = cohort;
 
   const navigate = useNavigate();
@@ -29,14 +31,32 @@ const CohortCard = ({
   const [isResuming, setIsResuming] = useState(false);
 
   const isCompleted = progress >= 100;
+  const isFirstTime = completedSubconcepts === 0; // Check if it's first time (0 completed subconcepts)
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "N/A");
 
   const handleResumeClick = async () => {
     if (isResuming) return;
     setIsResuming(true);
+    
     try {
+      localStorage.setItem("selectedCohort", JSON.stringify({
+        cohortId,
+        cohortName,
+        programId
+      }));
+      
+      if (!localStorage.getItem("sessionId")) {
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("sessionId", sessionId);
+      }
+      
+      navigate(`/course/${programId}`);
+      
       if (onResume) await onResume();
+      
+    } catch (error) {
+      console.error("Error resuming course:", error);
     } finally {
       setTimeout(() => {
         setIsResuming(false);
@@ -80,15 +100,6 @@ const CohortCard = ({
 
         {userRole?.toLowerCase() === "mentor" && (
           <>
-            {/* 
-            <button
-              onClick={() => onViewLearners(cohort)}
-              className="px-3 py-[6px] bg-white border border-slate-300 rounded-md text-[11px] text-slate-700 cursor-pointer"
-            >
-              View Learners
-            </button>
-            */}
-
             {/* Mentor Dashboard Button */}
             <button
               onClick={() => onViewMentorDashboard(cohort)}
@@ -101,9 +112,16 @@ const CohortCard = ({
 
         <button
           onClick={handleResumeClick}
-          className="px-3 py-[6px] bg-[#0EA5E9] text-white rounded-md text-[11px] font-medium cursor-pointer"
+          className={`px-3 py-[6px] rounded-md text-[11px] font-medium cursor-pointer
+            ${isFirstTime 
+              ? "bg-green-600 text-white hover:bg-green-700" 
+              : "bg-[#0EA5E9] text-white hover:bg-[#0284C7]"}`}
         >
-          {isResuming ? "Resuming..." : "Resume"}
+          {isResuming 
+            ? "Loading..." 
+            : isFirstTime 
+              ? "Start" 
+              : "Resume"}
         </button>
       </div>
     </div>

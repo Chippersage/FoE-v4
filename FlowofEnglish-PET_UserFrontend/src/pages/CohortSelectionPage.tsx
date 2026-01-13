@@ -51,6 +51,7 @@ const CohortSelectionPage = () => {
           stagesCount: c.program?.stagesCount,
           unitCount: c.program?.unitCount,
           progress: 0,
+          completedSubconcepts: 0, // Add this to track completed subconcepts
         }));
 
         const activeCohorts = formattedCohorts.filter(isCohortActive);
@@ -64,9 +65,17 @@ const CohortSelectionPage = () => {
             const total = progressRes.data?.totalSubconcepts || 0;
             const completed = progressRes.data?.completedSubconcepts || 0;
 
-            return { ...cohort, progress: total > 0 ? Math.round((completed / total) * 100) : 0 };
+            return { 
+              ...cohort, 
+              progress: total > 0 ? Math.round((completed / total) * 100) : 0,
+              completedSubconcepts: completed // Store completed subconcepts count
+            };
           } catch {
-            return { ...cohort, progress: 0 };
+            return { 
+              ...cohort, 
+              progress: 0,
+              completedSubconcepts: 0
+            };
           }
         });
 
@@ -151,7 +160,7 @@ const CohortSelectionPage = () => {
     <div className="min-h-screen bg-slate-50 px-4 md:px-10 pt-3">
       <div className="max-w-6xl mx-auto">
 
-        <h1 className="font-semibold text-slate-800 text-lg sm:text-xl md:text-2xl mb-6">
+        <h1 className="text-slate-800 text-lg sm:text-xl md:text-2xl mb-6 font-bold sm:font-semibold">
           Continue Learning
         </h1>
 
