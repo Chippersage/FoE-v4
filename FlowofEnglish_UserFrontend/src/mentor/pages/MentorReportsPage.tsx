@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Container, Card, Typography, FormControl, InputLabel, Select, MenuItem, Box, } from "@mui/material";
-import { useParams } from "react-router-dom";
 import { useUserContext } from "@/context/AuthContext";
-import { fetchMentorCohortProgress } from "@/lib/mentor-api";
+import { fetchMentorCohortProgress } from "@/mentor/mentor-api";
+import { Box, Card, Container, FormControl, InputLabel, MenuItem, Select, Typography, } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import LearnersProgressChart from "../../components/LearnersProgressChart";
 import LineProgressChart from "../../components/LineProgressChart";
 import ProgressDataTable from "../../components/TableView";

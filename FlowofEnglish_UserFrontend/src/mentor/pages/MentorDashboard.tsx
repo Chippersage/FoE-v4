@@ -1,11 +1,26 @@
+import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '@/mentor/mentor-api';
+import {
+    Alert,
+    Avatar,
+    Box,
+    Card, CardContent,
+    Chip,
+    CircularProgress,
+    Container, Grid,
+    IconButton,
+    LinearProgress,
+    Paper,
+    Stack,
+    Table, TableBody, TableCell, TableContainer, TableHead,
+    TablePagination,
+    TableRow,
+    Typography
+} from "@mui/material";
+import { format, formatDistanceToNow } from "date-fns";
+import { BarChart, Clock, FileText, Play, RefreshCw, Search, Square, TrendingUp, Users } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, 
-  Box, CircularProgress, Alert, IconButton, Chip, Avatar, Stack, LinearProgress} from "@mui/material";
-import { TrendingUp, Users, UserX, Clock, Search, RefreshCw, Play, Square, FileText, BarChart} from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
-import { fetchMentorCohortProgress, fetchLearnerSessionActivity, fetchMentorCohorts } from '@/lib/mentor-api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

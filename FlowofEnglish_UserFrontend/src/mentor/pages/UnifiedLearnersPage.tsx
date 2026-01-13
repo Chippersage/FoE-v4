@@ -1,26 +1,22 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort, fetchUserConceptsProgress,
-  fetchUserAssignments, } from '@/lib/mentor-api';
-import type { MentorCohortUser, MentorCohortMetadata, ConceptsProgressResponse } from '@/types/mentor.types';
-import { Download, Target, ChevronDown, User, UserX, Search, TrendingUp, Circle, Filter, SortAsc, SortDesc, X, RefreshCw, AlertTriangle, 
-    CheckCircle2, HelpCircle, Users, Menu, BarChart3, FileText, Activity, BarChart, PieChart, List, LogOut, ChevronLeft,ChevronRight, Eye, 
-    EyeOff, MoreVertical, Clock, Users as UsersIcon, UserCheck, Activity as ActivityIcon } from 'lucide-react';
 import { useUserContext } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useFetch } from '@/hooks/useFetch';
+import { disableUserInCohort, fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport, fetchUserAssignments, fetchUserConceptsProgress,
+    reactivateUserInCohort, } from '@/mentor/mentor-api';
+import type { ConceptsProgressResponse } from '@/mentor/mentor.types';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity as ActivityIcon, AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, Clock, Download, HelpCircle,
+    RefreshCw, Search, SortAsc, SortDesc, Target, TrendingUp, UserCheck, Users, Users as UsersIcon, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
-import CompletionChart from '../components/analytics/CompletionChart';
 import RadarChartComponent from '../components/analytics/RadarChartComponent';
-import SkillImpactMatrix from '../components/analytics/SkillImpactMatrix';
-import SessionList from '../components/analytics/SessionList';
 import RecentProgramAttempts from '../components/analytics/RecentProgramAttempts';
-import StageAccordion from '../components/analytics/StageAccordion';
-import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
+import StageAccordion from '../components/analytics/StageAccordion';
 import StudentAssignments from '../components/analytics/StudentAssignments';
-import LoadingOverlay from '@/components/LoadingOverlay';
+import TimeAnalysis from '../components/analytics/TimeAnalysis';
+import ReactPaginate from 'react-paginate';
 
 // Status Toggle Component
 const StatusToggle: React.FC<{
@@ -126,6 +122,9 @@ export default function UnifiedLearnersPage() {
   const queryParams = new URLSearchParams(location.search);
   const queryProgramId = queryParams.get('programId');
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   // 1. Load all users
   const { data: cohortData, isLoading: usersLoading, refresh: refreshUsers } = useFetch(
     () => {
@@ -401,9 +400,7 @@ export default function UnifiedLearnersPage() {
     const statusB = statusOrder[b.status] || 2;
     
     if (statusA !== statusB) {
-      return statusOrder === "asc" 
-        ? statusA - statusB 
-        : statusB - statusA;
+      return statusOrder === "asc" ? statusA - statusB : statusB - statusA;
     }
 
     // If same status, then sort by the selected field
@@ -480,6 +477,29 @@ export default function UnifiedLearnersPage() {
     "Other"
   ];
 
+  // Calculate pagination values
+const offset = currentPage * itemsPerPage;
+const pageCount = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
+
+// Get current page items
+const currentItems = filteredAndSortedUsers.slice(
+  offset,
+  offset + itemsPerPage
+);
+
+// Handle page click
+const handlePageClick = ({ selected }: { selected: number }) => {
+  setCurrentPage(selected);
+};
+
+// Also add items per page selector state and handler
+const [showItemsPerPageDropdown, setShowItemsPerPageDropdown] = useState(false);
+
+const handleItemsPerPageChange = (count: number) => {
+  setItemsPerPage(count);
+  setCurrentPage(0); // Reset to first page when changing items per page
+  setShowItemsPerPageDropdown(false);
+};
   // If no learner selected, show list view
   if (!selectedLearnerId) {
     return (
@@ -625,7 +645,7 @@ export default function UnifiedLearnersPage() {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
+                    Learner
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
@@ -660,7 +680,7 @@ export default function UnifiedLearnersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredAndSortedUsers.map((user) => (
+                  currentItems.map((user) => (
                     <tr 
                       key={user.userId} 
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
@@ -690,7 +710,8 @@ export default function UnifiedLearnersPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(user.createdAt * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric' })}
+                          year: 'numeric', month: 'long', day: 'numeric' 
+                        })}
                       </td>
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3">
@@ -718,6 +739,89 @@ export default function UnifiedLearnersPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls - Moved outside the table but inside the table container */}
+          {filteredAndSortedUsers.length > itemsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-white">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-600">
+                    Showing <span className="font-medium">{offset + 1}</span> to{' '}
+                    <span className="font-medium">
+                      {Math.min(offset + itemsPerPage, filteredAndSortedUsers.length)}
+                    </span>{' '}
+                    of <span className="font-medium">{filteredAndSortedUsers.length}</span> learners
+                  </div>
+                  
+                  {/* Items per page selector */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowItemsPerPageDropdown(!showItemsPerPageDropdown)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      {itemsPerPage} per page
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showItemsPerPageDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showItemsPerPageDropdown && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowItemsPerPageDropdown(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 min-w-[120px]">
+                          {[5, 10, 20, 50].map((count) => (
+                            <button
+                              key={count}
+                              onClick={() => handleItemsPerPageChange(count)}
+                              className={`block w-full px-4 py-2 text-sm text-left hover:bg-gray-50 ${
+                                itemsPerPage === count ? 'bg-blue-50 text-blue-600' : ''
+                              }`}
+                            >
+                              {count} per page
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Pagination */}
+                <ReactPaginate
+                  previousLabel={
+                    <span className="flex items-center gap-1 text-sm">
+                      <ChevronDown className="h-4 w-4 rotate-90" />
+                      Previous
+                    </span>
+                  }
+                  nextLabel={
+                    <span className="flex items-center gap-1 text-sm">
+                      Next
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </span>
+                  }
+                  breakLabel={'...'}
+                  pageCount={pageCount}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={3}
+                  onPageChange={handlePageClick}
+                  containerClassName="flex items-center gap-1"
+                  pageClassName=""
+                  pageLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors"
+                  activeClassName=""
+                  activeLinkClassName="px-3 py-1.5 text-sm rounded bg-blue-50 border border-blue-200 text-blue-600 font-medium"
+                  previousClassName="mr-2"
+                  nextClassName="ml-2"
+                  previousLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1 transition-colors"
+                  nextLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1 transition-colors"
+                  disabledClassName="opacity-50 cursor-not-allowed"
+                  disabledLinkClassName="hover:bg-transparent"
+                  forcePage={currentPage}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

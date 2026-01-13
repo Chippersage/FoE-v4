@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions } from '@/lib/mentor-api';
-import { Download, Target, ChevronDown, User, UserX } from 'lucide-react';
 import { useUserContext } from '@/context/AuthContext';
+import { useFetch } from '@/hooks/useFetch';
+import { fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport } from '@/mentor/mentor-api';
 import { motion } from 'framer-motion';
+import { ChevronDown, Download, Target } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import CompletionChart from '../components/analytics/CompletionChart';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
-import CompletionChart from '../components/analytics/CompletionChart';
 import SessionList from '../components/analytics/SessionList';
 import StageAccordion from '../components/analytics/StageAccordion';
 // import DetailedAttemptsView from '../components/analytics/DetailedAttemptsView';
-import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
 import StudentAssignments from '../components/analytics/StudentAssignments';
+import TimeAnalysis from '../components/analytics/TimeAnalysis';
 
 export default function LearnersProgressDashboard() {
   const navigate = useNavigate();
