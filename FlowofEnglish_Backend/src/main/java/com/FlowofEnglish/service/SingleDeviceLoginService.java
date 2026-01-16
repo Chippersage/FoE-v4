@@ -369,9 +369,7 @@ public class SingleDeviceLoginService {
         }
     }
     
-    /**
-     * Validate if user can create a new session
-     */
+     // Validate if user can create a new session
     public boolean canCreateNewSession(String userId) {
         if (!SINGLE_DEVICE_LOGIN_ENABLED) {
             return true;

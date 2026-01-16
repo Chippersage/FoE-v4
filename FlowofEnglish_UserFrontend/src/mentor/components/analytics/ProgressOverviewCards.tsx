@@ -1,5 +1,5 @@
 // components/analytics/ProgressOverviewCards.tsx
-import { TrendingUp, Award, Calendar, BookOpen, FileText } from 'lucide-react';
+import { TrendingUp, Award, Calendar, BookOpen, FileText,Trophy, Target, BarChart3, Star, CheckCircle, Clock } from 'lucide-react';
 
 export default function ProgressOverviewCards({ data }) {
   // Add this function at the top of the component
@@ -44,6 +44,15 @@ export default function ProgressOverviewCards({ data }) {
   };
 
   const assignments = calculateAssignmentsMetrics();
+  const calculateGradeStatus = (percentage: number) => {
+    if (percentage >= 90) return { label: 'Excellent', color: 'text-emerald-600 bg-emerald-50', icon: Trophy };
+    if (percentage >= 75) return { label: 'Good', color: 'text-green-600 bg-green-50', icon: CheckCircle };
+    if (percentage >= 60) return { label: 'Average', color: 'text-yellow-600 bg-yellow-50', icon: Star };
+    return { label: 'Needs Work', color: 'text-orange-600 bg-orange-50', icon: TrendingUp };
+  };
+
+  const attemptedGrade = calculateGradeStatus(data.attemptedPercentageScore || 0);
+  const overallGrade = calculateGradeStatus(data.overallPercentageScore || 0);
   
   const cards = [
     {
@@ -72,21 +81,82 @@ export default function ProgressOverviewCards({ data }) {
     },
     {
       title: 'Assignments Progress',
-      value: `${assignments.attempted}/${assignments.total} submitted`,
+      value: `${assignments.attempted}/${assignments.total}`,
+      // value: `${assignments.attempted}/${assignments.total} submitted`,
       percentage: assignments.percentage,
       icon: FileText,
       color: 'text-indigo-600 bg-indigo-50',
       bgColor: 'bg-gradient-to-r from-indigo-500 to-teal-400',
       isAssignments: true,
     },
+    // {
+    //   title: 'Learning Duration',
+    //   value: formatDuration(data.firstAttemptDate, data.lastAttemptDate),
+    //   icon: Calendar,
+    //   color: 'text-orange-600 bg-orange-50',
+    //   bgColor: 'bg-orange-600',
+    //   isDuration: true,
+    // },
     {
-      title: 'Learning Duration',
-      value: formatDuration(data.firstAttemptDate, data.lastAttemptDate),
-      icon: Calendar,
-      color: 'text-orange-600 bg-orange-50',
-      bgColor: 'bg-orange-600',
-      isDuration: true,
+      title: 'Score Achievement',
+      value: (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-gray-800">{data.gotScore || 0}</span>
+                <span className="text-sm text-gray-500">/ {data.attemptedMaxScore || 0} pts</span>
+              </div>
+              <div className="text-xs text-gray-500">
+                Total available: {data.totalScore || 0} pts
+              </div>
+            </div>
+            {/* <attemptedGrade.icon className="h-5 w-5 text-emerald-500" /> */}
+          </div>
+          {/* <div className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full inline-block">
+            {attemptedGrade.label} • {(data.attemptedPercentageScore || 0).toFixed(1)}%
+          </div> */}
+        </div>
+      ),
+      percentage: data.attemptedPercentageScore || 0,
+      icon: Target,
+      color: attemptedGrade.color,
+      bgColor: 'bg-gradient-to-r from-emerald-500 to-green-400',
+      isScore: true,
+      description: 'Based on attempted content',
     },
+    // {
+    //   title: 'Overall Performance',
+    //   value: (
+    //     <div className="space-y-1">
+    //       <div className="flex items-baseline gap-2">
+    //         <div className="text-2xl font-bold text-gray-800">
+    //           {(data.overallPercentageScore || 0).toFixed(1)}%
+    //         </div>
+    //         <div className="text-sm text-gray-500 flex items-center">
+    //           <Star className="h-4 w-4 text-amber-500 mr-1" />
+    //           {(data.averageScore || 0).toFixed(1)} avg
+    //         </div>
+    //       </div>
+    //       {/* <div className="flex items-center gap-1 text-sm">
+    //         <span className="text-gray-600">Score:</span>
+    //         <span className="font-medium">{data.gotScore || 0}</span>
+    //         <span className="text-gray-400">/</span>
+    //         <span className="font-medium">{data.totalScore || 0}</span>
+    //         <span className="text-gray-600">pts</span>
+    //       </div> */}
+    //       {/* <div className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-700 rounded-full inline-block">
+    //         {overallGrade.label} performance
+    //       </div> */}
+    //     </div>
+    //   ),
+    //   percentage: data.overallPercentageScore || 0,
+    //   icon: BarChart3,
+    //   color: overallGrade.color,
+    //   bgColor: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+    //   isOverall: true,
+    //   description: 'Complete program assessment',
+    // },
   ];
 
   return (
@@ -123,11 +193,11 @@ export default function ProgressOverviewCards({ data }) {
                   style={{ width: `${card.percentage}%` }}
                 />
               </div>
-              <div className="flex justify-between mt-1 text-xs text-gray-500">
+              {/* <div className="flex justify-between mt-1 text-xs text-gray-500">
                 <span>0%</span>
                 <span>50%</span>
                 <span>100%</span>
-              </div>
+              </div> */}
             </div>
           )}
         </div>

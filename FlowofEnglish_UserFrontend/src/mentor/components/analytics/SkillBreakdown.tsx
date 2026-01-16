@@ -87,46 +87,46 @@ interface SkillBreakdownProps {
 }
 
 // Define all possible skills with their icons and colors
-const ALL_SKILLS: Record<string, { icon: LucideIcon; color: string; bgColor: string }> = {
-  'Reading': { icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-  'Writing': { icon: Edit3, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-  'Speaking': { icon: MessageSquare, color: 'text-green-600', bgColor: 'bg-green-50' },
-  'Listening': { icon: Headphones, color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  'Grammar': { icon: BookText, color: 'text-red-600', bgColor: 'bg-red-50' },
-  'Vocabulary': { icon: BookMarked, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-  'Critical Thinking': { icon: Brain, color: 'text-rose-600', bgColor: 'bg-rose-50' },
-  'Literary Analysis': { icon: Library, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  'Visual Literacy': { icon: Eye, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
-  'Cultural Literacy': { icon: Globe, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-  'Classroom Management': { icon: Users, color: 'text-violet-600', bgColor: 'bg-violet-50' },
-  'Communication': { icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50' },
-  'Creativity': { icon: Sparkles, color: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50' },
-  'Reasoning': { icon: Puzzle, color: 'text-lime-600', bgColor: 'bg-lime-50' },
-  'Professional Skills': { icon: GraduationCap, color: 'text-teal-600', bgColor: 'bg-teal-50' },
-  'Letter Recognition': { icon: Layers, color: 'text-sky-600', bgColor: 'bg-sky-50' },
-  'Vowel Recognition': { icon: Layers, color: 'text-sky-600', bgColor: 'bg-sky-50' },
-  'Blending letters': { icon: TrendingUp, color: 'text-blue-500', bgColor: 'bg-blue-50' },
-  'CVC words': { icon: FileText, color: 'text-purple-500', bgColor: 'bg-purple-50' },
-  'Phonic rules': { icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-  'Sight words': { icon: Eye, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
-  'Contractions': { icon: Heart, color: 'text-rose-500', bgColor: 'bg-rose-50' },
-  'Evaluation': { icon: Award, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  'Etiquette': { icon: Star, color: 'text-gold-600', bgColor: 'bg-gold-50' },
-  'Leadership': { icon: Target, color: 'text-red-600', bgColor: 'bg-red-50' },
-  'Questioning': { icon: Lightbulb, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-  'Professional Development': { icon: TrendingUp, color: 'text-teal-600', bgColor: 'bg-teal-50' },
-  'Planning': { icon: ClipboardList, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-  'Sequencing': { icon: Clock, color: 'text-gray-600', bgColor: 'bg-gray-50' },
-  'Interpersonal Skills': { icon: Users, color: 'text-violet-600', bgColor: 'bg-violet-50' },
-  'Collaboration': { icon: Users, color: 'text-violet-600', bgColor: 'bg-violet-50' },
-  'Public Speaking': { icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50' },
-  'Comprehension': { icon: Brain, color: 'text-rose-600', bgColor: 'bg-rose-50' },
-  'Active listening': { icon: Headphones, color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  'Project Management': { icon: ClipboardList, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-  'Conflict Resolution': { icon: Heart, color: 'text-rose-500', bgColor: 'bg-rose-50' },
-  'Professional Etiquette': { icon: Star, color: 'text-gold-600', bgColor: 'bg-gold-50' },
-  'Basic Skills': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50' },
-  'Skill Development': { icon: TrendingUp, color: 'text-teal-600', bgColor: 'bg-teal-50' },
+const ALL_SKILLS: Record<string, { icon: LucideIcon; color: string; bgColor: string; barColor: string }> = {
+  'Reading': { icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-50', barColor: 'bg-blue-600' },
+  'Writing': { icon: Edit3, color: 'text-purple-600', bgColor: 'bg-purple-50', barColor: 'bg-purple-600' },
+  'Speaking': { icon: MessageSquare, color: 'text-green-600', bgColor: 'bg-green-50', barColor: 'bg-green-600' },
+  'Listening': { icon: Headphones, color: 'text-orange-600', bgColor: 'bg-orange-50', barColor: 'bg-orange-600' },
+  'Grammar': { icon: BookText, color: 'text-red-600', bgColor: 'bg-red-50', barColor: 'bg-red-600' },
+  'Vocabulary': { icon: BookMarked, color: 'text-indigo-600', bgColor: 'bg-indigo-50', barColor: 'bg-indigo-600' },
+  'Critical Thinking': { icon: Brain, color: 'text-rose-600', bgColor: 'bg-rose-50', barColor: 'bg-rose-600' },
+  'Literary Analysis': { icon: Library, color: 'text-amber-600', bgColor: 'bg-amber-50', barColor: 'bg-amber-600' },
+  'Visual Literacy': { icon: Eye, color: 'text-cyan-600', bgColor: 'bg-cyan-50', barColor: 'bg-cyan-600' },
+  'Cultural Literacy': { icon: Globe, color: 'text-emerald-600', bgColor: 'bg-emerald-50', barColor: 'bg-emerald-600' },
+  'Classroom Management': { icon: Users, color: 'text-violet-600', bgColor: 'bg-violet-50', barColor: 'bg-violet-600' },
+  'Communication': { icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50', barColor: 'bg-pink-600' },
+  'Creativity': { icon: Sparkles, color: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50', barColor: 'bg-fuchsia-600' },
+  'Reasoning': { icon: Puzzle, color: 'text-lime-600', bgColor: 'bg-lime-50', barColor: 'bg-lime-600' },
+  'Professional Skills': { icon: GraduationCap, color: 'text-teal-600', bgColor: 'bg-teal-50', barColor: 'bg-teal-600' },
+  'Letter Recognition': { icon: Layers, color: 'text-sky-600', bgColor: 'bg-sky-50', barColor: 'bg-sky-600' },
+  'Vowel Recognition': { icon: Layers, color: 'text-sky-500', bgColor: 'bg-sky-50', barColor: 'bg-sky-500' },
+  'Blending letters': { icon: TrendingUp, color: 'text-blue-500', bgColor: 'bg-blue-50', barColor: 'bg-blue-500' },
+  'CVC words': { icon: FileText, color: 'text-purple-500', bgColor: 'bg-purple-50', barColor: 'bg-purple-500' },
+  'Phonic rules': { icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', barColor: 'bg-yellow-600' },
+  'Sight words': { icon: Eye, color: 'text-cyan-500', bgColor: 'bg-cyan-50', barColor: 'bg-cyan-500' },
+  'Contractions': { icon: Heart, color: 'text-rose-500', bgColor: 'bg-rose-50', barColor: 'bg-rose-500' },
+  'Evaluation': { icon: Award, color: 'text-amber-500', bgColor: 'bg-amber-50', barColor: 'bg-amber-500' },
+  'Etiquette': { icon: Star, color: 'text-yellow-500', bgColor: 'bg-yellow-50', barColor: 'bg-yellow-500' },
+  'Leadership': { icon: Target, color: 'text-red-500', bgColor: 'bg-red-50', barColor: 'bg-red-500' },
+  'Questioning': { icon: Lightbulb, color: 'text-yellow-700', bgColor: 'bg-yellow-50', barColor: 'bg-yellow-700' },
+  'Professional Development': { icon: TrendingUp, color: 'text-teal-500', bgColor: 'bg-teal-50', barColor: 'bg-teal-500' },
+  'Planning': { icon: ClipboardList, color: 'text-indigo-500', bgColor: 'bg-indigo-50', barColor: 'bg-indigo-500' },
+  'Sequencing': { icon: Clock, color: 'text-gray-600', bgColor: 'bg-gray-50', barColor: 'bg-gray-600' },
+  'Interpersonal Skills': { icon: Users, color: 'text-violet-500', bgColor: 'bg-violet-50', barColor: 'bg-violet-500' },
+  'Collaboration': { icon: Users, color: 'text-violet-700', bgColor: 'bg-violet-50', barColor: 'bg-violet-700' },
+  'Public Speaking': { icon: Mic, color: 'text-pink-500', bgColor: 'bg-pink-50', barColor: 'bg-pink-500' },
+  'Comprehension': { icon: Brain, color: 'text-rose-700', bgColor: 'bg-rose-50', barColor: 'bg-rose-700' },
+  'Active listening': { icon: Headphones, color: 'text-orange-500', bgColor: 'bg-orange-50', barColor: 'bg-orange-500' },
+  'Project Management': { icon: ClipboardList, color: 'text-indigo-700', bgColor: 'bg-indigo-50', barColor: 'bg-indigo-700' },
+  'Conflict Resolution': { icon: Heart, color: 'text-rose-400', bgColor: 'bg-rose-50', barColor: 'bg-rose-400' },
+  'Professional Etiquette': { icon: Star, color: 'text-yellow-600', bgColor: 'bg-yellow-50', barColor: 'bg-yellow-600' },
+  'Basic Skills': { icon: CheckCircle, color: 'text-green-500', bgColor: 'bg-green-50', barColor: 'bg-green-500' },
+  'Skill Development': { icon: TrendingUp, color: 'text-teal-700', bgColor: 'bg-teal-50', barColor: 'bg-teal-700' },
 };
 
 
@@ -239,27 +239,3 @@ export default function SkillBreakdown({ stages }: SkillBreakdownProps) {
     </div>
   );
 }
-
-
-      
-      {/* {skillsInData.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-lg font-semibold text-gray-900">{skillsInData.length}</div>
-              <div className="text-xs text-gray-600">Skills Covered</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-lg font-semibold text-gray-900">{totalSkills}</div>
-              <div className="text-xs text-gray-600">Total Activities</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-lg font-semibold text-gray-900">
-                {skillsInData[0]?.name || 'N/A'}
-              </div>
-              <div className="text-xs text-gray-600">Top Skill</div>
-            </div>
-          </div>
-        </div>
-      )} */}
-    

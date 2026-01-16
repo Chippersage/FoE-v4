@@ -127,27 +127,21 @@ public class ProgramReportServiceImpl implements ProgramReportService {
         long startTime = System.currentTimeMillis();
         
         try {
-            Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + programId));
+            Program program = programRepository.findById(programId).orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + programId));
 
             // Get user type for filtering
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+            User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
             
          // Validate: user is enrolled in this program
-            UserCohortMapping userProgramMapping = userCohortMappingRepository
-                    .findByUserUserIdAndProgramId(userId, programId)
-                    .orElseThrow(() -> new ForbiddenException(
-                            "Access denied: User '" + userId + "' is not enrolled in program '" + programId + "'"));
+            UserCohortMapping userProgramMapping = userCohortMappingRepository.findByUserUserIdAndProgramId(userId, programId)
+            		.orElseThrow(() -> new ForbiddenException("Access denied: User '" + userId + "' is not enrolled in program '" + programId + "'"));
 
          // Extract cohortId of user
             String cohortId = userProgramMapping.getCohort().getCohortId();
 
          // Validate: cohort is mapped to program
-            cohortProgramRepository
-                    .findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId)
-                    .orElseThrow(() -> new ForbiddenException(
-                            "Invalid mapping: Cohort '" + cohortId + "' is not assigned under program '" + programId + "'"));
+            cohortProgramRepository.findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId)
+                    .orElseThrow(() -> new ForbiddenException("Invalid mapping: Cohort '" + cohortId + "' is not assigned under program '" + programId + "'"));
             
             String userType = user.getUserType();
 
@@ -174,11 +168,36 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             double totalScore = 0;
             int scoreCount = 0;
             
+         // NEW: Track score calculations
+            int programTotalScore = 0; // Sum of all visible subconceptMaxscore
+            int programAttemptedMaxScore = 0; // Sum of max scores for attempted subconcepts
+            int programGotScore = 0; // Sum of best attempt scores
+            
             // Get all user attempts for this program
-            List<UserAttempts> allAttempts = userAttemptsRepository
-                .findByUser_UserIdAndProgram_ProgramId(userId, programId);
+            List<UserAttempts> allAttempts = userAttemptsRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
             logger.debug("Found {} attempts for userId: {} and programId: {}", allAttempts.size(), userId, programId);
+            
+            // Group attempts by subconcept for easier processing
+            Map<String, List<UserAttempts>> attemptsBySubconcept = allAttempts.stream()
+                .collect(Collectors.groupingBy(a -> a.getSubconcept().getSubconceptId()));
+            
+            // Create a map of subconcept IDs to their best scores
+            Map<String, Integer> bestScoresBySubconcept = new HashMap<>();
+            for (Map.Entry<String, List<UserAttempts>> entry : attemptsBySubconcept.entrySet()) {
+                String subconceptId = entry.getKey();
+                List<UserAttempts> subconceptAttempts = entry.getValue();
                 
+                // Find the best (highest) score for this subconcept
+                int bestScore = subconceptAttempts.stream()
+                    .mapToInt(UserAttempts::getUserAttemptScore)
+                    .max()
+                    .orElse(0);
+                
+                bestScoresBySubconcept.put(subconceptId, bestScore);
+                logger.debug("Subconcept {}: best score = {} from {} attempts", 
+                    subconceptId, bestScore, subconceptAttempts.size());
+            }
+            
             // Set first and last attempt dates
             if (!allAttempts.isEmpty()) {
                 report.setFirstAttemptDate(allAttempts.stream()
@@ -218,6 +237,28 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     
                     //  Calculate assignments from unit's subconcepts
                     for (SubconceptReportDTO subconceptReport : unitReport.getSubconcepts()) {
+                    	String subconceptId = subconceptReport.getSubconceptId();
+                        int subconceptMaxScore = subconceptReport.getSubconceptMaxscore();
+                        
+                        // Add to totalScore (sum of all visible subconcept max scores)
+                        programTotalScore += subconceptMaxScore;
+                        
+                        // Check if this subconcept has attempts
+                        if (bestScoresBySubconcept.containsKey(subconceptId)) {
+                            // Add to attemptedMaxScore (sum of max scores for attempted subconcepts)
+                            programAttemptedMaxScore += subconceptMaxScore;
+                            
+                            // Add to gotScore (sum of best scores across attempted subconcepts)
+                            int bestScore = bestScoresBySubconcept.get(subconceptId);
+                            programGotScore += bestScore;
+                            
+                            logger.debug("Subconcept {}: maxScore={}, attempted=true, bestScore={}", 
+                                subconceptId, subconceptMaxScore, bestScore);
+                        } else {
+                            logger.debug("Subconcept {}: maxScore={}, attempted=false", 
+                                subconceptId, subconceptMaxScore);
+                        }
+                        
                         // Check if subconceptType contains "assignment"
                         if (isAssignmentSubconcept(subconceptReport.getSubconceptType())) {
                             totalAssignments++;
@@ -255,6 +296,31 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             // Calculate average score
             report.setAverageScore(scoreCount > 0 ? totalScore / scoreCount : 0);
             
+         // Set the new score calculations
+            report.setTotalScore(programTotalScore);
+            report.setAttemptedMaxScore(programAttemptedMaxScore);
+            report.setGotScore(programGotScore);
+            
+            // Calculate percentage scores with proper error handling
+            if (programTotalScore > 0) {
+                double overallPercentage = (double) programGotScore / programTotalScore * 100;
+                report.setOverallPercentageScore(roundToTwoDecimals(overallPercentage));
+            } else {
+                report.setOverallPercentageScore(0.0);
+            }
+            
+            if (programAttemptedMaxScore > 0) {
+                double attemptedPercentage = (double) programGotScore / programAttemptedMaxScore * 100;
+                report.setAttemptedPercentageScore(roundToTwoDecimals(attemptedPercentage));
+            } else {
+                report.setAttemptedPercentageScore(0.0);
+            }
+            
+            // Log the score calculations for debugging
+            logger.debug("Score calculations: totalScore={}, attemptedMaxScore={}, gotScore={}, overallPercentage={}%, attemptedPercentage={}%",
+                programTotalScore, programAttemptedMaxScore, programGotScore,
+                report.getOverallPercentageScore(), report.getAttemptedPercentageScore());
+            
             // Generate score distribution
             report.setScoreDistribution(generateScoreDistribution(allAttempts));
             
@@ -267,13 +333,20 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                     report.getCompletedStages(), report.getTotalStages(),
                     completedUnits, totalUnits,
                     completedSubconcepts, totalSubconcepts,
-                    completedAssignments, totalAssignments);
+                    completedAssignments, totalAssignments,
+                    programTotalScore, programAttemptedMaxScore, programGotScore,
+                    report.getOverallPercentageScore(), report.getAttemptedPercentageScore());
             
             return report;
         } catch (Exception e) {
             logger.error("Error generating program report for userId: {} and programId: {}", userId, programId, e);
             throw e;
         }
+    }
+    
+ //  helper method to round percentages to 2 decimal places
+    private double roundToTwoDecimals(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
  // Helper method to check if subconcept is an assignment with specific types
