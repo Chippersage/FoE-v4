@@ -191,7 +191,7 @@ export default function SkillBreakdown({ stages }: SkillBreakdownProps) {
       </div>
 
       {/* Scrollable Skills List */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[380px]">
+      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
         {skillsInData.length > 0 ? (
           skillsInData.map((skill) => {
             const percentage = totalSkills > 0 ? (skill.count / totalSkills) * 100 : 0;
@@ -209,9 +209,9 @@ export default function SkillBreakdown({ stages }: SkillBreakdownProps) {
                       <span className="text-sm font-medium text-gray-700 truncate block">
                         {skill.name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      {/* <span className="text-xs text-gray-500">
                         {percentage.toFixed(1)}%
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -239,3 +239,71 @@ export default function SkillBreakdown({ stages }: SkillBreakdownProps) {
     </div>
   );
 }
+
+// (NO SCROLL)
+
+//   return (
+//     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+//       {/* Header */}
+//       <div className="flex justify-between items-center mb-6">
+//         <h3 className="text-lg font-semibold text-gray-800">
+//           Skill Development
+//         </h3>
+//         <span className="text-sm text-gray-500">
+//           Total activities:{" "}
+//           <span className="font-medium text-gray-900">
+//             {totalSubconcepts}
+//           </span>
+//         </span>
+//       </div>
+
+//       {/* Skills List (NO SCROLL) */}
+//       <div className="space-y-4">
+//         {skillsInData.length > 0 ? (
+//           skillsInData.map(skill => {
+//             const percentage =
+//               totalSkills > 0 ? (skill.count / totalSkills) * 100 : 0;
+//             const Icon = skill.icon;
+
+//             return (
+//               <div key={skill.name} className="space-y-2">
+//                 <div className="flex items-center justify-between">
+//                   <div className="flex items-center gap-3">
+//                     <div className={`p-2 rounded-lg ${skill.bgColor}`}>
+//                       <Icon className={`h-4 w-4 ${skill.color}`} />
+//                     </div>
+//                     <div>
+//                       <p className="text-sm font-medium text-gray-700">
+//                         {skill.name}
+//                       </p>
+//                       <p className="text-xs text-gray-500">
+//                         {percentage.toFixed(1)}%
+//                       </p>
+//                     </div>
+//                   </div>
+
+//                   <p className="text-sm font-medium text-gray-900">
+//                     {skill.count}{" "}
+//                     <span className="text-xs text-gray-500">activities</span>
+//                   </p>
+//                 </div>
+
+//                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+//                   <div
+//                     className={`h-full ${skill.barColor} rounded-full transition-all duration-500`}
+//                     style={{ width: `${percentage}%` }}
+//                   />
+//                 </div>
+//               </div>
+//             );
+//           })
+//         ) : (
+//           <div className="text-center py-8 text-gray-500">
+//             <BookOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+//             <p className="text-sm">No skill data available</p>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }

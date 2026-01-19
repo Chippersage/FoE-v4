@@ -1,7 +1,7 @@
 // components/analytics/ProgressOverviewCards.tsx
 import { TrendingUp, Award, Calendar, BookOpen, FileText,Trophy, Target, BarChart3, Star, CheckCircle, Clock } from 'lucide-react';
 
-export default function ProgressOverviewCards({ data }) {
+export default function ProgressOverviewCards({ data, cohortEndDate,  }: {   data: any;   cohortEndDate?: number;  }) {
   // Add this function at the top of the component
   const calculateAssignmentsMetrics = () => {
     let totalAssignments = 0;
@@ -43,6 +43,26 @@ export default function ProgressOverviewCards({ data }) {
     };
   };
 
+  function formatTimeLeft(end: number) {
+  if (!end) return null;
+
+  const now = Date.now() / 1000;
+  const diffSeconds = end - now;
+
+  if (diffSeconds <= 0) return 'Ended';
+
+  const days = Math.floor(diffSeconds / (60 * 60 * 24));
+  const months = Math.floor(days / 30);
+  const remainingDays = days % 30;
+
+  if (months > 0) {
+    return `${months} month${months > 1 ? 's' : ''}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays > 1 ? 's' : ''}` : ''}`;
+  }
+
+  return `${days} day${days > 1 ? 's' : ''}`;
+}
+
+
   const assignments = calculateAssignmentsMetrics();
   const calculateGradeStatus = (percentage: number) => {
     if (percentage >= 90) return { label: 'Excellent', color: 'text-emerald-600 bg-emerald-50', icon: Trophy };
@@ -63,16 +83,16 @@ export default function ProgressOverviewCards({ data }) {
       color: 'text-blue-600 bg-blue-50',
       bgColor: 'bg-blue-600',
     },
+    // {
+    //   title: 'Sessions Completion',
+    //   value: `${data.completedUnits || 0}/${data.totalUnits || 0}`,
+    //   percentage: data.unitCompletionPercentage || 0,
+    //   icon: TrendingUp,
+    //   color: 'text-green-600 bg-green-50',
+    //   bgColor: 'bg-green-600',
+    // },
     {
-      title: 'Sessions Completion',
-      value: `${data.completedUnits || 0}/${data.totalUnits || 0}`,
-      percentage: data.unitCompletionPercentage || 0,
-      icon: TrendingUp,
-      color: 'text-green-600 bg-green-50',
-      bgColor: 'bg-green-600',
-    },
-    {
-      title: 'Activities Mastered',
+      title: 'Concepts Mastered',
       value: `${data.completedSubconcepts || 0}/${data.totalSubconcepts || 0}`,
       percentage: data.subconceptCompletionPercentage || 0,
       icon: Award,
@@ -80,7 +100,7 @@ export default function ProgressOverviewCards({ data }) {
       bgColor: 'bg-purple-600',
     },
     {
-      title: 'Assignments Progress',
+      title: 'Assignments',
       value: `${assignments.attempted}/${assignments.total}`,
       // value: `${assignments.attempted}/${assignments.total} submitted`,
       percentage: assignments.percentage,
@@ -89,16 +109,8 @@ export default function ProgressOverviewCards({ data }) {
       bgColor: 'bg-gradient-to-r from-indigo-500 to-teal-400',
       isAssignments: true,
     },
-    // {
-    //   title: 'Learning Duration',
-    //   value: formatDuration(data.firstAttemptDate, data.lastAttemptDate),
-    //   icon: Calendar,
-    //   color: 'text-orange-600 bg-orange-50',
-    //   bgColor: 'bg-orange-600',
-    //   isDuration: true,
-    // },
     {
-      title: 'Score Achievement',
+      title: 'Score',
       value: (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -107,9 +119,9 @@ export default function ProgressOverviewCards({ data }) {
                 <span className="text-2xl font-bold text-gray-800">{data.gotScore || 0}</span>
                 <span className="text-sm text-gray-500">/ {data.attemptedMaxScore || 0} pts</span>
               </div>
-              <div className="text-xs text-gray-500">
+              {/* <div className="text-xs text-gray-500">
                 Total available: {data.totalScore || 0} pts
-              </div>
+              </div> */}
             </div>
             {/* <attemptedGrade.icon className="h-5 w-5 text-emerald-500" /> */}
           </div>
@@ -157,6 +169,28 @@ export default function ProgressOverviewCards({ data }) {
     //   isOverall: true,
     //   description: 'Complete program assessment',
     // },
+    {
+    title: 'Time Spent',
+    value: (
+    <div className="space-y-1">
+      {/* Primary value */}
+      <div className="text-2xl font-bold text-gray-800">
+        {formatDuration(data.firstAttemptDate, data.lastAttemptDate)}
+      </div>
+
+      {/* Secondary meta (minimal like other cards) */}
+      {cohortEndDate && (
+        <div className="text-xs text-gray-500">
+          {formatTimeLeft(cohortEndDate)} left
+        </div>
+      )}
+    </div>
+  ),
+  icon: Calendar,
+  color: 'text-orange-600 bg-orange-50',
+  bgColor: 'bg-orange-600',
+  isDuration: true,
+},
   ];
 
   return (
@@ -169,15 +203,15 @@ export default function ProgressOverviewCards({ data }) {
               <p className="text-2xl font-bold text-gray-800">{card.value}</p>
               {card.percentage !== undefined && !card.isDuration && (
                 <div className="flex items-center mt-2">
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
                     <span className="text-sm font-medium text-gray-700">
                       {card.percentage.toFixed(1)}%
                     </span>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-2">
+                  </div> */}
+                  {/* <span className="text-xs text-gray-500 ml-2">
                     {card.isAssignments ? 'attempted' : 'completed'}
-                  </span>
+                  </span> */}
                 </div>
               )}
             </div>

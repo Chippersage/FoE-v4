@@ -6,7 +6,7 @@ import type { ConceptsProgressResponse } from '@/mentor/mentor.types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity as ActivityIcon, AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, Clock, Download, HelpCircle,
     RefreshCw, Search, SortAsc, SortDesc, Target, TrendingUp, UserCheck, Users, Users as UsersIcon, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
@@ -16,6 +16,7 @@ import SkillBreakdown from '../components/analytics/SkillBreakdown';
 import StageAccordion from '../components/analytics/StageAccordion';
 import StudentAssignments from '../components/analytics/StudentAssignments';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
+import MentorRemarks from '../components/analytics/MentorRemarks';
 import ReactPaginate from 'react-paginate';
 
 // Status Toggle Component
@@ -111,7 +112,14 @@ export default function UnifiedLearnersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [conceptsProgressData, setConceptsProgressData] = useState<ConceptsProgressResponse | null>(null);
   const [isConceptsLoading, setIsConceptsLoading] = useState(false);
-  
+  const [mentorRemarks, setMentorRemarks] = useState("");
+  const remarksRef = useRef<HTMLTextAreaElement>(null);
+  const saveRemarks = () => {
+  const remarks = remarksRef.current?.value || "";
+  setMentorRemarks(remarks);
+  alert("Remarks saved! They will be included in the PDF report.");
+};
+
   // Dashboard states
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState('all');
@@ -1058,15 +1066,15 @@ const handleItemsPerPageChange = (count: number) => {
         <>
           {/* Overview Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <ProgressOverviewCards data={analyticsData} />
+            <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 
           {/* Conditional rendering based on viewMode */}
           {viewMode === 'overview' ? (
             <>
               {/* OVERVIEW VIEW */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 space-y-6">
+                {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="lg:col-span-2 space-y-6"> */}
                 {/*  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-semibold text-gray-800">Progress Overview</h3>
@@ -1080,8 +1088,8 @@ const handleItemsPerPageChange = (count: number) => {
                   {/* <SkillImpactMatrix stages={analyticsData.stages} /> */}
 
 {/*  RadarChart Section */}
-<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-  <div className="flex items-center justify-between mb-6">
+{/* <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm ">
+  <div className="flex items-center justify-between mb-6 h-full">
     <div>
       <h3 className="text-lg font-semibold text-gray-800">Skills OverView </h3>
       <p className="text-sm text-gray-600 mt-1">
@@ -1107,7 +1115,7 @@ const handleItemsPerPageChange = (count: number) => {
     <div className="h-96 flex items-center justify-center">
       <p className="text-gray-500">No skill data available for this learner</p>
     </div>
-  )}
+  )} */}
   {/* <div className="mt-4 pt-4 border-t border-gray-200">
     <div className="flex flex-wrap gap-4 justify-center">
       {conceptsProgressData?.concepts && processSkillData(conceptsProgressData.concepts).map((skill: any) => (
@@ -1119,20 +1127,24 @@ const handleItemsPerPageChange = (count: number) => {
         ))}
     </div>
   </div> */}
-</div>
+{/* </div> */}
                   {/* <SessionList sessionsData={sessionsData}
                     learnerId={selectedLearnerId || undefined}
                     learnerName={selectedLearner?.userName || analyticsData?.userName}
                   /> */}
-                  <RecentProgramAttempts
+                  {/* <RecentProgramAttempts
                     analyticsData={analyticsData}
                     learnerName={selectedLearner?.userName || analyticsData?.userName}
                     onViewDetailed={() => setViewMode('detailed')}
                   />
 
                 </div>
-
                 <div className="space-y-6">
+                {analyticsData.stages && analyticsData.stages.length > 0 && (
+                    <SkillBreakdown stages={analyticsData.stages} />
+                  )}
+                </div> */}
+                {/* <div className="space-y-6">
                   {(analyticsData.firstAttemptDate || analyticsData.lastAttemptDate) && (
                     <TimeAnalysis 
                       firstAttemptDate={analyticsData.firstAttemptDate}
@@ -1143,8 +1155,83 @@ const handleItemsPerPageChange = (count: number) => {
                   {analyticsData.stages && analyticsData.stages.length > 0 && (
                     <SkillBreakdown stages={analyticsData.stages} />
                   )}
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
+
+                {/* OVERVIEW VIEW */}
+
+{/* ROW 1: Radar + Skill Breakdown (SAME HEIGHT) */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+  {/* Radar Chart */}
+  <div className="lg:col-span-2">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-[520px] flex flex-col">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Skills Overview
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Comprehensive view of skill proficiency across all concepts
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Target className="h-4 w-4" />
+          <span>Skill Proficiency (%)</span>
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center">
+        {isConceptsLoading ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-500">Loading skill analysis...</p>
+          </div>
+        ) : conceptsProgressData?.concepts ? (
+          <RadarChartComponent
+            data={processSkillData(conceptsProgressData.concepts)}
+            height={420}
+          />
+        ) : (
+          <p className="text-gray-500">No skill data available</p>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Skill Breakdown */}
+  <div>
+    {analyticsData.stages?.length > 0 && (
+      <div className="h-[520px]">
+        <SkillBreakdown stages={analyticsData.stages} />
+      </div>
+    )}
+  </div>
+</div>
+
+  {/* ROW 2: Recent Attempts + Mentor Remarks */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  {/* Recent Program Attempts */}
+  <div className="lg:col-span-2 h-[520px]">
+    <RecentProgramAttempts
+      analyticsData={analyticsData}
+      learnerName={selectedLearner?.userName || analyticsData?.userName}
+      onViewDetailed={() => setViewMode("detailed")}
+    />
+  </div>
+
+  {/* Mentor Remarks */}
+  <div className="h-[520px]">
+    <MentorRemarks
+      remarksRef={remarksRef}
+      mentorRemarks={mentorRemarks}
+      setMentorRemarks={setMentorRemarks}
+      onSave={saveRemarks}
+    />
+  </div>
+</div>
+
+
 
               <StudentAssignments
                 data={analyticsData}

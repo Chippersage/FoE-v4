@@ -1263,7 +1263,7 @@ export default function StudentAssignments({ data, assignmentsData, cohortId, co
                             ) : (
                               <>
                                 <ChevronDown className="h-3 w-3" />
-                                {assignment.status === 'graded' ? 'View' : 'Correct'}
+                                {assignment.status === 'graded' ? 'View' : 'Evaluate'}
                               </>
                             )}
                           </button>
@@ -1282,7 +1282,7 @@ export default function StudentAssignments({ data, assignmentsData, cohortId, co
                             >
                               <div className="flex items-center justify-between mb-4">
                                 <h4 className="font-medium text-gray-800 text-sm">
-                                  {assignment.status === 'graded' ? 'Correction Details' : 'Correct Assignment'}
+                                  {assignment.status === 'graded' ? 'Evaluation Details' : 'Correct Assignment'}
                                 </h4>
                                 {assignment.status === 'graded' && (
                                   <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
