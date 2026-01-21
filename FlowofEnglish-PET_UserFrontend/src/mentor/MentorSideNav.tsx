@@ -1,17 +1,10 @@
-<<<<<<< Updated upstream
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User, Menu, X, ChevronDown } from "lucide-react";
-=======
-import LoadingOverlay from "../components/LoadingOverlay";
-import { useUserContext } from "../context/AuthContext";
-import { fetchMentorCohorts, type CohortWithProgram } from "./mentor-api";
->>>>>>> Stashed changes
-import axios from "axios";
-import { CircularProgress } from "@mui/material";
-import { useUserContext } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import { fetchMentorCohorts, type CohortWithProgram } from "@/lib/mentor-api";
+import { useUserContext } from "@/context/AuthContext";
+import { fetchMentorCohorts, type CohortWithProgram } from "@/mentor/mentor-api";
+import axios from "axios";
+import { BarChart, BarChart3, ChevronDown, FileText, List, LogOut, Menu, Users, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 interface MentorSideNavProps {
   cohortId: string;
@@ -21,7 +14,7 @@ interface MentorSideNavProps {
 const navItems = [
   { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true, enabled: true },
   { label: "Learners Details", icon: Users, path: "learners", needsProgram: false, enabled: true },
-  // { label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
+  //{ label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
   { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false, enabled: true },
   { label: "Reports", icon: BarChart, path: "reports", needsProgram: true, enabled: true },
   // { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: true },

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 type User = {
@@ -13,6 +13,7 @@ type Cohort = {
   cohortId: string;
   programId: string;
   cohortName: string;
+  programName?: string;
 } | null;
 
 const INITIAL_USER_STATE: User = {
@@ -26,13 +27,23 @@ interface AuthContextType {
   user: User;
   isLoading: boolean;
   isAuthenticated: boolean;
+
   cohort: Cohort;
+  setCohort: React.Dispatch<React.SetStateAction<Cohort>>;
+
+  // ✅ User-UI compatibility
+  selectedCohortWithProgram: any;
+  setSelectedCohortWithProgram: (cohort: any) => void;
+
   setUser: React.Dispatch<React.SetStateAction<User>>;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
-  setCohort: React.Dispatch<React.SetStateAction<Cohort>>;
   checkAuthUser: () => Promise<boolean>;
   checkCohort: () => boolean;
-  logout: () => void;
+
+  clearAuth: () => void;
+
+  isChangingCohort: boolean;
+  setIsChangingCohort: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const INITIAL_STATE: AuthContextType = {
@@ -40,12 +51,20 @@ const INITIAL_STATE: AuthContextType = {
   isLoading: false,
   isAuthenticated: false,
   cohort: null,
+  setCohort: () => {},
+
+  selectedCohortWithProgram: null,
+  setSelectedCohortWithProgram: () => {},
+
   setUser: () => {},
   setIsAuthenticated: () => {},
-  setCohort: () => {},
   checkAuthUser: async () => false,
   checkCohort: () => false,
-  logout: () => {},
+
+  clearAuth: () => {},
+
+  isChangingCohort: false,
+  setIsChangingCohort: () => {},
 };
 
 const AuthContext = createContext<AuthContextType>(INITIAL_STATE);
@@ -64,17 +83,17 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState<User>(() => {
-    const stored = safeParse(localStorage.getItem("user"));
-    return stored || INITIAL_USER_STATE;
+    return safeParse(localStorage.getItem("user")) || INITIAL_USER_STATE;
   });
 
   const [cohort, setCohort] = useState<Cohort>(() => {
-    const stored = safeParse(localStorage.getItem("selectedCohort"));
-    return stored || null;
+    return safeParse(localStorage.getItem("selectedCohort")) || null;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isChangingCohort, setIsChangingCohort] = useState(false);
+
 
   const logout = () => {
     setUser(INITIAL_USER_STATE);
@@ -116,6 +135,59 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+const selectedCohortWithProgram = useMemo(() => {
+    const fromUserUI = safeParse(
+      localStorage.getItem("selectedCohortWithProgram")
+    );
+    if (fromUserUI) return fromUserUI;
+
+    if (!cohort) return null;
+
+    return {
+      cohortId: cohort.cohortId,
+      cohortName: cohort.cohortName,
+      program: {
+        programId: cohort.programId,
+        programName: cohort.programName,
+      },
+    };
+  }, [cohort]);
+
+  const setSelectedCohortWithProgram = (data: any) => {
+    if (!data) return;
+
+    // User UI format
+    localStorage.setItem(
+      "selectedCohortWithProgram",
+      JSON.stringify(data)
+    );
+
+    // PET internal format
+    const petCohort: Cohort = {
+      cohortId: data.cohortId,
+      cohortName: data.cohortName,
+      programId: data.program?.programId ?? data.programId,
+      programName: data.program?.programName ?? data.programName,
+    };
+
+    localStorage.setItem("selectedCohort", JSON.stringify(petCohort));
+    setCohort(petCohort);
+  };
+
+  // Clear Auth on Logout
+  const clearAuth = () => {
+    setUser(INITIAL_USER_STATE);
+    setCohort(null);
+    setIsAuthenticated(false);
+    setIsChangingCohort(false);
+
+    localStorage.removeItem("user");
+    localStorage.removeItem("selectedCohort");
+    localStorage.removeItem("selectedCohortWithProgram");
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("userData");
+  };
+
   useEffect(() => {
     const init = async () => {
       const ok = await checkAuthUser();
@@ -126,23 +198,32 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      checkCohort();
       setIsLoading(false);
     };
 
     init();
   }, [navigate]);
 
-  const value = {
+ const value = {
     user,
     setUser,
     isLoading,
     isAuthenticated,
     setIsAuthenticated,
-    checkAuthUser,
-    logout,
+
     cohort,
     setCohort,
+
+    selectedCohortWithProgram,
+    setSelectedCohortWithProgram,
+
+    checkAuthUser,
     checkCohort,
+    clearAuth,
+
+    isChangingCohort,
+    setIsChangingCohort,
   };
 
 if (isLoading) {
@@ -181,11 +262,6 @@ if (isLoading) {
     </div>
   );
 }
-
-
-
-
-
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -13,6 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }: any) => (
   <Card
     sx={{
+<<<<<<< Updated upstream
       height: '100%',
       minHeight: '180px', // Fixed minimum height
       background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
@@ -44,10 +45,59 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
               WebkitBoxOrient: 'vertical',
               lineHeight: 1.3,
               minHeight: '2.6em' // Reserve space for 2 lines
+=======
+      height: "100%",
+      width: "100%",
+      borderRadius: 3,
+      border: `1px solid ${color}.100`,
+      background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+      transition: "all 0.25s ease",
+      "&:hover": {
+        transform: "translateY(-4px)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+      },
+    }}
+  >
+    <CardContent
+      sx={{
+        p: 2.5,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        "&:last-child": { pb: 2.5 },
+      }}
+    >
+      {/* Top section */}
+      <Stack direction="row" justifyContent="space-between" spacing={2}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            color={`${color}.dark`}
+            sx={{ lineHeight: 1.1 }}
+          >
+            {value}
+          </Typography>
+
+          <Typography
+            variant="body2"
+            fontWeight={500}
+            color={`${color}.dark`}
+            sx={{
+              mt: 0.5,
+              lineHeight: 1.3,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+>>>>>>> Stashed changes
             }}
           >
             {title}
           </Typography>
+<<<<<<< Updated upstream
           {subtitle && (
             <Typography variant="caption" color={`${color}.main`} sx={{ display: 'block', mt: 0.5 }}>
               {subtitle}
@@ -66,18 +116,52 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
               </Typography>
             </Box>
           )}
+=======
+>>>>>>> Stashed changes
         </Box>
+
         <Box
+<<<<<<< Updated upstream
           sx={{ p: 2,
             borderRadius: 3,
             bgcolor: `${color}.50`,
             color: `${color}.main`,
             flexShrink: 0
+=======
+          sx={{
+            p: 1.25,
+            borderRadius: 2,
+            bgcolor: `${color}.50`,
+            color: `${color}.main`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+>>>>>>> Stashed changes
           }}
         >
           {icon}
         </Box>
       </Stack>
+
+      {/* Progress bar only (no % text) */}
+      {progress !== undefined && (
+        <Box sx={{ mt: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: `${color}.50`,
+              "& .MuiLinearProgress-bar": {
+                backgroundColor: `${color}.main`,
+                borderRadius: 4,
+              },
+            }}
+          />
+        </Box>
+      )}
     </CardContent>
   </Card>
 );
@@ -449,6 +533,7 @@ export default function MentorDashboardClean() {
         </Alert>
       )}
 
+<<<<<<< Updated upstream
       {!loading && !error && !isChangingCohort && (
         <>
           {/* Stats Cards - FIXED GRID */}
@@ -459,39 +544,73 @@ export default function MentorDashboardClean() {
                 value={totals.total}
                 subtitle="All users in cohort"
                 icon={<Users size={24} />}
+=======
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {!loading && !error && !isChangingCohort && (
+          <>
+            {/* Stats Cards - FIXED GRID with uniform size */}
+            <Grid container spacing={3} sx={{ mb: 4, alignItems: "stretch", }}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
+              <StatCard
+                title="Total Learners"
+                value={totals.total}
+                // subtitle="All learners in cohort"
+                icon={<Users />}
+>>>>>>> Stashed changes
                 color="primary"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Active Learners"
                 value={totals.active}
+<<<<<<< Updated upstream
                 subtitle="Currently active"
                 icon={<TrendingUp size={24} />}
+=======
+                // subtitle="Currently active"
+                icon={<TrendingUp />}
+>>>>>>> Stashed changes
                 color="success"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Assignments for Review"
                 value={assignmentsCount}
+<<<<<<< Updated upstream
                 subtitle="Pending assignments"
                 icon={<FileText size={24} />}
+=======
+                // subtitle="Pending assignments"
+                icon={<FileText />}
+>>>>>>> Stashed changes
                 color="warning"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Cohort Progress"
                 value={`${overallCohortProgress}%`}
+<<<<<<< Updated upstream
                 subtitle="Overall completion"
                 icon={<BarChart size={24} />}
+=======
+                // subtitle="Overall completion"
+                icon={<BarChart />}
+>>>>>>> Stashed changes
                 color="info"
                 progress={overallCohortProgress}
               />
             </Grid>
           </Grid>
 
+<<<<<<< Updated upstream
           {/* Search and Filters */}
           <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
             <Stack direction="row" spacing={2} alignItems="center">
@@ -542,6 +661,66 @@ export default function MentorDashboardClean() {
               </select>
             </Stack>
           </Paper>
+=======
+            {/* Search and Filters */}
+            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="center">
+                {/* Search */}
+    <Box sx={{ position: "relative", flex: 1, width: "100%" }}>
+      <Search
+        size={18}
+        style={{
+          position: "absolute",
+          left: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9CA3AF",
+        }}
+      />
+      <input
+        type="text"
+        placeholder="Search learner"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setPageNumber(0);
+        }}
+        disabled={isChangingCohort}
+        style={{
+          width: "100%",
+          height: "38px",
+          padding: "0 12px 0 36px",
+          border: "1px solid #E5E7EB",
+          borderRadius: "6px",
+          fontSize: "14px",
+        }}
+      />
+    </Box>
+
+    {/* Status Filter */}
+    <select
+      value={statusFilter}
+      onChange={(e) => {
+        setStatusFilter(e.target.value as any);
+        setPageNumber(0);
+      }}
+      disabled={isChangingCohort}
+      style={{
+        height: "38px",
+        padding: "0 12px",
+        border: "1px solid #E5E7EB",
+        borderRadius: "6px",
+        fontSize: "14px",
+        minWidth: "130px",
+      }}
+    >
+      <option value="ALL">All</option>
+      <option value="ACTIVE">Active</option>
+      <option value="DISABLED">Disabled</option>
+    </select>
+  </Stack>
+</Paper>
+>>>>>>> Stashed changes
 
           {/* Learners Table */}
           <Paper sx={{ p: 3, borderRadius: 3,
@@ -557,6 +736,7 @@ export default function MentorDashboardClean() {
               </Typography>
             </Stack>
 
+<<<<<<< Updated upstream
             <TableContainer>
               <Table>
                 <TableHead>
@@ -664,6 +844,90 @@ export default function MentorDashboardClean() {
                 </TableBody>
               </Table>
             </TableContainer>
+=======
+              <TableContainer>
+  <Table size="small">
+    <TableHead>
+      <TableRow sx={{ bgcolor: "grey.100" }}>
+        <TableCell sx={{ py: 1.25 }}><strong>Learner</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Status</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Last Activity</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Duration</strong></TableCell>
+      </TableRow>
+    </TableHead>
+
+    <TableBody>
+      {paginatedUsers.map((u) => {
+        const latestSession = u.latestSession;
+        const duration = latestSession
+          ? calculateDuration(
+              latestSession.sessionStartTimestamp,
+              latestSession.sessionEndTimestamp
+            )
+          : "—";
+
+        const isDisabled = (u.status ?? "").toUpperCase() === "DISABLED";
+
+        return (
+          <TableRow
+            key={u.userId}
+            sx={{
+              opacity: isDisabled ? 0.5 : 1,
+              "&:hover": {
+                bgcolor: isDisabled ? "grey.50" : "grey.100",
+              },
+            }}
+          >
+            <TableCell sx={{ py: 1 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    bgcolor:
+                      u.status === "ACTIVE"
+                        ? "success.main"
+                        : "error.main",
+                  }}
+                >
+                  {u.userName?.[0]?.toUpperCase() || "U"}
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" fontWeight={500}>
+                    {u.userName || "—"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {u.userId}
+                  </Typography>
+                </Box>
+              </Stack>
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <StatusChip status={u.status || "UNKNOWN"} />
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <Typography variant="body2">
+                {u.latestTimestamp
+                  ? formatLastActivity(u.latestTimestamp)
+                  : "Never logged in"}
+              </Typography>
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <Typography variant="body2" fontWeight={500}>
+                {duration}
+              </Typography>
+            </TableCell>
+          </TableRow>
+        );
+      })}
+    </TableBody>
+  </Table>
+</TableContainer>
+
+>>>>>>> Stashed changes
 
             <TablePagination
               rowsPerPageOptions={[5, 10, 20, 25]}
