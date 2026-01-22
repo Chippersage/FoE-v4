@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import type { LearnerSessionActivity } from "@/types/mentor.types";
-import { ChevronDown, ChevronUp, Calendar, Clock, User, Mail, Activity,TrendingUp,Zap, RefreshCw,} from "lucide-react";
+import type { LearnerSessionActivity } from "@/mentor/mentor.types";
+import { Activity, Calendar, ChevronDown, ChevronUp, Clock, Mail, RefreshCw, TrendingUp, User, Zap, } from "lucide-react";
+import { useState } from "react";
 
 interface Props {
   activities: LearnerSessionActivity[] | null | undefined;

@@ -1,7 +1,6 @@
-import React from "react";
+import { MentorCohortProgress } from "@/mentor/mentor.types";
 import { useNavigate } from "react-router-dom";
-import { MentorCohortProgress } from "@/types/mentor.types";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface LearnerCardProps {
   learner: MentorCohortProgress;

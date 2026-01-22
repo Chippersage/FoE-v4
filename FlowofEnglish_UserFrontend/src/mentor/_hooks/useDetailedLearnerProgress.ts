@@ -1,6 +1,6 @@
 import { useFetch } from "@/hooks/useFetch";
-import { LearnerDetailedProgress } from "@/types/mentor.types";
 import { processLearnerProgress } from "@/lib/data1-processing";
+import { LearnerDetailedProgress } from "@/mentor/mentor.types";
 
 export function useDetailedLearnerProgress(
   userId: string,

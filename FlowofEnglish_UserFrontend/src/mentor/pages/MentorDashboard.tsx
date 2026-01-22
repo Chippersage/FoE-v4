@@ -9,87 +9,100 @@ import { useUserContext } from "../../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Styled components for better UI - FIXED WIDTH
-const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }: any) => (
+// Styled components for better UI
+const StatCard = ({ title, value, icon, color = "primary", progress, }: any) => (
   <Card
     sx={{
-      height: '100%',
-      width: '100%',
-      minHeight: '180px',
-      maxWidth: '100%',
-      background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
-      border: `1px solid ${color}.100`,
+      height: "100%",
+      width: "100%",
       borderRadius: 3,
-      boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
-      transition: 'all 0.3s ease-in-out',
-      overflow: 'hidden',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 24px 0 rgba(0,0,0,0.1)',
-      }
+      border: `1px solid ${color}.100`,
+      background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+      transition: "all 0.25s ease",
+      "&:hover": {
+        transform: "translateY(-4px)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+      },
     }}
   >
-    <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', '&:last-child': { pb: 3 } }}>
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ flex: 1 }}>
-        <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          <Typography variant="h3" fontWeight="bold" color={`${color}.dark`} sx={{ mb: 1, fontSize: { xs: '2rem', sm: '2.125rem', md: '2.5rem' } }}>
+    <CardContent
+      sx={{
+        p: 2.5,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        "&:last-child": { pb: 2.5 },
+      }}
+    >
+      {/* Top section */}
+      <Stack direction="row" justifyContent="space-between" spacing={2}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            color={`${color}.dark`}
+            sx={{ lineHeight: 1.1 }}
+          >
             {value}
           </Typography>
-          <Typography variant="h6" color={`${color}.dark`} fontWeight="medium"
+
+          <Typography
+            variant="body2"
+            fontWeight={500}
+            color={`${color}.dark`}
             sx={{
-              fontSize: { xs: '0.9rem', sm: '1rem' }, // Smaller font for longer titles
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
+              mt: 0.5,
               lineHeight: 1.3,
-              minHeight: '2.6em',
-              wordBreak: 'break-word' // Break long words
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
             }}
           >
             {title}
           </Typography>
-          {subtitle && (
-            <Typography variant="caption" color={`${color}.main`} sx={{ display: 'block', mt: 0.5, overflow: 'hidden',
-                textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {subtitle}
-            </Typography>
-          )}
-          {progress !== undefined && (
-            <Box sx={{ mt: 2 }}>
-              <LinearProgress variant="determinate" value={progress}
-                sx={{
-                  height: 8, borderRadius: 4,
-                  backgroundColor: `${color}.50`,
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: `${color}.main`, borderRadius: 4
-                  }
-                }}
-              />
-              <Typography variant="caption" color={`${color}.main`} sx={{ mt: 0.5, display: 'block' }}>
-                {progress.toFixed(0)}% progress
-              </Typography>
-            </Box>
-          )}
         </Box>
+
         <Box
           sx={{
-            p: 1.5, borderRadius: 3,
+            p: 1.25,
+            borderRadius: 2,
             bgcolor: `${color}.50`,
             color: `${color}.main`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
           }}
         >
           {React.cloneElement(icon, { size: 20 })}
         </Box>
       </Stack>
+
+      {/* Progress bar only (no % text) */}
+      {progress !== undefined && (
+        <Box sx={{ mt: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: `${color}.50`,
+              "& .MuiLinearProgress-bar": {
+                backgroundColor: `${color}.main`,
+                borderRadius: 4,
+              },
+            }}
+          />
+        </Box>
+      )}
     </CardContent>
   </Card>
 );
+
 
 const StatusChip = ({ status }: { status: string }) => (
   <Chip
@@ -482,39 +495,39 @@ export default function MentorDashboardClean() {
         {!loading && !error && !isChangingCohort && (
           <>
             {/* Stats Cards - FIXED GRID with uniform size */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={3} sx={{ mb: 4, alignItems: "stretch", }}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Total Learners"
                 value={totals.total}
-                subtitle="All learners in cohort"
+                // subtitle="All learners in cohort"
                 icon={<Users />}
                 color="primary"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Active Learners"
                 value={totals.active}
-                subtitle="Currently active"
+                // subtitle="Currently active"
                 icon={<TrendingUp />}
                 color="success"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Assignments for Review"
                 value={assignmentsCount}
-                subtitle="Pending assignments"
+                // subtitle="Pending assignments"
                 icon={<FileText />}
                 color="warning"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Cohort Progress"
                 value={`${overallCohortProgress}%`}
-                subtitle="Overall completion"
+                // subtitle="Overall completion"
                 icon={<BarChart />}
                 color="info"
                 progress={overallCohortProgress}
@@ -523,61 +536,73 @@ export default function MentorDashboardClean() {
           </Grid>
 
             {/* Search and Filters */}
-            <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Box sx={{ position: 'relative', flex: 1 }}>
-                  <Search
-                    size={20}
-                    style={{
-                      position: 'absolute',
-                      left: 12,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#6B7280'
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search learners by name or ID..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setPageNumber(0); // Reset to first page when searching
-                    }}
-                    disabled={isChangingCohort}
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 40px',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
-                  />
-                </Box>
+            <Paper
+  sx={{
+    p: 2,
+    mb: 2,
+    borderRadius: 2,
+  }}
+>
+  <Stack
+    direction={{ xs: "column", sm: "row" }}
+    spacing={1.5}
+    alignItems="center"
+  >
+    {/* Search */}
+    <Box sx={{ position: "relative", flex: 1, width: "100%" }}>
+      <Search
+        size={18}
+        style={{
+          position: "absolute",
+          left: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9CA3AF",
+        }}
+      />
+      <input
+        type="text"
+        placeholder="Search learner"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setPageNumber(0);
+        }}
+        disabled={isChangingCohort}
+        style={{
+          width: "100%",
+          height: "38px",
+          padding: "0 12px 0 36px",
+          border: "1px solid #E5E7EB",
+          borderRadius: "6px",
+          fontSize: "14px",
+        }}
+      />
+    </Box>
 
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value as any);
-                    setPageNumber(0); // Reset to first page when filtering
-                  }}
-                  disabled={isChangingCohort}
-                  style={{
-                    padding: '12px 16px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    minWidth: '140px'
-                  }}
-                >
-                  <option value="ALL">All Status</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="DISABLED">Disabled</option>
-                </select>
-              </Stack>
-            </Paper>
+    {/* Status Filter */}
+    <select
+      value={statusFilter}
+      onChange={(e) => {
+        setStatusFilter(e.target.value as any);
+        setPageNumber(0);
+      }}
+      disabled={isChangingCohort}
+      style={{
+        height: "38px",
+        padding: "0 12px",
+        border: "1px solid #E5E7EB",
+        borderRadius: "6px",
+        fontSize: "14px",
+        minWidth: "130px",
+      }}
+    >
+      <option value="ALL">All</option>
+      <option value="ACTIVE">Active</option>
+      <option value="DISABLED">Disabled</option>
+    </select>
+  </Stack>
+</Paper>
 
             {/* Learners Table */}
             <Paper sx={{
@@ -595,112 +620,87 @@ export default function MentorDashboardClean() {
               </Stack>
 
               <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                      <TableCell><strong>Learner</strong></TableCell>
-                      <TableCell><strong>Status</strong></TableCell>
-                      <TableCell><strong>Last Activity</strong></TableCell>
-                      <TableCell><strong>Duration</strong></TableCell>
-                    </TableRow>
-                  </TableHead>
+  <Table size="small">
+    <TableHead>
+      <TableRow sx={{ bgcolor: "grey.100" }}>
+        <TableCell sx={{ py: 1.25 }}><strong>Learner</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Status</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Last Activity</strong></TableCell>
+        <TableCell sx={{ py: 1.25 }}><strong>Duration</strong></TableCell>
+      </TableRow>
+    </TableHead>
 
-                  <TableBody>
-                    {paginatedUsers.length > 0 ? (
-                      paginatedUsers.map((u) => {
-                        const latestSession = u.latestSession;
-                        const duration = latestSession ?
-                          calculateDuration(latestSession.sessionStartTimestamp, latestSession.sessionEndTimestamp)
-                          : "—";
+    <TableBody>
+      {paginatedUsers.map((u) => {
+        const latestSession = u.latestSession;
+        const duration = latestSession
+          ? calculateDuration(
+              latestSession.sessionStartTimestamp,
+              latestSession.sessionEndTimestamp
+            )
+          : "—";
 
-                        const isDisabled = (u.status ?? "").toUpperCase() === "DISABLED";
+        const isDisabled = (u.status ?? "").toUpperCase() === "DISABLED";
 
-                        return (
-                          <TableRow
-                            key={u.userId}
-                            sx={{
-                              transition: 'all 0.2s ease',
-                              opacity: isDisabled ? 0.5 : 1, // Light grey for DISABLED
-                              '&:hover': {
-                                backgroundColor: isDisabled ? 'grey.50' : 'grey.100',
-                              }
-                            }}
-                          >
-                            <TableCell>
-                              <Stack direction="row" alignItems="center" spacing={2}>
-                                <Avatar
-                                  sx={{
-                                    bgcolor: u.status === "ACTIVE" ? 'success.main' : 'error.main',
-                                    width: 40,
-                                    height: 40,
-                                    opacity: isDisabled ? 0.6 : 1
-                                  }}
-                                >
-                                  <Typography variant="body2" fontWeight="bold" color="white">
-                                    {u.userName?.charAt(0)?.toUpperCase() || 'U'}
-                                  </Typography>
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="subtitle1" fontWeight="medium">
-                                    {u.userName || "—"}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {u.userId}
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                            </TableCell>
-                            <TableCell>
-                              <StatusChip status={u.status || "UNKNOWN"} />
-                            </TableCell>
-                            <TableCell>
-                              <Stack direction="row" alignItems="center" spacing={1}>
-                                <Clock size={16} color="#6B7280" />
-                                <Typography variant="body2">
-                                  {u.latestTimestamp
-                                    ? formatLastActivity(u.latestTimestamp)
-                                    : "Never logged in"}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell>
-                              <Stack direction="row" alignItems="center" spacing={1}>
-                                {duration !== "—" ? (
-                                  <>
-                                    <Play size={16} color="#10B981" />
-                                    <Typography variant="body2" color="text.primary" fontWeight="medium">
-                                      {duration}
-                                    </Typography>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Square size={16} color="#6B7280" />
-                                    <Typography variant="body2" color="text.secondary">
-                                      {duration}
-                                    </Typography>
-                                  </>
-                                )}
-                              </Stack>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                          <Users size={48} color="#9CA3AF" />
-                          <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
-                            No learners found
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Try adjusting your search or filters
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+        return (
+          <TableRow
+            key={u.userId}
+            sx={{
+              opacity: isDisabled ? 0.5 : 1,
+              "&:hover": {
+                bgcolor: isDisabled ? "grey.50" : "grey.100",
+              },
+            }}
+          >
+            <TableCell sx={{ py: 1 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    bgcolor:
+                      u.status === "ACTIVE"
+                        ? "success.main"
+                        : "error.main",
+                  }}
+                >
+                  {u.userName?.[0]?.toUpperCase() || "U"}
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" fontWeight={500}>
+                    {u.userName || "—"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {u.userId}
+                  </Typography>
+                </Box>
+              </Stack>
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <StatusChip status={u.status || "UNKNOWN"} />
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <Typography variant="body2">
+                {u.latestTimestamp
+                  ? formatLastActivity(u.latestTimestamp)
+                  : "Never logged in"}
+              </Typography>
+            </TableCell>
+
+            <TableCell sx={{ py: 1 }}>
+              <Typography variant="body2" fontWeight={500}>
+                {duration}
+              </Typography>
+            </TableCell>
+          </TableRow>
+        );
+      })}
+    </TableBody>
+  </Table>
+</TableContainer>
+
 
               {/* Pagination */}
               {filteredUsers.length > itemsPerPage && (

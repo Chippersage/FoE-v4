@@ -23,6 +23,7 @@ import LearnerDetailPage from "./mentor/pages/LearnerDetailPage";
 import MentorReportsPage from "./mentor/pages/MentorReportsPage";
 import LearnersDetailsPage from "./mentor/pages/LearnersDetailsPage";
 import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
+import ViewSubmissions from "./mentor/pages/ViewSubmissions";
 
 export default function App() {
   const { user, isLoading, isChangingCohort } = useUserContext();
@@ -121,7 +122,7 @@ export default function App() {
           >
             <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
             <Route path=":cohortId/learners" element={<UnifiedLearnersPage />} />
-            <Route path=":cohortId/assignments" element={<AssignmentsPage />} />
+            <Route path=":cohortId/assignments" element={<ViewSubmissions />} />
             <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />}/>
             {/* <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnerDetailPage />} />
             <Route path=":cohortId/learner/:learnerId/:programId?" element={<LearnersProgressDashboard />} />

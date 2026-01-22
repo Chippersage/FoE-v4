@@ -1,4 +1,4 @@
-import { LearnerDetailedProgress, SubconceptAttempt } from "@/types/mentor.types";
+import { LearnerDetailedProgress, SubconceptAttempt } from "@/mentor/mentor.types";
 
 const MAX_RECENT_ATTEMPTS = 5;
 
