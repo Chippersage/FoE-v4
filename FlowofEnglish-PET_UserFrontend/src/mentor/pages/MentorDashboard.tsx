@@ -421,41 +421,6 @@ export default function MentorDashboardClean() {
     }
   };
 
-  // Stats
-  const activeCount = users.filter(u => u.status?.toString().toLowerCase() === "active").length;
-  const total = users.length;
-  const disabledCount = total - activeCount;
-
-  const normalizeDate = (v) => {
-    const parsed = Date.parse(v);
-    return isNaN(parsed) ? 0 : parsed;
-  };
-
-  // --- Filtering & Sorting ---
-  let filteredUsers = [...users];
-
-  if (searchTerm.trim()) {
-    filteredUsers = filteredUsers.filter(u =>
-      u.userName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
-
-  if (filterStatus !== "all") {
-    filteredUsers = filteredUsers.filter(u =>
-      filterStatus === "active" ? u.status?.toString().toLowerCase() === "active" : u.status?.toString().toLowerCase() !== "active"
-    );
-  }
-
-  const sorter = {
-    recentLogin: (a, b) => normalizeDate(b.lastLogin) - normalizeDate(a.lastLogin),
-    nameAsc: (a, b) => a.userName.localeCompare(b.userName),
-    nameDesc: (a, b) => b.userName.localeCompare(a.userName),
-    scoreHigh: (a, b) => b.leaderboardScore - a.leaderboardScore,
-    scoreLow: (a, b) => a.leaderboardScore - b.leaderboardScore,
-  };
-
-  filteredUsers.sort(sorter[sortOption]);
-
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Show loading overlay when cohort is changing */}
