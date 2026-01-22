@@ -75,4 +75,5 @@ const CourseLayout: React.FC = () => {
   );
 };
 
+
 export default React.memo(CourseLayout);
