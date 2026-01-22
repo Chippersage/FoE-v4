@@ -1,5 +1,5 @@
 import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser, MentorCohortsResponse,
-} from "@/types/mentor.types";
+UserAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "@/types/mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -166,12 +166,93 @@ export async function fetchProgramReport(userId: string, programId: string): Pro
   return handleResponse<LearnerDetailedProgress>(resp);
 }
 
+// Fetch all assignments for a user in a specific cohort
+export async function fetchUserAssignments( cohortId: string, userId: string, programId: string): Promise<UserAssignmentsResponse> {
+  if (!cohortId || !userId || !programId) {
+    throw new Error("cohortId, userId, and programId are required");
+  }
+  const url = `${API_BASE_URL}/assignments/cohort/${encodeURIComponent(cohortId)}/user/${encodeURIComponent(userId)}/assignments?programId=${encodeURIComponent(programId)}`;
+  
+  const resp = await fetch(url, { credentials: "include",
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+  });
+  
+  if (!resp.ok) {
+    const errorText = await resp.text().catch(() => '');
+    throw new Error(`Failed to fetch assignments: ${resp.status} ${resp.statusText} - ${errorText}`);
+  }
+  return handleResponse<UserAssignmentsResponse>(resp);
+}
+
+// Submit corrected assignment
+export async function submitCorrectedAssignment( assignmentId: string, params: SubmitCorrectionParams ): Promise<SubmitCorrectionResponse> {
+  if (!assignmentId) {
+    throw new Error("assignmentId is required");
+  }
+  const url = `${API_BASE_URL}/assignments/${encodeURIComponent(assignmentId)}/correct`;
+  
+  // Create FormData for multipart request
+  const formData = new FormData();
+  
+  if (params.score !== undefined) {
+    formData.append('score', params.score.toString());
+  }
+  
+  if (params.remarks) {
+    formData.append('remarks', params.remarks);
+  }
+  
+  if (params.correctedDate) {
+    formData.append('correctedDate', params.correctedDate);
+  }
+  
+  if (params.file) {
+    formData.append('file', params.file);
+  }
+  
+  const resp = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    // Note: Don't set Content-Type header for FormData - browser will set it with boundary
+  });
+  
+  if (!resp.ok) {
+    const errorText = await resp.text().catch(() => '');
+    throw new Error(`Failed to submit correction: ${resp.status} ${resp.statusText} - ${errorText}`);
+  }
+  
+  return handleResponse<SubmitCorrectionResponse>(resp);
+}
+
+// Alternative submit correction with typed params (if you prefer explicit parameter passing)
+export async function submitAssignmentCorrection(assignmentId: string, score?: number, remarks?: string, correctedDate?: string, file?: File
+): Promise<SubmitCorrectionResponse> {
+  return submitCorrectedAssignment(assignmentId, { score, remarks, correctedDate, file });
+}
+
 //Fetching all assigned mentor cohorts
 export async function fetchMentorCohorts(mentorId: string): Promise<MentorCohortsResponse> {
   const url = `${API_BASE_URL}/users/${encodeURIComponent(mentorId)}/cohorts`;
  // console.log("🔍 Fetching mentor cohorts:", url);
   const resp = await fetch(url, { credentials: "include" });
   return handleResponse<MentorCohortsResponse>(resp);
+}
+
+// Feching user's concepts progress in a program
+export async function fetchUserConceptsProgress( programId: string, userId: string ): Promise<any> {
+  const url = `${API_BASE_URL}/programs/${programId}/concepts/progress/${userId}`;
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch concepts progress: ${resp.status} ${resp.statusText}`);
+  }
+  return handleResponse<any>(resp);
 }
 
  // Export data in various formats
@@ -196,8 +277,7 @@ export const exportAPI = {
 export async function testAPIConnection(): Promise<boolean> {
   try {
     const testUrl = `${API_BASE_URL}/health`;
-    const response = await fetch(testUrl, { 
-      method: 'GET',
+    const response = await fetch(testUrl, { method: 'GET',
       headers: { 'Accept': 'application/json' }
     });
     return response.ok;

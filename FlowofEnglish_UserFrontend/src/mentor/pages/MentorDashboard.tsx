@@ -1,51 +1,18 @@
+import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '@/mentor/mentor-api';
+import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Container, Grid, IconButton, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { format, formatDistanceToNow } from "date-fns";
+import { BarChart, Clock, FileText, Play, RefreshCw, Search, Square, TrendingUp, Users, ChevronDown } from "lucide-react";
+import ReactPaginate from 'react-paginate';
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Grid, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, 
-  Box, CircularProgress, Alert, IconButton, Chip, Avatar, Stack, LinearProgress} from "@mui/material";
-import { TrendingUp, Users, UserX, Clock, Search, RefreshCw, Play, Square, FileText, BarChart} from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
-import { fetchMentorCohortProgress, fetchLearnerSessionActivity, fetchMentorCohorts } from '@/lib/mentor-api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Styled components for better UI - FIXED WIDTH
-const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }: any) => (
+// Styled components for better UI
+const StatCard = ({ title, value, icon, color = "primary", progress, }: any) => (
   <Card
     sx={{
-<<<<<<< Updated upstream
-      height: '100%',
-      minHeight: '180px', // Fixed minimum height
-      background: `linear-gradient(135deg, ${color}.light, ${color}.lighter)`,
-      border: `1px solid ${color}.100`,
-      borderRadius: 3,
-      boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
-      transition: 'all 0.3s ease-in-out',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 24px 0 rgba(0,0,0,0.1)',
-      }
-    }}
-  >
-    <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ flex: 1 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h3" fontWeight="bold" color={`${color}.dark`} sx={{ mb: 1 }}>
-            {value}
-          </Typography>
-          <Typography 
-            variant="h6" 
-            color={`${color}.dark`} 
-            fontWeight="medium"
-            sx={{ 
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              lineHeight: 1.3,
-              minHeight: '2.6em' // Reserve space for 2 lines
-=======
       height: "100%",
       width: "100%",
       borderRadius: 3,
@@ -92,42 +59,13 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
->>>>>>> Stashed changes
             }}
           >
             {title}
           </Typography>
-<<<<<<< Updated upstream
-          {subtitle && (
-            <Typography variant="caption" color={`${color}.main`} sx={{ display: 'block', mt: 0.5 }}>
-              {subtitle}
-            </Typography>
-          )}
-          {progress !== undefined && (
-            <Box sx={{ mt: 2 }}>
-              <LinearProgress variant="determinate" value={progress} 
-                sx={{ height: 8, borderRadius: 4,
-                  backgroundColor: `${color}.50`,
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: `${color}.main`, borderRadius: 4 }}}
-              />
-              <Typography variant="caption" color={`${color}.main`} sx={{ mt: 0.5, display: 'block' }}>
-                {progress.toFixed(0)}% progress
-              </Typography>
-            </Box>
-          )}
-=======
->>>>>>> Stashed changes
         </Box>
 
         <Box
-<<<<<<< Updated upstream
-          sx={{ p: 2,
-            borderRadius: 3,
-            bgcolor: `${color}.50`,
-            color: `${color}.main`,
-            flexShrink: 0
-=======
           sx={{
             p: 1.25,
             borderRadius: 2,
@@ -137,10 +75,9 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
->>>>>>> Stashed changes
           }}
         >
-          {icon}
+          {React.cloneElement(icon, { size: 20 })}
         </Box>
       </Stack>
 
@@ -165,6 +102,7 @@ const StatCard = ({ title, value, subtitle, icon, color = "primary", progress }:
     </CardContent>
   </Card>
 );
+
 
 const StatusChip = ({ status }: { status: string }) => (
   <Chip
@@ -191,18 +129,18 @@ const formatLastActivity = (timestamp?: string | null) => {
 // Calculate duration between start and end time
 const calculateDuration = (startTime?: string, endTime?: string) => {
   if (!startTime || !endTime) return "—";
-  
+
   try {
     const start = new Date(startTime);
     const end = new Date(endTime);
     const durationMs = end.getTime() - start.getTime();
-    
+
     if (durationMs < 0) return "Invalid";
-    
+
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${seconds}s`;
     } else if (minutes > 0) {
@@ -240,6 +178,7 @@ const getLatestSessionForUser = (sessions?: any[]) => {
 export default function MentorDashboardClean() {
   const { cohortId } = useParams<{ cohortId: string }>();
   const { user, selectedCohortWithProgram, isChangingCohort } = useUserContext();
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const mentorId = user?.userId ?? "";
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -249,7 +188,7 @@ export default function MentorDashboardClean() {
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
-  
+
   // New state for cohort progress and assignments
   const [cohortProgress, setCohortProgress] = useState<any[]>([]);
   const [assignmentsCount, setAssignmentsCount] = useState<number>(0);
@@ -258,8 +197,8 @@ export default function MentorDashboardClean() {
   const [programId, setProgramId] = useState<string>("");
 
   // Pagination
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [pageNumber, setPageNumber] = useState(0);
+  const itemsPerPage = 10; // Fixed items per page
 
   // Get programId from localStorage on component mount
   useEffect(() => {
@@ -272,11 +211,11 @@ export default function MentorDashboardClean() {
             return selectedCohort.program.programId;
           }
         }
-        
+
         if (cohortMeta?.program?.programId) {
           return cohortMeta.program.programId;
         }
-        
+
         const userStr = localStorage.getItem("user");
         if (userStr) {
           const userData = JSON.parse(userStr);
@@ -284,7 +223,7 @@ export default function MentorDashboardClean() {
             return userData.selectedProgramId;
           }
         }
-        
+
         return "";
       } catch (error) {
         console.error("Error getting programId from storage:", error);
@@ -298,15 +237,17 @@ export default function MentorDashboardClean() {
     }
   }, [cohortMeta]);
 
-
   useEffect(() => {
     if (isChangingCohort) {
+      setInitialDataLoaded(false);
       return;
     }
     if (!cohortId || !mentorId) {
       setError("Missing cohortId or mentorId. Please re-select your cohort.");
+      setInitialDataLoaded(true);
       return;
     }
+    setInitialDataLoaded(false);
     fetchData();
   }, [cohortId, mentorId, isChangingCohort]);
 
@@ -314,11 +255,21 @@ export default function MentorDashboardClean() {
     if (isChangingCohort) {
       return;
     }
-    
+
     if (programId && cohortId && mentorId) {
       fetchCohortProgress();
     }
   }, [programId, cohortId, mentorId, isChangingCohort]);
+
+  // Check when all data is loaded
+  useEffect(() => {
+    if (!loading && !loadingProgress && !isChangingCohort && cohortId) {
+      const timer = setTimeout(() => {
+        setInitialDataLoaded(true);
+      }, 100); // Small delay to ensure state updates
+      return () => clearTimeout(timer);
+    }
+  }, [loading, loadingProgress, isChangingCohort, cohortId]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -326,7 +277,7 @@ export default function MentorDashboardClean() {
     try {
       // Use the existing API function from mentor-api.ts
       const sessionData = await fetchLearnerSessionActivity(cohortId!, mentorId);
-      
+
       // Also fetch cohort metadata
       const resp = await fetch(
         `${API_BASE_URL}/user-session-mappings/cohort/${encodeURIComponent(cohortId!)}/mentor/${encodeURIComponent(mentorId)}`,
@@ -361,11 +312,11 @@ export default function MentorDashboardClean() {
       mapped.sort((a, b) => {
         const aStatus = (a.status ?? "").toUpperCase();
         const bStatus = (b.status ?? "").toUpperCase();
-        
+
         // DISABLED users go to bottom
         if (aStatus === "DISABLED" && bStatus !== "DISABLED") return 1;
         if (bStatus === "DISABLED" && aStatus !== "DISABLED") return -1;
-        
+
         // Within same status group, sort by latest activity
         if (!a.latestTimestamp && !b.latestTimestamp) return 0;
         if (!a.latestTimestamp) return 1;
@@ -374,9 +325,11 @@ export default function MentorDashboardClean() {
       });
 
       setUsers(mapped);
+      setPageNumber(0); // Reset to first page when data changes
     } catch (err: any) {
       console.error("Mentor dashboard fetch error:", err);
       setError(err?.message ?? "Failed to load mentor cohort data.");
+      setInitialDataLoaded(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -388,32 +341,33 @@ export default function MentorDashboardClean() {
       console.log("Missing required parameters for progress fetch:", { cohortId, mentorId, programId });
       return;
     }
-    
+
     setLoadingProgress(true);
     try {
       // Use the existing API function from mentor-api.ts
       const progressData = await fetchMentorCohortProgress(mentorId, programId, cohortId!);
       setCohortProgress(progressData);
-      
+
       // Calculate overall cohort progress
       if (progressData && progressData.length > 0) {
         const totalSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.totalSubconcepts || 0), 0);
         const completedSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.completedSubconcepts || 0), 0);
-        
+
         const overallProgress = totalSubconcepts > 0 ? (completedSubconcepts / totalSubconcepts) * 100 : 0;
-        
+
         setOverallCohortProgress(parseFloat(overallProgress.toFixed(1)));
       }
-      
+
       // Fetch assignments count using the new API function
       const cohortsData = await fetchMentorCohorts(mentorId);
       if (cohortsData.assignmentStatistics?.cohortDetails?.[cohortId!]) {
         const pendingAssignments = cohortsData.assignmentStatistics.cohortDetails[cohortId!].pendingAssignments || 0;
         setAssignmentsCount(pendingAssignments);
       }
-      
+
     } catch (err: any) {
       console.error("Error fetching cohort progress:", err);
+      setInitialDataLoaded(true);
     } finally {
       setLoadingProgress(false);
     }
@@ -447,12 +401,14 @@ export default function MentorDashboardClean() {
     return filtered;
   }, [users, searchTerm, statusFilter]);
 
-  const paginated = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Pagination setup
+  const pageCount = Math.ceil(filteredUsers.length / itemsPerPage);
+  const offset = pageNumber * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(offset, offset + itemsPerPage);
 
-  const handleChangePage = (_: any, newPage: number) => setPage(newPage);
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  // Handle page click
+  const handlePageClick = (event: { selected: number }) => {
+    setPageNumber(event.selected);
   };
 
   // Format date function
@@ -469,22 +425,25 @@ export default function MentorDashboardClean() {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Show loading overlay when cohort is changing */}
-      {isChangingCohort && (
+      {(isChangingCohort || !initialDataLoaded) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
           <div className="text-center p-8 bg-white rounded-lg shadow-xl">
             <CircularProgress className="mb-4" />
             <Typography variant="h6" className="mb-2">
-              Switching to {selectedCohortWithProgram?.cohortName}
+              {isChangingCohort
+                ? `Switching to ${selectedCohortWithProgram?.cohortName}`
+                : `Loading ${cohortMeta?.cohortName || "Cohort"} Dashboard`
+              }
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Loading cohort data...
+              Loading all data...
             </Typography>
           </div>
         </div>
       )}
 
       {/* Wrap ALL content in blur div when changing cohort */}
-      <div className={isChangingCohort ? "opacity-50 pointer-events-none blur-sm" : ""}>
+      <div className={(isChangingCohort || !initialDataLoaded) ? "opacity-50 pointer-events-none blur-sm" : ""}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
@@ -496,7 +455,7 @@ export default function MentorDashboardClean() {
                 {cohortMeta?.cohortName || "Loading..."} • {formatDate(cohortMeta?.cohortStartDate)} - {formatDate(cohortMeta?.cohortEndDate)}
               </Typography>
             </Box>
-            
+
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="subtitle1" color="text.primary">
                 {organization?.organizationName || "Organization"}
@@ -505,7 +464,7 @@ export default function MentorDashboardClean() {
                 Program: {cohortMeta?.program?.programName || programId || "Loading..."}
               </Typography>
             </Box>
-            
+
             <IconButton
               onClick={handleRefresh}
               disabled={refreshing || loadingProgress || isChangingCohort}
@@ -520,31 +479,13 @@ export default function MentorDashboardClean() {
             </IconButton>
           </Stack>
         </Box>
-      
-      {loading && (
-        <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
-          <CircularProgress />
-        </Box>
-      )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 6 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-<<<<<<< Updated upstream
-      {!loading && !error && !isChangingCohort && (
-        <>
-          {/* Stats Cards - FIXED GRID */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Total Learners"
-                value={totals.total}
-                subtitle="All users in cohort"
-                icon={<Users size={24} />}
-=======
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -561,7 +502,6 @@ export default function MentorDashboardClean() {
                 value={totals.total}
                 // subtitle="All learners in cohort"
                 icon={<Users />}
->>>>>>> Stashed changes
                 color="primary"
               />
             </Grid>
@@ -569,13 +509,8 @@ export default function MentorDashboardClean() {
               <StatCard
                 title="Active Learners"
                 value={totals.active}
-<<<<<<< Updated upstream
-                subtitle="Currently active"
-                icon={<TrendingUp size={24} />}
-=======
                 // subtitle="Currently active"
                 icon={<TrendingUp />}
->>>>>>> Stashed changes
                 color="success"
               />
             </Grid>
@@ -583,13 +518,8 @@ export default function MentorDashboardClean() {
               <StatCard
                 title="Assignments for Review"
                 value={assignmentsCount}
-<<<<<<< Updated upstream
-                subtitle="Pending assignments"
-                icon={<FileText size={24} />}
-=======
                 // subtitle="Pending assignments"
                 icon={<FileText />}
->>>>>>> Stashed changes
                 color="warning"
               />
             </Grid>
@@ -597,75 +527,28 @@ export default function MentorDashboardClean() {
               <StatCard
                 title="Cohort Progress"
                 value={`${overallCohortProgress}%`}
-<<<<<<< Updated upstream
-                subtitle="Overall completion"
-                icon={<BarChart size={24} />}
-=======
                 // subtitle="Overall completion"
                 icon={<BarChart />}
->>>>>>> Stashed changes
                 color="info"
                 progress={overallCohortProgress}
               />
             </Grid>
           </Grid>
 
-<<<<<<< Updated upstream
-          {/* Search and Filters */}
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Box sx={{ position: 'relative', flex: 1 }}>
-                <Search
-                  size={20}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#6B7280'
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search learners by name or ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  disabled={isChangingCohort}
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                />
-              </Box>
-              
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                disabled={isChangingCohort}
-                style={{
-                  padding: '12px 16px',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  minWidth: '140px'
-                }}
-              >
-                <option value="ALL">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="DISABLED">Disabled</option>
-              </select>
-            </Stack>
-          </Paper>
-=======
             {/* Search and Filters */}
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="center">
-                {/* Search */}
+            <Paper
+  sx={{
+    p: 2,
+    mb: 2,
+    borderRadius: 2,
+  }}
+>
+  <Stack
+    direction={{ xs: "column", sm: "row" }}
+    spacing={1.5}
+    alignItems="center"
+  >
+    {/* Search */}
     <Box sx={{ position: "relative", flex: 1, width: "100%" }}>
       <Search
         size={18}
@@ -720,131 +603,22 @@ export default function MentorDashboardClean() {
     </select>
   </Stack>
 </Paper>
->>>>>>> Stashed changes
 
-          {/* Learners Table */}
-          <Paper sx={{ p: 3, borderRadius: 3,
+            {/* Learners Table */}
+            <Paper sx={{
+              p: 3, borderRadius: 3,
               boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)'
             }}
-          >
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-              <Typography variant="h6" fontWeight="bold">
-                Learners Activity
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Showing {paginated.length} of {filteredUsers.length} learners
-              </Typography>
-            </Stack>
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight="bold">
+                  Learners Activity
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Showing {paginatedUsers.length} of {filteredUsers.length} learners
+                </Typography>
+              </Stack>
 
-<<<<<<< Updated upstream
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                    <TableCell><strong>Learner</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell><strong>Last Activity</strong></TableCell>
-                    <TableCell><strong>Duration</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {paginated.length > 0 ? (
-                    paginated.map((u) => {
-                      const latestSession = u.latestSession;
-                      const duration = latestSession ?
-                        calculateDuration(latestSession.sessionStartTimestamp, latestSession.sessionEndTimestamp) 
-                        : "—";
-                      
-                      const isDisabled = (u.status ?? "").toUpperCase() === "DISABLED";
-                      
-                      return (
-                        <TableRow 
-                          key={u.userId}
-                          sx={{ 
-                            transition: 'all 0.2s ease',
-                            opacity: isDisabled ? 0.5 : 1, // Light grey for DISABLED
-                            '&:hover': {
-                              backgroundColor: isDisabled ? 'grey.50' : 'grey.100',
-                            }
-                          }}
-                        >
-                          <TableCell>
-                            <Stack direction="row" alignItems="center" spacing={2}>
-                              <Avatar
-                                sx={{
-                                  bgcolor: u.status === "ACTIVE" ? 'success.main' : 'error.main',
-                                  width: 40,
-                                  height: 40,
-                                  opacity: isDisabled ? 0.6 : 1
-                                }}
-                              >
-                                <Typography variant="body2" fontWeight="bold" color="white">
-                                  {u.userName?.charAt(0)?.toUpperCase() || 'U'}
-                                </Typography>
-                              </Avatar>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight="medium">
-                                  {u.userName || "—"}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {u.userId}
-                                </Typography>
-                              </Box>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <StatusChip status={u.status || "UNKNOWN"} />
-                          </TableCell>
-                          <TableCell>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Clock size={16} color="#6B7280" />
-                              <Typography variant="body2">
-                                {u.latestTimestamp
-                                  ? formatLastActivity(u.latestTimestamp)
-                                  : "Never logged in"}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              {duration !== "—" ? (
-                                <>
-                                  <Play size={16} color="#10B981" />
-                                  <Typography variant="body2" color="text.primary" fontWeight="medium">
-                                    {duration}
-                                  </Typography>
-                                </>
-                              ) : (
-                                <>
-                                  <Square size={16} color="#6B7280" />
-                                  <Typography variant="body2" color="text.secondary">
-                                    {duration}
-                                  </Typography>
-                                </>
-                              )}
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Users size={48} color="#9CA3AF" />
-                        <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
-                          No learners found
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Try adjusting your search or filters
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-=======
               <TableContainer>
   <Table size="small">
     <TableHead>
@@ -927,25 +701,56 @@ export default function MentorDashboardClean() {
   </Table>
 </TableContainer>
 
->>>>>>> Stashed changes
 
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 20, 25]}
-              component="div"
-              count={filteredUsers.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{
-                borderTop: '1px solid',
-                borderColor: 'grey.200',
-                mt: 2
-              }}
-            />
-          </Paper>
-        </>
-      )}
+              {/* Pagination */}
+              {filteredUsers.length > itemsPerPage && (
+                <div className="px-4 py-3 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="text-sm text-gray-600">
+                      Showing <span className="font-medium">{offset + 1}</span> to{' '}
+                      <span className="font-medium">
+                        {Math.min(offset + itemsPerPage, filteredUsers.length)}
+                      </span>{' '}
+                      of <span className="font-medium">{filteredUsers.length}</span> learners
+                    </div>
+
+                    <ReactPaginate
+                      previousLabel={
+                        <span className="flex items-center gap-1 text-sm">
+                          <ChevronDown className="h-4 w-4 rotate-90" />
+                          Previous
+                        </span>
+                      }
+                      nextLabel={
+                        <span className="flex items-center gap-1 text-sm">
+                          Next
+                          <ChevronDown className="h-4 w-4 -rotate-90" />
+                        </span>
+                      }
+                      breakLabel={'...'}
+                      pageCount={pageCount}
+                      marginPagesDisplayed={2}
+                      pageRangeDisplayed={3}
+                      onPageChange={handlePageClick}
+                      containerClassName="flex items-center gap-1"
+                      pageClassName=""
+                      pageLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700"
+                      activeClassName=""
+                      activeLinkClassName="px-3 py-1.5 text-sm rounded bg-blue-50 border border-blue-200 text-blue-600 font-medium"
+                      previousClassName="mr-2"
+                      nextClassName="ml-2"
+                      previousLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1"
+                      nextLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1"
+                      disabledClassName="opacity-50 cursor-not-allowed"
+                      disabledLinkClassName="hover:bg-transparent"
+                      forcePage={pageNumber}
+                    />
+                  </div>
+                </div>
+              )}
+            </Paper>
+          </>
+        )}
       </div>
     </Container>
   );

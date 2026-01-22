@@ -1,5 +1,5 @@
 import { useFetch } from "@/hooks/useFetch";
-import { LearnerSessionActivity } from "@/types/mentor.types";
+import { LearnerSessionActivity } from "@/mentor/mentor.types";
 
 export function useLearnerSessionActivity(
   cohortId: string,

@@ -1,5 +1,5 @@
 import { useFetch } from "@/hooks/useFetch";
-import { MentorCohortProgress } from "@/types/mentor.types";
+import { MentorCohortProgress } from "@/mentor/mentor.types";
 
 interface UseMentorProgressParams {
   mentorId: string;

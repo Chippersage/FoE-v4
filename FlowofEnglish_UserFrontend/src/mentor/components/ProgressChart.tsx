@@ -1,5 +1,4 @@
-import React from "react";
-import type { SubconceptAttempt } from "@/types/mentor.types";
+import type { SubconceptAttempt } from "@/mentor/mentor.types";
 
 interface ProgressChartProps {
   title?: string;

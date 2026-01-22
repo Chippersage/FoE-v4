@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import { Activity, Calendar, Clock, RefreshCw, Search, Users } from "lucide-react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useUserContext } from "../../context/AuthContext";
-import { fetchLearnerSessionActivity } from "../../lib/mentor-api";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useFetch } from "../../hooks/useFetch";
 import SessionActivityTable from "../components/SessionActivityTable";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
-import { Search, RefreshCw, Users, Activity, Calendar, Clock, User, Mail } from "lucide-react";
-import { useDebounce } from "../../hooks/useDebounce";
+import { fetchLearnerSessionActivity } from "../mentor-api";
 
 export default function LearnersActivityMonitor() {
   const { cohortId } = useParams<{ cohortId: string }>();

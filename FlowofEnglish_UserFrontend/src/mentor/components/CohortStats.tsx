@@ -1,6 +1,6 @@
 // In CohortStats.tsx
-import React, { useMemo } from "react";
-import type { MentorCohortProgressRow } from "@/types/mentor.types";
+import type { MentorCohortProgressRow } from "@/mentor/mentor.types";
+import { useMemo } from "react";
 
 interface Props {
   rows: MentorCohortProgressRow[] | null | undefined;

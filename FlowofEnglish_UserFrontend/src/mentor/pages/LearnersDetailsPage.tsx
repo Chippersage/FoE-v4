@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
 import { useUserContext } from "@/context/AuthContext";
-import { fetchMentorCohortUsers, disableUserInCohort, reactivateUserInCohort } from "@/lib/mentor-api";
-import type { MentorCohortUser, MentorCohortMetadata } from "@/types/mentor.types";
-import {  Users, Search, TrendingUp, Circle, Filter, SortAsc, SortDesc, X, RefreshCw, AlertTriangle, CheckCircle2, HelpCircle} from "lucide-react";
+import { disableUserInCohort, fetchMentorCohortUsers, reactivateUserInCohort } from "@/mentor/mentor-api";
+import type { MentorCohortMetadata, MentorCohortUser } from "@/types/mentor.types";
+import { AlertTriangle, CheckCircle2, Circle, HelpCircle, RefreshCw, Search, SortAsc, SortDesc, TrendingUp, Users, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 
 export default function LearnersDetailsPage() {
   const { cohortId } = useParams();
