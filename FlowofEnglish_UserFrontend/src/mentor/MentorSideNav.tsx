@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { BarChart3, Users, Activity, LogOut, FileText, BarChart, PieChart, ClipboardList, List, User, Menu, X, ChevronDown } from "lucide-react";
-import axios from "axios";
-import { CircularProgress } from "@mui/material";
-import { useUserContext } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
-import { fetchMentorCohorts, type CohortWithProgram } from "@/lib/mentor-api";
+import { useUserContext } from "@/context/AuthContext";
+import { fetchMentorCohorts, type CohortWithProgram } from "@/mentor/mentor-api";
+import axios from "axios";
+import { BarChart, BarChart3, ChevronDown, FileText, List, LogOut, Menu, Users, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 interface MentorSideNavProps {
   cohortId: string;

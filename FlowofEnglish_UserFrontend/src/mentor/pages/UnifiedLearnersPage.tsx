@@ -1,26 +1,23 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useFetch } from '@/hooks/useFetch';
-import { fetchMentorCohortUsers, fetchProgramReport, fetchLatestSessions,disableUserInCohort, reactivateUserInCohort, fetchUserConceptsProgress,
-  fetchUserAssignments, } from '@/lib/mentor-api';
-import type { MentorCohortUser, MentorCohortMetadata, ConceptsProgressResponse } from '@/types/mentor.types';
-import { Download, Target, ChevronDown, User, UserX, Search, TrendingUp, Circle, Filter, SortAsc, SortDesc, X, RefreshCw, AlertTriangle, 
-    CheckCircle2, HelpCircle, Users, Menu, BarChart3, FileText, Activity, BarChart, PieChart, List, LogOut, ChevronLeft,ChevronRight, Eye, 
-    EyeOff, MoreVertical, Clock, Users as UsersIcon, UserCheck, Activity as ActivityIcon } from 'lucide-react';
 import { useUserContext } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useFetch } from '@/hooks/useFetch';
+import { disableUserInCohort, fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport, fetchUserAssignments, fetchUserConceptsProgress,
+    reactivateUserInCohort, } from '@/mentor/mentor-api';
+import type { ConceptsProgressResponse } from '@/mentor/mentor.types';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity as ActivityIcon, AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, Clock, Download, HelpCircle,
+    RefreshCw, Search, SortAsc, SortDesc, Target, TrendingUp, UserCheck, Users, Users as UsersIcon, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProgramHeader from '../components/analytics/ProgramHeader';
 import ProgressOverviewCards from '../components/analytics/ProgressOverviewCards';
-import CompletionChart from '../components/analytics/CompletionChart';
 import RadarChartComponent from '../components/analytics/RadarChartComponent';
-import SkillImpactMatrix from '../components/analytics/SkillImpactMatrix';
-import SessionList from '../components/analytics/SessionList';
 import RecentProgramAttempts from '../components/analytics/RecentProgramAttempts';
-import StageAccordion from '../components/analytics/StageAccordion';
-import TimeAnalysis from '../components/analytics/TimeAnalysis';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
+import StageAccordion from '../components/analytics/StageAccordion';
 import StudentAssignments from '../components/analytics/StudentAssignments';
-import LoadingOverlay from '@/components/LoadingOverlay';
+import TimeAnalysis from '../components/analytics/TimeAnalysis';
+import MentorRemarks from '../components/analytics/MentorRemarks';
+import ReactPaginate from 'react-paginate';
 
 // Status Toggle Component
 const StatusToggle: React.FC<{
@@ -115,7 +112,14 @@ export default function UnifiedLearnersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [conceptsProgressData, setConceptsProgressData] = useState<ConceptsProgressResponse | null>(null);
   const [isConceptsLoading, setIsConceptsLoading] = useState(false);
-  
+  const [mentorRemarks, setMentorRemarks] = useState("");
+  const remarksRef = useRef<HTMLTextAreaElement>(null);
+  const saveRemarks = () => {
+  const remarks = remarksRef.current?.value || "";
+  setMentorRemarks(remarks);
+  alert("Remarks saved! They will be included in the PDF report.");
+};
+
   // Dashboard states
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState('all');
@@ -126,6 +130,9 @@ export default function UnifiedLearnersPage() {
   const queryParams = new URLSearchParams(location.search);
   const queryProgramId = queryParams.get('programId');
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   // 1. Load all users
   const { data: cohortData, isLoading: usersLoading, refresh: refreshUsers } = useFetch(
     () => {
@@ -401,9 +408,7 @@ export default function UnifiedLearnersPage() {
     const statusB = statusOrder[b.status] || 2;
     
     if (statusA !== statusB) {
-      return statusOrder === "asc" 
-        ? statusA - statusB 
-        : statusB - statusA;
+      return statusOrder === "asc" ? statusA - statusB : statusB - statusA;
     }
 
     // If same status, then sort by the selected field
@@ -480,6 +485,29 @@ export default function UnifiedLearnersPage() {
     "Other"
   ];
 
+  // Calculate pagination values
+const offset = currentPage * itemsPerPage;
+const pageCount = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
+
+// Get current page items
+const currentItems = filteredAndSortedUsers.slice(
+  offset,
+  offset + itemsPerPage
+);
+
+// Handle page click
+const handlePageClick = ({ selected }: { selected: number }) => {
+  setCurrentPage(selected);
+};
+
+// Also add items per page selector state and handler
+const [showItemsPerPageDropdown, setShowItemsPerPageDropdown] = useState(false);
+
+const handleItemsPerPageChange = (count: number) => {
+  setItemsPerPage(count);
+  setCurrentPage(0); // Reset to first page when changing items per page
+  setShowItemsPerPageDropdown(false);
+};
   // If no learner selected, show list view
   if (!selectedLearnerId) {
     return (
@@ -625,7 +653,7 @@ export default function UnifiedLearnersPage() {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
+                    Learner
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
@@ -660,7 +688,7 @@ export default function UnifiedLearnersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredAndSortedUsers.map((user) => (
+                  currentItems.map((user) => (
                     <tr 
                       key={user.userId} 
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
@@ -690,7 +718,8 @@ export default function UnifiedLearnersPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(user.createdAt * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric' })}
+                          year: 'numeric', month: 'long', day: 'numeric' 
+                        })}
                       </td>
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3">
@@ -718,6 +747,89 @@ export default function UnifiedLearnersPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls - Moved outside the table but inside the table container */}
+          {filteredAndSortedUsers.length > itemsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-white">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-600">
+                    Showing <span className="font-medium">{offset + 1}</span> to{' '}
+                    <span className="font-medium">
+                      {Math.min(offset + itemsPerPage, filteredAndSortedUsers.length)}
+                    </span>{' '}
+                    of <span className="font-medium">{filteredAndSortedUsers.length}</span> learners
+                  </div>
+                  
+                  {/* Items per page selector */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowItemsPerPageDropdown(!showItemsPerPageDropdown)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      {itemsPerPage} per page
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showItemsPerPageDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showItemsPerPageDropdown && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowItemsPerPageDropdown(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 min-w-[120px]">
+                          {[5, 10, 20, 50].map((count) => (
+                            <button
+                              key={count}
+                              onClick={() => handleItemsPerPageChange(count)}
+                              className={`block w-full px-4 py-2 text-sm text-left hover:bg-gray-50 ${
+                                itemsPerPage === count ? 'bg-blue-50 text-blue-600' : ''
+                              }`}
+                            >
+                              {count} per page
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Pagination */}
+                <ReactPaginate
+                  previousLabel={
+                    <span className="flex items-center gap-1 text-sm">
+                      <ChevronDown className="h-4 w-4 rotate-90" />
+                      Previous
+                    </span>
+                  }
+                  nextLabel={
+                    <span className="flex items-center gap-1 text-sm">
+                      Next
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </span>
+                  }
+                  breakLabel={'...'}
+                  pageCount={pageCount}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={3}
+                  onPageChange={handlePageClick}
+                  containerClassName="flex items-center gap-1"
+                  pageClassName=""
+                  pageLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors"
+                  activeClassName=""
+                  activeLinkClassName="px-3 py-1.5 text-sm rounded bg-blue-50 border border-blue-200 text-blue-600 font-medium"
+                  previousClassName="mr-2"
+                  nextClassName="ml-2"
+                  previousLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1 transition-colors"
+                  nextLinkClassName="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50 text-gray-700 flex items-center gap-1 transition-colors"
+                  disabledClassName="opacity-50 cursor-not-allowed"
+                  disabledLinkClassName="hover:bg-transparent"
+                  forcePage={currentPage}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -954,15 +1066,15 @@ export default function UnifiedLearnersPage() {
         <>
           {/* Overview Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <ProgressOverviewCards data={analyticsData} />
+            <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 
           {/* Conditional rendering based on viewMode */}
           {viewMode === 'overview' ? (
             <>
               {/* OVERVIEW VIEW */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 space-y-6">
+                {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="lg:col-span-2 space-y-6"> */}
                 {/*  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-semibold text-gray-800">Progress Overview</h3>
@@ -976,8 +1088,8 @@ export default function UnifiedLearnersPage() {
                   {/* <SkillImpactMatrix stages={analyticsData.stages} /> */}
 
 {/*  RadarChart Section */}
-<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-  <div className="flex items-center justify-between mb-6">
+{/* <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm ">
+  <div className="flex items-center justify-between mb-6 h-full">
     <div>
       <h3 className="text-lg font-semibold text-gray-800">Skills OverView </h3>
       <p className="text-sm text-gray-600 mt-1">
@@ -1003,7 +1115,7 @@ export default function UnifiedLearnersPage() {
     <div className="h-96 flex items-center justify-center">
       <p className="text-gray-500">No skill data available for this learner</p>
     </div>
-  )}
+  )} */}
   {/* <div className="mt-4 pt-4 border-t border-gray-200">
     <div className="flex flex-wrap gap-4 justify-center">
       {conceptsProgressData?.concepts && processSkillData(conceptsProgressData.concepts).map((skill: any) => (
@@ -1015,20 +1127,24 @@ export default function UnifiedLearnersPage() {
         ))}
     </div>
   </div> */}
-</div>
+{/* </div> */}
                   {/* <SessionList sessionsData={sessionsData}
                     learnerId={selectedLearnerId || undefined}
                     learnerName={selectedLearner?.userName || analyticsData?.userName}
                   /> */}
-                  <RecentProgramAttempts
+                  {/* <RecentProgramAttempts
                     analyticsData={analyticsData}
                     learnerName={selectedLearner?.userName || analyticsData?.userName}
                     onViewDetailed={() => setViewMode('detailed')}
                   />
 
                 </div>
-
                 <div className="space-y-6">
+                {analyticsData.stages && analyticsData.stages.length > 0 && (
+                    <SkillBreakdown stages={analyticsData.stages} />
+                  )}
+                </div> */}
+                {/* <div className="space-y-6">
                   {(analyticsData.firstAttemptDate || analyticsData.lastAttemptDate) && (
                     <TimeAnalysis 
                       firstAttemptDate={analyticsData.firstAttemptDate}
@@ -1039,8 +1155,83 @@ export default function UnifiedLearnersPage() {
                   {analyticsData.stages && analyticsData.stages.length > 0 && (
                     <SkillBreakdown stages={analyticsData.stages} />
                   )}
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
+
+                {/* OVERVIEW VIEW */}
+
+{/* ROW 1: Radar + Skill Breakdown (SAME HEIGHT) */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+  {/* Radar Chart */}
+  <div className="lg:col-span-2">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-[520px] flex flex-col">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Skills Overview
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Comprehensive view of skill proficiency across all concepts
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Target className="h-4 w-4" />
+          <span>Skill Proficiency (%)</span>
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center">
+        {isConceptsLoading ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-500">Loading skill analysis...</p>
+          </div>
+        ) : conceptsProgressData?.concepts ? (
+          <RadarChartComponent
+            data={processSkillData(conceptsProgressData.concepts)}
+            height={420}
+          />
+        ) : (
+          <p className="text-gray-500">No skill data available</p>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Skill Breakdown */}
+  <div>
+    {analyticsData.stages?.length > 0 && (
+      <div className="h-[520px]">
+        <SkillBreakdown stages={analyticsData.stages} />
+      </div>
+    )}
+  </div>
+</div>
+
+  {/* ROW 2: Recent Attempts + Mentor Remarks */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  {/* Recent Program Attempts */}
+  <div className="lg:col-span-2 h-[520px]">
+    <RecentProgramAttempts
+      analyticsData={analyticsData}
+      learnerName={selectedLearner?.userName || analyticsData?.userName}
+      onViewDetailed={() => setViewMode("detailed")}
+    />
+  </div>
+
+  {/* Mentor Remarks */}
+  <div className="h-[520px]">
+    <MentorRemarks
+      remarksRef={remarksRef}
+      mentorRemarks={mentorRemarks}
+      setMentorRemarks={setMentorRemarks}
+      onSave={saveRemarks}
+    />
+  </div>
+</div>
+
+
 
               <StudentAssignments
                 data={analyticsData}

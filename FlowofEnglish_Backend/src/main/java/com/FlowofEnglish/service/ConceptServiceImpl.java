@@ -368,8 +368,7 @@ public class ConceptServiceImpl implements ConceptService {
      * @return Map of concepts to their associated subconcepts
      */
     @Override
-    @Cacheable(value = "conceptMappings", 
-               key = "#stageReport.stageId + '_' + #stageReport.hashCode()", 
+    @Cacheable(value = "conceptMappings", key = "#stageReport.stageId + '_' + #stageReport.hashCode()", 
                condition = "#stageReport != null and #stageReport.stageId != null")
     public Map<ConceptDTO, List<SubconceptReportStageDTO>> groupSubconceptsByConcept(
             StageReportStageDTO stageReport,
@@ -419,8 +418,7 @@ public class ConceptServiceImpl implements ConceptService {
      * @return List of concept summaries with progress information
      */
     @Override
-    @Cacheable(value = "conceptSummaries", 
-               key = "#conceptMapping.hashCode()", 
+    @Cacheable(value = "conceptSummaries", key = "#conceptMapping.hashCode()", 
                condition = "#conceptMapping != null and !#conceptMapping.isEmpty()")
     public List<ConceptSummaryDTO> generateConceptSummaries(Map<ConceptDTO, List<SubconceptReportDTO>> conceptMapping) {
         logger.info("Generating concept summaries for {} concepts", 
@@ -476,17 +474,13 @@ public class ConceptServiceImpl implements ConceptService {
 
     // Additional utility methods for cache management
     
-    /**
-     * Manually evict all concept-related caches
-     */
+     // Manually evict all concept-related caches
     @CacheEvict(value = {"concepts", "concept", "conceptSummaries", "conceptMappings"}, allEntries = true)
     public void evictAllConceptCaches() {
         logger.info("Manually evicting all concept-related caches");
     }
 
-    /**
-     * Manually evict specific concept from cache
-     */
+    // Manually evict specific concept from cache
     @CacheEvict(value = "concept", key = "#conceptId")
     public void evictConceptCache(String conceptId) {
         logger.info("Manually evicting concept cache for: {}", conceptId);

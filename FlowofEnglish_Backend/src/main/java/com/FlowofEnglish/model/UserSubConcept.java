@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity 
 @Table(name = "UserSubconcept_completion",
-	    uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "user_id", "unit_id", "subconcept_id"}))
+	    uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "user_id", "unit_id", "stage_id", "subconcept_id"}))
 public class UserSubConcept {
 
     @Id

@@ -23,12 +23,15 @@ public class ProgramReportDTO {
     private double subconceptCompletionPercentage;
     private double assignmentCompletionPercentage;
     private double averageScore;
+    private int totalScore;           // Sum of all subconceptMaxscore values for ALL visible subconcepts
+    private int attemptedMaxScore;    // Sum of subconceptMaxscore for ONLY attempted subconcepts
+    private int gotScore;             // Sum of best attempt scores across attempted subconcepts
+    private double overallPercentageScore;  // (gotScore / totalScore) * 100
+    private double attemptedPercentageScore; // (gotScore / attemptedMaxScore) * 100
     private OffsetDateTime firstAttemptDate;  
     private OffsetDateTime lastAttemptDate;  
     private List<StageReportDTO> stages;
     private Map<String, Integer> scoreDistribution;
-    
-    
 	public String getProgramId() {
 		return programId;
 	}
@@ -125,7 +128,36 @@ public class ProgramReportDTO {
 	public void setAverageScore(double averageScore) {
 		this.averageScore = averageScore;
 	}
-	
+	public int getTotalScore() {
+		return totalScore;
+	}
+	public void setTotalScore(int totalScore) {
+		this.totalScore = totalScore;
+	}
+	public int getAttemptedMaxScore() {
+		return attemptedMaxScore;
+	}
+	public void setAttemptedMaxScore(int attemptedMaxScore) {
+		this.attemptedMaxScore = attemptedMaxScore;
+	}
+	public int getGotScore() {
+		return gotScore;
+	}
+	public void setGotScore(int gotScore) {
+		this.gotScore = gotScore;
+	}
+	public double getOverallPercentageScore() {
+		return overallPercentageScore;
+	}
+	public void setOverallPercentageScore(double overallPercentageScore) {
+		this.overallPercentageScore = overallPercentageScore;
+	}
+	public double getAttemptedPercentageScore() {
+		return attemptedPercentageScore;
+	}
+	public void setAttemptedPercentageScore(double attemptedPercentageScore) {
+		this.attemptedPercentageScore = attemptedPercentageScore;
+	}
 	public OffsetDateTime getFirstAttemptDate() {
 		return firstAttemptDate;
 	}
@@ -150,5 +182,8 @@ public class ProgramReportDTO {
 	public void setScoreDistribution(Map<String, Integer> scoreDistribution) {
 		this.scoreDistribution = scoreDistribution;
 	}
+    
+    
+	
     
 }

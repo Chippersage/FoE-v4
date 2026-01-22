@@ -57,7 +57,7 @@ export default function RecentProgramAttempts({ analyticsData, learnerName, onVi
         <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border rounded-xl h-[340px] flex flex-col"
+        className="bg-white border rounded-xl h-full flex flex-col"
         >
 
             {/* HEADER */}
@@ -74,7 +74,9 @@ export default function RecentProgramAttempts({ analyticsData, learnerName, onVi
             </div>
 
             {/* ACTIVITY LIST */}
-            <div className="max-h-72 overflow-y-auto px-3 py-2 space-y-1.5">
+            {/* <div className="max-h-72 overflow-y-auto px-3 py-2 space-y-1.5"> */}
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
+
             {visible.map((a, i) => (
             <motion.div
             key={`${a.stageName}-${a.subconceptDesc}-${a.attemptId}-${a.attemptedAt}`}
