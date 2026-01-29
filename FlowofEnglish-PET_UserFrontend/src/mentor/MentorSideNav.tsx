@@ -13,9 +13,9 @@ interface MentorSideNavProps {
 
 const navItems = [
   { label: "Dashboard", icon: BarChart3, path: "dashboard", needsProgram: true, enabled: true },
-  { label: "Learners Details", icon: Users, path: "learners", needsProgram: false, enabled: true },
+  { label: "Learners Details", icon: Users, path: "learners", needsProgram: true, enabled: true },
   //{ label: "Activity Monitor", icon: Activity, path: "activity", needsProgram: false, enabled: true },
-  { label: "Assignments", icon: FileText, path: "assignments", needsProgram: false, enabled: true },
+  { label: "Assignments", icon: FileText, path: "assignments", needsProgram: true, enabled: true },
   { label: "Reports", icon: BarChart, path: "reports", needsProgram: true, enabled: true },
   // { label: "Analytics", icon: PieChart, path: "analytics", needsProgram: false, enabled: true },
   { label: "Cohort Details", icon: List, path: "cohort-details", needsProgram: false, enabled: false },
@@ -132,6 +132,8 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
     }
     return `/mentor/${cohortId}/${itemPath}`;
   };
+
+
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -296,8 +298,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
                 disabled={!isEnabled}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                  ${isEnabled 
-                    ? isActive 
+                  ${isEnabled ? isActive 
                       ? "bg-blue-50 text-blue-600 font-semibold border border-blue-200 shadow-sm" 
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm"
                     : "text-gray-400 cursor-not-allowed opacity-60"

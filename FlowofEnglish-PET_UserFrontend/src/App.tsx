@@ -134,47 +134,19 @@ export default function App() {
           </Route>
 
           {/* ===================== Mentor ===================== */}
-          <Route
-            path="/mentor"
-            element={
-              isAuthenticated && isMentor ? (
-                <MentorCohortLayout />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          >
-            <Route
-              path=":cohortId/:programId/dashboard"
-              element={<MentorDashboard />}
-            />
-            <Route
-              path=":cohortId/learners"
-              element={<UnifiedLearnersPage />}
-            />
-            <Route
-              path=":cohortId/:programId/reports"
-              element={<MentorReportsPage />}
-            />
-            <Route
-              path=":cohortId/:programId/assignments"
-              element={<ViewSubmissions />}
-            />
+          <Route path="/mentor" element={ isAuthenticated && isMentor ? (<MentorCohortLayout /> ) : (
+      <Navigate to="/sign-in" /> ) } >
+  <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
+  <Route path=":cohortId/:programId/learners" element={<UnifiedLearnersPage />} />
+  <Route path=":cohortId/:programId/assignments" element={<ViewSubmissions />} />
+  <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
 
-            {/* Optional deep links */}
-            <Route
-              path=":cohortId/learner/:learnerId/:programId?"
-              element={<LearnerDetailPage />}
-            />
-            <Route
-              path=":cohortId/analytics"
-              element={<LearnersProgressDashboard />}
-            />
-            <Route
-              path=":cohortId/activity"
-              element={<LearnersActivityMonitor />}
-            />
-          </Route>
+  {/* Optional */}
+  <Route path=":cohortId/:programId/learner/:learnerId" element={<LearnerDetailPage />} />
+  <Route path=":cohortId/:programId/analytics" element={<LearnersProgressDashboard />} />
+  <Route path=":cohortId/:programId/activity" element={<LearnersActivityMonitor />} />
+</Route>
+
 
           {/* ===================== Root Redirect ===================== */}
           <Route
