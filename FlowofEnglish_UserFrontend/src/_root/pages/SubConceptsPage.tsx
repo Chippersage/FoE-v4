@@ -185,7 +185,8 @@ export default function SubConceptsPage() {
 
   // MENTOR ACCESS: Check if user is Mentor
   const isMentor = user?.userType === "Mentor";
-
+  const isRitanya05 = user?.userId === "Ritanya05";
+  const hasFullAccess = isMentor || isRitanya05;
   // Detect orientation changes
   useEffect(() => {
     const handleResize = () => {
@@ -535,17 +536,24 @@ export default function SubConceptsPage() {
                 
                 // MENTOR ACCESS: For Mentors - always enable access to all subconcepts
                 // For others - use existing logic
-                const isEnabled = isMentor 
-                  ? index !== totalSteps - 1 // Mentors can access all except finish
-                  : index === 0 ||
-                    (index === totalSteps - 1 &&
-                      subconcepts.every((s) => s.completionStatus === "yes")) ||
-                    (subconcept?.completionStatus !== "disabled" &&
-                      index !== totalSteps - 1);
+                // const isEnabled = isMentor 
+                //   ? index !== totalSteps - 1 // Mentors can access all except finish
+                //   : index === 0 ||
+                //     (index === totalSteps - 1 &&
+                //       subconcepts.every((s) => s.completionStatus === "yes")) ||
+                //     (subconcept?.completionStatus !== "disabled" &&
+                //       index !== totalSteps - 1);
+                const isEnabled = hasFullAccess 
+  ? index !== totalSteps - 1 // Full access users can access all except finish
+  : index === 0 ||
+    (index === totalSteps - 1 &&
+      subconcepts.every((s) => s.completionStatus === "yes")) ||
+    (subconcept?.completionStatus !== "disabled" &&
+      index !== totalSteps - 1);
 
                 return (
                   <g key={index} ref={(el) => (stepRefs.current[index] = el)}>
-                    <Link
+                    {/* <Link
                       to={
                         // MENTOR ACCESS: Allow mentors to access all subconcepts
                         isMentor && index !== totalSteps - 1 && index !== 0
@@ -568,7 +576,30 @@ export default function SubConceptsPage() {
                             )
                           ? `/subconcept/${subconcept?.subconceptId}`
                           : null
-                      }
+                      } */}
+                      <Link
+  to={
+    hasFullAccess && index !== totalSteps - 1 && index !== 0
+      ? `/subconcept/${subconcept?.subconceptId}`
+      : index === totalSteps - 1 &&
+        nextUnitId &&
+        (unitCompletionStatus === "yes" ||
+          unitCompletionStatus.toLowerCase() ===
+            "unit completed without assignments")
+      ? "/dashboard"
+      : isEnabled &&
+        index !== totalSteps - 1 &&
+        index !== 0 &&
+        !(
+          subconcept?.subconceptType
+            ?.toLowerCase()
+            .startsWith("assessment") &&
+          subconcept?.completionStatus === "yes" &&
+          !hasFullAccess
+        )
+      ? `/subconcept/${subconcept?.subconceptId}`
+      : null
+  }
                       state={{ subconcept, stageId, currentUnitId }}
                       className={`${
                         !isEnabled &&
@@ -578,20 +609,33 @@ export default function SubConceptsPage() {
                       }`}
                       onMouseEnter={() => setActiveTooltip(index)}
                       onMouseLeave={() => setActiveTooltip(null)}
-                      onClick={(e) => {
-                        // MENTOR ACCESS: Skip restrictions for mentors
-                        if (isMentor && index !== totalSteps - 1 && index !== 0) {
-                          // Allow mentors to access everything, no restrictions
-                          return;
-                        }
-                        
-                        if (
-                          index === totalSteps - 1 &&
-                          (unitCompletionStatus === "yes" ||
-                            unitCompletionStatus.toLowerCase() ===
-                              "unit completed without assignments") &&
-                          nextUnitId
-                        ) {
+                      // onClick={(e) => {
+                      //   // MENTOR ACCESS: Skip restrictions for mentors
+                      //   if (isMentor && index !== totalSteps - 1 && index !== 0) {
+                      //     // Allow mentors to access everything, no restrictions
+                      //     return;
+                      //   }
+                        // if (
+                        //   index === totalSteps - 1 &&
+                        //   (unitCompletionStatus === "yes" ||
+                        //     unitCompletionStatus.toLowerCase() ===
+                        //       "unit completed without assignments") &&
+                        //   nextUnitId
+                        // ) {
+                        onClick={(e) => {
+    // FULL ACCESS: Skip restrictions for Ritanya05 and mentors
+    if (hasFullAccess && index !== totalSteps - 1 && index !== 0) {
+      // Allow full access to everything, no restrictions
+      return;
+    }
+    
+    if (
+      index === totalSteps - 1 &&
+      (unitCompletionStatus === "yes" ||
+        unitCompletionStatus.toLowerCase() ===
+          "unit completed without assignments") &&
+      nextUnitId
+    ) {
                           e.preventDefault(); // Prevent immediate navigation
                           setShowConfetti(true);
                           setAudioPlaying(true);
@@ -612,7 +656,8 @@ export default function SubConceptsPage() {
                             ?.toLowerCase()
                             .startsWith("assessment") &&
                           subconcept?.completionStatus === "yes" &&
-                          !isMentor // Only restrict for non-mentors
+                          // !isMentor // Only restrict for non-mentors
+                          !hasFullAccess // Only restrict for users without full access
                         ) {
                           e.preventDefault(); // prevent navigation
                           toast(
@@ -714,8 +759,7 @@ export default function SubConceptsPage() {
                             className={`transition-transform duration-300 ease-out ${
                               animationTrigger ? "scale-100" : "scale-0"
                             }`}
-                            style={{
-                              transitionDelay: `${index * 100 + 300}ms`,
+                            style={{ transitionDelay: `${index * 100 + 300}ms`,
                             }}
                           >
                             <circle

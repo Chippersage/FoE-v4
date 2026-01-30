@@ -299,7 +299,7 @@ const ViewSubmissions: React.FC = () => {
   // Read cohort from localStorage
   const selected = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("selectedCohort") || "{}");
+      return JSON.parse(localStorage.getItem("selectedCohortWithProgram") || "{}");
     } catch {
       return {};
     }
