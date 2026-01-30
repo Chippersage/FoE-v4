@@ -317,25 +317,26 @@ export default function UnifiedLearnersPage() {
 
   // Update URL when learner is selected
   useEffect(() => {
-    if (!cohortId) return;
-    
-    if (selectedLearnerId && progId) {
-      const newPath = `/mentor/${cohortId}/learners?learnerId=${selectedLearnerId}&programId=${progId}`;
-      navigate(newPath, { replace: true });
-    } else if (selectedLearnerId) {
-      const newPath = `/mentor/${cohortId}/learners?learnerId=${selectedLearnerId}`;
-      navigate(newPath, { replace: true });
-    } else {
-      navigate(`/mentor/${cohortId}/learners`, { replace: true });
-    }
-  }, [selectedLearnerId, progId, cohortId, navigate]);
-
-  // Initialize selected learner from URL
-  useEffect(() => {
-    if (urlLearnerId && urlLearnerId !== selectedLearnerId) {
-      setSelectedLearnerId(urlLearnerId);
-    }
-  }, [urlLearnerId]);
+      if (!cohortId) return;
+      if (!progId) return;
+      
+      if (selectedLearnerId && progId) {
+        const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}&programId=${progId}`;
+        navigate(newPath, { replace: true });
+      } else if (selectedLearnerId) {
+        const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}`;
+        navigate(newPath, { replace: true });
+      } else {
+        navigate(`/mentor/${cohortId}/${progId}/learners`, { replace: true });
+      }
+    }, [selectedLearnerId, progId, cohortId, navigate]);
+  
+    // Initialize selected learner from URL
+    useEffect(() => {
+      if (urlLearnerId && urlLearnerId !== selectedLearnerId) {
+        setSelectedLearnerId(urlLearnerId);
+      }
+    }, [urlLearnerId]);
 
   // Get selected learner info
   const selectedLearner = cohortData?.users?.find(

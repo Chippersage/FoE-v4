@@ -12,7 +12,7 @@ import CohortSelectionPage from "./_root/pages/CohortSelectionPage";
 import { SessionProvider } from "./context/TimerContext";
 import NotFoundPage from "./components/NotFoundPage";
 import { Toaster } from "react-hot-toast";
-import AssignmentsPage from "./_root/pages/AssignmentsPage";
+// import AssignmentsPage from "./_root/pages/AssignmentsPage";
 import ViewProgressPage from "./_root/pages/ViewProgressPage";
 import LoadingOverlay from "./components/LoadingOverlay";
 import MentorCohortLayout from "./mentor/layouts/MentorCohortLayout";
@@ -21,7 +21,7 @@ import LearnersProgressDashboard from "./mentor/pages/LearnersProgressDashboard"
 import LearnersActivityMonitor from "./mentor/pages/LearnersActivityMonitor";
 import LearnerDetailPage from "./mentor/pages/LearnerDetailPage";
 import MentorReportsPage from "./mentor/pages/MentorReportsPage";
-import LearnersDetailsPage from "./mentor/pages/LearnersDetailsPage";
+// import LearnersDetailsPage from "./mentor/pages/LearnersDetailsPage";
 import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
 import ViewSubmissions from "./mentor/pages/ViewSubmissions";
 
@@ -110,16 +110,8 @@ export default function App() {
           </Route>
 
           {/* Mentor routes */}
-          <Route
-            path="/mentor"
-            element={
-              isAuthenticated && isMentor ? (
-                <MentorCohortLayout />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          >
+          {/* <Route path="/mentor" element={ isAuthenticated && isMentor ? ( <MentorCohortLayout /> ) : (
+                <Navigate to="/sign-in" /> ) } >
             <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
             <Route path=":cohortId/learners" element={<UnifiedLearnersPage />} />
             <Route path=":cohortId/assignments" element={<ViewSubmissions />} />
@@ -129,10 +121,21 @@ export default function App() {
             <Route path=":cohortId/activity" element={<LearnersActivityMonitor />} />
             <Route path=":cohortId/analytics" element={< LearnersProgressDashboard /> } />
             <Route path=":cohortId/cohort-details" element={...} />
-            http://localhost:5173/mentor/COMM-SVCE-1/learner/Harikrishna05/CC-3 */}
+            http://localhost:5173/mentor/COMM-SVCE-1/learner/Harikrishna05/CC-3
+          </Route> */}
+{/* ===================== Mentor ===================== */}
+      <Route path="/mentor" element={ isAuthenticated && isMentor ? (<MentorCohortLayout /> ) : (
+      <Navigate to="/sign-in" /> ) } >
+  <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
+  <Route path=":cohortId/:programId/learners" element={<UnifiedLearnersPage />} />
+  <Route path=":cohortId/:programId/assignments" element={<ViewSubmissions />} />
+  <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
 
-          </Route>
-
+  {/* Optional */}
+  <Route path=":cohortId/:programId/learner/:learnerId" element={<LearnerDetailPage />} />
+  <Route path=":cohortId/:programId/analytics" element={<LearnersProgressDashboard />} />
+  <Route path=":cohortId/:programId/activity" element={<LearnersActivityMonitor />} />
+</Route>
           {/* Redirect root to appropriate page */}
           <Route
             path="/"
