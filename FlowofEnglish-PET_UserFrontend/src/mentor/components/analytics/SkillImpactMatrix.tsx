@@ -8,6 +8,7 @@ interface SkillImpactMatrixProps {
     conceptCount: number;   // how many concepts
     coverage: number;       // % of program concepts
     }[];
+    stages?: any[];
 }
 
 // Risk-based color logic

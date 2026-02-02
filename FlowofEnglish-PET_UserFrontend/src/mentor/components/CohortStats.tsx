@@ -1,5 +1,5 @@
 // In CohortStats.tsx
-import type { MentorCohortProgressRow } from "@/mentor/mentor.types";
+import type { MentorCohortProgressRow } from "../mentor.types";
 import { useMemo } from "react";
 
 interface Props {

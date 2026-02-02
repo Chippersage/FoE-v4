@@ -3,6 +3,12 @@ import React, { useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ExportButtons from './ExportButtons';
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
 const LineProgressChart = ({ data }) => {
   
   const learners = data?.users?.filter(user => user.userId !== 'All Learners') || [];
@@ -15,7 +21,7 @@ const LineProgressChart = ({ data }) => {
     leaderboardScore: user.leaderboardScore
   }));
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip: React.FC<TooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">

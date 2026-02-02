@@ -1,4 +1,4 @@
-import type { LearnerSessionActivity } from "@/mentor/mentor.types";
+import type { LearnerSessionActivity } from "../mentor.types";
 import { Activity, Calendar, ChevronDown, ChevronUp, Clock, Mail, RefreshCw, TrendingUp, User, Zap, } from "lucide-react";
 import { useState } from "react";
 

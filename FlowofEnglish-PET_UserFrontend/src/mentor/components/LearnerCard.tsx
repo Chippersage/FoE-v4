@@ -1,9 +1,9 @@
-import { MentorCohortProgress } from "@/mentor/mentor.types";
+import type { MentorCohortProgressRow } from "../mentor.types";
 import { useNavigate } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface LearnerCardProps {
-  learner: MentorCohortProgress;
+  learner: MentorCohortProgressRow;
 }
 
 export default function LearnerCard({ learner }: LearnerCardProps) {

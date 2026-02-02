@@ -1,5 +1,5 @@
 import { Clock, Calendar, ChevronRight } from 'lucide-react';
-import type { LearnerSessionActivity, SessionRecord } from '@/types/mentor.types';
+import type { LearnerSessionActivity, SessionRecord } from '../../mentor.types';
 import { motion } from 'framer-motion';
 
 interface SessionListProps {

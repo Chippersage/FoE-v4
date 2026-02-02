@@ -1,14 +1,18 @@
-import type { LearnerDetailedProgress, SubconceptAttempt } from "@/mentor/mentor.types";
+import type { LearnerDetailedProgress, SubconceptAttempt } from "../mentor/mentor.types";
 
 const MAX_RECENT_ATTEMPTS = 5;
+
+interface LearnerDetailedProgressWithSubconcepts extends LearnerDetailedProgress {
+  subconcepts: SubconceptAttempt[];
+}
 
 /**
  * Filters subconcept attempts to show only the 5 most recent ones
  * or highest scoring attempts (whichever is more meaningful)
  */
 export function processLearnerProgress(
-  progress: LearnerDetailedProgress
-): LearnerDetailedProgress {
+  progress: LearnerDetailedProgressWithSubconcepts
+): LearnerDetailedProgressWithSubconcepts {
   return {
     ...progress,
     subconcepts: progress.subconcepts.map((subconcept) =>
@@ -33,7 +37,7 @@ function filterSubconceptAttempts(subconcept: SubconceptAttempt): SubconceptAtte
   };
 }
 
-export function calculateLearnerStats(progress: LearnerDetailedProgress) {
+export function calculateLearnerStats(progress: LearnerDetailedProgressWithSubconcepts) {
   return {
     totalAttempts: progress.subconcepts.reduce(
       (sum, sc) => sum + sc.attempts.length,

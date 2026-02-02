@@ -1,6 +1,6 @@
-import LoadingOverlay from "@/components/LoadingOverlay";
-import { useUserContext } from "@/context/AuthContext";
-import { fetchMentorCohorts, type CohortWithProgram } from "@/mentor/mentor-api";
+import LoadingOverlay from "../components/LoadingOverlay";
+import { useUserContext } from "../context/AuthContext";
+import { fetchMentorCohorts, type CohortWithProgram } from "./mentor-api";
 import axios from "axios";
 import { BarChart, BarChart3, ChevronDown, FileText, List, LogOut, Menu, Users, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";

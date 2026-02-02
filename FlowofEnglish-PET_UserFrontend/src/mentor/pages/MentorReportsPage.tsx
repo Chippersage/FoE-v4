@@ -1,5 +1,5 @@
-import { useUserContext } from "@/context/AuthContext";
-import { fetchMentorCohortProgress } from "@/mentor/mentor-api";
+import { useUserContext } from "../../context/AuthContext";
+import { fetchMentorCohortProgress } from "../../mentor/mentor-api";
 import { Box, Card, Container, FormControl, InputLabel, MenuItem, Select, Typography, } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -168,7 +168,7 @@ export default function MentorReportsPage() {
             <LearnersProgressChart
               data={apiData}
               programId={programId}
-              selectedUserId={selectedLearnerId}
+              // selectedUserId={selectedLearnerId}
             />
           )}
 

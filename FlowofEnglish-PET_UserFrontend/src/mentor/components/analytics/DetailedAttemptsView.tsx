@@ -1,11 +1,7 @@
 // components/analytics/DetailedAttemptsView.tsx
 import { useState, useMemo } from 'react';
-import { 
-  Search, Filter, Calendar, ChevronDown, ChevronRight, 
-  TrendingUp, Target, Clock, CheckCircle, XCircle, 
-  BarChart3, Hash, Users, BookOpen, Zap, 
-  Download, Maximize2, Minus, Eye, EyeOff
-} from 'lucide-react';
+import { Search, Filter, Calendar, ChevronDown, ChevronRight, TrendingUp, Target, Clock, CheckCircle, XCircle, 
+  BarChart3, Hash, Users, BookOpen, Zap, Download, Maximize2, Minus, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Helper Functions

@@ -24,9 +24,9 @@ import MentorCohortLayout from "./mentor/layouts/MentorCohortLayout";
 import MentorDashboard from "./mentor/pages/MentorDashboard";
 import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
 import MentorReportsPage from "./mentor/pages/MentorReportsPage";
-import LearnersProgressDashboard from "./mentor/pages/LearnersProgressDashboard";
-import LearnersActivityMonitor from "./mentor/pages/LearnersActivityMonitor";
-import LearnerDetailPage from "./mentor/pages/LearnerDetailPage";
+// import LearnersProgressDashboard from "./mentor/pages/LearnersProgressDashboard";
+// import LearnersActivityMonitor from "./mentor/pages/LearnersActivityMonitor";
+// import LearnerDetailPage from "./mentor/pages/LearnerDetailPage";
 import ViewSubmissions from "./mentor/pages/ViewSubmissions";
 
 export default function App() {
@@ -142,9 +142,9 @@ export default function App() {
   <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
 
   {/* Optional */}
-  <Route path=":cohortId/:programId/learner/:learnerId" element={<LearnerDetailPage />} />
+  {/* <Route path=":cohortId/:programId/learner/:learnerId" element={<LearnerDetailPage />} />
   <Route path=":cohortId/:programId/analytics" element={<LearnersProgressDashboard />} />
-  <Route path=":cohortId/:programId/activity" element={<LearnersActivityMonitor />} />
+  <Route path=":cohortId/:programId/activity" element={<LearnersActivityMonitor />} /> */}
 </Route>
 
 

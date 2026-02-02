@@ -1,20 +1,60 @@
 import axios from 'axios';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, CartesianGrid, Legend, RadarChart, Radar, 
-  PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, CartesianGrid, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import  ExportButtons  from './ExportButtons';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-const Card = ({ children, className }) => (
+/* ---------- Generic UI ---------- */
+type CardProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+/* ---------- Chart Types ---------- */
+type LearnerRow = {
+  userId: string;
+  name: string;
+  completedSubconcepts: number;
+  totalSubconcepts: number;
+  completedUnits: number;
+  totalUnits: number;
+  completedStages: number;
+  totalStages: number;
+  completed: number;
+  total: number;
+};
+
+type LearnerApiRow = {
+  userId: string;
+  userName: string;
+  completedSubconcepts: number;
+  totalSubconcepts: number;
+  completedUnits: number;
+  totalUnits: number;
+  completedStages: number;
+  totalStages: number;
+};
+
+type LearnersChartData = {
+  users: LearnerApiRow[];
+};
+
+type TooltipProps = {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+};
+
+const Card = ({ children, className = "" }: CardProps) => (
   <div className={`bg-white rounded-lg shadow-lg ${className}`}>
     {children}
   </div>
 );
 
-const CardContent = ({ children, className }) => (
+const CardContent = ({ children, className = "" }: CardProps) => (
   <div className={`p-6 ${className}`}>
     {children}
   </div>
@@ -30,98 +70,97 @@ const skillColors = {
   'Active listening': '#D2B48C', // Tan
   'Other' : '#FF69B4' // Hot Pink (Teal-Pink)
 };
-
+type SkillName = keyof typeof skillColors;
 // Function to get a color based on skill name
-const getSkillColor = (skillName) => {
-  return skillColors[skillName] || skillColors.Other;
+const getSkillColor = (skillName: string): string => {
+  return skillColors[skillName as SkillName] ?? skillColors.Other;
 };
 
-// Function to get a lighter shade of a color for sub-elements
-const getLighterShade = (color, percent) => {
+const getLighterShade = (color: string, percent: number): string => {
   const hex = color.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
   const lightenAmount = Math.round(2.55 * percent);
-  const newR = Math.min(255, r + lightenAmount);
-  const newG = Math.min(255, g + lightenAmount);
-  const newB = Math.min(255, b + lightenAmount);
-  
-  const toHex = (n) => {
-    const hex = n.toString(16);
-    return hex.length === 1 ? `0${hex}` : hex;
-  };
-  
-  return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+
+  const toHex = (n: number) =>
+    n.toString(16).padStart(2, "0");
+
+  return `#${toHex(Math.min(255, r + lightenAmount))}${toHex(
+    Math.min(255, g + lightenAmount)
+  )}${toHex(Math.min(255, b + lightenAmount))}`;
 };
 
-const processSkillData = (concepts) => {
+type Concept = {
+  conceptName: string;
+  totalMaxScore: number;
+  userTotalScore: number;
+  completedSubconcepts: number;
+  totalSubconcepts: number;
+  "conceptSkill-1"?: string;
+  "conceptSkill-2"?: string;
+};
+
+const processSkillData = (concepts?: Concept[]) => {
   if (!concepts) return [];
-  
-  // Group by conceptSkill-1 and conceptSkill-2
-  const skillGroups = concepts.reduce((acc, concept) => {
-    const skill1 = concept['conceptSkill-1'] || 'Other';
-    const skill2 = concept['conceptSkill-2'] || 'Other';
-    
-    if (!acc[skill1]) {
-      acc[skill1] = {
-        name: skill1,
-        totalScore: 0,
-        userScore: 0,
-        conceptCount: 0,
-        subskills: {}
-      };
-    }
-    if (!acc[skill1].subskills[skill2]) {
-      acc[skill1].subskills[skill2] = {
-        name: skill2,
-        concepts: [],
-        totalScore: 0,
-        userScore: 0
-      };
-    }
-    acc[skill1].totalScore += concept.totalMaxScore;
-    acc[skill1].userScore += concept.userTotalScore;
-    acc[skill1].conceptCount += 1;
-    
-    acc[skill1].subskills[skill2].totalScore += concept.totalMaxScore;
-    acc[skill1].subskills[skill2].userScore += concept.userTotalScore;
-    acc[skill1].subskills[skill2].concepts.push({
+
+  const skillGroups: Record<string, any> = {};
+
+  concepts.forEach((concept) => {
+    const skill1 = concept["conceptSkill-1"] ?? "Other";
+    const skill2 = concept["conceptSkill-2"] ?? "Other";
+
+    skillGroups[skill1] ??= {
+      name: skill1,
+      totalScore: 0,
+      userScore: 0,
+      conceptCount: 0,
+      subskills: {},
+    };
+
+    skillGroups[skill1].subskills[skill2] ??= {
+      name: skill2,
+      concepts: [],
+      totalScore: 0,
+      userScore: 0,
+    };
+
+    skillGroups[skill1].totalScore += concept.totalMaxScore;
+    skillGroups[skill1].userScore += concept.userTotalScore;
+    skillGroups[skill1].conceptCount++;
+
+    skillGroups[skill1].subskills[skill2].totalScore += concept.totalMaxScore;
+    skillGroups[skill1].subskills[skill2].userScore += concept.userTotalScore;
+    skillGroups[skill1].subskills[skill2].concepts.push({
       name: concept.conceptName,
-      score: (concept.userTotalScore / concept.totalMaxScore) * 100
+      score: (concept.userTotalScore / concept.totalMaxScore) * 100,
     });
-    
-    return acc;
-  }, {});
-  // Convert to array and calculate percentages
-  return Object.values(skillGroups)
-  .filter(skill => skill.name !== '')
-  .map(skill => ({
+  });
+
+  return Object.values(skillGroups).map((skill: any) => ({
     name: skill.name,
     score: Math.round((skill.userScore / skill.totalScore) * 100) || 0,
     conceptCount: skill.conceptCount,
-    subskills: Object.values(skill.subskills).map(subskill => ({
-      name: subskill.name,
-      score: Math.round((subskill.userScore / subskill.totalScore) * 100) || 0,
-      concepts: subskill.concepts
-    }))
+    subskills: Object.values(skill.subskills).map((sub: any) => ({
+      name: sub.name,
+      score: Math.round((sub.userScore / sub.totalScore) * 100) || 0,
+      concepts: sub.concepts,
+    })),
   }));
 };
 
 
-const LearnersProgressChart = ({ data, programId }) => {
-  const [hoveredLearner, setHoveredLearner] = useState(null);
-  const [selectedLearner, setSelectedLearner] = useState(null);
-  const [userProgressData, setUserProgressData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+const LearnersProgressChart = ({ data, programId, }: { data: LearnersChartData; programId: string; }) => {
+  const [hoveredLearner, setHoveredLearner] = useState<LearnerRow | null>(null);
+  const [selectedLearner, setSelectedLearner] = useState<LearnerRow | null>(null);
+  const [userProgressData, setUserProgressData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Refs for export functionality
-  const chartContainerRef = useRef(null);  // Ref for main chart
-  const detailContainerRef = useRef(null); // Ref for detail view
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const detailContainerRef = useRef<HTMLDivElement | null>(null);
+  const detailRef = useRef<HTMLDivElement | null>(null);
 
-  // Ref to the user detail modal container
-  const detailRef = useRef(null);
 
   const learners = data?.users || [];
   const maxSubconcepts = Math.max(...learners.map(user => user.totalSubconcepts), 0);
@@ -175,7 +214,8 @@ const processUnitData = (stages) => {
     }
   }, [selectedLearner]);
 
-  const CustomTooltip = ({ active, payload, label }) => {
+ // Update the CustomTooltip component
+const CustomTooltip: React.FC<TooltipProps> = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
 
   const d = payload[0].payload;
@@ -183,13 +223,8 @@ const processUnitData = (stages) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow border">
       <p className="font-semibold text-gray-900">{label}</p>
-
-      <p className="text-blue-600">
-        Completed: {d.completedSubconcepts}
-      </p>
-      <p className="text-gray-600">
-        Total: {d.totalSubconcepts}
-      </p>
+      <p className="text-blue-600">Completed: {d.completedSubconcepts}</p>
+      <p className="text-gray-600">Total: {d.totalSubconcepts}</p>
       <p className="text-green-600">
         {Math.round((d.completedSubconcepts / d.totalSubconcepts) * 100)}% Progress
       </p>
@@ -197,23 +232,38 @@ const processUnitData = (stages) => {
   );
 };
 
+// Update the CustomSkillTooltip component
+const CustomSkillTooltip: React.FC<TooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <p className="font-semibold text-gray-900">{label}</p>
+        <p className="text-blue-600">Score: {payload[0].value}%</p>
+        <p className="text-gray-600">
+          Concepts: {payload[0].payload.conceptCount}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
-  const CustomSkillTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-semibold text-gray-900">{label}</p>
-          <p className="text-blue-600">Score: {payload[0].value}%</p>
-          <p className="text-gray-600">
-            Concepts: {payload[0].payload.conceptCount}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+ // Update the UserDetailModal props
+type UserDetailModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  userData: LearnerRow | null;
+  userProgressData: any;
+  isLoading: boolean;
+};
 
-  const UserDetailModal = ({ isOpen, onClose, userData, userProgressData, isLoading }) => {
+const UserDetailModal: React.FC<UserDetailModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  userData, 
+  userProgressData, 
+  isLoading 
+}) => {
     if (!isOpen) return null;
 
     const skillData = userProgressData ? processSkillData(userProgressData.concepts) : [];

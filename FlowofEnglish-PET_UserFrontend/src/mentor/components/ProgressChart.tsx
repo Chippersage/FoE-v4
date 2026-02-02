@@ -1,4 +1,4 @@
-import type { SubconceptAttempt } from "@/mentor/mentor.types";
+import type { SubconceptAttempt } from "../mentor.types";
 
 interface ProgressChartProps {
   title?: string;

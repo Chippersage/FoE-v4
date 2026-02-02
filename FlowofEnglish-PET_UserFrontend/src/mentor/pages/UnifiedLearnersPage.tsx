@@ -1,8 +1,8 @@
-import { useUserContext } from '@/context/AuthContext';
-import { useFetch } from '@/hooks/useFetch';
+import { useUserContext } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
 import { disableUserInCohort, fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport, fetchUserAssignments, fetchUserConceptsProgress,
-    reactivateUserInCohort, } from '@/mentor/mentor-api';
-import type { ConceptsProgressResponse } from '@/mentor/mentor.types';
+    reactivateUserInCohort, } from '../mentor-api';
+import type { ConceptsProgressResponse } from '../mentor.types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity as ActivityIcon, AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, Clock, Download, HelpCircle,
     RefreshCw, Search, SortAsc, SortDesc, Target, TrendingUp, UserCheck, Users, Users as UsersIcon, X } from 'lucide-react';

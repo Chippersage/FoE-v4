@@ -1,4 +1,4 @@
-import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '@/mentor/mentor-api';
+import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '../mentor-api';
 import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Container, Grid, IconButton, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { format, formatDistanceToNow } from "date-fns";
 import { BarChart, Clock, FileText, Play, RefreshCw, Search, Square, TrendingUp, Users, ChevronDown } from "lucide-react";
@@ -505,7 +505,7 @@ export default function MentorDashboardClean() {
                 color="primary"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3} display="flex">
+            <Grid item xs={12} sm={6} md={3} display="flex" >
               <StatCard
                 title="Active Learners"
                 value={totals.active}

@@ -1,5 +1,5 @@
 import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser, MentorCohortsResponse,
-UserAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "@/types/mentor.types";
+UserAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "./mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 

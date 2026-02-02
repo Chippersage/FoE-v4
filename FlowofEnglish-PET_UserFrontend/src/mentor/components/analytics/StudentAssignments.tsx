@@ -1,6 +1,6 @@
-import { useUserContext } from '@/context/AuthContext';
-import { submitCorrectedAssignment } from '@/mentor/mentor-api';
-import type { Assignment, LearnerDetailedProgress, Stage, Subconcept, SubmitCorrectionParams, UserAssignmentsResponse } from '@/types/mentor.types';
+import { useUserContext } from "../../../context/AuthContext";
+import { submitCorrectedAssignment } from "../../mentor-api";
+import type { Assignment, LearnerDetailedProgress, Stage, Subconcept, SubmitCorrectionParams, UserAssignmentsResponse } from "../../mentor.types";
 import { motion } from 'framer-motion';
 import { AlertCircle, Calendar, Check, CheckCircle, ChevronDown, ChevronUp, Clock, Download, FileText, FileUp, Info, MoreVertical, Pause, Play, TrendingUp, X, 
   ExternalLink } from 'lucide-react';

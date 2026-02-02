@@ -7,11 +7,39 @@ import Docxtemplater from 'docxtemplater';
 import axios from 'axios';
 
 // Helper function to process skill data
-const processSkillData = (concepts) => {
+// Add these interfaces at the top of ExportButtons.tsx
+interface SkillConcept {
+  conceptName: string;
+  totalMaxScore: number;
+  userTotalScore: number;
+  completedSubconcepts: number;
+  totalSubconcepts: number;
+  'conceptSkill-1'?: string;
+  'conceptSkill-2'?: string;
+}
+
+interface ProcessedSubskill {
+  name: string;
+  score: number;
+  concepts: Array<{ name: string; score: number }>;
+}
+
+interface ProcessedSkill {
+  name: string;
+  score: number;
+  conceptCount: number;
+  subskills: ProcessedSubskill[];
+  userScore?: number;
+  totalScore?: number;
+ // subskills?: Record<string, any>;
+}
+
+// Update the processSkillData function with proper typing
+const processSkillData = (concepts: SkillConcept[] | undefined): ProcessedSkill[] => {
   if (!concepts) return [];
   
   // Group by conceptSkill-1 and conceptSkill-2
-  const skillGroups = concepts.reduce((acc, concept) => {
+  const skillGroups = concepts.reduce((acc: Record<string, any>, concept: SkillConcept) => {
     const skill1 = concept['conceptSkill-1'] || 'Other';
     const skill2 = concept['conceptSkill-2'] || 'Other';
     
@@ -48,12 +76,12 @@ const processSkillData = (concepts) => {
   
   // Convert to array and calculate percentages
   return Object.values(skillGroups)
-    .filter(skill => skill.name !== '')
-    .map(skill => ({
+    .filter((skill: any) => skill.name !== '')
+    .map((skill: any) => ({
       name: skill.name,
       score: Math.round((skill.userScore / skill.totalScore) * 100) || 0,
       conceptCount: skill.conceptCount,
-      subskills: Object.values(skill.subskills).map(subskill => ({
+      subskills: Object.values(skill.subskills).map((subskill: any) => ({
         name: subskill.name,
         score: Math.round((subskill.userScore / subskill.totalScore) * 100) || 0,
         concepts: subskill.concepts
@@ -62,11 +90,7 @@ const processSkillData = (concepts) => {
 };
 
 // Component for the export buttons
-const ExportButtons = ({ 
-  componentRef, 
-  filename, 
-  exportType,
-  userData = null,
+const ExportButtons = ({ componentRef, filename, exportType, userData = null,
   programId = null,
   allowedFormats = ['pdf', 'csv'],
   tableData = null
@@ -347,10 +371,10 @@ const ExportButtons = ({
       // For a real implementation, we would fetch detailed user progress data
       // Here's a simplified example:
       
-      const apiUrl = process.env.REACT_APP_API_URL;
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
       
       // Get detailed user progress data
-      const response = await axios.get(`${apiUrl}/programs/${programId}/concepts/progress/${userData.userId}`);
+      const response = await axios.get(`${API_BASE_URL}/programs/${programId}/concepts/progress/${userData.userId}`);
       const detailedData = response.data;
       
       // Create a multi-page PDF report

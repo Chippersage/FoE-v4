@@ -210,10 +210,10 @@ const UnitAccordion = ({ unit, isExpanded, onToggle }: UnitAccordionProps) => {
   );
 };
 
-export default function StageAccordion({ 
-  stage, isExpanded, onToggle, defaultExpandedUnits = new Set() 
-}) {
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(defaultExpandedUnits);
+export default function StageAccordion({ stage, isExpanded, onToggle, defaultExpandedUnits = new Set<string>() }) {
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(
+    new Set<string>(Array.from(defaultExpandedUnits as Set<string>))
+  );
 
   const toggleUnit = (unitId: string) => {
     setExpandedUnits(prev => {

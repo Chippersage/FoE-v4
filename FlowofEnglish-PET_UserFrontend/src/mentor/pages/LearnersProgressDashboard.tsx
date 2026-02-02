@@ -1,6 +1,6 @@
-import { useUserContext } from '@/context/AuthContext';
-import { useFetch } from '@/hooks/useFetch';
-import { fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport } from '@/mentor/mentor-api';
+import { useUserContext } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
+import { fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport } from '../mentor-api';
 import { motion } from 'framer-motion';
 import { ChevronDown, Download, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';

@@ -164,6 +164,8 @@ export interface Subconcept {
   attempts: Attempt[];
   concept: Concept;
   completed: boolean;
+  subconceptType?: string;
+  subconceptMaxscore?: number;
 }
 
 export interface Unit {
@@ -220,6 +222,10 @@ export interface LearnerDetailedProgress {
   scoreDistribution: ScoreDistribution;
   userId?: string;
   userName?: string;
+  totalAssignments?: number;
+  assignmentCompletionPercentage?: number;
+  overallScore?: number;
+  subconcepts?: SubconceptAttempt[];
 }
 
 // Fetch mentor's cohorts with assignment statistics

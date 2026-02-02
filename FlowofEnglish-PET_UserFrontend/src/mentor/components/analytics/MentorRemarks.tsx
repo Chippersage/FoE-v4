@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react";
-import { RefObject } from "react";
+import type { RefObject } from "react";
 
 interface MentorRemarksProps {
   remarksRef: RefObject<HTMLTextAreaElement>;
