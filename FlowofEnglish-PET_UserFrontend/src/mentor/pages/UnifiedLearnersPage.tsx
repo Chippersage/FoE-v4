@@ -287,21 +287,21 @@ export default function UnifiedLearnersPage() {
     const usersActiveNow = new Set<string>();
     
     // Process all sessions to find active users
-    if (allSessionsData && allSessionsData.sessions) {
-      allSessionsData.sessions.forEach((session: any) => {
-        const sessionDate = new Date(session.createdAt);
-        
-        // Check if session was today
-        if (sessionDate >= today) {
-          usersActiveToday.add(session.userId);
-        }
-        
-        // Check if session was within last 5 minutes
-        if (sessionDate >= fiveMinutesAgo) {
-          usersActiveNow.add(session.userId);
-        }
-      });
-    }
+    if (allSessionsData) {
+  allSessionsData.forEach((user) => {
+    user.sessions.forEach((session) => {
+      const sessionDate = new Date(session.timestamp);
+
+      if (sessionDate >= today) {
+        usersActiveToday.add(user.userId);
+      }
+
+      if (sessionDate >= fiveMinutesAgo) {
+        usersActiveNow.add(user.userId);
+      }
+    });
+  });
+}
     
     activeToday = usersActiveToday.size;
     activeNow = usersActiveNow.size;
@@ -409,7 +409,9 @@ export default function UnifiedLearnersPage() {
     const statusB = statusOrder[b.status] || 2;
     
     if (statusA !== statusB) {
-      return statusOrder === "asc" ? statusA - statusB : statusB - statusA;
+      return sortOrder === "asc"
+      ? statusA - statusB
+      : statusB - statusA;
     }
 
     // If same status, then sort by the selected field

@@ -1,6 +1,7 @@
 import LoadingOverlay from "../components/LoadingOverlay";
 import { useUserContext } from "../context/AuthContext";
-import { fetchMentorCohorts, type CohortWithProgram } from "./mentor-api";
+import { fetchMentorCohorts} from "./mentor-api";
+import type { CohortWithProgram } from "./mentor.types";
 import axios from "axios";
 import { BarChart, BarChart3, ChevronDown, FileText, List, LogOut, Menu, Users, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -8,7 +9,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 interface MentorSideNavProps {
   cohortId: string;
-  mentorId: string;
+  programId?: string;
 }
 
 const navItems = [
@@ -22,7 +23,7 @@ const navItems = [
   // { label: "Session Logs", icon: ClipboardList, path: "session-logs", needsProgram: false, enabled: true },
 ];
 
-export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavProps) {
+export default function MentorSideNav({ cohortId: cohortIdProp, programId: programIdProp, }: MentorSideNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
@@ -41,8 +42,9 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   
   const programId = useMemo(() => {
+    if (programIdProp) return programIdProp;
     if (urlProgramId) return urlProgramId;
-    if (user?.selectedProgramId) return user.selectedProgramId;
+    // if (user?.selectedProgramId) return user.selectedProgramId;
     try {
       const stored = localStorage.getItem("selectedCohortWithProgram");
       if (stored) {
@@ -54,7 +56,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp }: MentorSideNavP
       /* ignore parse errors */
     }
     return "";
-  }, [urlProgramId, user]);
+  }, [programIdProp, urlProgramId, user]);
 
   // Get mentor name
   const mentorName = useMemo(() => {
