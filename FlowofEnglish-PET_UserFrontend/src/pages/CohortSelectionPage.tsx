@@ -122,20 +122,41 @@ const CohortSelectionPage = () => {
     }
   };
 
-  const handleViewLearners = (cohort) => {
-    navigate("/mentor/dashboard", { state: { cohort } });
-  };
+  // const handleViewLearners = (cohort) => {
+  //   navigate("/mentor/dashboard", { state: { cohort } });
+  // };
 
-  const handleViewAssignments = (cohort) => {
-    navigate("/view-submissions", {
-      state: { cohortId: cohort.cohortId, cohortName: cohort.cohortName },
-    });
-  };
+  // const handleViewAssignments = (cohort) => {
+  //   navigate("/view-submissions", {
+  //     state: { cohortId: cohort.cohortId, cohortName: cohort.cohortName },
+  //   });
+  // };
 
+  // const handleMentorDashboard = (cohort) => {
+  //   localStorage.setItem("selectedCohort", JSON.stringify(cohort));
+  //   navigate("/mentor/dashboard", { state: { cohort } });
+  // };
   const handleMentorDashboard = (cohort) => {
-    localStorage.setItem("selectedCohort", JSON.stringify(cohort));
-    navigate("/mentor/dashboard", { state: { cohort } });
+  const cohortWithProgram = {
+    cohortId: cohort.cohortId,
+    cohortName: cohort.cohortName,
+    program: {
+      programId: cohort.programId,
+      programName: cohort.programName,
+    },
   };
+
+  // single source of truth
+  localStorage.setItem(
+    "selectedCohortWithProgram",
+    JSON.stringify(cohortWithProgram)
+  );
+
+  navigate(
+    `/mentor/${cohort.cohortId}/${cohort.programId}/dashboard`
+  );
+};
+
 
   if (loading) {
     return (
@@ -183,8 +204,8 @@ const CohortSelectionPage = () => {
                     userRole={userRole}
                     assignmentStatistics={assignmentStatistics}
                     onResume={() => handleSelectCohort(c)}
-                    onViewLearners={handleViewLearners}
-                    onViewAssessments={handleViewAssignments}
+                    // onViewLearners={handleViewLearners}
+                    // onViewAssessments={handleViewAssignments}
                     onGenerateReport={() => console.log("Coming Soon")}
                     onViewMentorDashboard={() => handleMentorDashboard(c)}
                   />

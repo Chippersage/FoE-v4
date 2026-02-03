@@ -1,181 +1,161 @@
 // @ts-nocheck
-import React, { lazy, Suspense } from "react";
+import React, { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { CircularProgress } from "@mui/material";
+
 import { useUserContext } from "./context/AuthContext";
-import Loader from "./components/Loader";
-import MentorLayout from "./mentor/layout/MentorLayout";
+import { SessionProvider } from "./context/TimerContext";
 
-/* -------------------- Auth & Core Pages -------------------- */
-const LogInPage = lazy(() => import("./_auth/forms/LoginForm"));
-const CohortSelectionPage = lazy(() => import("./pages/CohortSelectionPage"));
-const CoursePage = lazy(() => import("./pages/course/CoursePage"));
-const ViewProgressPage = lazy(() => import("./pages/ViewProgressPage"));
-const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
-const RootLayout = lazy(() => import("./pages/RootLayout"));
-const CourseLayout = lazy(() => import("./pages/course/CourseLayout"));
+/* -------------------- Auth & Core -------------------- */
+import AuthLayout from "./_auth/AuthLayout";
+import LoginForm from "./_auth/forms/LoginForm";
+import RootLayout from "./pages/RootLayout";
+import CohortSelectionPage from "./pages/CohortSelectionPage";
+import ViewProgressPage from "./pages/ViewProgressPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import LoadingOverlay from "./components/LoadingOverlay";
 
-/* -------------------- Mentor Pages -------------------- */
-const MentorDashboard = lazy(() => import("./mentor/pages/MentorDashboard"));
-const StudentOverviewPage = lazy(() =>
-  import("./mentor/pages/StudentOverviewPage")
-);
-const ViewLearnersPage = lazy(() =>
-  import("./mentor/pages/ViewLearnersPage")
-);
-const ViewSubmissions = lazy(() =>
-  import("./mentor/pages/ViewSubmissions")
-);
-const CohortReports = lazy(() =>
-  import("./mentor/pages/CohortReports")
-);
-const CohortDetails = lazy(() =>
-  import("./mentor/pages/CohortDetails")
-);
+/* -------------------- Course -------------------- */
+import CourseLayout from "./pages/course/CourseLayout";
+import CoursePage from "./pages/course/CoursePage";
 
-const App: React.FC = () => {
-  const { user } = useUserContext();
+/* -------------------- Mentor -------------------- */
+import MentorCohortLayout from "./mentor/layouts/MentorCohortLayout";
+import MentorDashboard from "./mentor/pages/MentorDashboard";
+import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
+import MentorReportsPage from "./mentor/pages/MentorReportsPage";
+import ViewSubmissions from "./mentor/pages/ViewSubmissions";
 
-  const isValidUserType =
-    user?.userType?.toLowerCase() === "learner" ||
-    user?.userType?.toLowerCase() === "mentor";
+export default function App() {
+  const { user, isLoading, isChangingCohort } = useUserContext();
 
-  const isAuthenticatedAndValid = Boolean(user?.userId && isValidUserType);
+  const selectedCohortWithProgram =
+    localStorage.getItem("selectedCohortWithProgram");
+
+  /* -------------------- Auth Logic -------------------- */
+  const normalizedUserType = user?.userType?.toLowerCase();
+  const isLearner = normalizedUserType === "learner";
+  const isMentor = normalizedUserType === "mentor";
+
+  const isAuthenticated = Boolean(user?.userId && (isLearner || isMentor));
+
+  /* -------------------- Disable Right Click -------------------- */
+  useEffect(() => {
+    const disableRightClick = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", disableRightClick);
+    return () =>
+      document.removeEventListener("contextmenu", disableRightClick);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingOverlay />;
+  }
 
   return (
-    <Suspense fallback={<Loader />}>
-      <Routes>
-        {/* ===================== Login ===================== */}
-        <Route
-          path="/sign-in"
-          element={
-            isAuthenticatedAndValid ? (
-              <Navigate to="/select-cohort" />
-            ) : (
-              <LogInPage />
-            )
-          }
-        />
+    <SessionProvider>
+      <main className="flex h-screen flex-col">
+        {/* -------- Cohort Switch Loader -------- */}
+        {isChangingCohort && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm">
+            <div className="text-center">
+              <CircularProgress className="mb-4" />
+              <p className="text-lg font-medium text-gray-700">
+                Switching cohort...
+              </p>
+              <p className="text-sm text-gray-500">
+                Loading new cohort data
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* ===================== Root Layout ===================== */}
-        <Route element={<RootLayout />}>
-          {/* -------- Cohort Selection -------- */}
-          <Route
-            path="/select-cohort"
-            element={
-              isAuthenticatedAndValid ? (
-                <CohortSelectionPage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          />
-
-          {/* ===================== COURSE ROUTES ===================== */}
-          <Route element={<CourseLayout />}>
-            {/* ENTRY ROUTE (decision only) */}
+        <Routes>
+          {/* ===================== Auth ===================== */}
+          <Route element={<AuthLayout />}>
             <Route
-              path="/course/:programId"
+              path="/sign-in"
               element={
-                isAuthenticatedAndValid ? (
-                  <CoursePage />
+                isAuthenticated ? (
+                  <Navigate
+                    to={
+                      selectedCohortWithProgram
+                        ? "/select-cohort"
+                        : "/select-cohort"
+                    }
+                  />
                 ) : (
-                  <Navigate to="/sign-in" />
-                )
-              }
-            />
-
-            {/* REAL CONTENT ROUTE */}
-            <Route
-              path="/course/:programId/stage/:stageId/unit/:unitId/concept/:conceptId"
-              element={
-                isAuthenticatedAndValid ? (
-                  <CoursePage />
-                ) : (
-                  <Navigate to="/sign-in" />
+                  <LoginForm />
                 )
               }
             />
           </Route>
 
-          {/* -------- Learner Progress -------- */}
-          <Route
-            path="/view-progress"
-            element={
-              isAuthenticatedAndValid ? (
-                <ViewProgressPage />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          />
-
-          {/* -------- Mentor Submissions -------- */}
-          <Route
-            path="/view-submissions"
-            element={
-              isAuthenticatedAndValid &&
-              user?.userType?.toLowerCase() === "mentor" ? (
-                <ViewSubmissions />
-              ) : (
-                <Navigate to="/sign-in" />
-              )
-            }
-          />
-
-          {/* ===================== Mentor Routes ===================== */}
+          {/* ===================== Protected ===================== */}
           <Route
             element={
-              isAuthenticatedAndValid &&
-              user?.userType?.toLowerCase() === "mentor" ? (
-                <MentorLayout />
+              isAuthenticated ? (
+                <RootLayout />
               ) : (
                 <Navigate to="/sign-in" />
               )
             }
           >
-            <Route path="/mentor/dashboard" element={<MentorDashboard />} />
+            {/* -------- Cohort Selection -------- */}
             <Route
-              path="/mentor/:cohortId/:programId/dashboard"
-              element={<MentorDashboard />}
+              path="/select-cohort"
+              element={
+                selectedCohortWithProgram ? (
+                  <Navigate to={isMentor ? "/mentor" : "/course"} />
+                ) : (
+                  <CohortSelectionPage />
+                )
+              }
             />
+
+            {/* ===================== Learner ===================== */}
+            <Route element={<CourseLayout />}>
+              <Route
+                path="/course/:programId"
+                element={<CoursePage />}
+              />
+              <Route
+                path="/course/:programId/stage/:stageId/unit/:unitId/concept/:conceptId"
+                element={<CoursePage />}
+              />
+            </Route>
+
             <Route
-              path="/mentor/:cohortId/:programId/learners"
-              element={<ViewLearnersPage />}
-            />
-            <Route
-              path="/mentor/:cohortId/:programId/reports"
-              element={<CohortReports />}
-            />
-            <Route
-              path="/mentor/:cohortId/:programId/assignments"
-              element={<ViewSubmissions />}
-            />
-            <Route
-              path="/mentor/:cohortId/:programId/learner/:userId"
-              element={<StudentOverviewPage />}
-            />
-            <Route
-              path="/mentor/:cohortId/:programId/cohort-details"
-              element={<CohortDetails />}
+              path="/view-progress"
+              element={<ViewProgressPage />}
             />
           </Route>
-        </Route>
 
-        {/* ===================== Default Redirect ===================== */}
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to={isAuthenticatedAndValid ? "/select-cohort" : "/sign-in"}
-            />
-          }
-        />
+          {/* ===================== Mentor ===================== */}
+          <Route path="/mentor" element={ isAuthenticated && isMentor ? (<MentorCohortLayout /> ) : (
+      <Navigate to="/sign-in" /> ) } >
+  <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
+  <Route path=":cohortId/:programId/learners" element={<UnifiedLearnersPage />} />
+  <Route path=":cohortId/:programId/assignments" element={<ViewSubmissions />} />
+  <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
+</Route>
 
-        {/* ===================== 404 ===================== */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
+
+          {/* ===================== Root Redirect ===================== */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <Navigate to="/select-cohort" />
+              ) : (
+                <Navigate to="/sign-in" />
+              )
+            }
+          />
+
+          {/* ===================== 404 ===================== */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </SessionProvider>
   );
-};
-
-export default App;
+}
