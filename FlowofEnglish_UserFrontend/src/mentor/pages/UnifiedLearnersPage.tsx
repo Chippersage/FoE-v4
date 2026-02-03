@@ -1066,7 +1066,7 @@ const handleItemsPerPageChange = (count: number) => {
       {analyticsData && !analyticsLoading && !error && (
         <>
           {/* Overview Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 

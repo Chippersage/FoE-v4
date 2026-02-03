@@ -164,6 +164,8 @@ export interface Subconcept {
   attempts: Attempt[];
   concept: Concept;
   completed: boolean;
+  subconceptType?: string;
+  subconceptMaxscore?: number;
 }
 
 export interface Unit {
@@ -220,6 +222,10 @@ export interface LearnerDetailedProgress {
   scoreDistribution: ScoreDistribution;
   userId?: string;
   userName?: string;
+  totalAssignments?: number;
+  assignmentCompletionPercentage?: number;
+  overallScore?: number;
+  subconcepts?: SubconceptAttempt[];
 }
 
 // Fetch mentor's cohorts with assignment statistics
@@ -359,6 +365,70 @@ export interface UserAssignmentsResponse {
   evaluated: number;
   pendingReview: number;
   assignments: Assignment[];
+}
+
+export interface CohortAssignment {
+  assignmentId: string;
+  submittedDate: number;
+  correctedDate: number | null;
+  score: number | null;
+  remarks: string | null;
+  user: {
+    userId: string;
+    userName: string;
+  };
+  program: {
+    programId: string;
+    programName: string;
+  };
+  stage: {
+    stageId: string;
+    stageName: string;
+  };
+  unit: {
+    unitId: string;
+    unitName: string;
+  };
+  subconcept: {
+    subconceptId: string;
+    subconceptDesc: string;
+    subconceptMaxscore: number;
+    subconceptLink: string;
+    subconceptType: string;
+    dependencies?: Array<{
+      subconceptId: string;
+      subconceptDesc: string;
+      subconceptLink: string;
+      subconceptMaxscore: number;
+      subconceptType: string;
+    }>;
+  };
+  submittedFile?: {
+    fileId: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    downloadUrl: string;
+  };
+  correctedFile?: {
+    fileId: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    downloadUrl: string;
+  };
+}
+
+export interface CohortAssignmentStatistics {
+  cohortUserCount: number;
+  totalAssignments: number;
+  correctedAssignments: number;
+  pendingAssignments: number;
+}
+
+export interface CohortAssignmentsResponse {
+  assignments: CohortAssignment[];
+  statistics: CohortAssignmentStatistics;
 }
 
 export interface SubmitCorrectionParams {

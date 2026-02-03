@@ -243,7 +243,7 @@ export default function MentorSideNav({ cohortId: cohortIdProp, programId: progr
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-blue-800">Current Cohort</p>
                   <p className="text-sm text-blue-600 truncate">
-                    {selectedCohortWithProgram?.cohortName || "Select Cohort"}
+                    {selectedCohortWithProgram ? selectedCohortWithProgram.cohortName : "Loading cohort..."}
                   </p>
                 </div>
                 <ChevronDown 

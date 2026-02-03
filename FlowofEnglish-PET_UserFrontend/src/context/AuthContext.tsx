@@ -192,6 +192,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+  const stored = safeParse(
+    localStorage.getItem("selectedCohortWithProgram")
+  );
+
+  if (stored && !selectedCohortWithProgram) {
+    setSelectedCohortWithProgram(stored);
+  }
+}, []);
+
+  useEffect(() => {
     const init = async () => {
       const ok = await checkAuthUser();
 

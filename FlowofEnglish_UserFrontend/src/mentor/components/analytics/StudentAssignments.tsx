@@ -1529,7 +1529,7 @@ export default function StudentAssignments({ data, assignmentsData, cohortId, co
         )}
 
         {/* Footer */}
-        {assignments.length > 0 && (
+        {/* {assignments.length > 0 && (
           <div className="p-4 border-t border-gray-200 bg-gray-50/50">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-gray-600">
               <div>
@@ -1556,7 +1556,7 @@ export default function StudentAssignments({ data, assignmentsData, cohortId, co
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </motion.div>
     </>
   );

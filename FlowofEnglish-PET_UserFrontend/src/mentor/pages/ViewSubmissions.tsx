@@ -1057,7 +1057,7 @@ const ViewSubmissions: React.FC = () => {
               <span className="text-gray-600">
                 Cohort: <span className="font-medium">{cohortName}</span>
               </span>
-              <span className="text-gray-300">•</span>
+              {/* <span className="text-gray-300">•</span>
               <span className="text-gray-600">
                 Total: {stats.totalAssignments}
               </span>
@@ -1072,11 +1072,11 @@ const ViewSubmissions: React.FC = () => {
               <span className="text-gray-300">•</span>
               <span className="text-blue-600 font-medium">
                 Users: {stats.cohortUserCount}
-              </span>
+              </span> */}
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
               <div className="bg-blue-50 p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1104,7 +1104,7 @@ const ViewSubmissions: React.FC = () => {
                   <ClockIcon className="h-4 w-4 text-yellow-500" />
                 </div>
               </div>
-              <div className="bg-purple-50 p-3 rounded-lg">
+              {/* <div className="bg-purple-50 p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs text-purple-600 font-medium">Graded</div>
@@ -1112,7 +1112,7 @@ const ViewSubmissions: React.FC = () => {
                   </div>
                   <CheckCircleIcon className="h-4 w-4 text-purple-500" />
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2">

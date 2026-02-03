@@ -1,5 +1,5 @@
 import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '@/mentor/mentor-api';
-import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Container, Grid, IconButton, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Container, IconButton, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { format, formatDistanceToNow } from "date-fns";
 import { BarChart, Clock, FileText, Play, RefreshCw, Search, Square, TrendingUp, Users, ChevronDown } from "lucide-react";
 import ReactPaginate from 'react-paginate';
@@ -494,9 +494,8 @@ export default function MentorDashboardClean() {
 
         {!loading && !error && !isChangingCohort && (
           <>
-            {/* Stats Cards - FIXED GRID with uniform size */}
-            <Grid container spacing={3} sx={{ mb: 4, alignItems: "stretch", }}>
-            <Grid item xs={12} sm={6} md={3} display="flex">
+            {/* Stats Cards */}
+           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
               <StatCard
                 title="Total Learners"
                 value={totals.total}
@@ -504,8 +503,6 @@ export default function MentorDashboardClean() {
                 icon={<Users />}
                 color="primary"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Active Learners"
                 value={totals.active}
@@ -513,8 +510,6 @@ export default function MentorDashboardClean() {
                 icon={<TrendingUp />}
                 color="success"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Assignments for Review"
                 value={assignmentsCount}
@@ -522,8 +517,6 @@ export default function MentorDashboardClean() {
                 icon={<FileText />}
                 color="warning"
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} display="flex">
               <StatCard
                 title="Cohort Progress"
                 value={`${overallCohortProgress}%`}
@@ -532,8 +525,7 @@ export default function MentorDashboardClean() {
                 color="info"
                 progress={overallCohortProgress}
               />
-            </Grid>
-          </Grid>
+            </div>
 
             {/* Search and Filters */}
             <Paper
