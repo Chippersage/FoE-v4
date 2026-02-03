@@ -1,5 +1,5 @@
 import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser, MentorCohortsResponse,
-UserAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "./mentor.types";
+UserAssignmentsResponse, CohortAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "./mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -109,7 +109,7 @@ export async function fetchLatestSessions(mentorUserId: string, cohortId: string
       durationSeconds:
         session.sessionStartTimestamp && session.sessionEndTimestamp
           ? (new Date(session.sessionEndTimestamp).getTime() -
-             new Date(session.sessionStartTimestamp).getTime()) / 1000
+            new Date(session.sessionStartTimestamp).getTime()) / 1000
           : undefined,
       status: "completed",
     })),
@@ -183,6 +183,27 @@ export async function fetchUserAssignments( cohortId: string, userId: string, pr
   }
   return handleResponse<UserAssignmentsResponse>(resp);
 }
+
+// Fetch all assignments for a cohort
+export async function fetchCohortAssignments(cohortId: string): Promise<CohortAssignmentsResponse> {
+  if (!cohortId) {
+    throw new Error("cohortId is required");
+  }
+  const url = `${API_BASE_URL}/assignments/cohort/${encodeURIComponent(cohortId)}`;
+
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+  });
+
+  if (!resp.ok) {
+    const errorText = await resp.text().catch(() => '');
+    throw new Error(`Failed to fetch cohort assignments: ${resp.status} ${resp.statusText} - ${errorText}`);
+  }
+  return handleResponse<CohortAssignmentsResponse>(resp);
+}
+
+
 
 // Submit corrected assignment
 export async function submitCorrectedAssignment( assignmentId: string, params: SubmitCorrectionParams ): Promise<SubmitCorrectionResponse> {

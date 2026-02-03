@@ -99,8 +99,8 @@ export default function UnifiedLearnersPage() {
   // List view states
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
-  const [sortBy, setSortBy] = useState<"name" | "score" | "joinDate">("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<"name" | "score" | "joinDate">("score");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
@@ -388,64 +388,118 @@ export default function UnifiedLearnersPage() {
   };
 
   // Filter and sort users
+  const statusRank = (status?: string) =>
+  status === "DISABLED" ? 1 : 0;
+
   const filteredAndSortedUsers = useMemo(() => {
-    if (!cohortData?.users) return [];
+  if (!cohortData?.users) return [];
 
-    let filtered = cohortData.users.filter((u) =>
-      u.userName.toLowerCase().includes(search.toLowerCase()) ||
-      u.userId.toLowerCase().includes(search.toLowerCase())
-    );
+  const filtered = cohortData.users.filter((u) =>
+    u.userName.toLowerCase().includes(search.toLowerCase()) ||
+    u.userId.toLowerCase().includes(search.toLowerCase())
+  ).filter((u) =>
+    statusFilter === "ALL" ? true : u.status === statusFilter
+  );
 
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter(u => u.status === statusFilter);
-    }
+  return [...filtered].sort((a, b) => {
+    // STATUS (ABSOLUTE ORDER)
+    const statusDiff = statusRank(a.status) - statusRank(b.status);
+    if (statusDiff !== 0) return statusDiff;
 
-// Apply sorting - Disabled users always go to the bottom
-  filtered.sort((a, b) => {
-    // First, sort by status: Active users come first, Disabled users come last
-    const statusOrder = { "ACTIVE": 0, "DISABLED": 1 };
-    const statusA = statusOrder[a.status] || 2;
-    const statusB = statusOrder[b.status] || 2;
-    
-    if (statusA !== statusB) {
-      return sortOrder === "asc"
-      ? statusA - statusB
-      : statusB - statusA;
-    }
-
-    // If same status, then sort by the selected field
-    let aValue: string | number = "";
-    let bValue: string | number = "";
+    // FIELD SORT (USER CONTROLLED)
+    let aValue: string | number;
+    let bValue: string | number;
 
     switch (sortBy) {
       case "name":
         aValue = a.userName.toLowerCase();
         bValue = b.userName.toLowerCase();
         break;
+
       case "score":
-        aValue = a.leaderboardScore;
-        bValue = b.leaderboardScore;
+        aValue = a.leaderboardScore ?? 0;
+        bValue = b.leaderboardScore ?? 0;
         break;
+
       case "joinDate":
         aValue = new Date(a.createdAt).getTime();
         bValue = new Date(b.createdAt).getTime();
         break;
+
+      default:
+        return 0;
     }
 
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortOrder === "asc" 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    } else {
-      return sortOrder === "asc" 
-        ? (aValue as number) - (bValue as number)
-        : (bValue as number) - (aValue as number);
+    if (typeof aValue === "string") {
+      return sortOrder === "asc"
+        ? aValue.localeCompare(bValue as string)
+        : (bValue as string).localeCompare(aValue);
     }
+
+    return sortOrder === "asc"
+      ? (aValue as number) - (bValue as number)
+      : (bValue as number) - (aValue as number);
   });
-
-  return filtered;
 }, [cohortData?.users, search, statusFilter, sortBy, sortOrder]);
+
+//   const filteredAndSortedUsers = useMemo(() => {
+//     if (!cohortData?.users) return [];
+
+//     let filtered = cohortData.users.filter((u) =>
+//       u.userName.toLowerCase().includes(search.toLowerCase()) ||
+//       u.userId.toLowerCase().includes(search.toLowerCase())
+//     );
+
+//     // Apply status filter
+//     if (statusFilter !== "ALL") {
+//       filtered = filtered.filter(u => u.status === statusFilter);
+//     }
+
+// // Apply sorting - Disabled users always go to the bottom
+//   filtered.sort((a, b) => {
+//     // First, sort by status: Active users come first, Disabled users come last
+//     const statusOrder = { "ACTIVE": 0, "DISABLED": 1 };
+//     const statusA = statusOrder[a.status] || 2;
+//     const statusB = statusOrder[b.status] || 2;
+    
+//     if (statusA !== statusB) {
+//       return sortOrder === "asc"
+//       ? statusA - statusB
+//       : statusB - statusA;
+//     }
+
+//     // If same status, then sort by the selected field
+//     let aValue: string | number = "";
+//     let bValue: string | number = "";
+
+//     switch (sortBy) {
+//       case "name":
+//         aValue = a.userName.toLowerCase();
+//         bValue = b.userName.toLowerCase();
+//         break;
+//       case "score":
+//         aValue = a.leaderboardScore;
+//         bValue = b.leaderboardScore;
+//         break;
+//       case "joinDate":
+//         aValue = new Date(a.createdAt).getTime();
+//         bValue = new Date(b.createdAt).getTime();
+//         break;
+//     }
+
+//     if (typeof aValue === "string" && typeof bValue === "string") {
+//       return sortOrder === "asc" 
+//         ? aValue.localeCompare(bValue)
+//         : bValue.localeCompare(aValue);
+//     } else {
+//       return sortOrder === "asc" 
+//         ? (aValue as number) - (bValue as number)
+//         : (bValue as number) - (aValue as number);
+//     }
+//   });
+
+//   return filtered;
+// }, [cohortData?.users, search, statusFilter, sortBy, sortOrder]);
 
   // Toggle sort order
   const toggleSort = useCallback((field: "name" | "score" | "joinDate") => {
@@ -1068,7 +1122,7 @@ const handleItemsPerPageChange = (count: number) => {
       {analyticsData && !analyticsLoading && !error && (
         <>
           {/* Overview Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 
