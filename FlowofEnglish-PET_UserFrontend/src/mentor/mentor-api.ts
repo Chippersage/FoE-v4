@@ -128,10 +128,13 @@ export async function fetchMentorCohortProgress( mentorId: string, programId: st
 
   if (!data?.users) return [];
 
+  const programName: string = data.programName ?? programId;
+
   // RETURN ALL RAW VALUES CLEANLY
   return data.users.map((user: any) => ({
     userId: user.userId,
     userName: user.userName,
+    programName,
     status: user.status,
     totalStages: user.totalStages ?? 0,
     completedStages: user.completedStages ?? 0,

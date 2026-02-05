@@ -1,5 +1,5 @@
-import { useUserContext } from "@/context/AuthContext";
-import { fetchMentorCohortProgress } from "@/mentor/mentor-api";
+import { useUserContext } from "../../context/AuthContext";
+import { fetchMentorCohortProgress } from "../../mentor/mentor-api";
 import { Box, Card, Container, FormControl, InputLabel, MenuItem, Select, Typography, } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -33,20 +33,23 @@ export default function MentorReportsPage() {
         );
 
         const transformed = {
-          programId,
-          cohortId,
-          users: progress.map((u) => ({
-            userId: u.userId,
-            userName: u.userName,
-            totalStages: u.totalStages ?? 0,
-            completedStages: u.completedStages ?? 0,
-            totalUnits: u.totalUnits ?? 0,
-            completedUnits: u.completedUnits ?? 0,
-            totalSubconcepts: u.totalSubconcepts ?? 0,
-            completedSubconcepts: u.completedSubconcepts ?? 0,
-            leaderboardScore: u.leaderboardScore ?? 0,
-          })),
-        };
+        programId,
+        cohortId,
+    programName: progress?.[0]?.programName ?? programId,
+    users: progress.map((u) => ({
+    userId: u.userId,
+    userName: u.userName,
+    programName: progress?.[0]?.programName ?? programId,
+    totalStages: u.totalStages ?? 0,
+    completedStages: u.completedStages ?? 0,
+    totalUnits: u.totalUnits ?? 0,
+    completedUnits: u.completedUnits ?? 0,
+    totalSubconcepts: u.totalSubconcepts ?? 0,
+    completedSubconcepts: u.completedSubconcepts ?? 0,
+    leaderboardScore: u.leaderboardScore ?? 0,
+    status: u.status,
+  })),
+};
 
         setApiData(transformed);
 
@@ -168,7 +171,7 @@ export default function MentorReportsPage() {
             <LearnersProgressChart
               data={apiData}
               programId={programId}
-              selectedUserId={selectedLearnerId}
+              // selectedUserId={selectedLearnerId}
             />
           )}
 

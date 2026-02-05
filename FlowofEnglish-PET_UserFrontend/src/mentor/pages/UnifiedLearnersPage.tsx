@@ -103,8 +103,7 @@ export default function UnifiedLearnersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{
-    type: "disable" | "reactivate";
+  const [pendingAction, setPendingAction] = useState<{ type: "disable" | "reactivate";
     userId: string;
     userName: string;
   } | null>(null);
@@ -716,7 +715,7 @@ const handleItemsPerPageChange = (count: number) => {
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
+                    Leaderboard Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Join Date
@@ -766,12 +765,9 @@ const handleItemsPerPageChange = (count: number) => {
                         {user.userEmail || "N/A"}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-blue-600" />
-                          <span className="font-semibold text-blue-600">
-                            {user.leaderboardScore} pts
-                          </span>
-                        </div>
+                        <span className="font-semibold text-blue-600">
+                          {user.leaderboardScore} pts
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(user.createdAt * 1000).toLocaleDateString('en-US', {
