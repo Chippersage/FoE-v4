@@ -55,7 +55,7 @@ export interface MentorCohortProgressRow {
   userId: string;
   userName: string;
   email?: string;
-  // overallProgress: number; // 0-100
+  overallProgress: number; // 0-100
   leaderboardScore?: number;
   leaderboardRank?: number;
   programName: string;
