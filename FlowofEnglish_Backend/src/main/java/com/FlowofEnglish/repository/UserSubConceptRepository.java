@@ -17,7 +17,7 @@ public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, 
  	List<UserSubConcept> findByUser_UserIdAndUnit_UnitId(String userId, String unitId);
 	List<UserSubConcept> findAllByUser_UserId(String userId);  
 	List<UserSubConcept> findByUser_UserIdAndProgram_ProgramId(String userId, String programId);
-	
+	List<UserSubConcept> findByUser_UserIdInAndSubconcept_SubconceptIdIn(List<String> userIds, List<String> subconceptIds);
 	Optional<UserSubConcept> findByUser_UserIdAndProgram_ProgramIdAndStage_StageIdAndUnit_UnitIdAndSubconcept_SubconceptId(
 		    String userId, String programId, String stageId, String unitId, String subconceptId);
 	
@@ -52,6 +52,11 @@ public interface UserSubConceptRepository extends JpaRepository<UserSubConcept, 
 	    );
 	    @Query("SELECT usc.subconcept.subconceptId FROM UserSubConcept usc WHERE usc.user.userId = :userId AND usc.completionDate IS NOT NULL")
 	    Set<String> findCompletedSubconceptIdsByUser_UserId(@Param("userId") String userId);
+	    
+	    @Query("SELECT usc FROM UserSubConcept usc " + "WHERE usc.user.userId IN :userIds " +
+	    	       "AND usc.unit.stage.program.programId = :programId")
+	    	List<UserSubConcept> findByUser_UserIdInAndUnit_Stage_Program_ProgramId( @Param("userIds") List<String> userIds,
+	    	    @Param("programId") String programId );
 	    
 	    @Modifying
 	    @Transactional

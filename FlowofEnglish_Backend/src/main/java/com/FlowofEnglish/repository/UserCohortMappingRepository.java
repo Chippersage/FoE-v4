@@ -59,4 +59,7 @@ public interface UserCohortMappingRepository extends JpaRepository<UserCohortMap
     
     // Find all active mappings for a user
     List<UserCohortMapping> findByUserUserIdAndStatusEquals(String userId, String status);
+    
+    @Query("SELECT ucm.user.userId, ucm.createdAt " + "FROM UserCohortMapping ucm " +  "WHERE ucm.cohort.cohortId = :cohortId " +  "AND ucm.user.userId IN :userIds")
+    List<Object[]> findEnrollmentDatesByUsersAndCohort( @Param("userIds") List<String> userIds, @Param("cohortId") String cohortId );
 }

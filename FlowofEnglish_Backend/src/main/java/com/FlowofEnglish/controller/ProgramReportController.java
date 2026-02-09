@@ -32,9 +32,7 @@ public class ProgramReportController {
   }
   
   @GetMapping("/mentor/{mentorId}/program/{programId}/cohort/{cohortId}/progress")
-  public ResponseEntity<CohortProgressDTO> getCohortProgressForMentor(
-          @PathVariable String mentorId,
-          @PathVariable String programId,
+  public ResponseEntity<CohortProgressDTO> getCohortProgressForMentor( @PathVariable String mentorId, @PathVariable String programId,
           @PathVariable String cohortId) {
 
       CohortProgressDTO progress = programReportService.getCohortProgressForMentor(mentorId, programId, cohortId);
@@ -53,8 +51,7 @@ public class ProgramReportController {
   }
 
     @GetMapping("/program/{userId}/{programId}/download")
-    public ResponseEntity<?> downloadProgramReport(
-            @PathVariable String userId,
+    public ResponseEntity<?> downloadProgramReport( @PathVariable String userId,
             @PathVariable String programId,
             @RequestParam String format) {
         if ("csv".equalsIgnoreCase(format)) {

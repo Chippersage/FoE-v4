@@ -10,6 +10,7 @@ public class CohortProgressDTO {
     private String programDesc;
     private String cohortId;
     private String cohortName;
+    private Double overallProgressPercentage;
     private List<UserProgressDTO> users;
     
     // Getters and Setters
@@ -43,6 +44,12 @@ public class CohortProgressDTO {
 	public void setCohortName(String cohortName) {
 		this.cohortName = cohortName;
 	}
+	public Double getOverallProgressPercentage() {
+        return overallProgressPercentage;
+    }
+    public void setOverallProgressPercentage(Double overallProgressPercentage) {
+        this.overallProgressPercentage = overallProgressPercentage;
+    }
 	public List<UserProgressDTO> getUsers() {
 		return users;
 	}
