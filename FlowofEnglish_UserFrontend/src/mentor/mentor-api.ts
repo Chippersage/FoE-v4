@@ -1,5 +1,5 @@
 import type { LearnerSessionActivity,  MentorCohortProgressRow, LearnerDetailedProgress,  MentorCohortMetadata, MentorCohortUser, MentorCohortsResponse,
-UserAssignmentsResponse, CohortAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams} from "./mentor.types";
+UserAssignmentsResponse, CohortAssignmentsResponse, SubmitCorrectionResponse, SubmitCorrectionParams, MentorCohortProgressResponse} from "./mentor.types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -117,7 +117,7 @@ export async function fetchLatestSessions(mentorUserId: string, cohortId: string
 }
 
 
-export async function fetchMentorCohortProgress( mentorId: string, programId: string, cohortId: string ): Promise<MentorCohortProgressRow[]> {
+export async function fetchMentorCohortProgress( mentorId: string, programId: string, cohortId: string ): Promise<MentorCohortProgressResponse> {
   if (!programId?.trim()) {
     throw new Error("Program ID missing");
   }
@@ -126,28 +126,45 @@ export async function fetchMentorCohortProgress( mentorId: string, programId: st
   const resp = await fetch(url, { credentials: "include" });
   const data = await handleResponse<any>(resp);
 
-  if (!data?.users) return [];
+  if (!data?.users) {
+    throw new Error("Invalid mentor cohort progress response");
+  }
 
-  const programName: string = data.programName ?? programId;
+  const programName = data.programName ?? programId;
 
-  // RETURN ALL RAW VALUES CLEANLY
-  return data.users.map((user: any) => ({
-    userId: user.userId,
-    userName: user.userName,
+  return {
+    programId: data.programId ?? programId,
     programName,
-    status: user.status,
-    totalStages: user.totalStages ?? 0,
-    completedStages: user.completedStages ?? 0,
-    totalUnits: user.totalUnits ?? 0,
-    completedUnits: user.completedUnits ?? 0,
-    totalSubconcepts: user.totalSubconcepts ?? 0,
-    completedSubconcepts: user.completedSubconcepts ?? 0,
-    leaderboardScore: user.leaderboardScore ?? 0,
-    overallProgress:
-      user.totalSubconcepts > 0
-        ? Math.round((user.completedSubconcepts / user.totalSubconcepts) * 100)
-        : 0,
-  }));
+    cohortId: data.cohortId ?? cohortId,
+    cohortName: data.cohortName,
+    overallProgressPercentage: data.overallProgressPercentage ?? 0,
+
+    users: data.users.map((user: any) => ({
+      userId: user.userId,
+      userName: user.userName,
+      programName,
+      status: user.status,
+
+      totalStages: user.totalStages ?? 0,
+      completedStages: user.completedStages ?? 0,
+      totalUnits: user.totalUnits ?? 0,
+      completedUnits: user.completedUnits ?? 0,
+      totalSubconcepts: user.totalSubconcepts ?? 0,
+      completedSubconcepts: user.completedSubconcepts ?? 0,
+      totalAssignments: user.totalAssignments ?? 0,
+      completedAssignments: user.completedAssignments ?? 0,
+      createdAt: user.createdAt,
+      recentAttemptDate : user.recentAttemptDate,
+
+      leaderboardScore: user.leaderboardScore ?? 0,
+      // overallProgress:
+      //   user.totalSubconcepts > 0
+      //     ? Math.round(
+      //         (user.completedSubconcepts / user.totalSubconcepts) * 100
+      //       )
+      //     : 0,
+    })),
+  };
 }
 
 

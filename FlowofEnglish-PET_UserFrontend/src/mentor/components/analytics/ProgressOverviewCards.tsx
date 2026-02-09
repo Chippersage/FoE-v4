@@ -91,52 +91,51 @@ export default function ProgressOverviewCards({ data, cohortEndDate,  }: {   dat
       color: 'text-green-600 bg-green-50',
       bgColor: 'bg-green-600',
     },
-    {
-      title: 'Activities Mastered',
-      value: `${data.completedSubconcepts || 0}/${data.totalSubconcepts || 0}`,
-      percentage: data.subconceptCompletionPercentage || 0,
-      icon: Award,
-      color: 'text-purple-600 bg-purple-50',
-      bgColor: 'bg-purple-600',
-    },
+    // {
+    //   title: 'Activities Mastered',
+    //   value: `${data.completedSubconcepts || 0}/${data.totalSubconcepts || 0}`,
+    //   percentage: data.subconceptCompletionPercentage || 0,
+    //   icon: Award,
+    //   color: 'text-purple-600 bg-purple-50',
+    //   bgColor: 'bg-purple-600',
+    // },
     {
       title: 'Assignments Submitted',
       value: `${assignments.attempted}/${assignments.total}`,
-      // value: `${assignments.attempted}/${assignments.total} submitted`,
       percentage: assignments.percentage,
       icon: FileText,
       color: 'text-indigo-600 bg-indigo-50',
       bgColor: 'bg-gradient-to-r from-indigo-500 to-teal-400',
       isAssignments: true,
     },
-    {
-      title: 'Score',
-      value: (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-gray-800">{data.gotScore || 0}</span>
-                <span className="text-sm text-gray-500">/ {data.attemptedMaxScore || 0} pts</span>
-              </div>
-              {/* <div className="text-xs text-gray-500">
-                Total available: {data.totalScore || 0} pts
-              </div> */}
-            </div>
-            {/* <attemptedGrade.icon className="h-5 w-5 text-emerald-500" /> */}
-          </div>
-          {/* <div className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full inline-block">
-            {attemptedGrade.label} • {(data.attemptedPercentageScore || 0).toFixed(1)}%
-          </div> */}
-        </div>
-      ),
-      percentage: data.attemptedPercentageScore || 0,
-      icon: Target,
-      color: attemptedGrade.color,
-      bgColor: 'bg-gradient-to-r from-emerald-500 to-green-400',
-      isScore: true,
-      description: 'Based on attempted content',
-    },
+    // {
+    //   title: 'Score',
+    //   value: (
+    //     <div className="space-y-1">
+    //       <div className="flex items-center gap-2">
+    //         <div className="flex-1">
+    //           <div className="flex items-baseline gap-1">
+    //             <span className="text-2xl font-bold text-gray-800">{data.gotScore || 0}</span>
+    //             <span className="text-sm text-gray-500">/ {data.attemptedMaxScore || 0} pts</span>
+    //           </div>
+    //           {/* <div className="text-xs text-gray-500">
+    //             Total available: {data.totalScore || 0} pts
+    //           </div> */}
+    //         </div>
+    //         {/* <attemptedGrade.icon className="h-5 w-5 text-emerald-500" /> */}
+    //       </div>
+    //       {/* <div className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full inline-block">
+    //         {attemptedGrade.label} • {(data.attemptedPercentageScore || 0).toFixed(1)}%
+    //       </div> */}
+    //     </div>
+    //   ),
+    //   percentage: data.attemptedPercentageScore || 0,
+    //   icon: Target,
+    //   color: attemptedGrade.color,
+    //   bgColor: 'bg-gradient-to-r from-emerald-500 to-green-400',
+    //   isScore: true,
+    //   description: 'Based on attempted content',
+    // },
     // {
     //   title: 'Overall Performance',
     //   value: (

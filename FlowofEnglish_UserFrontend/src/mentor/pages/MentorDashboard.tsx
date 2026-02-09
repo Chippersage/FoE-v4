@@ -1,4 +1,4 @@
-import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '@/mentor/mentor-api';
+import { fetchLearnerSessionActivity, fetchMentorCohortProgress, fetchMentorCohorts } from '../mentor-api';
 import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Container, IconButton, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { format, formatDistanceToNow } from "date-fns";
 import { BarChart, Clock, FileText, Play, RefreshCw, Search, Square, TrendingUp, Users, ChevronDown } from "lucide-react";
@@ -344,20 +344,9 @@ export default function MentorDashboardClean() {
 
     setLoadingProgress(true);
     try {
-      // Use the existing API function from mentor-api.ts
-      const progressData = await fetchMentorCohortProgress(mentorId, programId, cohortId!);
-      setCohortProgress(progressData);
-
-      // Calculate overall cohort progress
-      if (progressData && progressData.length > 0) {
-        const totalSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.totalSubconcepts || 0), 0);
-        const completedSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.completedSubconcepts || 0), 0);
-
-        const overallProgress = totalSubconcepts > 0 ? (completedSubconcepts / totalSubconcepts) * 100 : 0;
-
-        setOverallCohortProgress(parseFloat(overallProgress.toFixed(1)));
-      }
-
+      const response = await fetchMentorCohortProgress( mentorId, programId, cohortId );
+    setCohortProgress(response.users);
+    setOverallCohortProgress(response.overallProgressPercentage ?? 0);
       // Fetch assignments count using the new API function
       const cohortsData = await fetchMentorCohorts(mentorId);
       if (cohortsData.assignmentStatistics?.cohortDetails?.[cohortId!]) {
@@ -494,8 +483,8 @@ export default function MentorDashboardClean() {
 
         {!loading && !error && !isChangingCohort && (
           <>
-            {/* Stats Cards */}
-           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+            {/* Stats Cards  */}
+            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
               <StatCard
                 title="Total Learners"
                 value={totals.total}
@@ -528,18 +517,9 @@ export default function MentorDashboardClean() {
             </div>
 
             {/* Search and Filters */}
-            <Paper
-  sx={{
-    p: 2,
-    mb: 2,
-    borderRadius: 2,
-  }}
->
+            <Paper sx={{ p: 2, mb: 2, borderRadius: 2, }}>
   <Stack
-    direction={{ xs: "column", sm: "row" }}
-    spacing={1.5}
-    alignItems="center"
-  >
+    direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="center" >
     {/* Search */}
     <Box sx={{ position: "relative", flex: 1, width: "100%" }}>
       <Search

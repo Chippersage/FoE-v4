@@ -1,6 +1,6 @@
-import { useUserContext } from '@/context/AuthContext';
-import { useFetch } from '@/hooks/useFetch';
-import { fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport } from '@/mentor/mentor-api';
+import { useUserContext } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
+import { fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport } from '../mentor-api';
 import { motion } from 'framer-motion';
 import { ChevronDown, Download, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,7 @@ import StageAccordion from '../components/analytics/StageAccordion';
 import SkillBreakdown from '../components/analytics/SkillBreakdown';
 import StudentAssignments from '../components/analytics/StudentAssignments';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
+
 
 export default function LearnersProgressDashboard() {
   const navigate = useNavigate();
