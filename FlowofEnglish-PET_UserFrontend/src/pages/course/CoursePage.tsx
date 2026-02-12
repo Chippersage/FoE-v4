@@ -13,7 +13,7 @@ import GoogleFormActions from "./components/GoogleFormActions";
 import MarkCompleteButton from "./components/MarkCompleteButton";
 import ScoreBadge from "./components/ScoreBadge";
 import ScoreSummaryModal from "./components/ScoreSummaryModal";
-import AssignmentImageAnswerModal from "./components/AssignmentImageAnswerModal";
+import AssignmentSampleAnswerModal from "./components/AssignmentSampleAnswerModal";
 
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
@@ -456,7 +456,7 @@ const CoursePage: React.FC = () => {
       )}
 
       {isAssignmentImage && hasAnswerImage && (
-        <AssignmentImageAnswerModal
+        <AssignmentSampleAnswerModal
           isOpen={showAnswerModal}
           onClose={() => setShowAnswerModal(false)}
           documentUrl={subconcept.subconceptGroup}

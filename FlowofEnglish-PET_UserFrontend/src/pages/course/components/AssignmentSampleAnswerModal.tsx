@@ -6,7 +6,7 @@ interface Props {
   documentUrl: string;
 }
 
-const AssignmentImageAnswerModal: React.FC<Props> = ({
+const AssignmentSampleAnswerModal: React.FC<Props> = ({
   isOpen,
   onClose,
   documentUrl,
@@ -28,7 +28,7 @@ const AssignmentImageAnswerModal: React.FC<Props> = ({
         </button>
 
         <h2 className="text-lg font-semibold mb-4 text-center">
-          Check the Answer
+          Sample Answer
         </h2>
 
         <div className="w-full h-[75vh] flex items-center justify-center overflow-auto">
@@ -57,4 +57,4 @@ const AssignmentImageAnswerModal: React.FC<Props> = ({
   );
 };
 
-export default AssignmentImageAnswerModal;
+export default AssignmentSampleAnswerModal;
