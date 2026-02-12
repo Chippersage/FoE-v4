@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useParams, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
-import useCourseEntryRedirect from '../course/hooks/useCourseEntryRedirect';
 
 /**
  * CourseLayout Component
