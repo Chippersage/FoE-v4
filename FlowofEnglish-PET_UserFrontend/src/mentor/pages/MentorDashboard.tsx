@@ -344,20 +344,9 @@ export default function MentorDashboardClean() {
 
     setLoadingProgress(true);
     try {
-      // Use the existing API function from mentor-api.ts
-      const progressData = await fetchMentorCohortProgress(mentorId, programId, cohortId!);
-      setCohortProgress(progressData);
-
-      // Calculate overall cohort progress
-      if (progressData && progressData.length > 0) {
-        const totalSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.totalSubconcepts || 0), 0);
-        const completedSubconcepts = progressData.reduce((sum: number, user: any) => sum + (user.completedSubconcepts || 0), 0);
-
-        const overallProgress = totalSubconcepts > 0 ? (completedSubconcepts / totalSubconcepts) * 100 : 0;
-
-        setOverallCohortProgress(parseFloat(overallProgress.toFixed(1)));
-      }
-
+      const response = await fetchMentorCohortProgress( mentorId, programId, cohortId );
+    setCohortProgress(response.users);
+    setOverallCohortProgress(response.overallProgressPercentage ?? 0);
       // Fetch assignments count using the new API function
       const cohortsData = await fetchMentorCohorts(mentorId);
       if (cohortsData.assignmentStatistics?.cohortDetails?.[cohortId!]) {

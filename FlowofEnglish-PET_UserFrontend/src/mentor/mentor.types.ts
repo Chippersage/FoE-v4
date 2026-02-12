@@ -58,6 +58,7 @@ export interface MentorCohortProgressRow {
   overallProgress: number; // 0-100
   leaderboardScore?: number;
   leaderboardRank?: number;
+  programName: string;
   moduleProgress?: ModuleProgress[];
   totalStages?: number;
   completedStages?: number;
@@ -65,7 +66,20 @@ export interface MentorCohortProgressRow {
   completedUnits?: number;
   totalSubconcepts?: number;
   completedSubconcepts?: number;
+  totalAssignments?: number;
+  completedAssignments?: number;
+  recentAttemptDate?: number;
+  createdAt?: number;
   status?: string;
+}
+
+export interface MentorCohortProgressResponse {
+  programId: string;
+  programName: string;
+  cohortId: string;
+  cohortName?: string;
+  overallProgressPercentage: number;
+  users: MentorCohortProgressRow[];
 }
 
 export interface MentorCohortUser {

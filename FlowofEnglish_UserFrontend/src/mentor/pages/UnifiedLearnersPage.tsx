@@ -1,8 +1,8 @@
-import { useUserContext } from '@/context/AuthContext';
-import { useFetch } from '@/hooks/useFetch';
+import { useUserContext } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
 import { disableUserInCohort, fetchLatestSessions, fetchMentorCohortUsers, fetchProgramReport, fetchUserAssignments, fetchUserConceptsProgress,
-    reactivateUserInCohort, } from '@/mentor/mentor-api';
-import type { ConceptsProgressResponse } from '@/mentor/mentor.types';
+    reactivateUserInCohort, } from '../mentor-api';
+import type { ConceptsProgressResponse } from '../mentor.types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity as ActivityIcon, AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, Clock, Download, HelpCircle,
     RefreshCw, Search, SortAsc, SortDesc, Target, TrendingUp, UserCheck, Users, Users as UsersIcon, X } from 'lucide-react';
@@ -99,12 +99,11 @@ export default function UnifiedLearnersPage() {
   // List view states
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DISABLED">("ALL");
-  const [sortBy, setSortBy] = useState<"name" | "score" | "joinDate">("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<"name" | "score" | "joinDate">("score");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{
-    type: "disable" | "reactivate";
+  const [pendingAction, setPendingAction] = useState<{ type: "disable" | "reactivate";
     userId: string;
     userName: string;
   } | null>(null);
@@ -287,21 +286,21 @@ export default function UnifiedLearnersPage() {
     const usersActiveNow = new Set<string>();
     
     // Process all sessions to find active users
-    if (allSessionsData && allSessionsData.sessions) {
-      allSessionsData.sessions.forEach((session: any) => {
-        const sessionDate = new Date(session.createdAt);
-        
-        // Check if session was today
-        if (sessionDate >= today) {
-          usersActiveToday.add(session.userId);
-        }
-        
-        // Check if session was within last 5 minutes
-        if (sessionDate >= fiveMinutesAgo) {
-          usersActiveNow.add(session.userId);
-        }
-      });
-    }
+    if (allSessionsData) {
+  allSessionsData.forEach((user) => {
+    user.sessions.forEach((session) => {
+      const sessionDate = new Date(session.timestamp);
+
+      if (sessionDate >= today) {
+        usersActiveToday.add(user.userId);
+      }
+
+      if (sessionDate >= fiveMinutesAgo) {
+        usersActiveNow.add(user.userId);
+      }
+    });
+  });
+}
     
     activeToday = usersActiveToday.size;
     activeNow = usersActiveNow.size;
@@ -317,26 +316,26 @@ export default function UnifiedLearnersPage() {
 
   // Update URL when learner is selected
   useEffect(() => {
-      if (!cohortId) return;
-      if (!progId) return;
-      
-      if (selectedLearnerId && progId) {
-        const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}&programId=${progId}`;
-        navigate(newPath, { replace: true });
-      } else if (selectedLearnerId) {
-        const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}`;
-        navigate(newPath, { replace: true });
-      } else {
-        navigate(`/mentor/${cohortId}/${progId}/learners`, { replace: true });
-      }
-    }, [selectedLearnerId, progId, cohortId, navigate]);
-  
-    // Initialize selected learner from URL
-    useEffect(() => {
-      if (urlLearnerId && urlLearnerId !== selectedLearnerId) {
-        setSelectedLearnerId(urlLearnerId);
-      }
-    }, [urlLearnerId]);
+    if (!cohortId) return;
+    if (!progId) return;
+    
+    if (selectedLearnerId && progId) {
+      const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}&programId=${progId}`;
+      navigate(newPath, { replace: true });
+    } else if (selectedLearnerId) {
+      const newPath = `/mentor/${cohortId}/${progId}/learners?learnerId=${selectedLearnerId}`;
+      navigate(newPath, { replace: true });
+    } else {
+      navigate(`/mentor/${cohortId}/${progId}/learners`, { replace: true });
+    }
+  }, [selectedLearnerId, progId, cohortId, navigate]);
+
+  // Initialize selected learner from URL
+  useEffect(() => {
+    if (urlLearnerId && urlLearnerId !== selectedLearnerId) {
+      setSelectedLearnerId(urlLearnerId);
+    }
+  }, [urlLearnerId]);
 
   // Get selected learner info
   const selectedLearner = cohortData?.users?.find(
@@ -350,36 +349,36 @@ export default function UnifiedLearnersPage() {
   }, []);
 
   // Handle user actions
-  const handleUserAction = useCallback(async (userId: string, action: "disable" | "reactivate", reason?: string) => {
-    if (!cohortId || !userId) return;
+  // const handleUserAction = useCallback(async (userId: string, action: "disable" | "reactivate", reason?: string) => {
+  //   if (!cohortId || !userId) return;
     
-    setActionLoading(userId);
-    try {
-      if (action === "disable") {
-        await disableUserInCohort(userId, cohortId, reason || "No reason provided");
-        showNotification("success", "User disabled successfully");
-      } else {
-        await reactivateUserInCohort(userId, cohortId);
-        showNotification("success", "User reactivated successfully");
-      }
+  //   setActionLoading(userId);
+  //   try {
+  //     if (action === "disable") {
+  //       await disableUserInCohort(userId, cohortId, reason || "No reason provided");
+  //       showNotification("success", "User disabled successfully");
+  //     } else {
+  //       await reactivateUserInCohort(userId, cohortId);
+  //       showNotification("success", "User reactivated successfully");
+  //     }
       
-      // Refresh users list
-      refreshUsers();
+  //     // Refresh users list
+  //     refreshUsers();
       
-      // If the current selected user was modified, refresh analytics too
-      if (userId === selectedLearnerId) {
-        refreshAnalytics();
-      }
-    } catch (error) {
-      console.error(`${action} user error:`, error);
-      showNotification("error", `Failed to ${action} user`);
-    } finally {
-      setActionLoading(null);
-      setShowConfirmation(false);
-      setPendingAction(null);
-      setDisableReason("");
-    }
-  }, [cohortId, selectedLearnerId, refreshUsers, refreshAnalytics, showNotification]);
+  //     // If the current selected user was modified, refresh analytics too
+  //     if (userId === selectedLearnerId) {
+  //       refreshAnalytics();
+  //     }
+  //   } catch (error) {
+  //     console.error(`${action} user error:`, error);
+  //     showNotification("error", `Failed to ${action} user`);
+  //   } finally {
+  //     setActionLoading(null);
+  //     setShowConfirmation(false);
+  //     setPendingAction(null);
+  //     setDisableReason("");
+  //   }
+  // }, [cohortId, selectedLearnerId, refreshUsers, refreshAnalytics, showNotification]);
 
   // Show confirmation dialog
   const showActionConfirmation = (userId: string, userName: string, action: "disable" | "reactivate") => {
@@ -388,62 +387,118 @@ export default function UnifiedLearnersPage() {
   };
 
   // Filter and sort users
+  const statusRank = (status?: string) =>
+  status === "DISABLED" ? 1 : 0;
+
   const filteredAndSortedUsers = useMemo(() => {
-    if (!cohortData?.users) return [];
+  if (!cohortData?.users) return [];
 
-    let filtered = cohortData.users.filter((u) =>
-      u.userName.toLowerCase().includes(search.toLowerCase()) ||
-      u.userId.toLowerCase().includes(search.toLowerCase())
-    );
+  const filtered = cohortData.users.filter((u) =>
+    u.userName.toLowerCase().includes(search.toLowerCase()) ||
+    u.userId.toLowerCase().includes(search.toLowerCase())
+  ).filter((u) =>
+    statusFilter === "ALL" ? true : u.status === statusFilter
+  );
 
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter(u => u.status === statusFilter);
-    }
+  return [...filtered].sort((a, b) => {
+    // STATUS (ABSOLUTE ORDER)
+    const statusDiff = statusRank(a.status) - statusRank(b.status);
+    if (statusDiff !== 0) return statusDiff;
 
-// Apply sorting - Disabled users always go to the bottom
-  filtered.sort((a, b) => {
-    // First, sort by status: Active users come first, Disabled users come last
-    const statusOrder = { "ACTIVE": 0, "DISABLED": 1 };
-    const statusA = statusOrder[a.status] || 2;
-    const statusB = statusOrder[b.status] || 2;
-    
-    if (statusA !== statusB) {
-      return statusOrder === "asc" ? statusA - statusB : statusB - statusA;
-    }
-
-    // If same status, then sort by the selected field
-    let aValue: string | number = "";
-    let bValue: string | number = "";
+    // FIELD SORT (USER CONTROLLED)
+    let aValue: string | number;
+    let bValue: string | number;
 
     switch (sortBy) {
       case "name":
         aValue = a.userName.toLowerCase();
         bValue = b.userName.toLowerCase();
         break;
+
       case "score":
-        aValue = a.leaderboardScore;
-        bValue = b.leaderboardScore;
+        aValue = a.leaderboardScore ?? 0;
+        bValue = b.leaderboardScore ?? 0;
         break;
+
       case "joinDate":
         aValue = new Date(a.createdAt).getTime();
         bValue = new Date(b.createdAt).getTime();
         break;
+
+      default:
+        return 0;
     }
 
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortOrder === "asc" 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    } else {
-      return sortOrder === "asc" 
-        ? (aValue as number) - (bValue as number)
-        : (bValue as number) - (aValue as number);
+    if (typeof aValue === "string") {
+      return sortOrder === "asc"
+        ? aValue.localeCompare(bValue as string)
+        : (bValue as string).localeCompare(aValue);
     }
+
+    return sortOrder === "asc"
+      ? (aValue as number) - (bValue as number)
+      : (bValue as number) - (aValue as number);
   });
-
-  return filtered;
 }, [cohortData?.users, search, statusFilter, sortBy, sortOrder]);
+
+//   const filteredAndSortedUsers = useMemo(() => {
+//     if (!cohortData?.users) return [];
+
+//     let filtered = cohortData.users.filter((u) =>
+//       u.userName.toLowerCase().includes(search.toLowerCase()) ||
+//       u.userId.toLowerCase().includes(search.toLowerCase())
+//     );
+
+//     // Apply status filter
+//     if (statusFilter !== "ALL") {
+//       filtered = filtered.filter(u => u.status === statusFilter);
+//     }
+
+// // Apply sorting - Disabled users always go to the bottom
+//   filtered.sort((a, b) => {
+//     // First, sort by status: Active users come first, Disabled users come last
+//     const statusOrder = { "ACTIVE": 0, "DISABLED": 1 };
+//     const statusA = statusOrder[a.status] || 2;
+//     const statusB = statusOrder[b.status] || 2;
+    
+//     if (statusA !== statusB) {
+//       return sortOrder === "asc"
+//       ? statusA - statusB
+//       : statusB - statusA;
+//     }
+
+//     // If same status, then sort by the selected field
+//     let aValue: string | number = "";
+//     let bValue: string | number = "";
+
+//     switch (sortBy) {
+//       case "name":
+//         aValue = a.userName.toLowerCase();
+//         bValue = b.userName.toLowerCase();
+//         break;
+//       case "score":
+//         aValue = a.leaderboardScore;
+//         bValue = b.leaderboardScore;
+//         break;
+//       case "joinDate":
+//         aValue = new Date(a.createdAt).getTime();
+//         bValue = new Date(b.createdAt).getTime();
+//         break;
+//     }
+
+//     if (typeof aValue === "string" && typeof bValue === "string") {
+//       return sortOrder === "asc" 
+//         ? aValue.localeCompare(bValue)
+//         : bValue.localeCompare(aValue);
+//     } else {
+//       return sortOrder === "asc" 
+//         ? (aValue as number) - (bValue as number)
+//         : (bValue as number) - (aValue as number);
+//     }
+//   });
+
+//   return filtered;
+// }, [cohortData?.users, search, statusFilter, sortBy, sortOrder]);
 
   // Toggle sort order
   const toggleSort = useCallback((field: "name" | "score" | "joinDate") => {
@@ -660,7 +715,7 @@ const handleItemsPerPageChange = (count: number) => {
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
+                    Leaderboard Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Join Date
@@ -710,12 +765,9 @@ const handleItemsPerPageChange = (count: number) => {
                         {user.userEmail || "N/A"}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-blue-600" />
-                          <span className="font-semibold text-blue-600">
-                            {user.leaderboardScore} pts
-                          </span>
-                        </div>
+                        <span className="font-semibold text-blue-600">
+                          {user.leaderboardScore} pts
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(user.createdAt * 1000).toLocaleDateString('en-US', {
@@ -999,7 +1051,7 @@ const handleItemsPerPageChange = (count: number) => {
       </div>
 
       {/* User Status Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
+      {/* <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -1023,7 +1075,7 @@ const handleItemsPerPageChange = (count: number) => {
             isLoading={actionLoading === selectedLearnerId}
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Loading State */}
       {analyticsLoading && (
@@ -1066,7 +1118,7 @@ const handleItemsPerPageChange = (count: number) => {
       {analyticsData && !analyticsLoading && !error && (
         <>
           {/* Overview Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
             <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 
@@ -1176,10 +1228,10 @@ const handleItemsPerPageChange = (count: number) => {
             Comprehensive view of skill proficiency across all concepts
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        {/* <div className="flex items-center gap-2 text-sm text-gray-500">
           <Target className="h-4 w-4" />
           <span>Skill Proficiency (%)</span>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex-1 flex items-center justify-center">
@@ -1232,8 +1284,6 @@ const handleItemsPerPageChange = (count: number) => {
   </div>
 </div>
 
-
-
               <StudentAssignments
                 data={analyticsData}
                 assignmentsData={assignmentsData}
@@ -1255,12 +1305,33 @@ const handleItemsPerPageChange = (count: number) => {
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">Detailed Progress & Attempt History</h3>
-                        <p className="text-gray-600 mt-1">
-                          Interactive view combining Modules progress with detailed attempt history
-                        </p>
-                      </div>
+                      <div className="flex flex-col gap-2">
+  <div className="flex flex-wrap items-center gap-3">
+    <h3 className="text-xl font-semibold text-gray-800">
+      Detailed Progress & Attempt History
+    </h3>
+
+    {/* 🔹 Activities Mastered badge */}
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200">
+      {/* <Target className="h-4 w-4 text-blue-600" /> */}
+      <span className="text-sm font-medium text-blue-700">
+        Activities Mastered
+      </span>
+      <span className="text-sm font-semibold text-blue-900">
+        {analyticsData?.completedSubconcepts ?? 0}
+        <span className="text-gray-500 font-normal">
+          {" "}
+          / {analyticsData?.totalSubconcepts ?? 0}
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <p className="text-gray-600">
+    Interactive view combining Modules progress with detailed attempt history
+  </p>
+</div>
+
                       
                       <div className="flex items-center gap-2">
                         <button 
@@ -1314,7 +1385,7 @@ const handleItemsPerPageChange = (count: number) => {
       )}
 
       {/* Confirmation Modals */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showConfirmation && pendingAction && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -1433,7 +1504,7 @@ const handleItemsPerPageChange = (count: number) => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.*;
 import org.slf4j.*;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.*;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.OffsetDateTime;
 
 import com.itextpdf.io.source.ByteArrayOutputStream;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -764,7 +766,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             Cohort cohort = cohortRepository.findById(cohortId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cohort not found with ID: " + cohortId));
             
-         //  Validate mapping between cohort and program
+            // Validate mapping between cohort and program
             cohortProgramRepository.findByProgram_ProgramIdAndCohort_CohortId(programId, cohortId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Invalid Request:  Given CohortId '" + cohortId +
@@ -772,86 +774,211 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             
             logger.debug("Found program: {} and cohort: {}", program.getProgramName(), cohort.getCohortName());
             
-            // Fetch all users in the cohort
+            // Fetch all users in the cohort with their mappings
             List<UserCohortMapping> userMappings = userCohortMappingRepository.findByCohortCohortId(cohortId);
-            List<User> users = userMappings.stream()
-                .map(UserCohortMapping::getUser)
+            List<String> userIds = userMappings.stream()
+                .map(um -> um.getUser().getUserId())
                 .collect(Collectors.toList());
             
-            logger.debug("Found {} users in cohort: {}", users.size(), cohortId);
+            if (userIds.isEmpty()) {
+                return createEmptyCohortProgress(program, cohort);
+            }
+            
+            logger.debug("Found {} users in cohort: {}", userIds.size(), cohortId);
+            
+            // OPTIMIZATION: Fetch all required data in batch queries
+            
+            // 1. Get enrollment dates (createdAt)
+            List<Object[]> enrollmentDates = userCohortMappingRepository
+                .findEnrollmentDatesByUsersAndCohort(userIds, cohortId);
+            Map<String, OffsetDateTime> enrollmentDateMap = enrollmentDates.stream()
+                .collect(Collectors.toMap(
+                    arr -> (String) arr[0],
+                    arr -> (OffsetDateTime) arr[1]
+                ));
+            
+            // 2. Get recent attempt dates for all users in this program
+            List<Object[]> recentAttemptDates = userAttemptsRepository
+                .findLatestAttemptDatesByUsersAndProgram(userIds, programId);
+            Map<String, OffsetDateTime> recentAttemptDateMap = recentAttemptDates.stream()
+                .collect(Collectors.toMap(
+                    arr -> (String) arr[0],
+                    arr -> (OffsetDateTime) arr[1]
+                ));
+            
+         // 3. Get all subconcepts for the program (for assignment filtering)
+            List<ProgramConceptsMapping> allProgramMappings = programConceptsMappingRepository
+                .findByUnit_Stage_Program_ProgramId(programId);
+            
+            // Identify assignment subconcepts
+            List<String> assignmentSubconceptIds = allProgramMappings.stream()
+                .filter(pcm -> isAssignmentSubconcept(pcm.getSubconcept().getSubconceptType()))
+                .map(pcm -> pcm.getSubconcept().getSubconceptId())
+                .distinct()
+                .collect(Collectors.toList());
+            
+            // 4. Get assignment completion data - FIXED APPROACH
+            Map<String, AssignmentStats> assignmentStatsMap = new HashMap<>();
+            if (!assignmentSubconceptIds.isEmpty()) {
+                // Get all completed subconcepts for assignment subconcepts
+                List<UserSubConcept> completedAssignments = userSubConceptRepository
+                    .findByUser_UserIdInAndSubconcept_SubconceptIdIn(userIds, assignmentSubconceptIds);
+                
+                // Group completed assignments by user
+                Map<String, List<UserSubConcept>> completedAssignmentsByUser = completedAssignments.stream()
+                    .collect(Collectors.groupingBy(usc -> usc.getUser().getUserId()));
+                
+                // Count total assignments and completed assignments per user
+                for (String userId : userIds) {
+                    AssignmentStats stats = new AssignmentStats();
+                    
+                    // Count total assignments visible to this user
+                    int userTotalAssignments = 0;
+                    Set<String> userAssignmentIds = new HashSet<>();
+                    
+                    for (ProgramConceptsMapping pcm : allProgramMappings) {
+                        Subconcept subconcept = pcm.getSubconcept();
+                        
+                        // Check if it's an assignment AND visible to this user's type
+                        if (isAssignmentSubconcept(subconcept.getSubconceptType()) && 
+                            isSubconceptVisibleToUser(getUserType(userId), subconcept)) {
+                            userTotalAssignments++;
+                            userAssignmentIds.add(subconcept.getSubconceptId());
+                        }
+                    }
+                    
+                    stats.totalAssignments = userTotalAssignments;
+                    
+                    // Count completed assignments for this user
+                    List<UserSubConcept> userCompleted = completedAssignmentsByUser.getOrDefault(userId, Collections.emptyList());
+                    int userCompletedAssignments = 0;
+                    
+                    for (UserSubConcept completed : userCompleted) {
+                        if (userAssignmentIds.contains(completed.getSubconcept().getSubconceptId())) {
+                            userCompletedAssignments++;
+                        }
+                    }
+                    
+                    stats.completedAssignments = userCompletedAssignments;
+                    assignmentStatsMap.put(userId, stats);
+                }
+            }
+            
+            // 5. Get all completed subconcepts for users in batch
+            List<UserSubConcept> allCompletedSubconcepts = userSubConceptRepository
+                .findByUser_UserIdInAndUnit_Stage_Program_ProgramId(userIds, programId);
+            
+            // Group completed subconcepts by user
+            Map<String, Set<String>> userCompletedSubconceptsMap = allCompletedSubconcepts.stream()
+                .collect(Collectors.groupingBy(
+                    usc -> usc.getUser().getUserId(),
+                    Collectors.mapping(
+                        usc -> usc.getSubconcept().getSubconceptId(),
+                        Collectors.toSet()
+                    )
+                ));
             
             // Prepare progress data for each user
             List<UserProgressDTO> userProgressList = new ArrayList<>();
-            for (User user : users) {
+            
+            // Group user mappings by userId for quick access
+            Map<String, UserCohortMapping> userMappingMap = userMappings.stream() .collect(Collectors.toMap( um -> um.getUser().getUserId(), Function.identity() ));
+            
+            for (UserCohortMapping userMapping : userMappings) {
+                User user = userMapping.getUser();
+                String userId = user.getUserId();
+                
                 logger.debug("Processing progress for user: {} (ID: {}) with userType: {}", 
-                    user.getUserName(), user.getUserId(), user.getUserType());
+                    user.getUserName(), userId, user.getUserType());
                 
                 UserProgressDTO userProgress = new UserProgressDTO();
-                userProgress.setUserId(user.getUserId());
+                userProgress.setUserId(userId);
                 userProgress.setUserName(user.getUserName());
-               
+                
                 String userType = user.getUserType();
                 
-                // Fetch stages for the program
-                List<Stage> stages = stageRepository.findByProgram_ProgramId(programId);
-                int totalStages = stages.size();
-                int completedStages = 0;
+                // Get user's completed subconcepts
+                Set<String> userCompletedSubconcepts = userCompletedSubconceptsMap.getOrDefault(userId, Collections.emptySet());
+                
+                // Count totals and completions
                 int totalUnits = 0;
                 int completedUnits = 0;
                 int totalSubconcepts = 0;
                 int completedSubconcepts = 0;
+                int completedStages = 0;
                 
-                // Process each stage
-                for (Stage stage : stages) {
-                    List<Unit> units = unitRepository.findByStage_StageId(stage.getStageId());
-                    totalUnits += units.size();
+                // Process all program mappings for this user type
+                for (ProgramConceptsMapping pcm : allProgramMappings) {
+                    Subconcept subconcept = pcm.getSubconcept();
                     
-                    int stageCompletedUnits = 0;
-                    int stageTotalUnits = units.size();
-                    
-                    // Process units within stage
-                    for (Unit unit : units) {
-                        // Get all subconcepts for the unit and filter by user visibility
-                        List<ProgramConceptsMapping> allSubconcepts = 
-                            programConceptsMappingRepository.findByUnit_UnitId(unit.getUnitId());
-                        
-                        // Filter subconcepts based on user visibility
-                        List<ProgramConceptsMapping> visibleSubconcepts = allSubconcepts.stream()
-                            .filter(m -> isSubconceptVisibleToUser(userType, m.getSubconcept()))
-                            .collect(Collectors.toList());
-                        
-                        totalSubconcepts += visibleSubconcepts.size();
-                        
-                        // Get completed subconcepts for this user and unit
-                        List<UserSubConcept> completedSubconceptsList = userSubConceptRepository
-                            .findByUser_UserIdAndUnit_UnitId(user.getUserId(), unit.getUnitId());
-                        
-                        // Filter completed subconcepts to only count visible ones
-                        Set<String> visibleSubconceptIds = visibleSubconcepts.stream()
-                            .map(m -> m.getSubconcept().getSubconceptId())
-                            .collect(Collectors.toSet());
-                        
-                        long unitCompletedSubconcepts = completedSubconceptsList.stream()
-                            .map(usc -> usc.getSubconcept().getSubconceptId())
-                            .filter(visibleSubconceptIds::contains)
-                            .count();
-                        
-                        completedSubconcepts += unitCompletedSubconcepts;
-                        
-                        // Check if unit is completed (all visible subconcepts completed)
-                        boolean unitCompleted = unitCompletedSubconcepts == visibleSubconcepts.size() && visibleSubconcepts.size() > 0;
-                        
-                        if (unitCompleted) {
-                            completedUnits++;
-                            stageCompletedUnits++;
-                        }
-                        
-                        logger.debug("Unit {} for user {}: {}/{} visible subconcepts completed", 
-                            unit.getUnitName(), user.getUserName(), unitCompletedSubconcepts, visibleSubconcepts.size());
+                    // Filter by user visibility
+                    if (!isSubconceptVisibleToUser(userType, subconcept)) {
+                        continue;
                     }
                     
-                    // Stage is completed when ALL its units are completed
-                    if (stageCompletedUnits == stageTotalUnits && stageTotalUnits > 0) {
+                    totalSubconcepts++;
+                    
+                    // Check if completed
+                    if (userCompletedSubconcepts.contains(subconcept.getSubconceptId())) {
+                        completedSubconcepts++;
+                    }
+                }
+                
+                // Calculate unit and stage completions based on visible subconcepts
+                // Group by unit first
+                Map<String, List<ProgramConceptsMapping>> mappingsByUnit = allProgramMappings.stream()
+                    .filter(pcm -> isSubconceptVisibleToUser(userType, pcm.getSubconcept()))
+                    .collect(Collectors.groupingBy(
+                        pcm -> pcm.getUnit().getUnitId()
+                    ));
+                
+                totalUnits = mappingsByUnit.size();
+                
+                for (Map.Entry<String, List<ProgramConceptsMapping>> unitEntry : mappingsByUnit.entrySet()) {
+                    List<ProgramConceptsMapping> unitMappings = unitEntry.getValue();
+                    long unitCompleted = unitMappings.stream()
+                        .filter(pcm -> userCompletedSubconcepts.contains(pcm.getSubconcept().getSubconceptId()))
+                        .count();
+                    
+                    if (unitCompleted == unitMappings.size()) {
+                        completedUnits++;
+                    }
+                }
+                
+                // Group by stage for stage completion calculation
+                Map<String, List<ProgramConceptsMapping>> mappingsByStage = allProgramMappings.stream()
+                    .filter(pcm -> isSubconceptVisibleToUser(userType, pcm.getSubconcept()))
+                    .collect(Collectors.groupingBy(
+                        pcm -> pcm.getUnit().getStage().getStageId()
+                    ));
+                
+                int totalStages = mappingsByStage.size();
+                
+                for (Map.Entry<String, List<ProgramConceptsMapping>> stageEntry : mappingsByStage.entrySet()) {
+                    List<ProgramConceptsMapping> stageMappings = stageEntry.getValue();
+                    
+                    // Group stage mappings by unit
+                    Map<String, Long> unitCompletionCounts = stageMappings.stream()
+                        .collect(Collectors.groupingBy(
+                            pcm -> pcm.getUnit().getUnitId(),
+                            Collectors.counting()
+                        ));
+                    
+                    Map<String, Long> unitCompletedCounts = stageMappings.stream()
+                        .filter(pcm -> userCompletedSubconcepts.contains(pcm.getSubconcept().getSubconceptId()))
+                        .collect(Collectors.groupingBy(
+                            pcm -> pcm.getUnit().getUnitId(),
+                            Collectors.counting()
+                        ));
+                    
+                    boolean stageCompleted = unitCompletionCounts.entrySet().stream()
+                        .allMatch(entry -> {
+                            Long total = entry.getValue();
+                            Long completed = unitCompletedCounts.getOrDefault(entry.getKey(), 0L);
+                            return total.equals(completed);
+                        });
+                    
+                    if (stageCompleted) {
                         completedStages++;
                     }
                 }
@@ -864,17 +991,30 @@ public class ProgramReportServiceImpl implements ProgramReportService {
                 userProgress.setTotalSubconcepts(totalSubconcepts);
                 userProgress.setCompletedSubconcepts(completedSubconcepts);
                 
-                // Fetch leaderboard score
-                UserCohortMapping mapping = userMappings.stream()
-                    .filter(um -> um.getUser().getUserId().equals(user.getUserId()))
-                    .findFirst()
-                    .orElse(null);
-                userProgress.setStatus(mapping.getStatus());
-                userProgress.setLeaderboardScore(mapping != null ? mapping.getLeaderboardScore() : 0);
+                // Set assignment statistics
+                AssignmentStats assignmentStats = assignmentStatsMap.get(userId);
+                if (assignmentStats != null) {
+                    userProgress.setTotalAssignments(assignmentStats.totalAssignments);
+                    userProgress.setCompletedAssignments(assignmentStats.completedAssignments);
+                } else {
+                    userProgress.setTotalAssignments(0);
+                    userProgress.setCompletedAssignments(0);
+                }
                 
-                logger.debug("User {} progress: {}/{} stages, {}/{} units, {}/{} visible subconcepts completed", 
+                // Set recent attempt date
+                userProgress.setRecentAttemptDate(recentAttemptDateMap.get(userId));
+                
+                // Set enrollment date (createdAt)
+                userProgress.setCreatedAt(enrollmentDateMap.get(userId));
+                
+                // Set leaderboard score and status
+                userProgress.setLeaderboardScore(userMapping.getLeaderboardScore());
+                userProgress.setStatus(userMapping.getStatus());
+                
+                logger.debug("User {} progress: {}/{} stages, {}/{} units, {}/{} subconcepts, {}/{} assignments", 
                     user.getUserName(), completedStages, totalStages, completedUnits, totalUnits, 
-                    completedSubconcepts, totalSubconcepts);
+                    completedSubconcepts, totalSubconcepts,
+                    userProgress.getCompletedAssignments(), userProgress.getTotalAssignments());
                 
                 userProgressList.add(userProgress);
             }
@@ -891,9 +1031,13 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             cohortProgress.setCohortName(cohort.getCohortName());
             cohortProgress.setUsers(userProgressList);
             
+            // Calculate overall cohort progress percentage
+            double overallProgressPercentage = calculateOverallCohortProgress(userProgressList);
+            cohortProgress.setOverallProgressPercentage(overallProgressPercentage);
+            
             long endTime = System.currentTimeMillis();
             logger.info("Successfully generated cohort progress for programId: {} and cohortId: {} in {}ms. " +
-                    "Processed {} users with user-type-specific visible subconcepts", 
+                    "Processed {} users", 
                     programId, cohortId, (endTime - startTime), userProgressList.size());
             
             return cohortProgress;
@@ -903,6 +1047,49 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             throw e;
         }
     }
+
+    // Helper class for assignment statistics
+    private static class AssignmentStats {
+        int totalAssignments = 0;
+        int completedAssignments = 0;
+    }
+
+    // Helper method for empty cohort
+    private CohortProgressDTO createEmptyCohortProgress(Program program, Cohort cohort) {
+        CohortProgressDTO cohortProgress = new CohortProgressDTO();
+        cohortProgress.setProgramName(program.getProgramName());
+        cohortProgress.setProgramId(program.getProgramId());
+        cohortProgress.setProgramDesc(program.getProgramDesc());
+        cohortProgress.setCohortId(cohort.getCohortId());
+        cohortProgress.setCohortName(cohort.getCohortName());
+        cohortProgress.setUsers(Collections.emptyList());
+        cohortProgress.setOverallProgressPercentage(0.0);
+        return cohortProgress;
+    }
+    
+    
+    private double calculateOverallCohortProgress(List<UserProgressDTO> userProgressList) {
+        if (userProgressList == null || userProgressList.isEmpty()) {
+            return 0.0;
+        }
+        
+        long totalSubconcepts = 0;
+        long completedSubconcepts = 0;
+        
+        for (UserProgressDTO userProgress : userProgressList) {
+            totalSubconcepts += userProgress.getTotalSubconcepts();
+            completedSubconcepts += userProgress.getCompletedSubconcepts();
+        }
+        
+        if (totalSubconcepts == 0) {
+            return 0.0;
+        }
+        
+        double overallProgress = (double) completedSubconcepts / totalSubconcepts * 100;
+        
+        // Round to one decimal place
+        return Math.round(overallProgress * 10.0) / 10.0;
+    }
     
     @Override
     @Cacheable(value = "cohortProgressForMentor", key = "#mentorId + '_' + #programId + '_' + #cohortId", unless = "#result == null") 
@@ -910,8 +1097,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
 
     	try {
     		// Check if mentor exists in User table
-            User mentor = userRepository.findById(mentorId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
+            User mentor = userRepository.findById(mentorId).orElseThrow(() -> new ResourceNotFoundException(
                             "Mentor not found with ID: " + mentorId));
             
             logger.debug("Found user with ID: {}, userType: {}, status: {}", 
@@ -925,8 +1111,7 @@ public class ProgramReportServiceImpl implements ProgramReportService {
             }
 
          //  Check if mentor is enrolled in the cohort
-            UserCohortMapping mentorMapping = userCohortMappingRepository
-                    .findByUser_UserIdAndCohort_CohortId(mentorId, cohortId)
+            UserCohortMapping mentorMapping = userCohortMappingRepository.findByUser_UserIdAndCohort_CohortId(mentorId, cohortId)
                     .orElseThrow(() -> new UnauthorizedException(
                             "Mentor " + mentorId + " is not enrolled in cohort: " + cohortId));
             

@@ -103,8 +103,7 @@ export default function UnifiedLearnersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{
-    type: "disable" | "reactivate";
+  const [pendingAction, setPendingAction] = useState<{ type: "disable" | "reactivate";
     userId: string;
     userName: string;
   } | null>(null);
@@ -350,36 +349,36 @@ export default function UnifiedLearnersPage() {
   }, []);
 
   // Handle user actions
-  const handleUserAction = useCallback(async (userId: string, action: "disable" | "reactivate", reason?: string) => {
-    if (!cohortId || !userId) return;
+  // const handleUserAction = useCallback(async (userId: string, action: "disable" | "reactivate", reason?: string) => {
+  //   if (!cohortId || !userId) return;
     
-    setActionLoading(userId);
-    try {
-      if (action === "disable") {
-        await disableUserInCohort(userId, cohortId, reason || "No reason provided");
-        showNotification("success", "User disabled successfully");
-      } else {
-        await reactivateUserInCohort(userId, cohortId);
-        showNotification("success", "User reactivated successfully");
-      }
+  //   setActionLoading(userId);
+  //   try {
+  //     if (action === "disable") {
+  //       await disableUserInCohort(userId, cohortId, reason || "No reason provided");
+  //       showNotification("success", "User disabled successfully");
+  //     } else {
+  //       await reactivateUserInCohort(userId, cohortId);
+  //       showNotification("success", "User reactivated successfully");
+  //     }
       
-      // Refresh users list
-      refreshUsers();
+  //     // Refresh users list
+  //     refreshUsers();
       
-      // If the current selected user was modified, refresh analytics too
-      if (userId === selectedLearnerId) {
-        refreshAnalytics();
-      }
-    } catch (error) {
-      console.error(`${action} user error:`, error);
-      showNotification("error", `Failed to ${action} user`);
-    } finally {
-      setActionLoading(null);
-      setShowConfirmation(false);
-      setPendingAction(null);
-      setDisableReason("");
-    }
-  }, [cohortId, selectedLearnerId, refreshUsers, refreshAnalytics, showNotification]);
+  //     // If the current selected user was modified, refresh analytics too
+  //     if (userId === selectedLearnerId) {
+  //       refreshAnalytics();
+  //     }
+  //   } catch (error) {
+  //     console.error(`${action} user error:`, error);
+  //     showNotification("error", `Failed to ${action} user`);
+  //   } finally {
+  //     setActionLoading(null);
+  //     setShowConfirmation(false);
+  //     setPendingAction(null);
+  //     setDisableReason("");
+  //   }
+  // }, [cohortId, selectedLearnerId, refreshUsers, refreshAnalytics, showNotification]);
 
   // Show confirmation dialog
   const showActionConfirmation = (userId: string, userName: string, action: "disable" | "reactivate") => {
@@ -716,7 +715,7 @@ const handleItemsPerPageChange = (count: number) => {
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
+                    Leaderboard Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Join Date
@@ -766,12 +765,9 @@ const handleItemsPerPageChange = (count: number) => {
                         {user.userEmail || "N/A"}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-blue-600" />
-                          <span className="font-semibold text-blue-600">
-                            {user.leaderboardScore} pts
-                          </span>
-                        </div>
+                        <span className="font-semibold text-blue-600">
+                          {user.leaderboardScore} pts
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {new Date(user.createdAt * 1000).toLocaleDateString('en-US', {
@@ -1055,7 +1051,7 @@ const handleItemsPerPageChange = (count: number) => {
       </div>
 
       {/* User Status Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
+      {/* <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -1079,7 +1075,7 @@ const handleItemsPerPageChange = (count: number) => {
             isLoading={actionLoading === selectedLearnerId}
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Loading State */}
       {analyticsLoading && (
@@ -1122,7 +1118,7 @@ const handleItemsPerPageChange = (count: number) => {
       {analyticsData && !analyticsLoading && !error && (
         <>
           {/* Overview Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
             <ProgressOverviewCards data={analyticsData} cohortEndDate={assignmentsData?.cohort?.cohortEndDate} />
           </div>
 
@@ -1232,10 +1228,10 @@ const handleItemsPerPageChange = (count: number) => {
             Comprehensive view of skill proficiency across all concepts
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        {/* <div className="flex items-center gap-2 text-sm text-gray-500">
           <Target className="h-4 w-4" />
           <span>Skill Proficiency (%)</span>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex-1 flex items-center justify-center">
@@ -1288,8 +1284,6 @@ const handleItemsPerPageChange = (count: number) => {
   </div>
 </div>
 
-
-
               <StudentAssignments
                 data={analyticsData}
                 assignmentsData={assignmentsData}
@@ -1311,12 +1305,33 @@ const handleItemsPerPageChange = (count: number) => {
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">Detailed Progress & Attempt History</h3>
-                        <p className="text-gray-600 mt-1">
-                          Interactive view combining Modules progress with detailed attempt history
-                        </p>
-                      </div>
+                      <div className="flex flex-col gap-2">
+  <div className="flex flex-wrap items-center gap-3">
+    <h3 className="text-xl font-semibold text-gray-800">
+      Detailed Progress & Attempt History
+    </h3>
+
+    {/* 🔹 Activities Mastered badge */}
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200">
+      {/* <Target className="h-4 w-4 text-blue-600" /> */}
+      <span className="text-sm font-medium text-blue-700">
+        Activities Mastered
+      </span>
+      <span className="text-sm font-semibold text-blue-900">
+        {analyticsData?.completedSubconcepts ?? 0}
+        <span className="text-gray-500 font-normal">
+          {" "}
+          / {analyticsData?.totalSubconcepts ?? 0}
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <p className="text-gray-600">
+    Interactive view combining Modules progress with detailed attempt history
+  </p>
+</div>
+
                       
                       <div className="flex items-center gap-2">
                         <button 
@@ -1370,7 +1385,7 @@ const handleItemsPerPageChange = (count: number) => {
       )}
 
       {/* Confirmation Modals */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showConfirmation && pendingAction && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -1489,7 +1504,7 @@ const handleItemsPerPageChange = (count: number) => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </div>
   );
 }

@@ -44,6 +44,8 @@ interface SubconceptData {
 interface MediaContentProps {
   subconceptData: SubconceptData;
   currentUnitId: string;
+  showSampleAnswer?: boolean;
+  onOpenSampleAnswer?: () => void;
 }
 
 interface AssignmentData {
@@ -510,7 +512,12 @@ const PDFSlideViewer = ({ pdfUrl, onContentLoaded }: { pdfUrl: string; onContent
   );
 };
 
-const MediaContent: React.FC<MediaContentProps> = ({ subconceptData, currentUnitId }) => {
+const MediaContent: React.FC<MediaContentProps> = ({
+  subconceptData,
+  currentUnitId,
+  showSampleAnswer,
+  onOpenSampleAnswer
+}) => {
   const [playedPercentage, setPlayedPercentage] = useState(0);
   
   // Read userData from localStorage but we'll update it with current values
@@ -1182,34 +1189,51 @@ Return in valid JSON format:
       case "image":
       case "assignment_image":
         return (
-          <div className="flex flex-col items-center">
-            <img
-              src={subconceptLink}
-              alt="Image content"
-              style={{
-                maxWidth: "100%",
-                borderRadius: "10px",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-              }}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-            {subconceptData?.subconceptType === "assignment_image" && (
-              <Button
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = subconceptLink;
-                  link.download = `assignment_${subconceptData?.subconceptId || 'image'}`;
-                  link.target = '_blank';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                className="mt-4 bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm transition-all"
-              >
-                Download Assignment
-              </Button>
-            )}
-          </div>
+              <div className="flex flex-col items-center">
+                <img
+                  src={subconceptLink}
+                  alt="Image content"
+                  style={{
+                    maxWidth: "100%",
+                    borderRadius: "10px",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                  }}
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+
+                {/* Buttons Row */}
+                {(subconceptData?.subconceptType === "assignment_image" || showSampleAnswer) && (
+                  <div className="flex flex-row gap-4 mt-4 flex-wrap justify-center">
+                    
+                    {subconceptData?.subconceptType === "assignment_image" && (
+                      <Button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = subconceptLink;
+                          link.download = `assignment_${subconceptData?.subconceptId || 'image'}`;
+                          link.target = '_blank';
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm"
+                      >
+                        Download Assignment
+                      </Button>
+                    )}
+
+                    {showSampleAnswer && (
+                      <Button
+                        onClick={onOpenSampleAnswer}
+                        className="bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm"
+                      >
+                        Sample Answer
+                      </Button>
+                    )}
+
+                  </div>
+                )}
+              </div>
         );
       case "pdf":
       case "assignment_pdf":

@@ -15,6 +15,7 @@ import SkillBreakdown from '../components/analytics/SkillBreakdown';
 import StudentAssignments from '../components/analytics/StudentAssignments';
 import TimeAnalysis from '../components/analytics/TimeAnalysis';
 
+
 export default function LearnersProgressDashboard() {
   const navigate = useNavigate();
   const location = useLocation();

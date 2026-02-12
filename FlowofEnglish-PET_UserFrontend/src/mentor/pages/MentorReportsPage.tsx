@@ -20,52 +20,23 @@ export default function MentorReportsPage() {
   const [apiData, setApiData] = useState(null);
 
   // Fetch the mentor cohort progress (main reports API)
-  useEffect(() => {
-    if (!mentorId || !programId || !cohortId) return;
-
-    async function loadData() {
+  useEffect(() => { if (!mentorId || !programId || !cohortId) return;
+    const loadData = async () => {
       try {
         setLoading(true);
-        const progress = await fetchMentorCohortProgress(
-          mentorId,
-          programId,
-          cohortId
-        );
-
-        const transformed = {
-          programId,
-          cohortId,
-          users: progress.map((u) => ({
-            userId: u.userId,
-            userName: u.userName,
-            totalStages: u.totalStages ?? 0,
-            completedStages: u.completedStages ?? 0,
-            totalUnits: u.totalUnits ?? 0,
-            completedUnits: u.completedUnits ?? 0,
-            totalSubconcepts: u.totalSubconcepts ?? 0,
-            completedSubconcepts: u.completedSubconcepts ?? 0,
-            leaderboardScore: u.leaderboardScore ?? 0,
-          })),
-        };
-
-        setApiData(transformed);
-
-        const learnerList = [
-          { userId: "All Learners", userName: "All Learners" },
-          ...transformed.users,
-        ];
-        setLearners(learnerList);
+        const response = await fetchMentorCohortProgress( mentorId, programId, cohortId );
+        // store EXACT API response
+        setApiData(response);
       } catch (err) {
         console.error("Error loading mentor reports:", err);
       } finally {
         setLoading(false);
       }
-    }
-
+    };
     loadData();
   }, [mentorId, programId, cohortId]);
 
-   return (
+  return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 6 }}>
       {/* --------------------- FILTER CARD --------------------- */}
       <Card sx={{ p: 3, mb: 3 }}>

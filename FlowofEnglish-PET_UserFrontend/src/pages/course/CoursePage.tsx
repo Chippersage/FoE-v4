@@ -13,6 +13,7 @@ import GoogleFormActions from "./components/GoogleFormActions";
 import MarkCompleteButton from "./components/MarkCompleteButton";
 import ScoreBadge from "./components/ScoreBadge";
 import ScoreSummaryModal from "./components/ScoreSummaryModal";
+import AssignmentSampleAnswerModal from "./components/AssignmentSampleAnswerModal";
 
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
@@ -41,6 +42,7 @@ const CoursePage: React.FC = () => {
   const [hasLoadedCourse, setHasLoadedCourse] = useState(false);
   const [loadAttempted, setLoadAttempted] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [showAnswerModal, setShowAnswerModal] = useState(false);
   
   // Track redirect state to prevent multiple redirects
   const hasRedirectedRef = useRef(false);
@@ -153,6 +155,9 @@ const CoursePage: React.FC = () => {
     );
 
   const isCompleted = subconcept?.completionStatus?.toLowerCase() === "yes";
+  const isAssignmentImage = type === "assignment_image";
+  const hasAnswerImage = !!subconcept?.subconceptGroup;
+
 
   // Determine content height based on type and screen size
   const contentHeightClass = useMemo(() => {
@@ -265,6 +270,14 @@ const CoursePage: React.FC = () => {
   // Main render - all data is available
   return (
     <div className="h-full flex flex-col">
+          {/* Subconcept Description */}
+      {subconcept?.subconceptDesc && (
+        <div className="px-4 md:px-8 pt-4 pb-2 bg-white">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 text-center">
+            {subconcept.subconceptDesc}
+          </h2>
+        </div>
+      )}
       {/* Content Area */}
       <div
         className={`${contentHeightClass} bg-white flex justify-center items-center p-2 md:p-4 lg:p-6 overflow-auto`}
@@ -335,6 +348,16 @@ const CoursePage: React.FC = () => {
               onClick={() => setShowScoreSummary(true)}
             />
           )}
+
+          {isAssignmentImage && hasAnswerImage && (
+            <button
+              onClick={() => setShowAnswerModal(true)}
+              className="px-4 py-2 rounded-md text-sm font-small bg-purple-600 text-white hover:bg-purple-700"
+            >
+              Sample Answer
+            </button>
+          )}
+
 
           <NextSubconceptButton disabled={isNextButtonDisabled} />
         </div>
@@ -408,6 +431,16 @@ const CoursePage: React.FC = () => {
             />
           )}
 
+          {isAssignmentImage && hasAnswerImage && (
+            <button
+              onClick={() => setShowAnswerModal(true)}
+              className="px-3 py-2 rounded-md text-sm font-medium bg-purple-600 text-white flex-shrink-0"
+            >
+              Sample Answer
+            </button>
+          )}
+
+
           <NextSubconceptButton disabled={isNextButtonDisabled} />
         </div>
       </div>
@@ -419,6 +452,14 @@ const CoursePage: React.FC = () => {
           onClose={() => setShowScoreSummary(false)}
           score={scoreData.score}
           total={scoreData.total}
+        />
+      )}
+
+      {isAssignmentImage && hasAnswerImage && (
+        <AssignmentSampleAnswerModal
+          isOpen={showAnswerModal}
+          onClose={() => setShowAnswerModal(false)}
+          documentUrl={subconcept.subconceptGroup}
         />
       )}
 
