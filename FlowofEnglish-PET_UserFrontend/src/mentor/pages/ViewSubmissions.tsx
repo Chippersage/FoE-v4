@@ -531,6 +531,7 @@ const ViewSubmissions: React.FC = () => {
 
   const cohortId = selected?.cohortId;
   const cohortName = selected?.cohortName;
+  const programId = selected?.program?.programId;
 
   const [assignments, setAssignments] = useState<CohortAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1319,6 +1320,26 @@ const ViewSubmissions: React.FC = () => {
                                     <h4 className="font-medium text-gray-800 text-sm">
                                       {isCorrected ? 'Evaluation Details' : 'Correct Assignment'}
                                     </h4>
+                                    <button
+                                      onClick={() =>
+                                        navigate(
+                                          `/mentor/${selected.cohortId}/${selected.program.programId}/assignments/${assignment.assignmentId}/ai-evaluate`,
+                                          {
+                                            state: {
+                                              referenceUrl:
+                                                assignment.subconcept?.dependencies?.[0]?.subconceptLink || "",
+                                              mediaUrl: assignment.submittedFile?.downloadUrl || "",
+                                              studentName: assignment.user.userName,
+                                              topic: assignment.subconcept.subconceptDesc,
+                                            },
+                                          }
+                                        )
+                                      }
+                                      className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                                    >
+                                    Evaluate with AI
+                                    </button>
+
                                     {isCorrected && (
                                       <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
                                         Already Graded

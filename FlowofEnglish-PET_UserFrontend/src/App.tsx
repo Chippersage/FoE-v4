@@ -25,6 +25,8 @@ import MentorDashboard from "./mentor/pages/MentorDashboard";
 import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
 import MentorReportsPage from "./mentor/pages/MentorReportsPage";
 import ViewSubmissions from "./mentor/pages/ViewSubmissions";
+import AIEvalutionPage from "./mentor/pages/AIEvaluationPage";
+import AIEvaluationPage from "./mentor/pages/AIEvaluationPage";
 
 export default function App() {
   const { user, isLoading, isChangingCohort } = useUserContext();
@@ -132,12 +134,13 @@ export default function App() {
 
           {/* ===================== Mentor ===================== */}
           <Route path="/mentor" element={ isAuthenticated && isMentor ? (<MentorCohortLayout /> ) : (
-      <Navigate to="/sign-in" /> ) } >
-  <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
-  <Route path=":cohortId/:programId/learners" element={<UnifiedLearnersPage />} />
-  <Route path=":cohortId/:programId/assignments" element={<ViewSubmissions />} />
-  <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
-</Route>
+              <Navigate to="/sign-in" /> ) } >
+            <Route path=":cohortId/:programId/dashboard" element={<MentorDashboard />} />
+            <Route path=":cohortId/:programId/learners" element={<UnifiedLearnersPage />} />
+            <Route path=":cohortId/:programId/assignments" element={<ViewSubmissions />} />
+            <Route path=":cohortId/:programId/reports" element={<MentorReportsPage />} />
+            <Route path=":cohortId/:programId/assignments/:assignmentId/ai-evaluate" element={<AIEvaluationPage />}/>
+          </Route>
 
 
           {/* ===================== Root Redirect ===================== */}
