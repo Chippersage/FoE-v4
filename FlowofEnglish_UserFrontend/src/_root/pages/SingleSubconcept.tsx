@@ -8,6 +8,7 @@ import VocabularyActivity from "@/components/activityComponents/VocabularyActivi
 import QuizActivity from "@/components/activityComponents/QuizActivity";
 import VocabularyLearning from "@/components/activityComponents/vocabulary-learning/vocabulary-learning";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import AssignmentSampleAnswerModal from "@/components/modals/AssignmentSampleAnswerModal";
 
 // @ts-ignore
 const ErrorOverlay = ({ countdown = 5, onClose }) => {
@@ -104,6 +105,7 @@ const SingleSubconcept = () => {
   const [onFrameLoad, setOnFrameLoad] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
+  const [showAnswerModal, setShowAnswerModal] = useState(false);
   const sessionId = localStorage.getItem("sessionId");
   const subconcept = location.state?.subconcept;
   const [showGoBack, setShowGoBack] = useState(
@@ -204,6 +206,12 @@ const SingleSubconcept = () => {
     setModalVisible(false);
     sessionStorage.setItem("orientationModalDismissed", "true");
   };
+
+  const isAssignmentImage =
+    subconcept?.subconceptType?.toLowerCase() === "assignment_image";
+
+  const hasAnswerDocument = !!subconcept?.subconceptGroup;
+
 
   useEffect(() => {
   if (!user || !subconcept || !currentUnitId) return;
@@ -407,6 +415,14 @@ const SingleSubconcept = () => {
       {errorOverlay && (
         <ErrorOverlay countdown={5} onClose={() => setErrorOverlay(false)} />
       )}
+      {isAssignmentImage && hasAnswerDocument && (
+        <AssignmentSampleAnswerModal
+          isOpen={showAnswerModal}
+          onClose={() => setShowAnswerModal(false)}
+          documentUrl={subconcept.subconceptGroup}
+        />
+      )}
+
       <div className="flex flex-col md:flex-row w-full">
         {/* Iframe Container */}
         {/* md:border-r-2 md:border-r-slate-300 */}
@@ -526,6 +542,8 @@ const SingleSubconcept = () => {
                   programId={selectedCohortWithProgram?.program?.programId}
                   cohortId={selectedCohortWithProgram?.cohortId}
                   sessionId={sessionId}
+                  showSampleAnswer={isAssignmentImage && hasAnswerDocument}
+                  onOpenSampleAnswer={() => setShowAnswerModal(true)}
                 />
               );
             }
