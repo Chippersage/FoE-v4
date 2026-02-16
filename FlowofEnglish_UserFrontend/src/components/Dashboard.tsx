@@ -242,6 +242,7 @@ function Dashboard() {
       {processedProgramInfo && processedProgramInfo.stages ? (
         <div className="md:w-[50%] w-full">
           <Stages
+            key={JSON.stringify(Object.keys(processedProgramInfo?.stages || {}))}
             stages={processedProgramInfo?.stages}
             programCompletionStatus={processedProgramInfo?.programCompletionStatus}
             isDataLoaded={isDataLoaded}
