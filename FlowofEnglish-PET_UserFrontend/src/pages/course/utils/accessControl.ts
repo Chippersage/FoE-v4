@@ -1,11 +1,11 @@
 // Add allowed usernames here
 const FULL_ACCESS_USER_IDS = new Set<string>([
   "Ritanya05",
-  "Anitha01",
-  "Suresh02",
-  "Priya03",
-  "Raghu04",
-  "Maria05",
+  "Anitha02",
+  "Suresh03",
+  "Priya04",
+  "Raghu05",
+  "Maria06",
 ]);
 
 export const hasFullAccess = (user: any): boolean => {
