@@ -428,6 +428,7 @@ import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import DashboardTour from "./tours/DashboardTour";
 import { useUserContext } from "@/context/AuthContext";
+import { hasFullAccess } from "@/utils/accessControl";
 
 export default function Stages({
   stages,
@@ -444,8 +445,10 @@ export default function Stages({
   // FULL ACCESS: Get user context and check for special access
   const { user } = useUserContext();
   const isMentor = user?.userType?.toLowerCase() === "mentor";
-  const isRitanya05 = user?.userId === "Ritanya05";
-  const hasFullAccess = isMentor || isRitanya05;
+  // const isRitanya05 = user?.userId === "Ritanya05";
+  // const hasFullAccess = isMentor || isRitanya05;
+
+  const fullAccess = hasFullAccess(user);
 
   useEffect(() => {
     // Check if user has seen the tour before or if cohort tour was skipped
@@ -476,9 +479,9 @@ export default function Stages({
     // FULL ACCESS: Allow full access users to expand any stage
     // Check if stage is locked (only for users without full access)
     // @ts-ignore
-    const isStageLocked = stagesArray[index]?.isLocked && !hasFullAccess;
+    const isStageLocked = stagesArray[index]?.isLocked && !fullAccess;
     
-    if ((stagesArray[index]?.stageEnabled || hasFullAccess) && !isStageLocked) {
+    if ((stagesArray[index]?.stageEnabled || fullAccess) && !isStageLocked) {
       setExpandedModule(expandedModule === index ? null : index);
       setStepIndex((prevStepIndex) => prevStepIndex + 1);
     }
@@ -500,7 +503,7 @@ export default function Stages({
           <h3 className="text-xl font-semibold font-openSans">
             Your Learning Path
             {/* Special badge for Ritanya05 */}
-            {isRitanya05 && !isMentor && (
+            {fullAccess && !isMentor && (
               <span className="ml-2 text-xs bg-[#FF9800] text-white px-2 py-1 rounded-full font-medium">
                 Special Access
               </span>
@@ -522,8 +525,8 @@ export default function Stages({
             stagesArray.map((stage, index) => {
               const cardRef = useRef(null);
               // @ts-ignore
-              const isStageLocked = stage.isLocked && !hasFullAccess;
-              const isStageAccessible = (stage.stageEnabled || hasFullAccess) && !isStageLocked;
+              const isStageLocked = stage.isLocked && !fullAccess;
+              const isStageAccessible = (stage.stageEnabled || fullAccess) && !isStageLocked;
               // @ts-ignore
               const daysUntilAvailable = stage.daysUntilAvailable || 0;
               
@@ -536,7 +539,7 @@ export default function Stages({
                   }`}
                 >
                   {/* Lock overlay for locked stages (only for users without full access) */}
-                  {isStageLocked && !hasFullAccess && (
+                  {isStageLocked && !fullAccess && (
                     <div className="absolute inset-0 bg-gray-100 bg-opacity-50 rounded-[2px] flex items-center justify-center z-10">
                       <div className="text-center">
                         <Lock className="w-8 h-8 text-black mx-auto mb-2" />
@@ -548,7 +551,7 @@ export default function Stages({
                   )}
                   
                   {/* Special overlay for Ritanya05 accessing locked stages */}
-                  {stage.isLocked && isRitanya05 && !isMentor && (
+                  {stage.isLocked && fullAccess && !isMentor && (
                     <div className="absolute inset-0 bg-[#FFF3E0] bg-opacity-30 rounded-[2px] border-2 border-dashed border-[#FF9800] z-5 pointer-events-none">
                       <div className="absolute top-2 right-2">
                         <Badge className="bg-[#FF9800] text-white text-xs px-2 py-1">
@@ -567,10 +570,10 @@ export default function Stages({
                       >
                         {/* @ts-ignore */}
                         {stage.stageName}
-                        {isStageLocked && !hasFullAccess && (
+                        {isStageLocked && !fullAccess && (
                           <Lock className="w-4 h-4 inline-block ml-2 text-black" />
                         )}
-                        {isStageLocked && hasFullAccess && (
+                        {isStageLocked && fullAccess && (
                           <Badge variant="outline" className="ml-2 text-xs bg-[#E3F2FD] text-[#1976D2] border-[#90CAF9] px-2 py-0.5">
                             {isMentor ? "Mentor Access" : "Special Access"}
                           </Badge>
@@ -609,7 +612,7 @@ export default function Stages({
                         )}
                         
                         {/* Days until available badge (only for users without full access) */}
-                        {isStageLocked && !hasFullAccess && daysUntilAvailable > 0 && (
+                        {isStageLocked && !fullAccess && daysUntilAvailable > 0 && (
                           <Badge
                             variant="outline"
                             className="bg-blue-50 text-blue-600 border-blue-200 px-3 py-1 rounded-full flex items-center gap-1"
@@ -635,7 +638,7 @@ export default function Stages({
                     >
                       {/* @ts-ignore */}
                       {stage.stageDesc}
-                      {isStageLocked && hasFullAccess && (
+                      {isStageLocked && fullAccess && (
                         <span className="ml-2 text-xs text-[#1976D2] italic">
                           (Unlocked with {isMentor ? "Mentor" : "Special"} Access)
                         </span>
@@ -662,15 +665,15 @@ export default function Stages({
                               ? "lets-go-button"
                               : ""
                           } ${
-                            isStageLocked && hasFullAccess
+                            isStageLocked && fullAccess
                               ? "bg-[#FF9800] hover:bg-[#F57C00]"
                               : ""
                           }`}
-                          disabled={isStageLocked && !hasFullAccess}
+                          disabled={isStageLocked && !fullAccess}
                         >
                           <div className="flex items-center justify-center space-x-2">
                             <span>
-                              {isStageLocked && !hasFullAccess
+                              {isStageLocked && !fullAccess
                                 ? "Locked" 
                                 : isStageAccessible
                                   ? stage.stageCompletionStatus === "yes"
@@ -680,7 +683,7 @@ export default function Stages({
                                       : "Let's Go"
                                   : "Not Yet..."}
                             </span>
-                            {isStageLocked && !hasFullAccess ? (
+                            {isStageLocked && !fullAccess ? (
                               <Lock className="h-4 w-4" />
                             ) : isStageAccessible ? (
                               stage.stageCompletionStatus === "yes" ? (
@@ -730,11 +733,11 @@ export default function Stages({
                             to={
                               // FULL ACCESS: Allow full access users to access all units
                               // Check if stage is locked (only for users without full access)
-                              (!isStageLocked || hasFullAccess) &&
+                              (!isStageLocked || fullAccess) &&
                               // @ts-ignore
                               (unit.completionStatus !== "disabled" ||
                                 unitIndex === 0 ||
-                                hasFullAccess)
+                                fullAccess)
                                 ? // @ts-ignore
                                   `/subconcepts/${unit.unitId}`
                                 : null
@@ -747,13 +750,13 @@ export default function Stages({
                             } ${
                               // @ts-ignore
                               (unit.completionStatus === "disabled" || isStageLocked) &&
-                              !hasFullAccess && // FULL ACCESS: Don't disable for full access users
+                              !fullAccess && // FULL ACCESS: Don't disable for full access users
                               "hover:cursor-not-allowed opacity-60"
                             } ${
                               // @ts-ignore
                               hoveredUnit === unit.unitId &&
                               // @ts-ignore
-                              (unit.completionStatus !== "disabled" || hasFullAccess) && // FULL ACCESS: Allow hover for all units
+                              (unit.completionStatus !== "disabled" || fullAccess) && // FULL ACCESS: Allow hover for all units
                               !isStageLocked // Don't apply hover effect to locked stages (for non-full-access users)
                                 ? "bg-[#DB5788]"
                                 : ""
@@ -762,7 +765,7 @@ export default function Stages({
                             onMouseEnter={() => !isStageLocked && setHoveredUnit(unit.unitId)}
                             onMouseLeave={() => setHoveredUnit(null)}
                             onClick={(e) => {
-                              if (isStageLocked && !hasFullAccess) {
+                              if (isStageLocked && !fullAccess) {
                                 e.preventDefault();
                                 return;
                               }
@@ -787,7 +790,7 @@ export default function Stages({
                                   className={`absolute top-0 left-0 ${
                                     hoveredUnit === unit.unitId &&
                                     // @ts-ignore
-                                    (unit.completionStatus !== "disabled" || hasFullAccess) && // FULL ACCESS: Allow hover for all units
+                                    (unit.completionStatus !== "disabled" || fullAccess) && // FULL ACCESS: Allow hover for all units
                                     !isStageLocked
                                       ? "text-white"
                                       : "text-green-500"
@@ -799,7 +802,7 @@ export default function Stages({
                                   className={`absolute top-0 left-0 ${
                                     hoveredUnit === unit.unitId &&
                                     // @ts-ignore
-                                    (unit.completionStatus !== "disabled" || hasFullAccess) && // FULL ACCESS: Allow hover for all units
+                                    (unit.completionStatus !== "disabled" || fullAccess) && // FULL ACCESS: Allow hover for all units
                                     !isStageLocked
                                       ? "text-white"
                                       : "text-red-500"
@@ -813,7 +816,7 @@ export default function Stages({
                                   // @ts-ignore
                                   hoveredUnit === unit.unitId &&
                                   // @ts-ignore
-                                  (unit.completionStatus !== "disabled" || hasFullAccess) && // FULL ACCESS: Allow hover for all units
+                                  (unit.completionStatus !== "disabled" || fullAccess) && // FULL ACCESS: Allow hover for all units
                                   !isStageLocked
                                     ? "/icons/User-icons/unit.svg"
                                     : "icons/User-icons/unit.png"
@@ -829,7 +832,7 @@ export default function Stages({
                                 // @ts-ignore
                                 hoveredUnit === unit.unitId &&
                                 // @ts-ignore
-                                (unit.completionStatus !== "disabled" || hasFullAccess) && // FULL ACCESS: Allow hover for all units
+                                (unit.completionStatus !== "disabled" || fullAccess) && // FULL ACCESS: Allow hover for all units
                                 !isStageLocked
                                   ? "opacity-100 transition-all duration-100 ease-in-out font-semibold text-white"
                                   : ""
@@ -837,10 +840,10 @@ export default function Stages({
                             >
                               {/* @ts-ignore */}
                               {unit.unitName}
-                              {isStageLocked && !hasFullAccess && (
+                              {isStageLocked && !fullAccess && (
                                 <Lock className="w-3 h-3 inline-block ml-1 text-black" />
                               )}
-                              {isStageLocked && hasFullAccess && (
+                              {isStageLocked && fullAccess && (
                                 <Badge variant="outline" className="ml-1 text-xs bg-[#FFF3E0] text-[#EF6C00] border-[#FFB74D] px-1 py-0">
                                   Unlocked
                                 </Badge>
