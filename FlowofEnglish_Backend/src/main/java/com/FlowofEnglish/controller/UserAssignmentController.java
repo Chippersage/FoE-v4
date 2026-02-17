@@ -1,6 +1,7 @@
 package com.FlowofEnglish.controller;
 
 import com.FlowofEnglish.model.*;
+import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.repository.*;
 import com.FlowofEnglish.service.*;
 import java.nio.file.Path;
@@ -137,6 +138,7 @@ public class UserAssignmentController {
             Subconcept subconcept = assignment.getSubconcept();
             subconceptData.put("subconceptId", subconcept.getSubconceptId());
             subconceptData.put("subconceptDesc", subconcept.getSubconceptDesc());
+            subconceptData.put("subconceptDesc2", subconcept.getSubconceptDesc2());
             subconceptData.put("subconceptMaxscore", subconcept.getSubconceptMaxscore());
             subconceptData.put("subconceptLink", subconcept.getSubconceptLink());
             subconceptData.put("subconceptType", subconcept.getSubconceptType());
@@ -156,6 +158,7 @@ public class UserAssignmentController {
                         Map<String, Object> dependencyData = new LinkedHashMap<>();
                         dependencyData.put("subconceptId", dependencySubconcept.get().getSubconceptId());
                         dependencyData.put("subconceptDesc", dependencySubconcept.get().getSubconceptDesc());
+                        dependencyData.put("subconceptDesc2", dependencySubconcept.get().getSubconceptDesc2());
                         dependencyData.put("subconceptLink", dependencySubconcept.get().getSubconceptLink());
                         dependencyData.put("subconceptMaxscore", dependencySubconcept.get().getSubconceptMaxscore());
                         dependencyData.put("subconceptType", dependencySubconcept.get().getSubconceptType());
@@ -330,14 +333,15 @@ public class UserAssignmentController {
     }
 
     @GetMapping("/{assignmentId}")
-    public ResponseEntity<UserAssignment> getAssignmentById(@PathVariable String assignmentId) {
-        return ResponseEntity.ok(userAssignmentService.getAssignmentById(assignmentId));
+    public ResponseEntity<UserAssignmentMinimalDTO> getAssignmentById(@PathVariable String assignmentId) {
+        UserAssignment assignment = userAssignmentService.getAssignmentById(assignmentId);
+        UserAssignmentMinimalDTO dto = userAssignmentService.toMinimalDTO(assignment);
+        return ResponseEntity.ok(dto);
     }
+
     
     @GetMapping("/user-assignment")
-    public ResponseEntity<Map<String, Object>> getAssignmentByUserAndSubconcept(
-            @RequestParam("userId") String userId,
-            @RequestParam("subconceptId") String subconceptId) {
+    public ResponseEntity<Map<String, Object>> getAssignmentByUserAndSubconcept(@RequestParam("userId") String userId, @RequestParam("subconceptId") String subconceptId) {
         
         UserAssignment assignment = userAssignmentService.getAssignmentByUserIdAndSubconceptId(userId, subconceptId);
         Map<String, Object> response = new HashMap<>();

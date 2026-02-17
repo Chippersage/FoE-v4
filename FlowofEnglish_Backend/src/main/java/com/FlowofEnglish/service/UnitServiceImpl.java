@@ -810,7 +810,9 @@ public class UnitServiceImpl implements UnitService {
                 stageResponse.getDaysUntilNextStageEnabled());
             
             // Add the stage to the response
-            stageMap.put(String.valueOf(i), stageResponse);
+         // Use zero-padded format (e.g., "00", "01", "02", ..., "10", "11")
+            String paddedKey = String.format("%02d", i);
+            stageMap.put(paddedKey, stageResponse);
             stagesCount++;
         }
 

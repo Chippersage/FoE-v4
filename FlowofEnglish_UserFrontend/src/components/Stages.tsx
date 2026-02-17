@@ -464,8 +464,27 @@ export default function Stages({
     }
   }, [isDataLoaded]);
 
-  // Ensure that stages is not null or undefined before converting it to an array
-  const stagesArray = stages ? Object.values(stages) : [];
+   // Sort stages numerically by their keys
+  const stagesArray = stages 
+    ? Object.entries(stages)
+        .sort(([keyA], [keyB]) => {
+          // Convert string keys to numbers for proper numerical sorting
+          const numA = parseInt(keyA, 10);
+          const numB = parseInt(keyB, 10);
+          return numA - numB;
+        })
+        .map(([_, stage]) => stage)
+    : [];
+
+  // Add debug logging to verify order
+  // useEffect(() => {
+  //   if (stagesArray.length > 0) {
+  //     console.log('Stages order:', stagesArray.map(s => ({
+  //       id: s.stageId,
+  //       name: s.stageName
+  //     })));
+  //   }
+  // }, [stagesArray]);
 
   const handleScrollToCard = (cardRef: React.RefObject<HTMLDivElement>) => {
     cardRef.current?.scrollIntoView({

@@ -24,15 +24,19 @@ public class UserAssignmentMinimalDTO {
 
     private String subconceptId;
     private String subconceptDesc;
+    private String subconceptDesc2;
     private String subconceptLink;
+    private Integer subconceptMaxscore;
 
     private String fileName;
     private String filePath;
     private Long fileSize;
+    private String downloadUrl;
 
     private OffsetDateTime submittedDate;
     private Integer score;
     private String remarks;
+    private OffsetDateTime correctedDate;
 	public String getAssignmentId() {
 		return assignmentId;
 	}
@@ -111,11 +115,23 @@ public class UserAssignmentMinimalDTO {
 	public void setSubconceptDesc(String subconceptDesc) {
 		this.subconceptDesc = subconceptDesc;
 	}
+	public String getSubconceptDesc2() {
+		return subconceptDesc2;
+	}
+	public void setSubconceptDesc2(String subconceptDesc2) {
+		this.subconceptDesc2 = subconceptDesc2;
+	}
 	public String getSubconceptLink() {
 		return subconceptLink;
 	}
 	public void setSubconceptLink(String subconceptLink) {
 		this.subconceptLink = subconceptLink;
+	}
+	public Integer getSubconceptMaxscore() {
+		return subconceptMaxscore;
+	}
+	public void setSubconceptMaxscore(Integer subconceptMaxscore) {
+		this.subconceptMaxscore = subconceptMaxscore;
 	}
 	public String getFileName() {
 		return fileName;
@@ -135,11 +151,24 @@ public class UserAssignmentMinimalDTO {
 	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
+	public String getDownloadUrl() {
+		return downloadUrl;
+	}
+	public void setDownloadUrl(String downloadUrl) {
+		this.downloadUrl = downloadUrl;
+	}
 	public OffsetDateTime getSubmittedDate() {
 		return submittedDate;
 	}
 	public void setSubmittedDate(OffsetDateTime offsetDateTime) {
 		this.submittedDate = offsetDateTime;
+	}
+	
+	public OffsetDateTime getCorrectedDate() {
+		return correctedDate;
+	}
+	public void setCorrectedDate(OffsetDateTime correctedDate) {
+		this.correctedDate = correctedDate;
 	}
 	public Integer getScore() {
 		return score;

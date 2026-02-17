@@ -953,5 +953,52 @@ public class UserAssignmentServiceImpl implements UserAssignmentService {
         return assignmentOptional.orElse(null);
     }
     
+    @Override
+    public UserAssignmentMinimalDTO toMinimalDTO(UserAssignment assignment) {
+
+        UserAssignmentMinimalDTO dto = new UserAssignmentMinimalDTO();
+
+        dto.setAssignmentId(assignment.getAssignmentId());
+        
+        dto.setUserId(assignment.getUser().getUserId());
+        dto.setUserName(assignment.getUser().getUserName());
+
+        dto.setCohortId(assignment.getCohort().getCohortId());
+        dto.setCohortName(assignment.getCohort().getCohortName());
+
+        dto.setProgramId(assignment.getProgram().getProgramId());
+        dto.setProgramName(assignment.getProgram().getProgramName());
+
+        dto.setStageId(assignment.getStage().getStageId());
+        dto.setStageName(assignment.getStage().getStageName());
+
+        dto.setUnitId(assignment.getUnit().getUnitId());
+        dto.setUnitName(assignment.getUnit().getUnitName());
+
+        dto.setSubconceptId(assignment.getSubconcept().getSubconceptId());
+        dto.setSubconceptDesc(assignment.getSubconcept().getSubconceptDesc());
+        dto.setSubconceptDesc2(assignment.getSubconcept().getSubconceptDesc2());
+        dto.setSubconceptLink(assignment.getSubconcept().getSubconceptLink());
+        dto.setSubconceptMaxscore(assignment.getSubconcept().getSubconceptMaxscore());
+
+        if (assignment.getSubmittedFile() != null) {
+            MediaFile file = assignment.getSubmittedFile();
+
+            s3StorageService.makeFilePublic(file.getFilePath());
+            String publicUrl = s3StorageService.generatePublicUrl(file.getFilePath());
+
+            dto.setFileName(file.getFileName());
+            dto.setFileSize(file.getFileSize());
+            dto.setDownloadUrl(publicUrl);
+        }
+
+        dto.setSubmittedDate(assignment.getSubmittedDate());
+        dto.setCorrectedDate(assignment.getCorrectedDate());
+        dto.setScore(assignment.getScore());
+        dto.setRemarks(assignment.getRemarks());
+
+        return dto;
+    }
+
 
 }
