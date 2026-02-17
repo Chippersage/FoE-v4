@@ -1320,6 +1320,7 @@ const ViewSubmissions: React.FC = () => {
                                     <h4 className="font-medium text-gray-800 text-sm">
                                       {isCorrected ? 'Evaluation Details' : 'Correct Assignment'}
                                     </h4>
+                                    {assignment.subconcept?.subconceptDesc2?.trim() && (
                                     <button
                                       onClick={() =>
                                         navigate(
@@ -1330,6 +1331,7 @@ const ViewSubmissions: React.FC = () => {
                                     >
                                       Evaluate with AI
                                     </button>
+                                    )}  
                                     {isCorrected && (
                                       <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
                                         Already Graded

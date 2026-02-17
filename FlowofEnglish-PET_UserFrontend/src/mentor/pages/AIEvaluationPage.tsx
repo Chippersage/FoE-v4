@@ -1,13 +1,10 @@
 // @ts-nocheck
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  ArrowLeftIcon,
-  MicrophoneIcon,
-  DocumentTextIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const AI_API_BASE_URL = import.meta.env.VITE_AI_API_BASE_URL || "";
 
 const LEVELS = ["Beginner", "Developing", "Competent", "Proficient", "Advanced"];
 
@@ -36,51 +33,42 @@ export default function AIEvaluationPage() {
   const [selectedRubrics, setSelectedRubrics] = useState<string[]>([]);
   const [transcribing, setTranscribing] = useState(false);
   const [transcript, setTranscript] = useState<string | null>(null);
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<any>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
 
+  // Fetch Assignment
   useEffect(() => {
     if (!assignmentId) return;
 
     const fetchAssignmentDetails = async () => {
       try {
         setLoading(true);
+        setUiError(null);
 
-        const url = `${API_BASE_URL}/assignments/${encodeURIComponent(
-          assignmentId
-        )}`;
+        const response = await fetch(
+          `${API_BASE_URL}/assignments/${assignmentId}`
+        );
 
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch assignment");
-        }
+        if (!response.ok) throw new Error();
 
         const data = await response.json();
 
-        const question = data?.subconcept?.subconceptDesc2;
-        const submittedFile = data?.submittedFile;
-        const fileUrl = submittedFile?.downloadUrl;
-        const fileType = submittedFile?.fileType || "";
+        const question = data?.subconceptDesc2;
+        const fileUrl = data?.downloadUrl;
+        const fileName = data?.fileName || "";
 
-        const isAudioFile =
-          fileType.startsWith("audio") ||
-          fileUrl?.match(/\.(mp3|wav|m4a|aac|ogg)$/i);
+        const isAudioFile = fileName.match(/\.(mp3|wav|m4a|aac|ogg)$/i);
 
-        // Rule 1: Must have subconceptDesc2
-        if (!question) {
+        if (!question || !fileUrl || !isAudioFile) {
           setAiSupported(false);
+          return;
         }
 
-        // Rule 2: Must have audio submission
-        if (!isAudioFile) {
-          setAiSupported(false);
-        }
-
-        setReferenceQuestion(question || "");
-        setMediaUrl(fileUrl || "");
-        setStudentName(data?.user?.userName || "");
-
-      } catch (error) {
-        console.error(error);
+        setReferenceQuestion(question);
+        setMediaUrl(fileUrl);
+        setStudentName(data?.userName || "");
+      } catch {
         setAiSupported(false);
       } finally {
         setLoading(false);
@@ -90,6 +78,39 @@ export default function AIEvaluationPage() {
     fetchAssignmentDetails();
   }, [assignmentId]);
 
+  // Auto Transcription
+  useEffect(() => {
+    if (!mediaUrl || !aiSupported) return;
+
+    const autoTranscribe = async () => {
+      try {
+        setUiError(null);
+        setTranscript(null);
+        setTranscribing(true);
+
+        const response = await fetch(`${AI_API_BASE_URL}/transcribe-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mediaUrl,
+            mediaType: "audio",
+          }),
+        });
+
+        if (!response.ok) throw new Error();
+
+        const data = await response.json();
+        setTranscript(data.text || "No transcript returned.");
+      } catch {
+        setUiError("Transcription failed. Please try again.");
+      } finally {
+        setTranscribing(false);
+      }
+    };
+
+    autoTranscribe();
+  }, [mediaUrl, aiSupported]);
+
   const toggleRubric = (key: string) => {
     setSelectedRubrics((prev) =>
       prev.includes(key)
@@ -98,166 +119,215 @@ export default function AIEvaluationPage() {
     );
   };
 
-  const handleTranscribe = () => {
-    setTranscribing(true);
-    setTimeout(() => {
-      setTranscript("Transcript will appear here once backend is connected.");
-      setTranscribing(false);
-    }, 1500);
+  const handleEvaluation = async () => {
+    try {
+      setUiError(null);
+      setEvaluationResult(null);
+
+      if (!transcript || selectedRubrics.length === 0) return;
+
+      setEvaluating(true);
+
+      const rubricsText = selectedRubrics
+        .map((r) => `${r} (${LEVELS[level]} Level)`)
+        .join("\n");
+
+      const formData = new FormData();
+      formData.append("question", referenceQuestion);
+      formData.append("rubrics", rubricsText);
+      formData.append("response", transcript);
+
+      const response = await fetch(`${AI_API_BASE_URL}/evaluate`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error();
+
+      const data = await response.json();
+      setEvaluationResult(data);
+    } catch {
+      setUiError("Evaluation failed. Please try again.");
+    } finally {
+      setEvaluating(false);
+    }
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
         Loading evaluation...
       </div>
     );
-  }
 
-  if (!aiSupported) {
+  if (!aiSupported)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="bg-white max-w-md w-full rounded-xl shadow-sm border p-6 text-center">
-          <div className="mb-4">
-            <MicrophoneIcon className="h-8 w-8 mx-auto text-slate-400" />
-          </div>
-          <h2 className="text-lg font-semibold text-slate-800">
-            AI Evaluation Not Available
-          </h2>
-          <p className="text-sm text-slate-500 mt-2">
-            This assignment doesn’t support AI evaluation.
-            <br />
-            Currently, only audio-based assignments with AI-enabled questions are supported.
-          </p>
-          <button
-            onClick={() => navigate(-1)}
-            className="mt-5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Go Back
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        AI Evaluation Not Available
       </div>
     );
-  }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-5">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br  px-6 py-10">
+      <div className="max-w-3xl mx-auto space-y-10">
 
-        {/* Header */}
-        <header className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-800">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-full hover:bg-blue-100 transition"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-blue-600" />
+          </button>
+
+          <div className="text-center flex-1">
+            <h1 className="text-2xl font-semibold text-black">
               AI Evaluation
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {studentName} • Assignment ID: {assignmentId}
+            <p className="text-sm text-blue-500 mt-1">
+              {studentName}
             </p>
           </div>
 
-          <button
-            onClick={() => navigate(-1)}
-            className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-100"
-          >
-            <ArrowLeftIcon className="h-4 w-4 text-slate-600" />
-          </button>
-        </header>
+          <div className="w-8" />
+        </div>
 
-        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {uiError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-sm">
+            {uiError}
+          </div>
+        )}
 
-          {/* LEFT */}
-          <section className="lg:col-span-2 space-y-6">
+        {/* QUESTION + AUDIO */}
+        <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 space-y-6">
 
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-sm font-medium text-slate-600">
-                <DocumentTextIcon className="h-4 w-4" />
-                AI Evaluation Question
-              </div>
-
-              <div className="bg-white border rounded-lg p-4 text-slate-700 leading-relaxed shadow-sm">
-                {referenceQuestion}
-              </div>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-blue-400 mb-2">
+              Assignment Question
             </div>
+            <p className="text-gray-800 leading-relaxed text-[15px]">
+              {referenceQuestion}
+            </p>
+          </div>
 
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-sm font-medium text-slate-600">
-                <MicrophoneIcon className="h-4 w-4" />
-                Submitted Audio
+          <div className="border-t border-blue-100 pt-5 space-y-4">
+            <audio controls className="w-full rounded-md" src={mediaUrl} />
+
+            {transcribing && (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-600 animate-pulse">
+                AI is transcribing the audio...
               </div>
+            )}
 
-              <audio controls className="w-full">
-                <source src={mediaUrl} />
-              </audio>
+            {transcript && (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-gray-700 whitespace-pre-wrap">
+                {transcript}
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* LEVEL */}
+        <div>
+          <div className="text-xs uppercase tracking-wide text-blue-400 mb-3">
+            Evaluation Level
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {LEVELS.map((lvl, idx) => (
               <button
-                onClick={handleTranscribe}
-                disabled={transcribing}
-                className="mt-3 text-xs px-3 py-1 rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-50"
+                key={lvl}
+                onClick={() => {
+                  setLevel(idx);
+                  setSelectedRubrics([]);
+                }}
+                className={`px-4 py-2 rounded-full text-sm transition ${
+                  level === idx
+                    ? "bg-blue-600 text-white"
+                    : "bg-white border border-blue-200 text-blue-600"
+                }`}
               >
-                {transcribing ? "Transcribing…" : "Transcribe"}
+                {lvl}
               </button>
+            ))}
+          </div>
+        </div>
 
-              {transcript && (
-                <div className="mt-3 p-3 rounded-md bg-slate-100 text-sm text-slate-700">
-                  {transcript}
+        {/* RUBRICS */}
+        <div>
+          <div className="text-xs uppercase tracking-wide text-blue-400 mb-3">
+            Select Criteria
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {RUBRICS.filter((r) => r.min <= level).map((r) => (
+              <button
+                key={r.key}
+                onClick={() => toggleRubric(r.key)}
+                className={`px-4 py-2 rounded-xl text-sm border transition ${
+                  selectedRubrics.includes(r.key)
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-blue-600 border-blue-200"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* RUN BUTTON */}
+        <button
+          onClick={handleEvaluation}
+          disabled={
+            evaluating || !transcript || selectedRubrics.length === 0
+          }
+          className={`w-full py-3 rounded-2xl text-white font-medium transition ${
+            evaluating || !transcript || selectedRubrics.length === 0
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {evaluating ? "Evaluating..." : "Run AI Evaluation"}
+        </button>
+
+        {/* RESULTS */}
+        {evaluationResult && (
+          <div className="bg-white border border-blue-100 rounded-2xl p-6 shadow-sm space-y-6">
+
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-blue-800">
+                AI Analysis
+              </h2>
+              <div className="text-3xl font-bold text-blue-600">
+                {evaluationResult.overall_score}/100
+              </div>
+            </div>
+
+            {evaluationResult.summary && (
+              <div className="bg-blue-50 p-4 rounded-xl text-sm text-gray-700">
+                {evaluationResult.summary}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {evaluationResult.rubrics?.map((r: any, i: number) => (
+                <div
+                  key={i}
+                  className="border border-blue-100 rounded-xl p-4 bg-blue-50"
+                >
+                  <div className="flex justify-between font-medium text-blue-800">
+                    <span>{r.criterion}</span>
+                    <span>{r.score}/100</span>
+                  </div>
+                  <div className="text-sm text-gray-700 mt-2">
+                    {r.feedback}
+                  </div>
                 </div>
-              )}
-            </div>
-          </section>
-
-          {/* RIGHT */}
-          <aside className="space-y-6">
-
-            <div>
-              <div className="text-xs text-slate-500 mb-2">
-                Evaluation Level
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {LEVELS.map((lvl, idx) => (
-                  <button
-                    key={lvl}
-                    onClick={() => {
-                      setLevel(idx);
-                      setSelectedRubrics([]);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-sm ${
-                      level === idx
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
 
-            <div>
-              <div className="text-xs text-slate-500 mb-2">
-                Rubrics
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {RUBRICS.filter((r) => r.min <= level).map((r) => (
-                  <button
-                    key={r.key}
-                    onClick={() => toggleRubric(r.key)}
-                    className={`px-3 py-1.5 rounded-md border text-sm ${
-                      selectedRubrics.includes(r.key)
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          </div>
+        )}
 
-            <button className="w-full py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700">
-              Run AI Evaluation
-            </button>
-          </aside>
-        </main>
       </div>
     </div>
   );
