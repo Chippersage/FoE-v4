@@ -25,8 +25,8 @@ import MentorDashboard from "./mentor/pages/MentorDashboard";
 import UnifiedLearnersPage from "./mentor/pages/UnifiedLearnersPage";
 import MentorReportsPage from "./mentor/pages/MentorReportsPage";
 import ViewSubmissions from "./mentor/pages/ViewSubmissions";
-import AIEvalutionPage from "./mentor/pages/AIEvaluationPage";
-import AIEvaluationPage from "./mentor/pages/AIEvaluationPage";
+import AIEvalutionPage from "./mentor/pages/AIEvaluationModal";
+import AIEvaluationPage from "./mentor/pages/AIEvaluationModal";
 
 export default function App() {
   const { user, isLoading, isChangingCohort } = useUserContext();

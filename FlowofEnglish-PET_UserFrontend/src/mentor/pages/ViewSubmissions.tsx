@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { fetchCohortAssignments, submitCorrectedAssignment } from "../mentor-api";
 import type { CohortAssignment, CohortAssignmentsResponse, SubmitCorrectionParams } from "../mentor.types";
+import AIEvaluationModal from "./AIEvaluationModal";
 
 // Import React Paginate for modern pagination
 import ReactPaginate from "react-paginate";
@@ -555,6 +556,9 @@ const ViewSubmissions: React.FC = () => {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiAssignmentId, setAiAssignmentId] = useState<string | null>(null);
+
 
   const addToast = (message: string, type: "error" | "success" = "error") => {
     const id = Date.now().toString();
@@ -1000,6 +1004,35 @@ const ViewSubmissions: React.FC = () => {
     }
   };
 
+  const handleApplyAI = (data: { score: number; remarks: string }) => {
+    if (!aiAssignmentId) return;
+
+    const assignment = assignments.find(
+      (a) => a.assignmentId === aiAssignmentId
+    );
+
+    if (!assignment) return;
+
+    // OPTIONAL: Scale AI 100 score to subconcept max score
+    const maxScore = assignment.subconcept.subconceptMaxscore || 100;
+    const scaledScore = maxScore === 100
+      ? data.score
+      : (data.score / 100) * maxScore;
+    const roundedScore = Math.round(scaledScore);
+
+    setCorrectionData((prev) => ({
+      ...prev,
+      [aiAssignmentId]: {
+        ...prev[aiAssignmentId],
+        score: roundedScore.toString(),
+        remarks: data.remarks,
+      },
+    }));
+
+    setAiModalOpen(false);
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-600">
@@ -1210,6 +1243,13 @@ const ViewSubmissions: React.FC = () => {
                         remarks: "",
                         file: null,
                       };
+                      const isAudioSubmission =
+                        assignment.submittedFile &&
+                        (
+                          assignment.submittedFile.fileType?.startsWith("audio") ||
+                          assignment.submittedFile.fileName?.toLowerCase().match(/\.(mp3|wav|ogg|m4a|flac|aac)$/)
+                        );
+
 
                       return (
                         <React.Fragment key={assignment.assignmentId}>
@@ -1321,17 +1361,22 @@ const ViewSubmissions: React.FC = () => {
                                       {isCorrected ? 'Evaluation Details' : 'Correct Assignment'}
                                     </h4>
                                     {assignment.subconcept?.subconceptDesc2?.trim() && (
-                                    <button
-                                      onClick={() =>
-                                        navigate(
-                                          `/mentor/${selected.cohortId}/${selected.program.programId}/assignments/${assignment.assignmentId}/ai-evaluate`,
-                                        )
-                                      }
-                                      className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                                    >
-                                      Evaluate with AI
-                                    </button>
-                                    )}  
+                                      isAudioSubmission ? (
+                                        <button
+                                          onClick={() => {
+                                            setAiAssignmentId(assignment.assignmentId);
+                                            setAiModalOpen(true);
+                                          }}
+                                          className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                                        >
+                                          Evaluate with AI
+                                        </button>
+                                      ) : (
+                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                          AI evaluation supported for audio submissions only
+                                        </span>
+                                      )
+                                    )}
                                     {isCorrected && (
                                       <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
                                         Already Graded
@@ -1610,6 +1655,13 @@ const ViewSubmissions: React.FC = () => {
           </motion.div>
         </div>
       </div>
+      {aiModalOpen && aiAssignmentId && (
+        <AIEvaluationModal
+          assignmentId={aiAssignmentId}
+          onClose={() => setAiModalOpen(false)}
+          onApply={handleApplyAI}
+        />
+      )}
     </>
   );
 };
