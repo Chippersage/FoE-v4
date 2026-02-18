@@ -62,6 +62,7 @@ import BackButton from "@/components/BackButton";
 import toast from "react-hot-toast";
 import Word from "@/components/activityIcons/Word";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { hasFullAccess } from "@/utils/accessControl";
 
 interface Subconcept {
   subconceptId: string;
@@ -185,8 +186,11 @@ export default function SubConceptsPage() {
 
   // MENTOR ACCESS: Check if user is Mentor
   const isMentor = user?.userType === "Mentor";
-  const isRitanya05 = user?.userId === "Ritanya05";
-  const hasFullAccess = isMentor || isRitanya05;
+  // const isRitanya05 = user?.userId === "Ritanya05";
+  // const hasFullAccess = isMentor || isRitanya05;
+
+  const fullAccess = hasFullAccess(user);
+
   // Detect orientation changes
   useEffect(() => {
     const handleResize = () => {
@@ -543,7 +547,7 @@ export default function SubConceptsPage() {
                 //       subconcepts.every((s) => s.completionStatus === "yes")) ||
                 //     (subconcept?.completionStatus !== "disabled" &&
                 //       index !== totalSteps - 1);
-                const isEnabled = hasFullAccess 
+                const isEnabled = fullAccess 
   ? index !== totalSteps - 1 // Full access users can access all except finish
   : index === 0 ||
     (index === totalSteps - 1 &&
@@ -579,7 +583,7 @@ export default function SubConceptsPage() {
                       } */}
                       <Link
   to={
-    hasFullAccess && index !== totalSteps - 1 && index !== 0
+    fullAccess && index !== totalSteps - 1 && index !== 0
       ? `/subconcept/${subconcept?.subconceptId}`
       : index === totalSteps - 1 &&
         nextUnitId &&
@@ -595,7 +599,7 @@ export default function SubConceptsPage() {
             ?.toLowerCase()
             .startsWith("assessment") &&
           subconcept?.completionStatus === "yes" &&
-          !hasFullAccess
+          !fullAccess
         )
       ? `/subconcept/${subconcept?.subconceptId}`
       : null
@@ -624,7 +628,7 @@ export default function SubConceptsPage() {
                         // ) {
                         onClick={(e) => {
     // FULL ACCESS: Skip restrictions for Ritanya05 and mentors
-    if (hasFullAccess && index !== totalSteps - 1 && index !== 0) {
+    if (fullAccess && index !== totalSteps - 1 && index !== 0) {
       // Allow full access to everything, no restrictions
       return;
     }
@@ -657,7 +661,7 @@ export default function SubConceptsPage() {
                             .startsWith("assessment") &&
                           subconcept?.completionStatus === "yes" &&
                           // !isMentor // Only restrict for non-mentors
-                          !hasFullAccess // Only restrict for users without full access
+                          !fullAccess // Only restrict for users without full access
                         ) {
                           e.preventDefault(); // prevent navigation
                           toast(
