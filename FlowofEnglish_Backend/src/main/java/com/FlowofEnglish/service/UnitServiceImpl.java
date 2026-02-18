@@ -737,8 +737,7 @@ public class UnitServiceImpl implements UnitService {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                     String formattedUnlockDate = expectedUnlockDate.format(formatter);
                     
-                    logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", 
-                        stage.getStageId(), currentDate, expectedUnlockDate);
+                    logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", stage.getStageId(), currentDate, expectedUnlockDate);
                    // Set the formatted date in the response
                     stageResponse.setStageAvailableDate(formattedUnlockDate);
 
@@ -746,8 +745,7 @@ public class UnitServiceImpl implements UnitService {
                         // We're before the planned unlock date
                         stageResponse.setStageEnabled(false);
                         stageResponse.setDaysUntilNextStageEnabled(Math.max(0, (int)daysRemaining));
-                        logger.info("Stage {} is locked with {} days remaining", 
-                            stage.getStageId(), daysRemaining, formattedUnlockDate);
+                        logger.info("Stage {} is locked with {} days remaining", stage.getStageId(), daysRemaining, formattedUnlockDate);
                     } else {
                         // Current date is past the unlock date, check previous stage completion
                     	StageDTO previousStageDTO = stageMap.get(previousStageKey);
