@@ -185,13 +185,13 @@ public class EmailService {
     }
 
     
-    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
+    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, List<String> programIds,
             List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) {
         
         String subject = "Welcome to Your Learning Journey with ChipperSage";
         
-     // Determine which login link to use based on programs
-        String loginLink = determineLoginLink(programNames);
+        // Determine which login link to use based on programs
+        String loginLink = determineLoginLink(programIds);
         
         // Build program details string based on the number of programs
         String programDetails = buildProgramDetails(programNames);
@@ -229,23 +229,26 @@ public class EmailService {
      * Link 2 (Teachers Portal): https://teachers.thechippersage.com/sign-in
      * Used for: PET-Level-1, PET-Level-2, PET-Level-3, PMT-1
      */
-    private String determineLoginLink(List<String> programNames) {
+    private String determineLoginLink(List<String> programIds) {
 
-        if (programNames == null || programNames.isEmpty()) {
+        if (programIds == null || programIds.isEmpty()) {
             return FLOW_OF_ENGLISH_LOGIN; // safe default
         }
 
-        for (String program : programNames) {
+        for (String rawProgramId : programIds) {
 
-            String p = program.trim().toUpperCase();
+            String programId = rawProgramId
+                    .trim()
+                    .replaceAll("\\s+", "") // handles "EEA - 3"
+                    .toUpperCase();
 
-            // Teachers Portal programs
-            if (p.startsWith("PET-LEVEL-") || p.startsWith("PMT-")) {
+            // Teachers Portal programs (priority)
+            if (programId.startsWith("PET-LEVEL-") || programId.equals("PMT-1")) {
                 return TEACHERS_PORTAL_LOGIN;
             }
         }
 
-        // Everything else goes to Flow of English
+        // Everything else → Flow of English
         return FLOW_OF_ENGLISH_LOGIN;
     }
 

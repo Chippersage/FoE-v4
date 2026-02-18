@@ -199,17 +199,19 @@ public class UserServiceImpl implements UserService {
         userCohortMappingRepository.save(userCohortMapping);
         
      // Fetch program details from CohortProgram
+        List<String> programIds = new ArrayList<>();
         List<String> programNames = new ArrayList<>();
         List<String> cohortNames = new ArrayList<>();
         cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
                 .ifPresent(cohortProgram -> {
+                	programIds.add(cohortProgram.getProgram().getProgramId());
                     programNames.add(cohortProgram.getProgram().getProgramName());
                     cohortNames.add(cohort.getCohortName());
                 });
 
      // If the email is present, send credentials to the user
         if (user.getUserEmail() != null && !user.getUserEmail().isEmpty()) {
-            sendWelcomeEmail(savedUser, plainPassword, programNames, cohortNames);
+            sendWelcomeEmail(savedUser, plainPassword, programIds, programNames, cohortNames);
         }
 
         return savedUser;
@@ -364,6 +366,7 @@ public class UserServiceImpl implements UserService {
                 for (User savedUser : savedUsers) {
                     if (savedUser.getUserEmail() != null && !savedUser.getUserEmail().isEmpty()) {
                         List<UserCohortMapping> userCohortMappings = userCohortMappingRepository.findAllByUserUserId(savedUser.getUserId());
+                        List<String> programIds = new ArrayList<>();
                         List<String> programNames = new ArrayList<>();
                         List<String> cohortNames = new ArrayList<>();
 
@@ -372,11 +375,13 @@ public class UserServiceImpl implements UserService {
                             cohortNames.add(cohort.getCohortName());
 
                             cohortProgramRepository.findByCohortCohortId(cohort.getCohortId()).ifPresent(cohortProgram -> 
-                                programNames.add(cohortProgram.getProgram().getProgramName())
-                            );
+                            {
+                                programIds.add(cohortProgram.getProgram().getProgramId());
+                                programNames.add(cohortProgram.getProgram().getProgramName());
+                            });
                         }
 
-                        sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
+                        sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programIds, programNames, cohortNames);
                     }
                 }
             }
@@ -395,7 +400,7 @@ public class UserServiceImpl implements UserService {
     }
 
     // Helper function to send welcome email
-    private void sendWelcomeEmail(User user, String plainPassword, List<String> programNames, List<String> cohortNames) {
+    private void sendWelcomeEmail(User user, String plainPassword, List<String> programIds, List<String> programNames, List<String> cohortNames) {
         try {
             Organization organization = user.getOrganization();
             
@@ -404,6 +409,7 @@ public class UserServiceImpl implements UserService {
                     user.getUserName(),
                     user.getUserId(),
                     plainPassword,
+                    programIds,
                     programNames,
                     cohortNames, // Still passed but not used in the new email format
                     organization.getOrganizationAdminEmail(),
