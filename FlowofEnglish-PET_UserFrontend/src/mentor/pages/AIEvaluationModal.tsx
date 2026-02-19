@@ -153,6 +153,15 @@ export default function AIEvaluationModal({
     evaluationResult?.overall_score !== undefined
       ? Math.round(evaluationResult.overall_score)
       : null;
+  
+  function toTitleCase(text: string) {
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -180,14 +189,22 @@ export default function AIEvaluationModal({
           <audio controls className="w-full" src={mediaUrl} />
         </Section>
 
-        {/* Transcript */}
-        {transcript && (
-          <Section title="Transcription">
+        {/* Transcript Section */}
+        <Section title="Transcription">
+          {transcribing && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-sm text-yellow-700 flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin" />
+              Transcription in progress... Please wait.
+            </div>
+          )}
+
+          {!transcribing && transcript && (
             <div className="bg-blue-50 p-4 rounded-lg text-sm whitespace-pre-wrap">
               {transcript}
             </div>
-          </Section>
-        )}
+          )}
+        </Section>
+
 
         {/* Proficiency Level */}
         <Section title="Proficiency Level">
@@ -266,7 +283,7 @@ export default function AIEvaluationModal({
                       className="border border-gray-200 rounded-lg p-4"
                     >
                       <div className="flex justify-between font-medium">
-                        <span>{r.criterion}</span>
+                        <span>{toTitleCase(r.criterion)}</span>
                         <span>{Math.round(r.score)}/100</span>
                       </div>
                       <div className="text-sm text-gray-600 mt-2">
