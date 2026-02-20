@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { UsersIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
+import { ErrorModal } from "../components/modals/ErrorModal";
 
 const CohortCard = ({
   cohort,
@@ -16,11 +17,14 @@ const CohortCard = ({
   const {
     cohortName,
     progress = 0,
-    completedSubconcepts = 0, // Add this prop
+    completedSubconcepts = 0, 
     cohortStartDate,
     cohortEndDate,
     cohortId,
-    programId
+    programId,
+    userCohortStatus,      
+    deactivatedReason,     
+    deactivatedAt          
   } = cohort;
 
   const navigate = useNavigate();
@@ -29,9 +33,12 @@ const CohortCard = ({
     assignmentStatistics?.cohortDetails?.[cohortId]?.pendingAssignments || 0;
 
   const [isResuming, setIsResuming] = useState(false);
+  const [showDisabledModal, setShowDisabledModal] = useState(false);
 
   const isCompleted = progress >= 100;
   const isFirstTime = completedSubconcepts === 0; // Check if it's first time (0 completed subconcepts)
+
+  const isCohortDisabled = userCohortStatus === "DISABLED";
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "N/A");
 
@@ -110,19 +117,49 @@ const CohortCard = ({
           </>
         )}
 
-        <button
-          onClick={handleResumeClick}
-          className={`px-3 py-[6px] rounded-md text-[11px] font-medium cursor-pointer
-            ${isFirstTime 
-              ? "bg-green-600 text-white hover:bg-green-700" 
-              : "bg-[#0EA5E9] text-white hover:bg-[#0284C7]"}`}
-        >
-          {isResuming 
-            ? "Loading..." 
-            : isFirstTime 
-              ? "Start" 
-              : "Resume"}
-        </button>
+        {isCohortDisabled ? (
+          <>
+            <button
+              onClick={() => setShowDisabledModal(true)}
+              className="px-3 py-[6px] bg-red-100 text-red-700 border border-red-300 rounded-md text-[11px] font-medium cursor-pointer"
+            >
+              Disabled
+            </button>
+
+            {showDisabledModal && (
+              <ErrorModal
+                isOpen={showDisabledModal}
+                onClose={() => setShowDisabledModal(false)}
+                errorModalData={{
+                  error: "Your access to this cohort has been disabled.",
+                  deactivationDetails: `
+                  Reason: ${deactivatedReason || "No reason provided"}
+                  Deactivated On: ${
+                    deactivatedAt
+                      ? new Date(deactivatedAt * 1000).toLocaleDateString()
+                      : "N/A"
+                  }
+                  `,
+                  contactInfo : "Support Team at support@chippersage.com",
+                }}
+              />
+            )}
+          </>
+        ) : (
+          <button
+            onClick={handleResumeClick}
+            className={`px-3 py-[6px] rounded-md text-[11px] font-medium cursor-pointer
+              ${isFirstTime 
+                ? "bg-green-600 text-white hover:bg-green-700" 
+                : "bg-[#0EA5E9] text-white hover:bg-[#0284C7]"}`}
+          >
+            {isResuming 
+              ? "Loading..." 
+              : isFirstTime 
+                ? "Start" 
+                : "Resume"}
+          </button>
+        )}
       </div>
     </div>
   );
