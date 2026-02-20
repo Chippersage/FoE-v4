@@ -11,15 +11,12 @@ import org.springframework.stereotype.Service;
 //import org.thymeleaf.TemplateEngine;
 //import org.thymeleaf.context.Context;
 
-
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -43,6 +40,10 @@ public class EmailService {
     private S3StorageService s3StorageService;
     
  //   private static final String LOGO_IMAGE = "images/ChipperSageLogo.png";
+    private static final String FLOW_OF_ENGLISH_LOGIN = "https://flowofenglish.thechippersage.com/sign-in";
+
+    private static final String TEACHERS_PORTAL_LOGIN = "https://teachers.thechippersage.com/sign-in";
+
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailService.class);
 
@@ -184,38 +185,171 @@ public class EmailService {
     }
 
     
-    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, 
-    		List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) { 
-    	
-        String subject = "Welcome to Your Learning Journey!";
+    public void sendUserCreationEmail(String userEmail, String userName, String userId, String plainPassword, List<String> programIds,
+            List<String> programNames, List<String> cohortNames, String orgAdminEmail, String orgName, String userType) {
         
-     // Building the list of programs and cohorts dynamically
-        StringBuilder programCohortDetails = new StringBuilder();
-        for (int i = 0; i < programNames.size(); i++) {
-            programCohortDetails.append("Program Name: ").append(programNames.get(i)).append("\n");
-            if (i < cohortNames.size()) {
-                programCohortDetails.append("Cohort Name: ").append(cohortNames.get(i)).append("\n\n");
-            }
-        }
+        String subject = "Welcome to Your Learning Journey with ChipperSage";
         
-        String body = "Dear " + userName + ",\n\n"
-                + "We are excited to welcome you to the following programs and cohorts as part of your learning journey:\n\n"
-                + programCohortDetails
-                + "To get started, please find your login credentials below:\n\n"
-                + "User ID: " + userId + "\n"
-                + "Password: " + plainPassword + "\n"
-                + "User Type: " + userType + "\n\n"
-                + "You can log in to the learning portal using the following link:\n"
-                + "https://flowofenglish.thechippersage.com\n\n"
-                + "If you have any questions or need assistance, please feel free to reach out to your organization administrator:\n"
-                + "Administrator Email: " + orgAdminEmail + "\n"
-                + "Organization Name: " + orgName + "\n\n"
-                + "We are thrilled to have you onboard and look forward to your achievements in these programs. Let’s get started and make the most of this learning experience together!\n\n"
-                + "Best regards,\n"
-                + "Team Chippersage\n";
+        // Determine which login link to use based on programs
+        String loginLink = determineLoginLink(programIds);
+        
+        // Build program details string based on the number of programs
+        String programDetails = buildProgramDetails(programNames);
+        
+        String body = "Dear " + userName + ",\n\n" +
+                "Warm greetings from Team ChipperSage.\n\n" +
+                "We are delighted to welcome you to your enrolled learning program(s), designed to support structured language development and confident communication.\n\n" +
+                "You have been successfully enrolled in the following program(s):\n" +
+                getProgramListFormatted(programNames) + "\n\n" +
+                "Login Details\n\n" +
+                "Please use the credentials below to access our learning platform:\n\n" +
+                "User ID: " + userId + "\n" +
+                "Password: " + plainPassword + "\n" +
+                "User Type: " + userType + "\n\n" +
+                "🔗 Login Portal:\n" +
+                loginLink + "\n\n" +
+                "Through this platform, you can access structured learning modules, applied concepts, and performance-oriented content designed to support measurable skill development.\n\n" +
+                "If you need any assistance during onboarding or have questions, please feel free to contact your organization administrator:\n\n" +
+                "Administrator Email: " + orgAdminEmail + "\n" +
+                "Organization: " + orgName + "\n\n" +
+                "We look forward to supporting you on this journey and helping you grow into a confident and effective communicator.\n\n" +
+                "Wishing you a rewarding and successful learning experience.\n\n" +
+                "Warm regards,\n" +
+                "Team ChipperSage";
 
         sendEmail(userEmail, subject, body);
     }
+    
+    /**
+     * Determines the appropriate login link based on the programs assigned
+     * 
+     * Link 1 (Flow of English): https://flowofenglish.thechippersage.com/sign-in
+     * Used for: CC-1 to CC-8, AIF-6, AIF-7, AIF-8, CC-DEMO, CC-SAMPLE, EEA-3
+     * 
+     * Link 2 (Teachers Portal): https://teachers.thechippersage.com/sign-in
+     * Used for: PET-Level-1, PET-Level-2, PET-Level-3, PMT-1
+     */
+    private String determineLoginLink(List<String> programIds) {
+
+        if (programIds == null || programIds.isEmpty()) {
+            return FLOW_OF_ENGLISH_LOGIN; // safe default
+        }
+
+        for (String rawProgramId : programIds) {
+
+            String programId = rawProgramId
+                    .trim()
+                    .replaceAll("\\s+", "") // handles "EEA - 3"
+                    .toUpperCase();
+
+            // Teachers Portal programs (priority)
+            if (programId.startsWith("PET-LEVEL-") || programId.equals("PMT-1")) {
+                return TEACHERS_PORTAL_LOGIN;
+            }
+        }
+
+        // Everything else → Flow of English
+        return FLOW_OF_ENGLISH_LOGIN;
+    }
+
+    // Helper function to build program details based on count
+    private String buildProgramDetails(List<String> programNames) {
+        if (programNames == null || programNames.isEmpty()) {
+            return "our programs";
+        }
+        
+        if (programNames.size() == 1) {
+            return "the " + programNames.get(0) + " Program";
+        } else {
+            // For multiple programs, list them in a comma-separated format
+            StringBuilder details = new StringBuilder("the ");
+            for (int i = 0; i < programNames.size(); i++) {
+                if (i > 0 && i == programNames.size() - 1) {
+                    details.append(" and ");
+                } else if (i > 0) {
+                    details.append(", ");
+                }
+                details.append(programNames.get(i));
+            }
+            details.append(" Programs");
+            return details.toString();
+        }
+    }
+
+    // Helper function to format program list with numbers (like "Communicative English – 3, 4, 5, 6, 7, and 8")
+    private String getProgramListFormatted(List<String> programNames) {
+        if (programNames == null || programNames.isEmpty()) {
+            return "No programs assigned";
+        }
+        
+        // Group programs by base name and collect numbers
+        Map<String, List<String>> programGroups = new LinkedHashMap<>();
+        
+        for (String programName : programNames) {
+            // Extract base program name and number (assuming format like "Communicative English – 3")
+            String[] parts = programName.split(" – ");
+            if (parts.length == 2) {
+                String baseName = parts[0];
+                String number = parts[1];
+                programGroups.computeIfAbsent(baseName, k -> new ArrayList<>()).add(number);
+            } else {
+                // If program doesn't have the format with dash, just add it as is
+                programGroups.computeIfAbsent(programName, k -> new ArrayList<>()).add("");
+            }
+        }
+        
+        // Build the formatted string
+        StringBuilder formattedList = new StringBuilder();
+        int groupCount = 0;
+        
+        for (Map.Entry<String, List<String>> entry : programGroups.entrySet()) {
+            if (groupCount > 0) {
+                formattedList.append("\n");
+            }
+            
+            String baseName = entry.getKey();
+            List<String> numbers = entry.getValue();
+            
+            if (numbers.isEmpty() || numbers.get(0).isEmpty()) {
+                // Single program without numbers
+                formattedList.append(baseName);
+            } else {
+                // Format numbers: 3, 4, 5, 6, 7, and 8
+                String numbersFormatted = formatNumberList(numbers);
+                formattedList.append(baseName).append(" – ").append(numbersFormatted);
+            }
+            groupCount++;
+        }
+        
+        return formattedList.toString();
+    }
+
+    // Helper function to format number list with commas and "and"
+    private String formatNumberList(List<String> numbers) {
+        if (numbers == null || numbers.isEmpty()) {
+            return "";
+        }
+        
+        if (numbers.size() == 1) {
+            return numbers.get(0);
+        }
+        
+        Collections.sort(numbers); // Sort numbers in ascending order
+        
+        StringBuilder formatted = new StringBuilder();
+        for (int i = 0; i < numbers.size(); i++) {
+            if (i > 0 && i == numbers.size() - 1) {
+                formatted.append(" and ");
+            } else if (i > 0) {
+                formatted.append(", ");
+            }
+            formatted.append(numbers.get(i));
+        }
+        
+        return formatted.toString();
+    }
+
+    
     
     public void sendCohortAssignmentEmail(String userEmail, String userName, String cohortName, 
             String programName, String orgName) {
@@ -327,43 +461,4 @@ public class EmailService {
             // Don't throw exception to prevent disrupting the main correction flow
         }
     }
-    
-//    public void sendPaymentStatusEmail(String to, String subject, Map<String, Object> templateModel) {
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-//            
-//            helper.setTo(to);
-//            helper.setSubject(subject);
-//            
-//            Context context = new Context();
-//            context.setVariables(templateModel);
-//            
-//            String template = determineTemplate(templateModel);
-//            String htmlContent = templateEngine.process(template, context);
-//            helper.setText(htmlContent, true);
-//            
-//            mailSender.send(message);
-//            logger.info("Payment notification email sent to {}", to);
-//        } catch (MessagingException e) {
-//            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
-//        }
-//    }
-//    
-//    private String determineTemplate(Map<String, Object> templateModel) {
-//        String status = (String) templateModel.get("status");
-//        
-//        switch (status) {
-//            case "authorized":
-//                return "payment-authorized";
-//            case "successful":
-//                return "payment-successful";
-//            case "failed":
-//                return "payment-failed";
-//            case "paid":
-//                return "order-paid";
-//            default:
-//                return "payment-notification";
-//        }
-//    }
 }

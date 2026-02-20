@@ -7,8 +7,7 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
-@Table(name = "UserCohortMapping",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "user_id"}))
+@Table(name = "UserCohortMapping", uniqueConstraints = @UniqueConstraint(columnNames = {"cohort_id", "user_id"}))
 public class UserCohortMapping  {
 
 	@Id
@@ -32,7 +31,7 @@ public class UserCohortMapping  {
     private Cohort cohort;
     
     @Column(name = "status", length = 20, nullable = false)
-    private String status = "ACTIVE"; // Default value: ACTIVE
+    private String status = "ACTIVE";
     
     @Column(name = "deactivated_at")
     private OffsetDateTime deactivatedAt;
@@ -146,18 +145,10 @@ public class UserCohortMapping  {
 				+ ", createdAt=" + createdAt + "]";
 	}
 
-	/**
-    * Check if user is active
-    * @return true if user is active, false otherwise
-    */
    public boolean isActive() {
        return "ACTIVE".equals(this.status);
    }
    
-   /**
-    * Disable user with reason
-    * @param reason Reason for disabling the user
-    */
    public void disable(String reason) {
        this.status = "DISABLED";
        this.deactivatedAt = OffsetDateTime.now();

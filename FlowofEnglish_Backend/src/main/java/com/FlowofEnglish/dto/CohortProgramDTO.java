@@ -9,10 +9,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 	    private String cohortName;
 	    private OffsetDateTime cohortStartDate;
 	    private OffsetDateTime cohortEndDate;
+	    
+	    private String userCohortStatus;
+	    private OffsetDateTime deactivatedAt;
+	    private String deactivatedReason;
+	    
 	    private boolean showLeaderboard;
 	    private boolean delayedStageUnlock;
 	    private Integer delayInDays;
 	    private boolean enableAiEvaluation;
+	    
 	    private ProgramDTO program;
 	    
 	 // Getters and Setters
@@ -39,6 +45,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 		}
 		public void setCohortEndDate(OffsetDateTime cohortEndDate) {
 			this.cohortEndDate = cohortEndDate;
+		}
+		public String getUserCohortStatus() {
+			return userCohortStatus;
+		}
+		public void setUserCohortStatus(String userCohortStatus) {
+			this.userCohortStatus = userCohortStatus;
+		}
+		public OffsetDateTime getDeactivatedAt() {
+			return deactivatedAt;
+		}
+		public void setDeactivatedAt(OffsetDateTime deactivatedAt) {
+			this.deactivatedAt = deactivatedAt;
+		}
+		public String getDeactivatedReason() {
+			return deactivatedReason;
+		}
+		public void setDeactivatedReason(String deactivatedReason) {
+			this.deactivatedReason = deactivatedReason;
 		}
 		public ProgramDTO getProgram() {
 			return program;

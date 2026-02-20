@@ -7,6 +7,7 @@ import HomeExitIcon from "./icons/HomeExitIcon";
 import useCourseStore from "../store/courseStore";
 import SidebarSkeleton from "../pages/course/skeletons/SidebarSkeleton";
 import useCourseEntryRedirect from "../pages/course/hooks/useCourseEntryRedirect"; 
+import { hasFullAccess } from "../pages/course/utils/accessControl";
 
 // --------------------------------------------------------------------------
 // STATIC COMPONENTS
@@ -49,7 +50,8 @@ const Sidebar: React.FC = () => {
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [localStages, setLocalStages] = useState<any[]>(stages);
   
-  const isMentor = user?.userType?.toLowerCase() === "mentor";
+  // const isMentor = user?.userType?.toLowerCase() === "mentor";
+  const fullAccess = hasFullAccess(user);
   
   // --------------------------------------------------------------------------
   // 2. USE COURSE ENTRY REDIRECT HOOK (IMPORTED)
@@ -104,7 +106,9 @@ const Sidebar: React.FC = () => {
     const sub = unit.subconcepts?.[subIndex];
     if (!sub) return true;
 
-    if (isMentor) return false;
+    // if (isMentor) return false;
+    if (fullAccess) return false;
+
 
     if (!buildGlobalList.length) return false;
 
@@ -140,7 +144,8 @@ const Sidebar: React.FC = () => {
     }
 
     return currentGlobalIndex > nextUnlockIndex;
-  }, [isMentor, buildGlobalList]);
+  }, [fullAccess, buildGlobalList]);
+
   
   const handleSubconceptClick = useCallback((
     sub: any, 

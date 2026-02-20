@@ -905,6 +905,7 @@ public class WebhookService {
         logger.info("Subscription updated with userId: {}", subscription.getUserId());
         
         // Prepare data for welcome email
+        List<String> programIds = new ArrayList<>();
         List<String> programNames = new ArrayList<>();
         programNames.add(program.getProgramName());
         
@@ -912,7 +913,7 @@ public class WebhookService {
         cohortNames.add(cohort.getCohortName());
         
         // Send welcome email
-        sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programNames, cohortNames);
+        sendWelcomeEmail(savedUser, DEFAULT_PASSWORD, programIds, programNames, cohortNames);
         
     } catch (Exception e) {
         logger.error("Error creating user from subscription: {}", e.getMessage(), e);
@@ -988,7 +989,7 @@ public class WebhookService {
     }
 
     // Helper method for sending welcome email (this is already in your code)
-    private void sendWelcomeEmail(User user, String plainPassword, List<String> programNames, List<String> cohortNames) {
+    private void sendWelcomeEmail(User user, String plainPassword,List<String> programIds, List<String> programNames, List<String> cohortNames) {
         try {
             Organization organization = user.getOrganization();
             emailService.sendUserCreationEmail(
@@ -996,6 +997,7 @@ public class WebhookService {
                 user.getUserName(),
                 user.getUserId(),
                 plainPassword,
+                programIds,
                 programNames,
                 cohortNames,
                 organization.getOrganizationAdminEmail(),

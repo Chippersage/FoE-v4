@@ -512,9 +512,6 @@ public class UnitServiceImpl implements UnitService {
         int totalUnitCount = 0;
         int stagesCount = 0;
 
-//     // Calculate the number of digits needed for padding
-//        int maxDigits = String.valueOf(stages.size()).length();
-
         // Fetch all UserSubConcepts for the user and unit to track completion
         List<UserSubConcept> userSubConcepts = userSubConceptRepository.findByUser_UserIdAndProgram_ProgramId(userId, programId);
         logger.info("Fetched UserSubConcepts: {}", userSubConcepts);
@@ -726,6 +723,8 @@ public class UnitServiceImpl implements UnitService {
                 
                 logger.info("First stage {} is always enabled, available from {}", stage.getStageId(), formattedStartDate);
             } else {
+            	
+            	String previousStageKey = String.format("%02d", i - 1);
             	 // Process stages after the first one
                 if (delayedStageUnlock) {
                     logger.info("Delayed stage unlock is enabled for stage {}", stage.getStageId());
@@ -738,8 +737,7 @@ public class UnitServiceImpl implements UnitService {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                     String formattedUnlockDate = expectedUnlockDate.format(formatter);
                     
-                    logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", 
-                        stage.getStageId(), currentDate, expectedUnlockDate);
+                    logger.info("Stage {} unlock calculation - Current: {}, Expected unlock: {}", stage.getStageId(), currentDate, expectedUnlockDate);
                    // Set the formatted date in the response
                     stageResponse.setStageAvailableDate(formattedUnlockDate);
 
@@ -747,11 +745,10 @@ public class UnitServiceImpl implements UnitService {
                         // We're before the planned unlock date
                         stageResponse.setStageEnabled(false);
                         stageResponse.setDaysUntilNextStageEnabled(Math.max(0, (int)daysRemaining));
-                        logger.info("Stage {} is locked with {} days remaining", 
-                            stage.getStageId(), daysRemaining, formattedUnlockDate);
+                        logger.info("Stage {} is locked with {} days remaining", stage.getStageId(), daysRemaining, formattedUnlockDate);
                     } else {
                         // Current date is past the unlock date, check previous stage completion
-                        StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
+                    	StageDTO previousStageDTO = stageMap.get(previousStageKey);
                         if (previousStageDTO != null) {
                             String previousStageStatus = previousStageDTO.getStageCompletionStatus();
                             boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
@@ -774,15 +771,13 @@ public class UnitServiceImpl implements UnitService {
                         }
                     }
                 } else {
-                    // Non-delayed unlock logic - based only on completion status
-                    StageDTO previousStageDTO = stageMap.get(String.valueOf(i - 1));
-                 // For non-delayed unlock, calculate what the date would be if it were enabled
-                    // This helps show what the date would be if delayedStageUnlock were true
+                    
                     OffsetDateTime potentialUnlockDate = cohortStartDate.plusDays(i * delayInDays);
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy");
                     String formattedPotentialDate = potentialUnlockDate.format(formatter);
                     stageResponse.setStageAvailableDate(formattedPotentialDate);
 
+                    StageDTO previousStageDTO = stageMap.get(previousStageKey);
                     if (previousStageDTO != null) {
                         String previousStageStatus = previousStageDTO.getStageCompletionStatus();
                         boolean isPreviousStageCompleted = "yes".equals(previousStageStatus) || 
@@ -804,15 +799,16 @@ public class UnitServiceImpl implements UnitService {
             }
             
             // After setting stage status
-            logger.info("Stage {} final status - Enabled: {}, Days until next stage: {}", 
-                stage.getStageId(), 
-                stageResponse.isStageEnabled(), 
-                stageResponse.getDaysUntilNextStageEnabled());
+            logger.info("Stage {} final status - Enabled: {}, Days until next stage: {}", stage.getStageId(), 
+                stageResponse.isStageEnabled(), stageResponse.getDaysUntilNextStageEnabled());
             
             // Add the stage to the response
          // Use zero-padded format (e.g., "00", "01", "02", ..., "10", "11")
-            String paddedKey = String.format("%02d", i);
-            stageMap.put(paddedKey, stageResponse);
+//            String paddedKey = String.format("%02d", i);
+//            stageMap.put(paddedKey, stageResponse);
+//            //stageMap.put(String.valueOf(i), stageResponse);
+//            stagesCount++;
+            stageMap.put(String.format("%02d", i), stageResponse);
             stagesCount++;
         }
 

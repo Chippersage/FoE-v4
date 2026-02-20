@@ -454,9 +454,7 @@ public class UserController {
         response.put("assignmentStatistics", assignmentStats);
     }
     
-    /**
-     * Helper method to add cohort reminders to the response
-     */
+     // Helper method to add cohort reminders to the response
     private void addCohortEndDateReminders(Map<String, Object> response,
                                         UserDetailsWithCohortsAndProgramsDTO userDetailsDTO) {
         List<String> cohortReminders = new ArrayList<>();
@@ -622,10 +620,8 @@ public class UserController {
         // Create session with enhanced validation
         return createEnhancedSessionAndRespond(user, selectedCohort, userId, selectedCohortId, response, request);
     }
-
-    /**
-     * Helper method to check if cohort has ended or is ending
-     */
+    
+     //Helper method to check if cohort has ended or is ending
     private boolean isCohortEndedOrEnding(Cohort cohort, Map<String, Object> response) {
         OffsetDateTime cohortEndDate = cohort.getCohortEndDate();
         if (cohortEndDate == null) {
@@ -646,9 +642,7 @@ public class UserController {
         return false;
     }
 
-    /**
-     * Enhanced session creation with better error handling
-     */
+     // Enhanced session creation with better error handling
     private ResponseEntity<?> createEnhancedSessionAndRespond(User user, Cohort selectedCohort,
                                                                 String userId, String selectedCohortId,
                                                                 Map<String, Object> response,
@@ -732,9 +726,7 @@ public class UserController {
         }
     }
 
-    /**
-     * Check if cohort is on its final day
-     */
+     // Check if cohort is on its final day
     private boolean isCohortFinalDay(Cohort cohort) {
         if (cohort.getCohortEndDate() == null) {
             return false;
@@ -747,9 +739,7 @@ public class UserController {
         return endDateOnly.isEqual(nowDateOnly);
     }
 
-    /**
-     * Build response for deactivated user
-     */
+     // Build response for deactivated user
     private ResponseEntity<?> buildDeactivatedUserResponse(User user) {
         Organization userOrganization = user.getOrganization();
         String adminContactMessage = buildAdminContactMessage(userOrganization);
@@ -763,9 +753,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetails);
     }
 
-    /**
-     * Build response for cohort access denied
-     */
+     // Build response for cohort access denied
     private ResponseEntity<?> buildCohortAccessDeniedResponse(User user, Optional<UserCohortMapping> cohortMapping) {
         Organization userOrganization = user.getOrganization();
         String adminContactMessage = buildAdminContactMessage(userOrganization);
@@ -783,9 +771,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetails);
     }
 
-    /**
-     * Build admin contact message
-     */
+     // Build admin contact message
     private String buildAdminContactMessage(Organization organization) {
         if (organization != null) {
             String adminName = organization.getOrganizationAdminName();

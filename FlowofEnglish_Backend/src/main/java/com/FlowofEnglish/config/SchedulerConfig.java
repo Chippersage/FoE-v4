@@ -14,15 +14,15 @@ public class SchedulerConfig {
     @Autowired
     private WeeklyReportService weeklyReportService;
         
-    @Scheduled(cron = "0 00 10 * * Mon", zone = "Asia/Kolkata") // Every Monday at 10 AM
-    public void sendWeeklyEmails() {
-        System.out.println("Weekly email scheduler triggered at: " + java.time.LocalDateTime.now());
-        logger.info("Weekly email scheduler triggered at: {}", java.time.LocalDateTime.now());
-        try {
-            weeklyReportService.sendWeeklyReports();
-            logger.info("Weekly email process completed successfully.");
-        } catch (Exception e) {
-            logger.error("Error occurred while sending weekly emails: {}", e.getMessage(), e);
-        }
-    }
+//    @Scheduled(cron = "0 00 10 * * Mon", zone = "Asia/Kolkata") // Every Monday at 10 AM
+//    public void sendWeeklyEmails() {
+//        System.out.println("Weekly email scheduler triggered at: " + java.time.LocalDateTime.now());
+//        logger.info("Weekly email scheduler triggered at: {}", java.time.LocalDateTime.now());
+//        try {
+//            weeklyReportService.sendWeeklyReports();
+//            logger.info("Weekly email process completed successfully.");
+//        } catch (Exception e) {
+//            logger.error("Error occurred while sending weekly emails: {}", e.getMessage(), e);
+//        }
+//    }
 }
