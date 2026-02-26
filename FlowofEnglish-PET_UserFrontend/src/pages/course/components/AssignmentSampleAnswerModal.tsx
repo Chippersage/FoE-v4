@@ -15,6 +15,7 @@ const AssignmentSampleAnswerModal: React.FC<Props> = ({
 
   const isImage = documentUrl?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
   const isPdf = documentUrl?.match(/\.pdf$/i);
+  const isVideo = documentUrl?.match(/\.(mp4|webm|ogg|mov)$/i);
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -45,7 +46,13 @@ const AssignmentSampleAnswerModal: React.FC<Props> = ({
                 title="PDF Viewer"
                 className="w-full h-full rounded-lg border"
                 />
-          ) : (
+          )  : isVideo ? (
+              <video
+                src={documentUrl}
+                controls
+                className="max-h-full max-w-full rounded-lg"
+              />
+            ): (
             <div className="text-sm text-gray-500 text-center">
               Preview not supported for this file type.
             </div>
