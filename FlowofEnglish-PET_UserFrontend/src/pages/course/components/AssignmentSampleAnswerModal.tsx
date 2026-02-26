@@ -49,7 +49,7 @@ const AssignmentSampleAnswerModal: React.FC<Props> = ({
           )  : isVideo ? (
               <video
                 src={documentUrl}
-                controls
+                controls controlsList="nodownload"
                 className="max-h-full max-w-full rounded-lg"
               />
             ): (
