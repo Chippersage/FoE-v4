@@ -13,7 +13,7 @@ import PDFRenderer from "./PDFRenderer";
 import { useUserAttempt } from "../hooks/useUserAttempt";
 import useCourseStore from "../store/courseStore";
 import { useUserContext } from "../context/AuthContext";
-import ReactForm from "./ActivityComponents/ReactForm";
+import ReactForm from "./ActivityComponents/React-Form/ReactForm";
 
 interface ContentRendererProps {
   className?: string;
