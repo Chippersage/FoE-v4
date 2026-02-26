@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<activity id="PET3143" type="audio-typing">
+
+  <meta>
+    <title>Practice Drill</title>
+    <maxScore>2</maxScore>
+  </meta>
+
+  <appScriptUrl>
+    https://script.google.com/macros/s/AKfycbw_URsDv39A1ahQmfa2YUPoTdNrggzRjBhmeDuNqFQzwMs-xPWyzWprNOIU675rWzA/exec
+  </appScriptUrl>
+
+  <instructions>
+    Listen carefully to each audio and type exactly what you hear.
+    You can listen to each audio only 3 times.
+    You cannot pause or skip while it is playing.
+  </instructions>
+
+  <settings>
+    <maxPlaysPerAudio>3</maxPlaysPerAudio>
+  </settings>
+
+  <questions>
+
+    <question id="audio1" type="audio-typing" marks="1">
+      <media type="audio">
+        https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/L7c1-PET3143-audio1.mp3
+      </media>
+      <correctAnswer></correctAnswer>
+    </question>
+
+    <question id="audio2" type="audio-typing" marks="1">
+      <media type="audio">
+        https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/L7c2-PET3143-audio2.mp3
+      </media>
+      <correctAnswer></correctAnswer>
+    </question>
+
+  </questions>
+
+</activity>

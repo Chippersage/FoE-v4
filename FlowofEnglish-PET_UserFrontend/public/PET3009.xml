@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<activity>
+
+  <meta>
+    <title>Post Assessment – 2</title>
+    <type>mcq</type>
+  </meta>
+
+  <appScriptUrl>
+    https://script.google.com/macros/s/AKfycbyt7AA3OuxnocID5jjw4YguOhSvBpBCosZT9wA8rtzGti9FcXEZfjaVhB2wfe5oDI2c8g/exec
+  </appScriptUrl>
+
+  <instructions>
+    Refer to the image and answer the questions below by choosing the correct option.
+  </instructions>
+
+  <!-- Shared Image (Shown Once at Top) -->
+  <media type="image">
+    https://s3.amazonaws.com/thinkific/file_uploads/216702/images/f0a/36c/cd6/1593594734124.jpg
+  </media>
+
+  <questions>
+
+    <!-- Question 1 -->
+    <question id="q1" type="mcq-single" marks="2">
+      <text>
+        Our school ______ a Nature Walk to SJ National Park, on Sunday, October 30.
+      </text>
+      <options>
+        <option id="A">is organising</option>
+        <option id="B">has organised</option>
+        <option id="C">will be organising</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 2 -->
+    <question id="q2" type="mcq-single" marks="2">
+      <text>
+        Assemble in school ___ 9 am sharp.
+      </text>
+      <options>
+        <option id="A">on</option>
+        <option id="B">at</option>
+      </options>
+      <correctAnswer>B</correctAnswer>
+    </question>
+
+    <!-- Question 3 -->
+    <question id="q3" type="mcq-single" marks="1">
+      <text>
+        Please ___ school uniform and sports shoes.
+      </text>
+      <options>
+        <option id="A">wear</option>
+        <option id="B">will wear</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 4 -->
+    <question id="q4" type="mcq-single" marks="3">
+      <text>
+        Attendance is _____.
+      </text>
+      <options>
+        <option id="A">necessary</option>
+        <option id="B">compulsory</option>
+        <option id="C">important</option>
+      </options>
+      <correctAnswer>B</correctAnswer>
+    </question>
+
+  </questions>
+
+</activity>

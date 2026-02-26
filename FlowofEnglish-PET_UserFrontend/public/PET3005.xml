@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<activity>
+
+  <meta>
+    <title>Practice Drill</title>
+    <type>mcq</type>
+  </meta>
+
+  <appScriptUrl>
+    https://script.google.com/macros/s/AKfycbwLzPWrkCf07WUW0PcFhUkVWWsRyt289yOND2cv9Si3Llr-wkSUtEEmR7WPAnhfz3aw/exec
+  </appScriptUrl>
+
+  <instructions>
+    Read the notice carefully and choose the correct option for each question.
+  </instructions>
+
+  <!-- Shared Image (Shown Once at Top) -->
+  <media type="image">
+    https://s3.amazonaws.com/thinkific/file_uploads/216702/images/117/fb4/d7b/L4C2.png
+  </media>
+
+  <questions>
+
+    <!-- Question 1 -->
+    <question id="q1" type="mcq-single" marks="1">
+      <text>
+        You are Deepak, the cultural secretary of Naina School, Bangalore.
+        You have been asked to inform students of class 9th and 10th about an inter-school dramatic competition.
+        
+        What is an appropriate heading for this notice?
+      </text>
+      <options>
+        <option id="A">Dramatic competition – Audition</option>
+        <option id="B">Important notice!</option>
+        <option id="C">Students of grades 9 and 10: Attention!</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 2 -->
+    <question id="q2" type="mcq-single" marks="2">
+      <text>
+        An inter-school dramatic competition will be held on ______(1) at Mayo Hall.
+      </text>
+      <options>
+        <option id="A">1 February 2017</option>
+        <option id="B">1st February, 2017</option>
+        <option id="C">February 1, 2017</option>
+      </options>
+      <correctAnswer>B</correctAnswer>
+    </question>
+
+    <!-- Question 3 -->
+    <question id="q3" type="mcq-single" marks="2">
+      <text>
+        An _____(2) will be held to select students for the school team.
+      </text>
+      <options>
+        <option id="A">screening</option>
+        <option id="B">audition</option>
+      </options>
+      <correctAnswer>B</correctAnswer>
+    </question>
+
+    <!-- Question 4 -->
+    <question id="q4" type="mcq-single" marks="1">
+      <text>
+        _____ – Class 9th and 10th students
+      </text>
+      <options>
+        <option id="A">Eligibility</option>
+        <option id="B">Classes</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 5 -->
+    <question id="q5" type="mcq-single" marks="2">
+      <text>
+        Deepak ______
+      </text>
+      <options>
+        <option id="A">Teacher</option>
+        <option id="B">Cultural Secretary</option>
+        <option id="C">Person in-charge</option>
+      </options>
+      <correctAnswer>B</correctAnswer>
+    </question>
+
+  </questions>
+
+</activity>

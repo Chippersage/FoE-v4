@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<activity>
+
+  <meta>
+    <title>Test Your Knowledge!</title>
+    <type>mcq</type>
+  </meta>
+
+  <appScriptUrl>
+    https://script.google.com/macros/s/AKfycbwrLmCd5-h28dMBV7PswzuFehTsMwZ6691qryDMpt6l3ESVeBsh1X8BjLg_c9SXyUcJ/exec
+  </appScriptUrl>
+
+  <instructions>
+    Answer the following questions by choosing the correct option.
+  </instructions>
+
+  <questions>
+
+    <!-- Question 1 -->
+    <question id="q1" type="mcq-single" marks="1">
+      <text>
+        What is the first thing you would do when compering?
+      </text>
+      <options>
+        <option id="A">Greet the audience</option>
+        <option id="B">Start the school prayer</option>
+        <option id="C">Ask the audience to sit</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 2 -->
+    <question id="q2" type="mcq-single" marks="1">
+      <text>
+        As the compere, you need to know the order of events taking place.
+      </text>
+      <options>
+        <option id="A">TRUE</option>
+        <option id="B">FALSE</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- Question 3 -->
+    <question id="q3" type="mcq-single" marks="1">
+      <text>
+        Comperes have to ensure that the programme progresses according to schedule.
+      </text>
+      <options>
+        <option id="A">TRUE</option>
+        <option id="B">FALSE</option>
+      </options>
+      <correctAnswer>A</correctAnswer>
+    </question>
+
+  </questions>
+
+</activity>

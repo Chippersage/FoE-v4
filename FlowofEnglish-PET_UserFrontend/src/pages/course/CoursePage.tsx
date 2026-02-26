@@ -36,6 +36,7 @@ const CoursePage: React.FC = () => {
   const { isSidebarOpen, isEntryRoute = false } = useOutletContext<OutletContext>();
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const reactFormRef = useRef<any>(null);
   const [showScoreSummary, setShowScoreSummary] = useState(false);
   const [videoProgressPercent, setVideoProgressPercent] = useState(0);
   const [isVideoCompleted, setIsVideoCompleted] = useState(false);
@@ -141,6 +142,8 @@ const CoursePage: React.FC = () => {
     return subconcept?.subconceptType?.toLowerCase();
   }, [subconcept?.subconceptType]);
 
+  const isHtmlForm = type === "html-form";
+
   const isAssignment = type?.startsWith("assignment");
   const isGoogleForm = type === "googleform" || type === "assessment";
   
@@ -150,7 +153,7 @@ const CoursePage: React.FC = () => {
 
   const isIframeContent =
     !!type &&
-    !["video", "audio", "pdf", "image", "youtube", "mcq", "mtf", "word"].includes(
+    !["video", "audio", "pdf", "image", "youtube", "mcq", "mtf", "word", "html-form", ].includes(
       type
     );
 
@@ -204,9 +207,16 @@ const CoursePage: React.FC = () => {
   }, [scoreData]);
 
   const handleSubmit = () => {
-    if (!iframeRef.current || !iframeRef.current.contentWindow) return;
-    iframeRef.current.contentWindow.postMessage("submitClicked", "*");
-    onSubmitClicked();
+    if (reactFormRef.current) {
+      reactFormRef.current.submitForm();
+      onSubmitClicked();
+      return;
+    }
+
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage("submitClicked", "*");
+      onSubmitClicked();
+    }
   };
 
   // Determine if Next button should be disabled
@@ -285,8 +295,9 @@ const CoursePage: React.FC = () => {
         <div className="w-full max-w-5xl rounded-xl overflow-hidden bg-white h-full relative">
           <ContentRenderer
             iframeRef={iframeRef}
+            reactFormRef={reactFormRef}
             style={{
-              opacity: showScore ? 0.1 : 1,
+              opacity: showScore && !isHtmlForm ? 0.1 : 1,
               pointerEvents: showScore ? "none" : "auto",
             }}
           />
@@ -327,7 +338,9 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {isIframeContent && showSubmit && !attemptRecorded && !showScore && (
+          {((isIframeContent && showSubmit) || isHtmlForm) &&
+            !attemptRecorded &&
+            !showScore && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
@@ -341,7 +354,7 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
-          {(attemptRecorded || showScore) && scoreData && (
+          {!isHtmlForm && (attemptRecorded || showScore) && scoreData && (
             <ScoreBadge
               score={scoreData.score}
               total={scoreData.total}
@@ -446,7 +459,7 @@ const CoursePage: React.FC = () => {
       </div>
 
       {/* Score Summary Modal */}
-      {scoreData && (
+      {!isHtmlForm && scoreData && (
         <ScoreSummaryModal
           isOpen={showScoreSummary}
           onClose={() => setShowScoreSummary(false)}

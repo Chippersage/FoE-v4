@@ -13,10 +13,12 @@ import PDFRenderer from "./PDFRenderer";
 import { useUserAttempt } from "../hooks/useUserAttempt";
 import useCourseStore from "../store/courseStore";
 import { useUserContext } from "../context/AuthContext";
+import ReactForm from "./ActivityComponents/ReactForm";
 
 interface ContentRendererProps {
   className?: string;
   iframeRef?: React.RefObject<HTMLIFrameElement>;
+  reactFormRef?: React.RefObject<any>;
   style?: React.CSSProperties;
 }
 
@@ -142,6 +144,7 @@ function formatGoogleFormUrl(originalUrl: string, userId: string, cohortId: stri
 const ContentRenderer: React.FC<ContentRendererProps> = ({
   className = "",
   iframeRef,
+  reactFormRef,
   style,
 }) => {
   // 1. Get current content from URL
@@ -720,6 +723,55 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           />
         </div>
       );
+    // case "html-form": {
+    //   const selectedCohortRaw = localStorage.getItem("selectedCohort");
+    //   const selectedCohort = selectedCohortRaw
+    //     ? JSON.parse(selectedCohortRaw)
+    //     : null;
+      
+    //   const htmlLink =  "/PET - 3 (Practice Drill - PET3143).html";
+    //   // const htmlLink = "/PET - 3 (Post Assessment - 2 - PET3149).html";
+
+    //   const htmlUrl = `${htmlLink}?userId=${user?.userId || ""}&cohortId=${selectedCohort?.cohortId || ""}&subconceptId=${currentSubconcept.subconceptId}`;
+    //   return (
+    //     <div className={`relative w-full h-full ${className}`}>
+    //       {isLoading && renderLoading()}
+    //       <iframe
+    //         ref={iframeRef}
+    //         src={htmlUrl}
+    //         className="w-full h-full rounded-xl bg-white"
+    //         title="HTML Form Content"
+    //         frameBorder="0"
+    //         onLoad={() => setIsLoading(false)}
+    //         onError={() => setIsLoading(false)}
+    //         loading="lazy"
+    //       />
+    //     </div>
+    //   );
+    // }
+
+    case "html-form": {
+      const selectedCohortRaw = localStorage.getItem("selectedCohort");
+      const selectedCohort = selectedCohortRaw
+        ? JSON.parse(selectedCohortRaw)
+        : null;
+
+      
+      // const xmlLink =  "/AudioXml.xml";
+      const xmlLink =  "/PET3011.xml";
+
+      return (
+        <div className={`relative w-full h-full overflow-auto ${className}`}>
+          <ReactForm
+            xmlUrl={xmlLink} 
+            ref={reactFormRef}
+            userId={user?.userId || ""}
+            cohortId={selectedCohort?.cohortId || ""}
+            subconceptId={currentSubconcept.subconceptId}
+          />
+        </div>
+      );
+    }
 
     default:
       return (
