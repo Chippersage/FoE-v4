@@ -352,7 +352,7 @@ const CoursePage: React.FC = () => {
           {isAssignmentImage && hasAnswerImage && (
             <button
               onClick={() => setShowAnswerModal(true)}
-              className="px-4 py-2.5 rounded-md text-sm font-small bg-purple-600 text-white hover:bg-purple-700"
+              className="px-4 py-2.5 rounded-md text-sm font-small bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
             >
               Sample Answer
             </button>
@@ -434,7 +434,7 @@ const CoursePage: React.FC = () => {
           {isAssignmentImage && hasAnswerImage && (
             <button
               onClick={() => setShowAnswerModal(true)}
-              className="px-3 py-2 rounded-md text-sm font-medium bg-purple-600 text-white flex-shrink-0"
+              className="px-3 py-2 rounded-md text-sm font-medium bg-purple-600 text-white flex-shrink-0 cursor-pointer"
             >
               Sample Answer
             </button>
