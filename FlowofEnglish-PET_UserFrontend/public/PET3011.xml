@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<activity>
+<activity id="MCQ001" type="html-form">
 
   <meta>
     <title>Test Your Knowledge!</title>
-    <type>mcq</type>
+    <maxScore>3</maxScore>
   </meta>
 
   <appScriptUrl>
@@ -17,7 +17,6 @@
 
   <questions>
 
-    <!-- Question 1 -->
     <question id="q1" type="mcq-single" marks="1">
       <text>
         What is the first thing you would do when compering?
@@ -30,7 +29,6 @@
       <correctAnswer>A</correctAnswer>
     </question>
 
-    <!-- Question 2 -->
     <question id="q2" type="mcq-single" marks="1">
       <text>
         As the compere, you need to know the order of events taking place.
@@ -42,7 +40,6 @@
       <correctAnswer>A</correctAnswer>
     </question>
 
-    <!-- Question 3 -->
     <question id="q3" type="mcq-single" marks="1">
       <text>
         Comperes have to ensure that the programme progresses according to schedule.

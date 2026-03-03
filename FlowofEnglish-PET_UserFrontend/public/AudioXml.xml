@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<activity id="PET3143" type="audio-typing">
+<activity id="PET3143" type="html-form">
 
   <meta>
     <title>Practice Drill</title>
@@ -27,14 +27,18 @@
       <media type="audio">
         https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/L7c1-PET3143-audio1.mp3
       </media>
-      <correctAnswer></correctAnswer>
+      <correctAnswer>
+        Belief Really Creature Apply Memory Receive Century History
+      </correctAnswer>
     </question>
 
     <question id="audio2" type="audio-typing" marks="1">
       <media type="audio">
         https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/L7c2-PET3143-audio2.mp3
       </media>
-      <correctAnswer></correctAnswer>
+      <correctAnswer>
+        Naughty Usually Electricity Geography Anniversary
+      </correctAnswer>
     </question>
 
   </questions>

@@ -17,6 +17,8 @@ import AssignmentSampleAnswerModal from "./components/AssignmentSampleAnswerModa
 
 import { useIframeAttemptHandler } from "./hooks/useIframeAttemptHandler";
 import CourseSkeleton from "./skeletons/CourseSkeleton";
+import  ReactForm  from "../../components/ActivityComponents/React-Form/ReactForm";
+import { useUserAttempt } from "../../hooks/useUserAttempt";
 
 import { 
   MANUAL_COMPLETION_TYPES, 
@@ -37,6 +39,7 @@ const CoursePage: React.FC = () => {
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const reactFormRef = useRef<any>(null);
+  const formRef = useRef<any>(null);
   const [showScoreSummary, setShowScoreSummary] = useState(false);
   const [videoProgressPercent, setVideoProgressPercent] = useState(0);
   const [isVideoCompleted, setIsVideoCompleted] = useState(false);
@@ -44,9 +47,12 @@ const CoursePage: React.FC = () => {
   const [loadAttempted, setLoadAttempted] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
+  const [htmlScore, setHtmlScore] = useState<{ score: number; total: number } | null>(null);
   
   // Track redirect state to prevent multiple redirects
   const hasRedirectedRef = useRef(false);
+
+  const { recordAttempt } = useUserAttempt();
 
   const {
     loadCourse,
@@ -206,13 +212,36 @@ const CoursePage: React.FC = () => {
     }
   }, [scoreData]);
 
-  const handleSubmit = () => {
-    if (reactFormRef.current) {
-      reactFormRef.current.submitForm();
-      onSubmitClicked();
+  const handleSubmit = async () => {
+
+    // ===== HTML FORM FLOW =====
+    if (isHtmlForm && reactFormRef.current) {
+
+      const result = await reactFormRef.current.submitForm();
+      if (!result) return;
+
+      const { score, maxScore } = result;
+
+      await recordAttempt({
+        userId: user!.userId,
+        programId: programId!,
+        stageId: stageId!,
+        unitId: unitId!,
+        subconceptId: subconcept!.subconceptId,
+        subconceptType: "html-form",
+        subconceptMaxscore: maxScore,
+        score,
+      });
+
+      markSubconceptCompleted(subconcept!.subconceptId);
+
+      setHtmlScore({ score, total: maxScore });
+      setShowScoreSummary(true);
+
       return;
     }
 
+    // ===== IFRAME FLOW =====
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage("submitClicked", "*");
       onSubmitClicked();
@@ -459,12 +488,12 @@ const CoursePage: React.FC = () => {
       </div>
 
       {/* Score Summary Modal */}
-      {!isHtmlForm && scoreData && (
+      {(scoreData || htmlScore) && (
         <ScoreSummaryModal
           isOpen={showScoreSummary}
           onClose={() => setShowScoreSummary(false)}
-          score={scoreData.score}
-          total={scoreData.total}
+          score={htmlScore?.score ?? scoreData?.score}
+          total={htmlScore?.total ?? scoreData?.total}
         />
       )}
 

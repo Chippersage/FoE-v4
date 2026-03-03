@@ -12,7 +12,9 @@ export interface Question {
   marks: number;
   text?: string;
   mediaUrl?: string;
+  audioUrl?: string;
   options?: Option[];
+  correctAnswer?: string;
 }
 
 export interface Activity {

@@ -1,6 +1,5 @@
 // features/react-form/ReactForm.tsx
-
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { useActivityLoader } from "./hooks/useActivityLoader";
 import { useScoring } from "./hooks/useScoring";
 import { useSubmission } from "./hooks/useSubmission";
@@ -15,12 +14,16 @@ interface Props {
   subconceptId: string;
 }
 
-const ReactForm = ({
+interface ReactFormRef {
+  submitForm: () => Promise<{ score: number; maxScore: number } | null>;
+}
+
+const ReactForm = forwardRef<ReactFormRef, Props>(({
   xmlUrl,
   userId,
   cohortId,
   subconceptId,
-}: Props) => {
+}, ref) => {
   const { activity } = useActivityLoader(xmlUrl);
   const [answers, setAnswers] = useState<Record<string, any>>({});
 
@@ -32,15 +35,38 @@ const ReactForm = ({
     subconceptId
   );
 
-  if (!activity) return null;
+  useImperativeHandle(ref, () => ({
+    async submitForm() {
+      console.log("==== SUBMIT CLICKED ====");
+      console.log("Answers at submit:", answers);
+      console.log("Activity questions:", activity.questions);
+      if (!activity) return null;
 
-  const handleSubmit = async () => {
-    const { score, maxScore } = calculateScore();
-    await submit(answers, score, maxScore);
-  };
+      const allAnswered = activity.questions.every(q => {
+        const val = answers[q.id];
+        return val && val.toString().trim() !== "";
+      });
+
+      if (!allAnswered) {
+        alert("Please answer all questions.");
+        return null;
+      }
+
+      const { score, maxScore } = calculateScore();
+      console.log("Calculated score:", score);
+      console.log("Max score:", maxScore);
+
+      await submit(answers, score, maxScore);
+
+      return { score, maxScore };
+    },
+  }));
+
+  if (!activity) return null;
+  console.log("Current answers state:", answers);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 m-4">
       <p>{activity.instructions}</p>
 
       {activity.questions.map(q => {
@@ -49,6 +75,7 @@ const ReactForm = ({
             <AudioQuestion
               key={q.id}
               question={q}
+              subconceptId={subconceptId}
               value={answers[q.id] || ""}
               onChange={val =>
                 setAnswers(prev => ({ ...prev, [q.id]: val }))
@@ -82,15 +109,8 @@ const ReactForm = ({
 
         return null;
       })}
-
-      <button
-        onClick={handleSubmit}
-        className="px-4 py-2 bg-black text-white rounded"
-      >
-        Submit
-      </button>
     </div>
   );
-};
+});
 
 export default ReactForm;
