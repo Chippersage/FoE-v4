@@ -450,7 +450,9 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
-          {isIframeContent && showSubmit && !attemptRecorded && !showScore && (
+          {((isIframeContent && showSubmit) || isHtmlForm) &&
+            !attemptRecorded &&
+            !showScore && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

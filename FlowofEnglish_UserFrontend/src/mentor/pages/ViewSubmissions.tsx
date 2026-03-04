@@ -1317,7 +1317,7 @@ const ViewSubmissions: React.FC = () => {
                                 >
                                   <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-medium text-gray-800 text-sm">
-                                      {isCorrected ? 'Evaluation Details' : 'Correct Assignment'}
+                                      {isCorrected ? 'Evaluation Details' : 'Evaluate Assignment'}
                                     </h4>
                                     {isCorrected && (
                                       <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
