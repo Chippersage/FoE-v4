@@ -11,12 +11,14 @@ interface Props {
   subconceptId: string;
   completionStatus?: string;
   isMobile?: boolean;
+  subconceptType?: string;
 }
 
 const AssignmentActions: React.FC<Props> = ({
   subconceptId,
   completionStatus,
-  isMobile = false
+  isMobile = false,
+  subconceptType,
 }) => {
   const { cohort: contextCohort, user } = useUserContext();
   const { cohortId: cohortIdFromParams } = useParams();
@@ -211,6 +213,7 @@ const AssignmentActions: React.FC<Props> = ({
                 subconceptId: sub.subconceptId,
               }}
               isMobile={true}
+              subconceptType={sub.subconceptType}
             />
           </div>
         )}
@@ -276,6 +279,7 @@ const AssignmentActions: React.FC<Props> = ({
               unitId: sub.unitId,
               subconceptId: sub.subconceptId,
             }}
+            subconceptType={sub.subconceptType}
           />
         )}
 
@@ -298,7 +302,7 @@ const AssignmentActions: React.FC<Props> = ({
 
         {showViewStatus && (
           <button
-            className="h-10 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 rounded-md text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-4 py-2 rounded-md text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleViewStatusClick}
             disabled={loadingStatus || isOpeningModalRef.current}
           >

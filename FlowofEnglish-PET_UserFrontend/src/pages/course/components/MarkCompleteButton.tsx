@@ -87,7 +87,7 @@ const MarkCompleteButton: React.FC<MarkCompleteButtonProps> = ({
       disabled={isLoading || isSubmittingRef.current}
       className={`
         ${isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2 text-sm'}
-        rounded-md font-medium transition flex items-center gap-2
+        rounded-md font-medium transition flex items-center gap-2  cursor-pointer
         ${isLoading || isSubmittingRef.current
           ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
           : 'bg-[#0EA5E9] hover:bg-[#0284C7] text-white'

@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronDown, ChevronUp, Video, FileText, Check, Lock } from "lucide-react";
-import { useUserContext } from "../context/AuthContext";
-import HomeExitIcon from "./icons/HomeExitIcon";
-import useCourseStore from "../store/courseStore";
-import SidebarSkeleton from "../pages/course/skeletons/SidebarSkeleton";
-import useCourseEntryRedirect from "../pages/course/hooks/useCourseEntryRedirect"; 
-import { hasFullAccess } from "../pages/course/utils/accessControl";
+import { getSubconceptIcon } from "./utils/subconceptIcons";
+import { useUserContext } from "../../context/AuthContext";
+import HomeExitIcon from "../icons/HomeExitIcon";
+import useCourseStore from "../../store/courseStore";
+import SidebarSkeleton from "../../pages/course/skeletons/SidebarSkeleton";
+import useCourseEntryRedirect from "../../pages/course/hooks/useCourseEntryRedirect"; 
+import { hasFullAccess } from "../../pages/course/utils/accessControl";
 
 // --------------------------------------------------------------------------
 // STATIC COMPONENTS
@@ -323,16 +324,8 @@ const Sidebar: React.FC = () => {
                                 active={conceptId === sub.subconceptId}
                               />
 
-                              <div className="flex-1 min-w-0 flex items-center gap-3">
-                                {isVideo ? (
-                                  <Video size={16} className={`flex-shrink-0 ${
-                                    isLocked ? 'text-gray-400' : 'text-gray-600'
-                                  }`} />
-                                ) : (
-                                  <FileText size={16} className={`flex-shrink-0 ${
-                                    isLocked ? 'text-gray-400' : 'text-gray-600'
-                                  }`} />
-                                )}
+                            <div className="flex-1 min-w-0 flex items-center gap-3">
+                              {getSubconceptIcon(type, isLocked)}
                                 
                                 <div className="flex-1">
                                   <div className={`text-[13px] leading-snug ${

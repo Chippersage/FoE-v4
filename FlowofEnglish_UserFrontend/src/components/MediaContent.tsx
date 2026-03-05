@@ -1227,7 +1227,7 @@ Return in valid JSON format:
                         onClick={onOpenSampleAnswer}
                         className="bg-[#00A66B] hover:bg-green-600 text-white px-4 py-2 rounded-[5px] text-sm"
                       >
-                        Sample Answer
+                        Hint
                       </Button>
                     )}
 

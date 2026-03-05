@@ -3,6 +3,7 @@ export const MANUAL_COMPLETION_TYPES = [
   "image",
   "pdf",
   "youtube",
+  "practice_drill",
   // Add more types later as needed
   // "audio",
   // "word",

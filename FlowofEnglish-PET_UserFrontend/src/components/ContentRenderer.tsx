@@ -170,6 +170,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     subconceptLink: string;
     subconceptType: string;
     subconceptMaxscore: number;
+    subconceptContent?: string;
     stageId: string;
     unitId: string;
     isLockedForDemo?: boolean;
@@ -186,12 +187,17 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const [formattedUrl, setFormattedUrl] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isFirstLoad = useRef(true);
 
   // ----------------------------------------------------------
   //  Load subconcept data when URL changes
   // ----------------------------------------------------------
   useEffect(() => {
-    const loadSubconcept = () => {
+    if (!isFirstLoad.current) {
+      setIsLoading(true);
+    }
+
+    const loadSubconcept = () => {      
       if (!conceptId || !programId || !stageId || !unitId) {
         setIsLoading(false);
         return;
@@ -208,6 +214,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         subconceptId: subconcept.subconceptId,
         subconceptLink: subconcept.subconceptLink,
         subconceptType: subconcept.subconceptType,
+        subconceptContent: subconcept.subconceptContent,
         subconceptMaxscore: Number(subconcept.subconceptMaxscore || 0),
         stageId: subconcept.stageId,
         unitId: subconcept.unitId,
@@ -215,7 +222,12 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         completionStatus: subconcept.completionStatus
       });
       
-      setIsLoading(false);
+      // keep loader visible slightly longer
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 600);
+      isFirstLoad.current = false;
+
     };
 
     loadSubconcept();
@@ -421,8 +433,8 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   //  Loading spinner
   // ----------------------------------------------------------
   const renderLoading = () => (
-    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-      <div className="animate-spin h-6 w-6 border-b-2 border-blue-500 rounded-full" />
+    <div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm z-50">
+      <div className="animate-spin h-8 w-8 border-b-2 border-blue-500 rounded-full" />
     </div>
   );
 
@@ -546,13 +558,13 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   // ----------------------------------------------------------
   //  Show loading state
   // ----------------------------------------------------------
-  if (isLoading) {
-    return (
-      <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
-        <div className="animate-spin h-8 w-8 border-b-2 border-blue-500 rounded-full" />
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
+  //       <div className="animate-spin h-8 w-8 border-b-2 border-blue-500 rounded-full" />
+  //     </div>
+  //   );
+  // }
 
   // ----------------------------------------------------------
   //  Show error if no subconcept
@@ -585,6 +597,9 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   }
 
   const { subconceptLink, subconceptType, completionStatus } = currentSubconcept;
+
+  // const { subconceptLink, completionStatus } = currentSubconcept;
+  // let subconceptType = "practice_drill";
 
   // ----------------------------------------------------------
   //  Type-based content rendering
@@ -723,32 +738,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           />
         </div>
       );
-    // case "html-form": {
-    //   const selectedCohortRaw = localStorage.getItem("selectedCohort");
-    //   const selectedCohort = selectedCohortRaw
-    //     ? JSON.parse(selectedCohortRaw)
-    //     : null;
-      
-    //   const htmlLink =  "/PET - 3 (Practice Drill - PET3143).html";
-    //   // const htmlLink = "/PET - 3 (Post Assessment - 2 - PET3149).html";
-
-    //   const htmlUrl = `${htmlLink}?userId=${user?.userId || ""}&cohortId=${selectedCohort?.cohortId || ""}&subconceptId=${currentSubconcept.subconceptId}`;
-    //   return (
-    //     <div className={`relative w-full h-full ${className}`}>
-    //       {isLoading && renderLoading()}
-    //       <iframe
-    //         ref={iframeRef}
-    //         src={htmlUrl}
-    //         className="w-full h-full rounded-xl bg-white"
-    //         title="HTML Form Content"
-    //         frameBorder="0"
-    //         onLoad={() => setIsLoading(false)}
-    //         onError={() => setIsLoading(false)}
-    //         loading="lazy"
-    //       />
-    //     </div>
-    //   );
-    // }
 
     case "html-form": {
       const selectedCohortRaw = localStorage.getItem("selectedCohort");
@@ -759,6 +748,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       
       const xmlLink =  "/AudioXml.xml";
       // const xmlLink =  "/PET3011.xml";
+      // const xmlLink =  "/PET3034.xml";
 
       return (
         <div className={`relative w-full h-full overflow-auto ${className}`}>
@@ -769,6 +759,60 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
             cohortId={selectedCohort?.cohortId || ""}
             subconceptId={currentSubconcept.subconceptId}
           />
+        </div>
+      );
+    }
+
+    case "practice_drill":
+    case "assignment_write":
+    case "assignment_speak": {
+      const type = subconceptType.toLowerCase();
+
+      const hasContent =
+        currentSubconcept.subconceptContent &&
+        currentSubconcept.subconceptContent.trim().length > 0;
+
+      const icon =
+        hasContent && type === "assignment_write"
+          ? "/assignment_icons/Write_icon.jpeg"
+          : hasContent && type === "assignment_speak"
+          ? "/assignment_icons/Speak_icon.jpeg"
+          : null;
+
+      return (
+        <div className={`relative w-full h-full overflow-auto bg-white ${className}`}>
+          <div className="w-full max-w-[1200px] mx-auto p-6 text-gray-800 leading-relaxed">
+
+            {icon && (
+              <div className="flex justify-center mb-6">
+                <img
+                  src={icon}
+                  alt="Assignment Icon"
+                  className="w-24 h-24 object-contain"
+                />
+              </div>
+            )}
+
+            {hasContent ? (
+              <div
+                className="space-y-6"
+                dangerouslySetInnerHTML={{
+                  __html: currentSubconcept.subconceptContent
+                    .trim()
+                    .replace(/^"(.*)"$/, "$1"),
+                }}
+              />
+            ) : (
+              <div className="flex justify-center">
+                <img
+                  src={subconceptLink}
+                  alt="Assignment"
+                  className="max-h-[500px] object-contain rounded-xl"
+                />
+              </div>
+            )}
+
+          </div>
         </div>
       );
     }

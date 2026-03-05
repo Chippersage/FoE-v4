@@ -148,6 +148,8 @@ const CoursePage: React.FC = () => {
     return subconcept?.subconceptType?.toLowerCase();
   }, [subconcept?.subconceptType]);
 
+  console.log("Current Subconcept:", subconcept);
+
   const isHtmlForm = type === "html-form";
 
   const isAssignment = type?.startsWith("assignment");
@@ -164,8 +166,8 @@ const CoursePage: React.FC = () => {
     );
 
   const isCompleted = subconcept?.completionStatus?.toLowerCase() === "yes";
-  const isAssignmentImage = type === "assignment_image";
   const hasAnswerImage = !!subconcept?.subconceptGroup;
+  const hasSampleAnswerType = ["assignment_image", "practice_drill"].includes(type || "");
 
 
   // Determine content height based on type and screen size
@@ -321,7 +323,7 @@ const CoursePage: React.FC = () => {
       <div
         className={`${contentHeightClass} bg-white flex justify-center items-center p-2 md:p-4 lg:p-6 overflow-auto`}
       >
-        <div className="w-full max-w-5xl rounded-xl overflow-hidden bg-white h-full relative">
+        <div className="w-full max-w-7xl rounded-xl overflow-hidden bg-white h-full relative">
           <ContentRenderer
             iframeRef={iframeRef}
             reactFormRef={reactFormRef}
@@ -341,6 +343,7 @@ const CoursePage: React.FC = () => {
               <AssignmentActions
                 subconceptId={subconcept.subconceptId}
                 completionStatus={subconcept.completionStatus}
+                subconceptType={subconcept.subconceptType}
               />
             </div>
           )}
@@ -391,12 +394,12 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {isAssignmentImage && hasAnswerImage && (
+          {hasSampleAnswerType && hasAnswerImage && (
             <button
               onClick={() => setShowAnswerModal(true)}
-              className="px-4 py-2.5 rounded-md text-sm font-small bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+              className="px-4 py-2 rounded-md text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
             >
-              Sample Answer
+              Hint
             </button>
           )}
 
@@ -417,6 +420,7 @@ const CoursePage: React.FC = () => {
               <AssignmentActions
                 subconceptId={subconcept.subconceptId}
                 completionStatus={subconcept.completionStatus}
+                subconceptType={subconcept.subconceptType}
                 isMobile={true}
               />
             </div>
@@ -475,12 +479,12 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {isAssignmentImage && hasAnswerImage && (
+          {hasSampleAnswerType && hasAnswerImage && (
             <button
               onClick={() => setShowAnswerModal(true)}
-              className="px-3 py-2 rounded-md text-sm font-medium bg-purple-600 text-white flex-shrink-0 cursor-pointer"
+              className="px-2.5 py-2 rounded-md text-sm font-semibold bg-purple-600 text-white flex-shrink-0 cursor-pointer"
             >
-              Sample Answer
+              Hint
             </button>
           )}
 
@@ -499,7 +503,7 @@ const CoursePage: React.FC = () => {
         />
       )}
 
-      {isAssignmentImage && hasAnswerImage && (
+      {hasSampleAnswerType && hasAnswerImage && (
         <AssignmentSampleAnswerModal
           isOpen={showAnswerModal}
           onClose={() => setShowAnswerModal(false)}

@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useRef, type ReactNode, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
 import FileUploader from "./FileUploader";
 import AudioRecorder from "./AudioRecorder";
 import { VideoRecorder } from "./VideoRecorder";
@@ -25,6 +25,7 @@ interface FileUploaderRecorderProps {
     subconceptId: string;
   };
   isMobile?: boolean;
+  subconceptType?: string;
 }
 
 type RecordingState = "recording" | "paused" | "stopped";
@@ -59,6 +60,7 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
   assignmentStatus,
   uploadMeta,
   isMobile = false,
+  subconceptType,
 }) => {
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
   const [recordingState, setRecordingState] =
@@ -117,6 +119,20 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
 
     return true;
   };
+
+  const normalizedType = subconceptType?.toLowerCase();
+
+  const allowedActions = useMemo(() => {
+    if (normalizedType === "assignment_write") {
+      return ["upload", "photo"];
+    }
+
+    if (normalizedType === "assignment_speak") {
+      return ["upload", "audio", "video"];
+    }
+
+    return ["upload", "audio", "video", "photo"];
+  }, [normalizedType]);
 
   /* -------------------------------------------------------------------------- */
   /* Actions                                                                   */
@@ -213,36 +229,49 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
           className="flex justify-center items-center py-0.5 md:py-1" // Reduced top-bottom padding for PC
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex space-x-2 sm:space-x-2.5 bg-white rounded-full shadow-sm p-1.5 sm:p-2 border border-gray-100">
+        <div className="flex space-x-2 sm:space-x-2.5 bg-white rounded-full shadow-sm p-1.5 sm:p-2 border border-gray-100">
+
+          {allowedActions.includes("upload") && (
             <ActionButton
-              icon={<Upload className="w-5 h-5 sm:w-5 sm:h-5" />} // Bigger on mobile: w-5
+              icon={<Upload className="w-5 h-5 sm:w-5 sm:h-5" />}
               isActive={activeAction === "upload"}
               onClick={() => setActiveAction("upload")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
+          )}
+
+          {allowedActions.includes("audio") && (
             <ActionButton
-              icon={<Mic className="w-5 h-5 sm:w-5 sm:h-5" />} // Bigger on mobile: w-5
+              icon={<Mic className="w-5 h-5 sm:w-5 sm:h-5" />}
               isActive={activeAction === "audio"}
               onClick={() => setActiveAction("audio")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
+          )}
+
+          {allowedActions.includes("video") && (
             <ActionButton
-              icon={<Video className="w-5 h-5 sm:w-5 sm:h-5" />} // Bigger on mobile: w-5
+              icon={<Video className="w-5 h-5 sm:w-5 sm:h-5" />}
               isActive={activeAction === "video"}
               onClick={() => setActiveAction("video")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
+          )}
+
+          {allowedActions.includes("photo") && (
             <ActionButton
-              icon={<Camera className="w-5 h-5 sm:w-5 sm:h-5" />} // Bigger on mobile: w-5
+              icon={<Camera className="w-5 h-5 sm:w-5 sm:h-5" />}
               isActive={activeAction === "photo"}
               onClick={() => setActiveAction("photo")}
               activeAction={activeAction}
               disabled={isDisabled}
             />
-          </div>
+          )}
+
+        </div>
         </div>
       )}
 
@@ -331,7 +360,7 @@ const ActionButton = ({
       }}
       className={`
         rounded-full flex items-center justify-center transition-all duration-200
-        cursor-pointer // Added cursor-pointer
+        cursor-pointer
         h-10 w-10 sm:h-10 sm:w-10 p-0 // Same size for mobile and PC
         ${isActive 
           ? "bg-[#0EA5E9] text-white shadow-sm scale-105" 

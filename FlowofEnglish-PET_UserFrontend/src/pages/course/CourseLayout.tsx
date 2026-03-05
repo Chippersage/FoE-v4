@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Outlet, useParams, useLocation } from 'react-router-dom';
-import Sidebar from '../../components/Sidebar';
+import Sidebar from '../../components/Sidebar/Sidebar';
 
 /**
  * CourseLayout Component

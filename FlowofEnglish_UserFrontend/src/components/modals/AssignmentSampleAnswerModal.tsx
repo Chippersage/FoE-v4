@@ -1,95 +1,81 @@
-import { useEffect } from "react";
+import * as React from "react";
 
-interface AssignmentSampleAnswerModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   documentUrl: string;
 }
 
-const AssignmentSampleAnswerModal = ({
-  isOpen,
-  onClose,
-  documentUrl,
-}: AssignmentSampleAnswerModalProps) => {
-
-  // Prevent background scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
-
-  // Close on ESC
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener("keydown", handleEsc);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleEsc);
-    };
-  }, [isOpen, onClose]);
-
+const AssignmentSampleAnswerModal: React.FC<Props> = (props: Props) => {
+  const { isOpen, onClose, documentUrl } = props;
   if (!isOpen) return null;
 
-  const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(documentUrl);
-  const isPdf = /\.pdf$/i.test(documentUrl);
+  // Check if it is a valid URL (starts with http or https)
+  const isUrl = /^https?:\/\//i.test(documentUrl || "");
+
+  // Media type checks (only if it's a URL)
+  const isImage =
+    isUrl && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(documentUrl);
+  const isPdf = isUrl && /\.pdf$/i.test(documentUrl);
+  const isVideo =
+    isUrl && /\.(mp4|webm|ogg|mov)$/i.test(documentUrl);
+
+  // If not URL → treat as text
+  const isText = !isUrl;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-3 md:px-6"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div
-        className="bg-white rounded-xl w-full md:w-[85%] lg:w-[65%] max-h-[92vh] overflow-hidden p-4 md:p-6 relative shadow-xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className={`bg-white rounded-xl w-[95%] md:w-[80%] lg:w-[60%] p-4 relative ${
+          isText ? "max-h-[80vh]" : "max-h-[90vh]"
+        }`}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-4 text-gray-500 hover:text-black text-xl font-bold"
+          className="absolute top-3 right-4 font-medium text-gray-500 hover:text-black text-lg cursor-pointer"
         >
           ✕
         </button>
 
-        {/* Title */}
-        <h2 className="text-base md:text-lg font-semibold mb-4 text-center">
-          Sample Answer
+        <h2 className="text-xl font-semibold mb-4 text-center">
+          Hint
         </h2>
 
         {/* Content Area */}
-        <div className="w-full flex-1 overflow-auto flex items-center justify-center bg-gray-50 rounded-lg">
-          
+        <div
+          className={`w-full flex items-center justify-center overflow-auto ${
+            isText ? "" : "h-[75vh]"
+          }`}
+        >
           {isImage ? (
             <img
               src={documentUrl}
               alt="Assignment Answer"
-              className="max-h-[75vh] max-w-full object-contain rounded-lg"
+              className="max-h-full max-w-full object-contain rounded-lg"
             />
           ) : isPdf ? (
             <iframe
               src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
               title="PDF Viewer"
-              className="w-full h-[75vh] rounded-lg border"
+              className="w-full h-full rounded-lg border"
             />
+          ) : isVideo ? (
+            <video
+              src={documentUrl}
+              controls
+              controlsList="nodownload"
+              className="max-h-full max-w-full rounded-lg"
+            />
+          ) : isText ? (
+              <div className="text-gray-700 text-base whitespace-pre-wrap break-words p-2 overflow-y-auto max-h-[70vh]">
+                {documentUrl}
+              </div>
           ) : (
-            <div className="text-sm text-gray-500 text-center p-6">
+            <div className="text-sm text-gray-500 text-center">
               Preview not supported for this file type.
             </div>
           )}
-
         </div>
       </div>
     </div>
