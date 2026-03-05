@@ -37,7 +37,6 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private UserCohortMappingService userCohortMappingService;
-
     
     @Autowired
     private CohortRepository cohortRepository;
@@ -60,8 +59,7 @@ public class UserServiceImpl implements UserService {
     @Cacheable(value = "users", key = "'all_users'")
     public List<UserGetDTO> getAllUsers() {
         logger.info("Fetching all users from database - cache miss");
-        return userRepository.findAll().stream()
-                .map(this::convertToUserDTO)
+        return userRepository.findAll().stream().map(this::convertToUserDTO)
                 .collect(Collectors.toList());
     }
     
@@ -176,7 +174,7 @@ public class UserServiceImpl implements UserService {
         
      // Validate userType
         try {
-            UserType.fromString(user.getUserType()); // Throws exception if invalid
+            UserType.fromString(user.getUserType());
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid userType: " + user.getUserType() + ". Allowed values are 'learner' or 'mentor'.");
         }
@@ -202,8 +200,7 @@ public class UserServiceImpl implements UserService {
         List<String> programIds = new ArrayList<>();
         List<String> programNames = new ArrayList<>();
         List<String> cohortNames = new ArrayList<>();
-        cohortProgramRepository.findByCohortCohortId(cohort.getCohortId())
-                .ifPresent(cohortProgram -> {
+        cohortProgramRepository.findByCohortCohortId(cohort.getCohortId()).ifPresent(cohortProgram -> {
                 	programIds.add(cohortProgram.getProgram().getProgramId());
                     programNames.add(cohortProgram.getProgram().getProgramName());
                     cohortNames.add(cohort.getCohortName());
@@ -458,11 +455,8 @@ public class UserServiceImpl implements UserService {
 
     
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "user", key = "#userId"),
-        @CacheEvict(value = "userDto", key = "#userId"),
-        @CacheEvict(value = "users", key = "'all_users'"),
-        @CacheEvict(value = "usersByOrg", key = "#result.organization.organizationId")
+    @Caching(evict = { @CacheEvict(value = "user", key = "#userId"), @CacheEvict(value = "userDto", key = "#userId"),
+    @CacheEvict(value = "users", key = "'all_users'"), @CacheEvict(value = "usersByOrg", key = "#result.organization.organizationId")
     })
     public User updateUser(String userId, User updatedUser) {
         logger.info("Updating user with ID: {}", userId);
@@ -572,18 +566,15 @@ public class UserServiceImpl implements UserService {
     
     
     @Override
-    @Caching(evict = {
-        @CacheEvict(value = "user", key = "#userId"),
-        @CacheEvict(value = "userDto", key = "#userId"),
-        @CacheEvict(value = "users", key = "'all_users'")
-    })
+    @Caching(evict = { @CacheEvict(value = "user", key = "#userId"), @CacheEvict(value = "userDto", key = "#userId"),
+        @CacheEvict(value = "users", key = "'all_users'") })
     public String deleteUser(String userId) {
         // First, retrieve the user to get their details before deletion
         Optional<User> userOpt = userRepository.findById(userId);
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            userRepository.deleteById(userId);  // Delete the user
+            userRepository.deleteById(userId);
             
             // Return a message with the user's name and ID
             return "User '" + user.getUserName() + "' with ID: " + user.getUserId() + " has been deleted.";
@@ -879,7 +870,6 @@ public class UserServiceImpl implements UserService {
         
         if (!userCohortMappings.isEmpty()) {
             // Get the active or most recent cohort mapping
-            // You might want to add a status field to UserCohortMapping to track active/inactive
             UserCohortMapping primaryMapping = userCohortMappings.get(0);
             
             // Set primary cohort
@@ -889,8 +879,7 @@ public class UserServiceImpl implements UserService {
                 dto.setCohort(cohortDTO);
 
                 // Get program for primary cohort
-                Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository
-                    .findByCohortCohortId(primaryCohort.getCohortId());
+                Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(primaryCohort.getCohortId());
                 
                 if (cohortProgramOpt.isPresent()) {
                     ProgramDTO programDTO = programService.convertToDTO(cohortProgramOpt.get().getProgram());
@@ -910,8 +899,7 @@ public class UserServiceImpl implements UserService {
                     allCohorts.add(cohortDTO);
 
                     // Get program for this cohort
-                    Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository
-                        .findByCohortCohortId(cohort.getCohortId());
+                    Optional<CohortProgram> cohortProgramOpt = cohortProgramRepository.findByCohortCohortId(cohort.getCohortId());
                     
                     if (cohortProgramOpt.isPresent()) {
                         ProgramDTO programDTO = programService.convertToDTO(cohortProgramOpt.get().getProgram());
@@ -972,7 +960,6 @@ public class UserServiceImpl implements UserService {
                 cohortProgramDTO.setShowLeaderboard(cohort.isShowLeaderboard());
                 cohortProgramDTO.setDelayedStageUnlock(cohort.isDelayedStageUnlock());
                 cohortProgramDTO.setDelayInDays(cohort.getDelayInDays());
-                 // Set program details
 
                 ProgramDTO programDTO = new ProgramDTO();
                 programDTO.setProgramId(cohortProgram.getProgram().getProgramId());

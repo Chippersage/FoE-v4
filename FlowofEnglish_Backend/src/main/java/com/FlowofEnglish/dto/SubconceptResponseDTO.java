@@ -13,6 +13,7 @@ public class SubconceptResponseDTO {
 	 private String subconceptDesc2;
 	 private String subconceptType;
      private String subconceptLink;
+     private String subconceptContent;
      private Integer subconceptDuration;
      private String completionStatus;
      
@@ -73,6 +74,13 @@ public class SubconceptResponseDTO {
 	}
 	public String getSubconceptLink() {
 		return subconceptLink;
+	}
+	
+	public String getSubconceptContent() {
+		return subconceptContent;
+	}
+	public void setSubconceptContent(String subconceptContent) {
+		this.subconceptContent = subconceptContent;
 	}
 	public void setSubconceptLink(String subconceptLink) {
 		this.subconceptLink = subconceptLink;

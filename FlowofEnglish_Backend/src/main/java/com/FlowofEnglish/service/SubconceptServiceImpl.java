@@ -178,6 +178,9 @@ public class SubconceptServiceImpl implements SubconceptService {
                     case "subconcepttype":
                         headerMap.put("subconcept_type", i);
                         break;
+                    case "subconceptcontent":
+                        headerMap.put("subconcept_content", i);
+                        break;
                     case "numquestions":
                         headerMap.put("num_questions", i);
                         break;
@@ -225,6 +228,7 @@ public class SubconceptServiceImpl implements SubconceptService {
                     subconcept.setSubconceptDesc(getValue(record, headerMap, "subconcept_desc"));
                     subconcept.setSubconceptDesc2(getValue(record, headerMap, "subconcept_desc_2"));
                     subconcept.setSubconceptGroup(getValue(record, headerMap, "subconcept_group"));
+                    subconcept.setSubconceptType(getValue(record, headerMap, "subconcept_type"));
                     subconcept.setSubconceptLink(getValue(record, headerMap, "subconcept_link"));
                     subconcept.setSubconceptType(getValue(record, headerMap, "subconcept_type"));
 
@@ -374,6 +378,7 @@ public class SubconceptServiceImpl implements SubconceptService {
             existingSubconcept.setSubconceptLink(subconcept.getSubconceptLink());
             existingSubconcept.setSubconceptDesc2(subconcept.getSubconceptDesc2());
             existingSubconcept.setSubconceptType(subconcept.getSubconceptType());
+            existingSubconcept.setSubconceptContent(subconcept.getSubconceptContent());
             existingSubconcept.setNumQuestions(subconcept.getNumQuestions());
             existingSubconcept.setSubconceptMaxscore(subconcept.getSubconceptMaxscore());
             existingSubconcept.setSubconceptDuration(subconcept.getSubconceptDuration());
@@ -506,6 +511,7 @@ public class SubconceptServiceImpl implements SubconceptService {
                     hasUpdates |= updateField(headerMap, record, "subconceptgroup", existing::setSubconceptGroup, updatedFields);
                     hasUpdates |= updateField(headerMap, record, "subconceptlink", existing::setSubconceptLink, updatedFields);
                     hasUpdates |= updateField(headerMap, record, "subconcepttype", existing::setSubconceptType, updatedFields);
+                    hasUpdates |= updateField(headerMap, record, "subconceptcontent", existing::setSubconceptContent, updatedFields);
                     hasUpdates |= updateNumericField(headerMap, record, "numquestions", existing::setNumQuestions, updatedFields, subconceptId, failedIds);
                     hasUpdates |= updateNumericField(headerMap, record, "subconceptduration", existing::setSubconceptDuration, updatedFields, subconceptId, failedIds);
                     hasUpdates |= updateNumericField(headerMap, record, "subconceptmaxscore", existing::setSubconceptMaxscore, updatedFields, subconceptId, failedIds);
