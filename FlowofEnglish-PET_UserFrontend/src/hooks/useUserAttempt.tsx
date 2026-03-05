@@ -49,11 +49,12 @@ export const useUserAttempt = () => {
         
         const type = subconceptType.toLowerCase();
         if (type === "video") return subconceptMaxscore;
-        if (type === "pdf" || type === "image" || type === "assignment") return subconceptMaxscore;
+        if (type === "pdf" || type === "image" || type === "assignment" || type === "html-form") return subconceptMaxscore;
         return 0; // Default for other types
       };
 
-      const userAttemptScore = getAttemptScore();
+      const userAttemptScore = Number(getAttemptScore() ?? 1);
+      console.log("FINAL SCORE SENT:", userAttemptScore, typeof userAttemptScore);
 
       // Build payload
       const payload = {
@@ -71,7 +72,14 @@ export const useUserAttempt = () => {
       };
 
       // Submit to backend
-      await axios.post(`${API_BASE_URL}/user-attempts`, payload);
+      try {
+        const res = await axios.post(`${API_BASE_URL}/user-attempts`, payload);
+        console.log("Attempt success:", res.data);
+      } catch (err: any) {
+        console.error("FULL BACKEND ERROR:", err.response?.data);
+        console.error("STATUS:", err.response?.status);
+        throw err;
+      }
 
       // Dispatch event for sidebar updates
       window.dispatchEvent(

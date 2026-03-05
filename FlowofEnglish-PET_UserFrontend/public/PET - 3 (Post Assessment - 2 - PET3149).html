@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Post Assessment – 2 | ChipperSage</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root{
+  --brand:#5A3DF0;
+  --background:#F5F5F7;
+  --surface:#FFFFFF;
+  --border:#E1E1E1;
+  --error:#d62828;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Inter",sans-serif;background:var(--background);}
+
+.wrapper{display:flex;justify-content:center;padding:30px 15px;}
+.container{width:100%;max-width:620px;}
+.title{text-align:center;font-size:18px;font-weight:600;margin-bottom:20px;}
+
+.card{
+  background:var(--surface);
+  padding:18px;
+  margin-bottom:18px;
+  border-radius:12px;
+  border:1px solid var(--border);
+}
+
+label{font-size:13px;font-weight:600;display:block;margin-bottom:6px;}
+
+textarea{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  min-height:90px;
+}
+
+.attempt-info{margin-top:6px;font-size:12px;}
+.limit-message{margin-top:6px;font-size:12px;color:var(--error);display:none;}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:var(--brand);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal.active{display:flex;}
+
+.modal-box{
+  background:white;
+  padding:24px;
+  border-radius:12px;
+  width:90%;
+  max-width:320px;
+  text-align:center;
+}
+.instruction{
+  background:var(--surface);
+  padding:15px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  margin-bottom:20px;
+  font-size:14px;
+}
+
+/* just to match reference exactly — hidden debug box is present but commented out in HTML */
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+<div class="container">
+
+<div class="title">Post Assessment – 2</div>
+
+<div class="instruction">
+  <strong>Instructions:</strong> Listen carefully to each audio and type exactly what you hear. <br />
+  You can listen to each audio only <strong>3 times</strong>. <br />
+  You cannot pause or skip while it is playing.
+</div>
+
+<form id="postAssessmentForm">
+
+<input type="hidden" name="subconceptId">
+<input type="hidden" name="learnerId">
+<input type="hidden" name="cohortId">
+
+<!-- DEBUG BOX (kept exactly as reference, commented out)
+<div class="card" style="background:#f3f3ff; font-size:13px;">
+  <strong>Debug Info:</strong>
+  <div id="debugUser"></div>
+  <div id="debugCohort"></div>
+  <div id="debugSubconcept"></div>
+</div> -->
+
+<!-- AUDIO 1 -->
+<div class="card">
+  <label>Audio 1</label>
+
+  <audio id="audio1" preload="auto">
+    <source src="https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/Question-1-PET3149-audio1.mp3" type="audio/mpeg">
+  </audio>
+
+  <button type="button" id="btn_audio1">▶ Play</button>
+
+  <div class="attempt-info">
+    Remaining Plays: <span id="count1">3</span>
+  </div>
+
+  <div class="limit-message" id="limit1">
+    Maximum listening attempts reached.
+  </div>
+
+  <label>Your Answer</label>
+  <textarea name="answer1" required></textarea>
+</div>
+
+<!-- AUDIO 2 -->
+<div class="card">
+  <label>Audio 2</label>
+
+  <audio id="audio2" preload="auto">
+    <source src="https://chippersageblr.s3.ap-south-1.amazonaws.com/TEFD+L3+Videos+with+CS+Logo/PET-3+Practice+Drill+Assignments/Question-2-PET3149-audio2.mp3" type="audio/mpeg">
+  </audio>
+
+  <button type="button" id="btn_audio2">▶ Play</button>
+
+  <div class="attempt-info">
+    Remaining Plays: <span id="count2">3</span>
+  </div>
+
+  <div class="limit-message" id="limit2">
+    Maximum listening attempts reached.
+  </div>
+
+  <label>Your Answer</label>
+  <textarea name="answer2" required></textarea>
+</div>
+
+<!-- submit button hidden, triggered via postMessage (exactly like reference) -->
+<button type="submit" id="internalSubmit" style="display:none;">Submit Response</button>
+
+</form>
+</div>
+</div>
+
+<div class="modal" id="statusModal">
+  <div class="modal-box" id="modalMessage">Submitting...</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // 1️⃣ Capture URL parameters exactly like reference
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("userId") || "TEST_USER";
+  const cohortId = params.get("cohortId") || "TEST_COHORT";
+  const subconceptId = params.get("subconceptId") || "PET3149";   // default for post-assessment
+
+  // 2️⃣ Populate hidden inputs
+  document.querySelector('input[name="learnerId"]').value = userId;
+  document.querySelector('input[name="cohortId"]').value = cohortId;
+  document.querySelector('input[name="subconceptId"]').value = subconceptId;
+
+  // 3️⃣ Setup audio playback with limit (identical to reference)
+  function setupAudio(audioId, buttonId, countId, limitId) {
+    const audio = document.getElementById(audioId);
+    const button = document.getElementById(buttonId);
+    const count = document.getElementById(countId);
+    const limit = document.getElementById(limitId);
+
+    const max = 3;
+    const key = `${userId}_${subconceptId}_${audioId}`;
+    let plays = parseInt(localStorage.getItem(key)) || 0;
+
+    count.innerText = max - plays;
+
+    if (plays >= max) {
+      button.disabled = true;
+      limit.style.display = "block";
+    }
+
+    button.addEventListener("click", async () => {
+      if (plays >= max) {
+        limit.style.display = "block";
+        return;
+      }
+
+      plays++;
+      localStorage.setItem(key, plays);
+      count.innerText = max - plays;
+
+      button.disabled = true;
+      button.innerText = "Playing...";
+
+      audio.currentTime = 0;
+
+      try {
+        await audio.play();
+      } catch (err) {
+        console.error("Playback failed:", err);
+        button.disabled = false;
+        button.innerText = "▶ Play";
+        return;
+      }
+
+      audio.onended = () => {
+        if (plays >= max) {
+          button.disabled = true;
+          limit.style.display = "block";
+        } else {
+          button.disabled = false;
+          button.innerText = "▶ Play";
+        }
+      };
+    });
+  }
+
+  // Initialize both audios
+  setupAudio("audio1", "btn_audio1", "count1", "limit1");
+  setupAudio("audio2", "btn_audio2", "count2", "limit2");
+
+  // 4️⃣ Form submit logic – same as reference, only SCRIPT_URL updated
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlv41PvQ1oS19dd5ZjnhRrA1rMTHTahjhy1izwI9pQKpsgkzJG9LQV1M1kqNgKYjy-/exec";
+
+  const form = document.getElementById("postAssessmentForm");
+
+  // 5️⃣ Listen for "submitClicked" message from parent (exact copy)
+  window.addEventListener("message", function (event) {
+
+    if (event.data === "submitClicked") {
+
+      // Check HTML5 validation
+      if (!form.checkValidity()) {
+        form.reportValidity(); // Show browser validation messages
+        return;
+      }
+
+      // If valid, trigger actual submit
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    }
+
+  });
+
+  // 6️⃣ Handle actual form submission (exactly as reference)
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    showModal("Submitting...");
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        showModal(
+          `<strong>Submission Successful</strong><br><br>
+          Your Score: ${result.score} / 2`
+        );
+
+        window.parent.postMessage({
+          type: "HTML_FORM_SUCCESS"
+        }, "*");
+        } else {
+          showModal("Submission Failed");
+      }
+
+    } catch (err) {
+      console.error("Submit error:", err);
+      showModal("Error submitting form");
+    }
+  });
+
+  // 7️⃣ Tell parent to enable/disable submit button based on validity (exact copy)
+  form.addEventListener("input", function () {
+    if (form.checkValidity()) {
+      window.parent.postMessage("enableSubmit", "*");
+    } else {
+      window.parent.postMessage("disableSubmit", "*");
+    }
+  });
+
+  // 8️⃣ Modal helper (exact copy)
+  function showModal(msg) {
+    document.getElementById("modalMessage").innerHTML = msg;
+    document.getElementById("statusModal").classList.add("active");
+    setTimeout(() => {
+      document.getElementById("statusModal").classList.remove("active");
+    }, 3000);
+  }
+
+});
+</script>
+</body>
+</html>

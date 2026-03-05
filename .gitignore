@@ -37,3 +37,40 @@ FlowofEnglish_Backend/src/main/resources/application-docker.properties
 
 Mindful_FrontEnd/
 redis_cheat_sheet.md
+
+FlowofEnglish-PET_UserFrontend/public/PET3023.xml
+FlowofEnglish-PET_UserFrontend/public/PET3028.xml
+FlowofEnglish-PET_UserFrontend/public/PET3034.xml
+FlowofEnglish-PET_UserFrontend/public/PET3051.xml
+FlowofEnglish-PET_UserFrontend/public/PET3059.xml
+FlowofEnglish-PET_UserFrontend/public/PET3064.xml
+FlowofEnglish-PET_UserFrontend/public/PET3065.xml
+
+
+# PET - Modern UI
+# Logs
+FlowofEnglish-PET_UserFrontend/logs
+FlowofEnglish-PET_UserFrontend/*.log
+FlowofEnglish-PET_UserFrontend/npm-debug.log*
+FlowofEnglish-PET_UserFrontend/yarn-debug.log*
+FlowofEnglish-PET_UserFrontend/yarn-error.log*
+FlowofEnglish-PET_UserFrontend/pnpm-debug.log*
+FlowofEnglish-PET_UserFrontend/lerna-debug.log*
+
+FlowofEnglish-PET_UserFrontend/node_modules
+FlowofEnglish-PET_UserFrontend/dist
+FlowofEnglish-PET_UserFrontend/dist-ssr
+FlowofEnglish-PET_UserFrontend/*.local
+
+# Editor directories and files
+FlowofEnglish-PET_UserFrontend/.vscode/*
+FlowofEnglish-PET_UserFrontend/!.vscode/extensions.json
+FlowofEnglish-PET_UserFrontend/.idea
+FlowofEnglish-PET_UserFrontend/.DS_Store
+FlowofEnglish-PET_UserFrontend/*.suo
+FlowofEnglish-PET_UserFrontend/*.ntvs*
+FlowofEnglish-PET_UserFrontend/*.njsproj
+FlowofEnglish-PET_UserFrontend/*.sln
+FlowofEnglish-PET_UserFrontend/*.sw?
+
+FlowofEnglish-PET_UserFrontend/.env
