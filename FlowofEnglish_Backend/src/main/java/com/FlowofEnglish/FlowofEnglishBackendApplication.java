@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoCo
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+
 @SpringBootApplication(exclude = {RedisRepositoriesAutoConfiguration.class})
 @EnableJpaRepositories(basePackages = "com.FlowofEnglish.repository")
 @EnableTransactionManagement
