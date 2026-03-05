@@ -195,7 +195,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             subconceptResponseDTO.setSubconceptDesc(mapping.getSubconcept().getSubconceptDesc());
             subconceptResponseDTO.setSubconceptDesc2(mapping.getSubconcept().getSubconceptDesc2());
             subconceptResponseDTO.setSubconceptType(mapping.getSubconcept().getSubconceptType());
-            //subconceptResponseDTO.setSubconceptLink(mapping.getSubconcept().getSubconceptLink());
+            subconceptResponseDTO.setSubconceptContent(mapping.getSubconcept().getSubconceptContent());
 
             // Process the subconceptLink to handle signed URLs
             String originalLink = mapping.getSubconcept().getSubconceptLink();
@@ -674,7 +674,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                             .findFirst();
 
                     if (existingOpt.isPresent()) {
-                        // ✅ Update existing record
+                        //  Update existing record
                         ProgramConceptsMapping existing = existingOpt.get();
                         existing.setUnit(unit);
                         existing.setPosition(newPosition);
@@ -682,7 +682,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                         programConceptsMappingRepository.save(existing);
                         successCount++;
                     } else {
-                        // ❌ No record found, skip or optionally create new
+                        //  No record found, skip or optionally create new
                         errorMessages.add("Mapping not found for ProgramId=" + programId +
                                 ", StageId=" + stageId + ", SubconceptId=" + subconceptId);
                         failCount++;
@@ -837,7 +837,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 throw new IllegalArgumentException("User ID cannot be null or empty");
             }
 
-            // ✅ Step 1: Get userType from DB
+            //  Step 1: Get userType from DB
             String userType = userRepository.findById(userId)
                     .map(User::getUserType)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -855,7 +855,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
             List<Subconcept> subconcepts = subconceptRepository.findAllById(subconceptIds);
             logger.debug("Retrieved {} subconcepts", subconcepts.size());
 
-            // ✅ Step 4: Apply visibility filtering
+            //  Step 4: Apply visibility filtering
             List<Subconcept> visibleSubconcepts = subconcepts.stream()
                     .filter(sub -> isSubconceptVisibleToUser(userType, sub))
                     .collect(Collectors.toList());
@@ -1318,7 +1318,7 @@ public class ProgramConceptsMappingServiceImpl implements ProgramConceptsMapping
                 subconceptDTO.setSubconceptDesc(subconcept.getSubconceptDesc());
                 subconceptDTO.setSubconceptDesc2(subconcept.getSubconceptDesc2());
                 subconceptDTO.setSubconceptType(subconcept.getSubconceptType());
-                
+                subconceptDTO.setSubconceptContent(subconcept.getSubconceptContent());
                 // Process link for signed URLs
                 String originalLink = subconcept.getSubconceptLink();
                 String processedLink = processSubconceptLink(originalLink);
