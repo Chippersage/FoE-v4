@@ -4,7 +4,7 @@ import com.FlowofEnglish.dto.*;
 import com.FlowofEnglish.model.*;
 import com.FlowofEnglish.repository.*;
 import com.opencsv.CSVReader;
-
+import com.opencsv.exceptions.CsvException;
 import jakarta.transaction.Transactional;
 
 import org.springframework.cache.annotation.*;
@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 @Service
@@ -416,7 +418,7 @@ public class SubconceptServiceImpl implements SubconceptService {
             throw new RuntimeException("File is empty");
         }
 
-        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             List<String[]> records = reader.readAll();
             if (records.isEmpty()) throw new RuntimeException("CSV file is empty");
 
