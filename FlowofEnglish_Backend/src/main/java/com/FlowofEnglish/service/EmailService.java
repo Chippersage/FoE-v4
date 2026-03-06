@@ -217,7 +217,22 @@ public class EmailService {
                 "Warm regards,\n" +
                 "Team ChipperSage";
 
-        sendEmail(userEmail, subject, body);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false);
+
+            helper.setTo(userEmail);
+            helper.setBcc("rashmi@mindfultalk.in"); // BCC
+            helper.setSubject(subject);
+            helper.setText(body);
+
+            mailSender.send(message);
+
+            logger.info("Welcome email sent to {} with BCC", userEmail);
+
+        } catch (Exception e) {
+            logger.error("Failed to send welcome email to {}: {}", userEmail, e.getMessage());
+        }
     }
     
     /**

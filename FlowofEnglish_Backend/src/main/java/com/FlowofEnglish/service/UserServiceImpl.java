@@ -408,7 +408,7 @@ public class UserServiceImpl implements UserService {
                     plainPassword,
                     programIds,
                     programNames,
-                    cohortNames, // Still passed but not used in the new email format
+                    cohortNames,
                     organization.getOrganizationAdminEmail(),
                     organization.getOrganizationName(),
                     user.getUserType()
@@ -421,14 +421,14 @@ public class UserServiceImpl implements UserService {
     private boolean isValidEmail(String email) {
     	// Return true for null or empty strings
         if (email == null || email.isEmpty()) {
-            return true; // No error for empty email
+            return true;
         }
         return email != null && email.matches("^(?!.*\\.\\.)[\\w._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
     	if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return true; // No error for empty phoneNumber
+            return true;
         }
         return phoneNumber != null && phoneNumber.matches("^[6-9]\\d{9}$");
     }
