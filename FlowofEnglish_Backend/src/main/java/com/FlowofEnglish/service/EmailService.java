@@ -257,7 +257,6 @@ public class EmailService {
                     .replaceAll("\\s+", "") // handles "EEA - 3"
                     .toUpperCase();
 
-            // Teachers Portal programs (priority)
             if (programId.startsWith("PET-LEVEL-") || programId.equals("PMT-1")) {
                 return TEACHERS_PORTAL_LOGIN;
             }
