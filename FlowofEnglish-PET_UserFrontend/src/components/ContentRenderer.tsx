@@ -795,7 +795,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
 
             {hasContent ? (
               <div
-                className="space-y-6"
+                className="space-y-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mb-2"
                 dangerouslySetInnerHTML={{
                   __html: currentSubconcept.subconceptContent
                     .trim()
