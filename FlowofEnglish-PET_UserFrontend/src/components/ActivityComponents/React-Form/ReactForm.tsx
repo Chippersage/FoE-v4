@@ -10,6 +10,7 @@ import MCQSingle from "./components/MCQSingle";
 import MCQMultiple from "./components/MCQMultiple";
 import TextInputQuestion from "./components/TextInputQuestion";
 import MediaRenderer from "./components/MediaRenderer";
+import { CheckCircle } from "lucide-react";
 
 interface Props {
   xmlUrl: string;
@@ -70,9 +71,7 @@ const ReactForm = forwardRef<ReactFormRef, Props>(({
 
       setResult({ score, maxScore });
       
-      if (activity?.showScore !== false) {
-        setShowReview(true);
-      }
+      setShowReview(true);
 
       return { score, maxScore, showScore: activity?.showScore !== false };
     },
@@ -232,6 +231,36 @@ const ReactForm = forwardRef<ReactFormRef, Props>(({
               </div>
             );
           })}
+
+        </div>
+
+      </div>
+    );
+  }
+
+  if (showReview && result && activity?.showScore === false) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+
+        <div className="w-full max-w-xl px-4 text-center">
+
+          <div className="bg-white rounded-xl shadow-sm p-10">
+
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Activity Completed
+            </h2>
+
+            <p className="text-gray-700 text-lg">
+              Great work completing this activity.
+            </p>
+
+            <p className="text-gray-600 mt-2">
+              Have a wonderful journey through the program. Keep learning and growing.
+            </p>
+
+          </div>
 
         </div>
 

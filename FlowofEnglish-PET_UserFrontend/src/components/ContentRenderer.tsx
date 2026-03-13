@@ -755,7 +755,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       const xmlLink = currentSubconcept?.subconceptLink || "";
       const isCompleted = currentSubconcept?.completionStatus?.toLowerCase() === "yes";
       
-          if (isCompleted) {
+      if (isCompleted) {
         return (
           <div className="flex items-center justify-center h-full">
             <div className="bg-white rounded-xl shadow-md p-8 text-center max-w-md">
