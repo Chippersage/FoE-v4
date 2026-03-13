@@ -596,10 +596,12 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
     );
   }
 
-  const { subconceptLink, subconceptType, completionStatus } = currentSubconcept;
+  // const { subconceptLink, subconceptType, completionStatus } = currentSubconcept;
 
-  // const { subconceptLink, completionStatus } = currentSubconcept;
-  // let subconceptType = "practice_drill";
+  const { subconceptLink, subconceptType } = currentSubconcept;
+
+  const latestSubconcept = getSubconceptById(currentSubconcept.subconceptId);
+  const completionStatus = latestSubconcept?.completionStatus;
 
   // ----------------------------------------------------------
   //  Type-based content rendering
@@ -739,20 +741,45 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
 
-    case "html-form": {
+    case "react-form": {
       const selectedCohortRaw = localStorage.getItem("selectedCohort");
       const selectedCohort = selectedCohortRaw
         ? JSON.parse(selectedCohortRaw)
         : null;
-
       
-      const xmlLink =  "/AudioXml.xml";
+      // const xmlLink =  "/AudioXml.xml";
       // const xmlLink =  "/PET3011.xml";
       // const xmlLink =  "/PET3034.xml";
+      // const xmlLink = "/PET2 React-Forms/PET2023-5.xml";
+
+      const xmlLink = currentSubconcept?.subconceptLink || "";
+      const isCompleted = currentSubconcept?.completionStatus?.toLowerCase() === "yes";
+      
+          if (isCompleted) {
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="bg-white rounded-xl shadow-md p-8 text-center max-w-md">
+
+              <div className="text-5xl mb-4">🎉</div>
+              <h2 className="text-2xl font-semibold text-green-600">
+                Activity Completed
+              </h2>
+              <p className="text-gray-600 mt-3">
+                Well done! You've successfully completed this activity.
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Keep up the great work and continue to the next activity.
+              </p>
+            </div>
+          </div>
+        );
+      }
+
 
       return (
         <div className={`relative w-full h-full overflow-auto ${className}`}>
           <ReactForm
+            key={currentSubconcept.subconceptId}
             xmlUrl={xmlLink} 
             ref={reactFormRef}
             userId={user?.userId || ""}
@@ -779,6 +806,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           ? "/assignment_icons/Speak_icon.jpeg"
           : null;
 
+      const isVideo =
+        subconceptLink &&
+        /\.(mp4|webm|ogg)$/i.test(subconceptLink);
+
       return (
         <div className={`relative w-full h-full overflow-auto bg-white ${className}`}>
           <div className="w-full max-w-[1200px] mx-auto p-6 text-gray-800 leading-relaxed">
@@ -804,11 +835,19 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
               />
             ) : (
               <div className="flex justify-center">
-                <img
-                  src={subconceptLink}
-                  alt="Assignment"
-                  className="max-h-[500px] object-contain rounded-xl"
-                />
+                {isVideo ? (
+                  <video
+                    src={subconceptLink}
+                    controls
+                    className="max-h-[500px] rounded-xl"
+                  />
+                ) : (
+                  <img
+                    src={subconceptLink}
+                    alt="Assignment"
+                    className="max-h-[500px] object-contain rounded-xl"
+                  />
+                )}
               </div>
             )}
 

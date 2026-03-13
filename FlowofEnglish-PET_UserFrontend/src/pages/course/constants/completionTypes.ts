@@ -28,5 +28,5 @@ export const NEEDS_SUBMISSION_TYPES = [
   "googleform",
   "assessment",
   "quiz",
-  "html-form,"
+  "react-form,"
 ];

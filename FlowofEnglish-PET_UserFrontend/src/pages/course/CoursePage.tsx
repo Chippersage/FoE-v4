@@ -48,6 +48,8 @@ const CoursePage: React.FC = () => {
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
   const [htmlScore, setHtmlScore] = useState<{ score: number; total: number } | null>(null);
+  const [shouldShowScore, setShouldShowScore] = useState(true);
+  const isReactFormSubmitted = !!htmlScore;
   
   // Track redirect state to prevent multiple redirects
   const hasRedirectedRef = useRef(false);
@@ -150,7 +152,7 @@ const CoursePage: React.FC = () => {
 
   console.log("Current Subconcept:", subconcept);
 
-  const isHtmlForm = type === "html-form";
+  const isReactForm = type === "react-form";
 
   const isAssignment = type?.startsWith("assignment");
   const isGoogleForm = type === "googleform" || type === "assessment";
@@ -161,7 +163,7 @@ const CoursePage: React.FC = () => {
 
   const isIframeContent =
     !!type &&
-    !["video", "audio", "pdf", "image", "youtube", "mcq", "mtf", "word", "html-form", ].includes(
+    !["video", "audio", "pdf", "image", "youtube", "mcq", "mtf", "word", "react-form", ].includes(
       type
     );
 
@@ -217,12 +219,12 @@ const CoursePage: React.FC = () => {
   const handleSubmit = async () => {
 
     // ===== HTML FORM FLOW =====
-    if (isHtmlForm && reactFormRef.current) {
+    if (isReactForm && reactFormRef.current) {
 
       const result = await reactFormRef.current.submitForm();
       if (!result) return;
 
-      const { score, maxScore } = result;
+      const { score, maxScore ,showScore } = result;
 
       await recordAttempt({
         userId: user!.userId,
@@ -230,15 +232,21 @@ const CoursePage: React.FC = () => {
         stageId: stageId!,
         unitId: unitId!,
         subconceptId: subconcept!.subconceptId,
-        subconceptType: "html-form",
+        subconceptType: "react-form",
         subconceptMaxscore: maxScore,
         score,
       });
 
       markSubconceptCompleted(subconcept!.subconceptId);
+        window.dispatchEvent(
+        new CustomEvent("updateSidebarCompletion", {
+          detail: { subconceptId: subconcept!.subconceptId }
+        })
+      );
 
       setHtmlScore({ score, total: maxScore });
       setShowScoreSummary(true);
+      setShouldShowScore(showScore);
 
       return;
     }
@@ -328,7 +336,7 @@ const CoursePage: React.FC = () => {
             iframeRef={iframeRef}
             reactFormRef={reactFormRef}
             style={{
-              opacity: showScore && !isHtmlForm ? 0.1 : 1,
+              opacity: showScore && !isReactForm ? 0.1 : 1,
               pointerEvents: showScore ? "none" : "auto",
             }}
           />
@@ -370,13 +378,13 @@ const CoursePage: React.FC = () => {
             />
           )}
 
-          {((isIframeContent && showSubmit) || isHtmlForm) &&
+          {((isIframeContent && showSubmit) || isReactForm) &&
             !attemptRecorded &&
-            !showScore && (
+            !showScore   && !(isReactForm && (isReactFormSubmitted || isCompleted)) && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+              className={`px-4 py-2 rounded-md text-sm font-medium cursor-pointer text-white ${
                 isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#0EA5E9] hover:bg-[#0284c7]"
@@ -386,7 +394,7 @@ const CoursePage: React.FC = () => {
             </button>
           )}
 
-          {!isHtmlForm && (attemptRecorded || showScore) && scoreData && (
+          {!isReactForm && (attemptRecorded || showScore) && scoreData && (
             <ScoreBadge
               score={scoreData.score}
               total={scoreData.total}
@@ -454,13 +462,13 @@ const CoursePage: React.FC = () => {
             </div>
           )}
 
-          {((isIframeContent && showSubmit) || isHtmlForm) &&
+          {((isIframeContent && showSubmit) || isReactForm) &&
             !attemptRecorded &&
-            !showScore && (
+            !showScore && !(isReactForm && (isReactFormSubmitted || isCompleted)) &&(
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`px-4 py-2 rounded-md text-sm font-medium text-white flex-shrink-0 ${
+              className={`px-4 py-2 rounded-md text-sm font-medium cursor-pointer text-white flex-shrink-0 ${
                 isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#0EA5E9]"
@@ -494,7 +502,7 @@ const CoursePage: React.FC = () => {
       </div>
 
       {/* Score Summary Modal */}
-      {(scoreData || htmlScore) && (
+      {shouldShowScore && (scoreData || htmlScore) && (
         <ScoreSummaryModal
           isOpen={showScoreSummary}
           onClose={() => setShowScoreSummary(false)}

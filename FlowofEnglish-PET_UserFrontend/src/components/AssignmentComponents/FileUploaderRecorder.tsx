@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
 import FileUploader from "./FileUploader";
 import AudioRecorder from "./AudioRecorder";
-import { VideoRecorder } from "./VideoRecorder";
+// import { VideoRecorder } from "./VideoRecorder";
 import { Preview } from "./Preview";
 import { Upload, Mic, Video, Camera } from "lucide-react";
 import UploadModal from "../modals/UploadModal";
@@ -251,7 +251,7 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
             />
           )}
 
-          {allowedActions.includes("video") && (
+          {/* {allowedActions.includes("video") && (
             <ActionButton
               icon={<Video className="w-5 h-5 sm:w-5 sm:h-5" />}
               isActive={activeAction === "video"}
@@ -259,7 +259,7 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
               activeAction={activeAction}
               disabled={isDisabled}
             />
-          )}
+          )} */}
 
           {allowedActions.includes("photo") && (
             <ActionButton
@@ -290,9 +290,10 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
           />
         </div>
       )}
-
+      
+      {/*
       {activeAction === "video" && !isDisabled && (
-        <div className="mt-2 sm:mt-3"> {/* Reduced top margin for PC */}
+        <div className="mt-2 sm:mt-3">
           <VideoRecorder
             onRecordingStart={handleVideoRecordingStart}
             onRecordingStop={handleRecordingStop}
@@ -300,6 +301,7 @@ export const FileUploaderRecorder: React.FC<FileUploaderRecorderProps> = ({
           />
         </div>
       )}
+      */}
 
       {activeAction === "photo" && !isDisabled && (
         <div className="mt-2 sm:mt-3"> {/* Reduced top margin for PC */}

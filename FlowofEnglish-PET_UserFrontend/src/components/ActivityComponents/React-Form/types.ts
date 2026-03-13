@@ -20,8 +20,11 @@ export interface Question {
 export interface Activity {
   instructions: string;
   maxPlaysPerAudio: number;
-  mediaUrl?: string;
-  mediaType?: string;
+  media?: {
+    type: string;
+    url: string;
+  };
+  showScore?: boolean;
   questions: Question[];
   scriptUrl?: string;
 }

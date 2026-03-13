@@ -49,7 +49,7 @@ export const useUserAttempt = () => {
         
         const type = subconceptType.toLowerCase();
         if (type === "video") return subconceptMaxscore;
-        if (type === "pdf" || type === "image" || type === "assignment" || type === "html-form") return subconceptMaxscore;
+        if (type === "pdf" || type === "image" || type === "assignment" || type === "react-form") return subconceptMaxscore;
         return 0; // Default for other types
       };
 

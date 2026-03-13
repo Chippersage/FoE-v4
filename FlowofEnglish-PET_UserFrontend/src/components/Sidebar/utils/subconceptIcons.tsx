@@ -39,7 +39,7 @@ export const getSubconceptIcon = (type: string, isLocked: boolean) => {
     case "toastmasters":
       return <Globe size={16} className={iconClass} />;
 
-    case "html-form":
+    case "react-form":
       return <FileSpreadsheet size={16} className={iconClass} />;
 
     default:

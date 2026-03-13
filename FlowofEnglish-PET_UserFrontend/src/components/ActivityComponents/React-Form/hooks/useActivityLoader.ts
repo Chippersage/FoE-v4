@@ -1,5 +1,3 @@
-// features/react-form/hooks/useActivityLoader.ts
-
 import { useEffect, useState } from "react";
 import { type Activity, type Question } from "../types";
 
@@ -23,11 +21,14 @@ export const useActivityLoader = (xmlUrl: string) => {
           id: q.getAttribute("id") || "",
           type: q.getAttribute("type") || "",
           marks: parseInt(q.getAttribute("marks") || "1"),
-          text: q.querySelector("text")?.textContent?.trim(),
+
+          text: q.querySelector("text")?.innerHTML.trim(),
 
           audioUrl: mediaType === "audio" ? mediaContent : undefined,
 
-          correctAnswer: q.querySelector("correctAnswer")?.textContent?.trim(),
+          correctAnswer: q
+            .querySelector("correctAnswer")
+            ?.textContent?.trim(),
 
           options: Array.from(q.querySelectorAll("option")).map(opt => ({
             id: opt.getAttribute("id") || "",
@@ -38,18 +39,36 @@ export const useActivityLoader = (xmlUrl: string) => {
       });
 
       const activityMediaNode = xml.querySelector("activity > media");
-      
+
+      const media = activityMediaNode
+        ? {
+            type: activityMediaNode.getAttribute("type") || "",
+            url: activityMediaNode.textContent?.trim() || "",
+          }
+        : null;
+
       console.log("==== XML LOADED ====");
       console.log("Questions parsed:", questions);
+      console.log("Media parsed:", media);
+
+      const meta = xml.querySelector("meta");
+
+      const showScore =
+        meta?.querySelector("showScore")?.textContent?.trim() !== "false";
+
       setActivity({
         instructions:
           xml.querySelector("instructions")?.textContent?.trim() || "",
+
         maxPlaysPerAudio: parseInt(
           xml.querySelector("maxPlaysPerAudio")?.textContent || "3"
         ),
-        mediaUrl: activityMediaNode?.textContent?.trim(),
-        mediaType: activityMediaNode?.getAttribute("type") || undefined,
+
+        media,
+
         questions,
+        showScore,
+
         scriptUrl:
           xml.querySelector("appScriptUrl")?.textContent?.trim() || "",
       });

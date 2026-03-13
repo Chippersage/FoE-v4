@@ -1,50 +1,39 @@
-import AudioPlayer from "./AudioPlayer";
-
 interface Props {
   question: any;
   questionNumber: number;
-  subconceptId: string;
   value: string;
   onChange: (val: string) => void;
 }
 
-export default function AudioQuestion({
+export default function TextInputQuestion({
   question,
   questionNumber,
-  subconceptId,
   value,
   onChange,
 }: Props) {
-
   return (
     <div className="rounded-lg overflow-hidden bg-white shadow-sm">
 
-      {/* Header */}
+      {/* Question Header */}
       <div className="bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700">
         Question {questionNumber}
       </div>
 
       <div className="p-4 space-y-4">
 
-        {/* Question */}
+        {/* Question Text with HTML support */}
         {question.text && (
-          <p className="text-base text-gray-900">
-            {question.text}
-          </p>
+          <p
+            className="text-base text-gray-900 whitespace-pre-line"
+            dangerouslySetInnerHTML={{ __html: question.text }}
+          />
         )}
 
-        {/* Audio */}
-        <AudioPlayer
-          subconceptId={subconceptId}
-          audioId={question.id}
-          audioUrl={question.audioUrl}
-        />
-
-        {/* Answer box */}
+        {/* Answer Input */}
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Type exactly what you hear..."
+          placeholder="Type your answer..."
           rows={3}
           className="
             w-full
