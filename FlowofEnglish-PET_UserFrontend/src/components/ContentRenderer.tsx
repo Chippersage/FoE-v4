@@ -779,6 +779,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
           ? "/assignment_icons/Speak_icon.jpeg"
           : null;
 
+      const isVideo =
+        subconceptLink &&
+        /\.(mp4|webm|ogg)$/i.test(subconceptLink);
+
       return (
         <div className={`relative w-full h-full overflow-auto bg-white ${className}`}>
           <div className="w-full max-w-[1200px] mx-auto p-6 text-gray-800 leading-relaxed">
@@ -804,11 +808,19 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
               />
             ) : (
               <div className="flex justify-center">
-                <img
-                  src={subconceptLink}
-                  alt="Assignment"
-                  className="max-h-[500px] object-contain rounded-xl"
-                />
+                {isVideo ? (
+                  <video
+                    src={subconceptLink}
+                    controls
+                    className="max-h-[500px] rounded-xl"
+                  />
+                ) : (
+                  <img
+                    src={subconceptLink}
+                    alt="Assignment"
+                    className="max-h-[500px] object-contain rounded-xl"
+                  />
+                )}
               </div>
             )}
 
@@ -816,7 +828,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
     }
-
     default:
       return (
         <div className={`relative w-full h-full ${className}`}>
