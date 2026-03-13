@@ -855,7 +855,6 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
     }
-
     default:
       return (
         <div className={`relative w-full h-full ${className}`}>

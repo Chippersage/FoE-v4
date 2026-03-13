@@ -20,7 +20,7 @@ public class Subconcept {
     @Column(name = "subconcept_desc", length = 1000, nullable = true)
     private String subconceptDesc;
     
-    @Column(name = "subconcept_desc_2", length = 1000, nullable = true)
+    @Column(name = "subconcept_desc_2", length = 5000, nullable = true)
     private String subconceptDesc2;
     
     @Column(name = "subconcept_group", length = 1000, nullable = true)
