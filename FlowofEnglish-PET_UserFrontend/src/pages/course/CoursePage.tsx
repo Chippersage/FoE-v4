@@ -47,9 +47,11 @@ const CoursePage: React.FC = () => {
   const [loadAttempted, setLoadAttempted] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
-  const [htmlScore, setHtmlScore] = useState<{ score: number; total: number } | null>(null);
+  // const [htmlScore, setHtmlScore] = useState<{ score: number; total: number } | null>(null);
+  const [htmlScores, setHtmlScores] = useState<
+    Record<string, { score: number; total: number }>
+  >({});
   const [shouldShowScore, setShouldShowScore] = useState(true);
-  const isReactFormSubmitted = !!htmlScore;
   
   // Track redirect state to prevent multiple redirects
   const hasRedirectedRef = useRef(false);
@@ -150,6 +152,9 @@ const CoursePage: React.FC = () => {
     return subconcept?.subconceptType?.toLowerCase();
   }, [subconcept?.subconceptType]);
 
+  const htmlScore = subconcept ? htmlScores[subconcept.subconceptId] : null;
+  const isReactFormSubmitted = !!htmlScore;
+
   console.log("Current Subconcept:", subconcept);
 
   const isReactForm = type === "react-form";
@@ -167,7 +172,9 @@ const CoursePage: React.FC = () => {
       type
     );
 
-  const isCompleted = subconcept?.completionStatus?.toLowerCase() === "yes";
+  const isCompleted =
+  subconcept?.completionStatus?.toLowerCase() === "yes" || isReactFormSubmitted;
+  console.log("Completion Status:", subconcept?.completionStatus, "Is Completed:", isCompleted);
   const hasAnswerImage = !!subconcept?.subconceptGroup;
   const hasSampleAnswerType = ["assignment_image", "practice_drill"].includes(type || "");
 
@@ -244,7 +251,11 @@ const CoursePage: React.FC = () => {
         })
       );
 
-      setHtmlScore({ score, total: maxScore });
+      // setHtmlScore({ score, total: maxScore });
+      setHtmlScores(prev => ({
+        ...prev,
+        [subconcept!.subconceptId]: { score, total: maxScore }
+      }));
       setShowScoreSummary(true);
       setShouldShowScore(showScore);
 
@@ -380,7 +391,7 @@ const CoursePage: React.FC = () => {
 
           {((isIframeContent && showSubmit) || isReactForm) &&
             !attemptRecorded &&
-            !showScore   && !(isReactForm && (isReactFormSubmitted || isCompleted)) && (
+            !showScore   && !isCompleted && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
@@ -464,7 +475,7 @@ const CoursePage: React.FC = () => {
 
           {((isIframeContent && showSubmit) || isReactForm) &&
             !attemptRecorded &&
-            !showScore && !(isReactForm && (isReactFormSubmitted || isCompleted)) &&(
+            !showScore && !isCompleted &&(
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

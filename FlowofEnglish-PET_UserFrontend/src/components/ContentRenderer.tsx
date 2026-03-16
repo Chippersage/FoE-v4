@@ -225,7 +225,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       // keep loader visible slightly longer
       setTimeout(() => {
         setIsLoading(false);
-      }, 600);
+      }, 1000);
       isFirstLoad.current = false;
 
     };
