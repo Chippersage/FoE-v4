@@ -789,7 +789,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
     }
-
+  
     case "practice_drill":
     case "assignment_write":
     case "assignment_speak": {
@@ -809,6 +809,10 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
       const isVideo =
         subconceptLink &&
         /\.(mp4|webm|ogg)$/i.test(subconceptLink);
+
+      const isPDF =
+        subconceptLink &&
+        /\.pdf$/i.test(subconceptLink);
 
       return (
         <div className={`relative w-full h-full overflow-auto bg-white ${className}`}>
@@ -834,12 +838,17 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
                 }}
               />
             ) : (
-              <div className="flex justify-center">
+              <div className="flex justify-center w-full">
                 {isVideo ? (
                   <video
                     src={subconceptLink}
                     controls
                     className="max-h-[500px] rounded-xl"
+                  />
+                ) : isPDF ? (
+                  <iframe
+                    src={subconceptLink}
+                    className="w-full h-[600px] rounded-xl border"
                   />
                 ) : (
                   <img
