@@ -847,7 +847,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
                   />
                 ) : isPDF ? (
                   <iframe
-                    src={subconceptLink}
+                    src={`${subconceptLink}#toolbar=0&navpanes=0&scrollbar=0`}
                     className="w-full h-[600px] rounded-xl border"
                   />
                 ) : (
